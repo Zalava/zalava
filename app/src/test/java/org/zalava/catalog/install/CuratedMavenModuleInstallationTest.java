@@ -32,11 +32,11 @@ class CuratedMavenModuleInstallationTest {
         .isEqualTo(
             new BinaryModuleInstallRequest(
                 module(),
-                "/tmp/sea-module-time.jar",
+                "/tmp/zalava-module-time.jar",
                 "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "maven-central"));
     assertThat(resolver.discarded).isTrue();
-    assertThat(installed.moduleId()).isEqualTo("sea-module-time");
+    assertThat(installed.moduleId()).isEqualTo("zalava-module-time");
   }
 
   @Test
@@ -53,7 +53,7 @@ class CuratedMavenModuleInstallationTest {
   private static SourceModuleCatalogSearch.Result result() {
     return new SourceModuleCatalogSearch.Result(
         module(),
-        new SourceModuleCatalog.Entry("sea-module-time", "time.yaml", "a".repeat(64), null),
+        new SourceModuleCatalog.Entry("zalava-module-time", "time.yaml", "a".repeat(64), null),
         List.of(
             new SourceModuleCatalog.MavenRepository(
                 "maven-central", "https://repo.maven.apache.org/maven2")));
@@ -61,12 +61,12 @@ class CuratedMavenModuleInstallationTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-time",
+        "zalava-module-time",
         "1.0.0",
         "Time",
         "Time tools",
         URI.create("https://example.test/support"),
-        new SourceModuleIndex.Artifact("org.zalava.modules", "sea-module-time", "1.0.0"),
+        new SourceModuleIndex.Artifact("org.zalava.modules", "zalava-module-time", "1.0.0"),
         new SourceModuleIndex.Source(
             URI.create("https://github.com/Zalava/zalava-module-time"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of("./gradlew", "build"), List.of("./gradlew", "test")),
@@ -85,7 +85,7 @@ class CuratedMavenModuleInstallationTest {
     public ResolvedArtifact resolve(Request request) {
       this.request = request;
       return new ResolvedArtifact(
-          "/tmp/sea-module-time.jar",
+          "/tmp/zalava-module-time.jar",
           "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     }
 

@@ -55,7 +55,7 @@ import tools.jackson.databind.ObjectMapper;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class IndexedInstallAcceptanceTest {
 
-  static final String MODULE_ID = "sea-module-time";
+  static final String MODULE_ID = "zalava-module-time";
   static final String VERSION = "1.2.0";
   static final String ARTIFACT_DIGEST =
       "sha256:b31aa253e089d80618255ceddeb754d58e8f426d352bed08734bf0a3bef30365";
@@ -101,7 +101,7 @@ class IndexedInstallAcceptanceTest {
 
     assertThat(response).contains("digest");
     assertThat(latestRequestStatus()).isEqualTo("FAILED");
-    assertThat(enabledModule("sea-module-time")).isNull();
+    assertThat(enabledModule("zalava-module-time")).isNull();
   }
 
   @Test

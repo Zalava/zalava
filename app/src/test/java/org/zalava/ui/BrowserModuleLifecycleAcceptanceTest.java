@@ -107,7 +107,7 @@ class BrowserModuleLifecycleAcceptanceTest {
 
   private static Path workspace() {
     try {
-      return Files.createTempDirectory("sea-module-lifecycle-browser-");
+      return Files.createTempDirectory("zalava-module-lifecycle-browser-");
     } catch (java.io.IOException exception) {
       throw new ExceptionInInitializerError(exception);
     }

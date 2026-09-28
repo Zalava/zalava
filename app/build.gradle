@@ -257,9 +257,9 @@ tasks.register('indexedInstallAcceptanceTest', Test) {
     reports.junitXml.required = true
     [
         'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
-        'sea.indexed-install.github-packages-username': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
-        'sea.indexed-install.github-packages-token': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
-        'sea.indexed-install.module-locator-url': 'SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+        'sea.indexed-install.github-packages-username': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'sea.indexed-install.github-packages-token': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'sea.indexed-install.module-locator-url': 'Zalava_INDEXED_INSTALL_MODULE_LOCATOR_URL'
     ].each { propertyName, environmentName ->
         def value = providers.systemProperty(propertyName)
                 .orElse(providers.gradleProperty(propertyName))
@@ -272,7 +272,7 @@ tasks.register('indexedInstallAcceptanceTest', Test) {
 
 tasks.register('moduleCompatAcceptanceTest', Test) {
     group = 'verification'
-    description = 'Runs the opt-in cross-repository released-module compatibility matrix against disposable SEA.'
+    description = 'Runs the opt-in cross-repository released-module compatibility matrix against disposable Zalava.'
     dependsOn tasks.named('testClasses')
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
@@ -287,9 +287,9 @@ tasks.register('moduleCompatAcceptanceTest', Test) {
     reports.junitXml.required = true
     [
         'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
-        'sea.indexed-install.github-packages-username': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
-        'sea.indexed-install.github-packages-token': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
-        'sea.indexed-install.module-locator-url': 'SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+        'sea.indexed-install.github-packages-username': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'sea.indexed-install.github-packages-token': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'sea.indexed-install.module-locator-url': 'Zalava_INDEXED_INSTALL_MODULE_LOCATOR_URL'
     ].each { propertyName, environmentName ->
         def value = providers.systemProperty(propertyName)
                 .orElse(providers.gradleProperty(propertyName))
@@ -302,7 +302,7 @@ tasks.register('moduleCompatAcceptanceTest', Test) {
 
 tasks.register('ocrWorkerAcceptanceTest', Test) {
     group = 'verification'
-    description = 'Runs the opt-in real sea-ocr-worker acceptance lane against disposable SEA.'
+    description = 'Runs the opt-in real sea-ocr-worker acceptance lane against disposable Zalava.'
     dependsOn tasks.named('testClasses')
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
@@ -318,9 +318,9 @@ tasks.register('ocrWorkerAcceptanceTest', Test) {
     reports.junitXml.required = true
     [
         'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
-        'sea.indexed-install.github-packages-username': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
-        'sea.indexed-install.github-packages-token': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
-        'sea.indexed-install.module-locator-url': 'SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+        'sea.indexed-install.github-packages-username': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'sea.indexed-install.github-packages-token': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'sea.indexed-install.module-locator-url': 'Zalava_INDEXED_INSTALL_MODULE_LOCATOR_URL'
     ].each { propertyName, environmentName ->
         def value = providers.systemProperty(propertyName)
                 .orElse(providers.gradleProperty(propertyName))
@@ -330,7 +330,7 @@ tasks.register('ocrWorkerAcceptanceTest', Test) {
         }
     }
     def workerImage = providers.gradleProperty('sea.ocr-worker.image')
-            .orElse(providers.environmentVariable('SEA_OCR_WORKER_IMAGE'))
+            .orElse(providers.environmentVariable('Zalava_OCR_WORKER_IMAGE'))
     if (workerImage.present) {
         systemProperty 'sea.ocr-worker.image', workerImage.get()
     }
@@ -477,7 +477,7 @@ tasks.named('processResources') {
     from(rootProject.file('docs/module-api-release-guide.md')) {
         into 'development-workspace/docs'
     }
-    from(rootProject.file('templates/sea-module')) {
+    from(rootProject.file('templates/zalava-module')) {
         into 'development-workspace/examples/minimal-module'
     }
     from('src/externalModuleFixture') {

@@ -27,7 +27,8 @@ class FileSystemCapabilityGapEvidenceStoreTest {
             CapabilityGapClassification.WEAK_MATCH,
             "recommendation only",
             List.of(
-                new RankedCandidate("sea-module-weather", "1.0.0", "c".repeat(64), 1, "moduleId")));
+                new RankedCandidate(
+                    "zalava-module-weather", "1.0.0", "c".repeat(64), 1, "moduleId")));
 
     store.save(evidence);
 

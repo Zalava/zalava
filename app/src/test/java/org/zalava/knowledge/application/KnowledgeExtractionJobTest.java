@@ -49,7 +49,7 @@ class KnowledgeExtractionJobTest {
           0);
   private final KnowledgeDerivation candidate =
       new KnowledgeDerivation(
-          sourceId, 1, "sea-module-tika", "1", DerivationState.CANDIDATE, Instant.EPOCH, 0);
+          sourceId, 1, "zalava-module-tika", "1", DerivationState.CANDIDATE, Instant.EPOCH, 0);
 
   @Test
   void promotesOnlyAValidSourceCorrelatedExtractorResult() {
@@ -65,9 +65,9 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "sea-module-tika", "1"),
+                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
-    when(lifecycle.beginReprocessing(owner, sourceId, "sea-module-tika", "1"))
+    when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
 
     new KnowledgeExtractionJob(
@@ -135,9 +135,9 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "sea-module-tika", "1"),
+                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
-    when(lifecycle.beginReprocessing(owner, sourceId, "sea-module-tika", "1"))
+    when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
 
     job(lifecycle, sources, blobs, records, runtime).extract(sourceId);
@@ -287,9 +287,9 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "sea-module-tika", "1"),
+                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
-    when(lifecycle.beginReprocessing(owner, sourceId, "sea-module-tika", "1"))
+    when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
 
     org.assertj.core.api.Assertions.assertThatThrownBy(
@@ -311,9 +311,9 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "sea-module-tika", "1"),
+                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
-    when(lifecycle.beginReprocessing(owner, sourceId, "sea-module-tika", "1"))
+    when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
   }
 

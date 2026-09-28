@@ -20,9 +20,10 @@ class JdkModuleLocatorRemoteModuleCatalogTest {
   @Test
   void returnsCandidatesForModulesMatchingTheNormalizedQuery() {
     FakeLocator locator = new FakeLocator();
-    locator.modules.add(module("sea-module-weather", "Weather", "Pollen forecast"));
-    locator.modules.add(module("sea-module-time", "Time", "Clock and time"));
-    locator.releases.put("sea-module-weather", index("sea-module-weather", "1.2.0", "pollen.read"));
+    locator.modules.add(module("zalava-module-weather", "Weather", "Pollen forecast"));
+    locator.modules.add(module("zalava-module-time", "Time", "Clock and time"));
+    locator.releases.put(
+        "zalava-module-weather", index("zalava-module-weather", "1.2.0", "pollen.read"));
     JdkModuleLocatorRemoteModuleCatalog catalog =
         new JdkModuleLocatorRemoteModuleCatalog(locator, locator, null, 5, 10);
 
@@ -33,18 +34,18 @@ class JdkModuleLocatorRemoteModuleCatalogTest {
         .singleElement()
         .satisfies(
             candidate -> {
-              assertThat(candidate.moduleId()).isEqualTo("sea-module-weather");
+              assertThat(candidate.moduleId()).isEqualTo("zalava-module-weather");
               assertThat(candidate.version()).isEqualTo("1.2.0");
               assertThat(candidate.digest()).isEqualTo(DIGEST);
               assertThat(candidate.permissions()).containsExactly("pollen.read");
             });
-    assertThat(locator.resolved).containsExactly("sea-module-weather");
+    assertThat(locator.resolved).containsExactly("zalava-module-weather");
   }
 
   @Test
   void returnsNoCandidatesWhenNothingMatchesTheQuery() {
     FakeLocator locator = new FakeLocator();
-    locator.modules.add(module("sea-module-time", "Time", "Clock and time"));
+    locator.modules.add(module("zalava-module-time", "Time", "Clock and time"));
     JdkModuleLocatorRemoteModuleCatalog catalog =
         new JdkModuleLocatorRemoteModuleCatalog(locator, locator, null, 5, 10);
 
@@ -55,32 +56,32 @@ class JdkModuleLocatorRemoteModuleCatalogTest {
   @Test
   void boundsTheNumberOfResolvedModules() {
     FakeLocator locator = new FakeLocator();
-    locator.modules.add(module("sea-module-a", "Pollen A", "Pollen a"));
-    locator.modules.add(module("sea-module-b", "Pollen B", "Pollen b"));
-    locator.modules.add(module("sea-module-c", "Pollen C", "Pollen c"));
-    locator.releases.put("sea-module-a", index("sea-module-a", "1.0.0", "read"));
-    locator.releases.put("sea-module-b", index("sea-module-b", "1.0.0", "read"));
-    locator.releases.put("sea-module-c", index("sea-module-c", "1.0.0", "read"));
+    locator.modules.add(module("zalava-module-a", "Pollen A", "Pollen a"));
+    locator.modules.add(module("zalava-module-b", "Pollen B", "Pollen b"));
+    locator.modules.add(module("zalava-module-c", "Pollen C", "Pollen c"));
+    locator.releases.put("zalava-module-a", index("zalava-module-a", "1.0.0", "read"));
+    locator.releases.put("zalava-module-b", index("zalava-module-b", "1.0.0", "read"));
+    locator.releases.put("zalava-module-c", index("zalava-module-c", "1.0.0", "read"));
     JdkModuleLocatorRemoteModuleCatalog catalog =
         new JdkModuleLocatorRemoteModuleCatalog(locator, locator, null, 2, 10);
 
     assertThat(catalog.lookup("pollen")).hasSize(2);
-    assertThat(locator.resolved).containsExactly("sea-module-a", "sea-module-b");
+    assertThat(locator.resolved).containsExactly("zalava-module-a", "zalava-module-b");
   }
 
   @Test
   void boundsTheNumberOfCandidates() {
     FakeLocator locator = new FakeLocator();
-    locator.modules.add(module("sea-module-weather", "Weather", "Pollen forecast"));
+    locator.modules.add(module("zalava-module-weather", "Weather", "Pollen forecast"));
     ModuleReleaseIndex manyReleases =
         new ModuleReleaseIndex(
             1,
-            "sea-module-weather",
+            "zalava-module-weather",
             List.of(
-                release("sea-module-weather", "1.0.0", "read"),
-                release("sea-module-weather", "1.1.0", "read"),
-                release("sea-module-weather", "1.2.0", "read")));
-    locator.releases.put("sea-module-weather", manyReleases);
+                release("zalava-module-weather", "1.0.0", "read"),
+                release("zalava-module-weather", "1.1.0", "read"),
+                release("zalava-module-weather", "1.2.0", "read")));
+    locator.releases.put("zalava-module-weather", manyReleases);
     JdkModuleLocatorRemoteModuleCatalog catalog =
         new JdkModuleLocatorRemoteModuleCatalog(locator, locator, null, 5, 2);
 
@@ -90,8 +91,8 @@ class JdkModuleLocatorRemoteModuleCatalogTest {
   @Test
   void mismatchedReleaseIndexIsRejected() {
     FakeLocator locator = new FakeLocator();
-    locator.modules.add(module("sea-module-weather", "Weather", "Pollen forecast"));
-    locator.releases.put("sea-module-weather", index("sea-module-other", "1.0.0", "read"));
+    locator.modules.add(module("zalava-module-weather", "Weather", "Pollen forecast"));
+    locator.releases.put("zalava-module-weather", index("zalava-module-other", "1.0.0", "read"));
     JdkModuleLocatorRemoteModuleCatalog catalog =
         new JdkModuleLocatorRemoteModuleCatalog(locator, locator, null, 5, 10);
 
@@ -103,7 +104,7 @@ class JdkModuleLocatorRemoteModuleCatalogTest {
   @Test
   void retrievalFailuresAreWrappedAsBoundedCatalogExceptions() {
     FakeLocator locator = new FakeLocator();
-    locator.modules.add(module("sea-module-weather", "Weather", "Pollen forecast"));
+    locator.modules.add(module("zalava-module-weather", "Weather", "Pollen forecast"));
     locator.fail = true;
     JdkModuleLocatorRemoteModuleCatalog catalog =
         new JdkModuleLocatorRemoteModuleCatalog(locator, locator, null, 5, 10);

@@ -7,7 +7,7 @@ plugins {
 
 spotless {
     java {
-        target 'app/src/**/*.java', 'module-api/src/**/*.java', 'module-api-test/src/**/*.java', 'templates/sea-module/src/**/*.java'
+        target 'app/src/**/*.java', 'module-api/src/**/*.java', 'module-api-test/src/**/*.java', 'templates/zalava-module/src/**/*.java'
         googleJavaFormat('1.36.1')
     }
 }

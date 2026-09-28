@@ -46,14 +46,14 @@ class DevelopmentRequestToolsTest {
     JsonNode inspected = JSON.readTree(tools.inspect(created.path("requestId").asText()));
     JsonNode exported =
         JSON.readTree(
-            tools.export(created.path("requestId").asText(), "/external/sea-module-time"));
+            tools.export(created.path("requestId").asText(), "/external/zalava-module-time"));
 
     assertThat(created.path("status").asText()).isEqualTo("PREPARED");
-    assertThat(inspected.path("moduleId").asText()).isEqualTo("sea-module-time");
+    assertThat(inspected.path("moduleId").asText()).isEqualTo("zalava-module-time");
     assertThat(inspected.path("installationApproval").asText()).isEqualTo("not_available");
-    assertThat(exported.path("workspacePath").asText()).isEqualTo("/external/sea-module-time");
+    assertThat(exported.path("workspacePath").asText()).isEqualTo("/external/zalava-module-time");
     assertThat(exported.path("codexCommand").asText())
-        .isEqualTo("cd /external/sea-module-time && codex");
+        .isEqualTo("cd /external/zalava-module-time && codex");
     assertThat(exported.path("initialPrompt").asText())
         .isEqualTo("Read .sea-request/CODEX_TASK.md and begin the implementation.");
     assertThat(exported.path("nextSteps")).hasSize(3);
@@ -69,7 +69,7 @@ class DevelopmentRequestToolsTest {
 
   private static ModuleDevelopmentContract contract() {
     return new ModuleDevelopmentContract(
-        new ModuleDevelopmentContract.Module("sea-module-time", "1.0.0"),
+        new ModuleDevelopmentContract.Module("zalava-module-time", "1.0.0"),
         "Return time",
         "1.0.0",
         java.util.List.of(
@@ -91,6 +91,6 @@ class DevelopmentRequestToolsTest {
         new ModuleDevelopmentContract.OperationalRequirements(
             null, null, null, java.util.List.of(), null, null, null),
         new ModuleDevelopmentContract.DeliveryRequirements(
-            "jar", "sea-module-time-*.jar", "1", false, Map.of()));
+            "jar", "zalava-module-time-*.jar", "1", false, Map.of()));
   }
 }

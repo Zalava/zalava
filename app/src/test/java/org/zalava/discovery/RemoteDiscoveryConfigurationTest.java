@@ -42,7 +42,7 @@ class RemoteDiscoveryConfigurationTest {
     assertThat(
             policy.eligible(
                 new RemoteModuleCandidate(
-                    "sea-module-a",
+                    "zalava-module-a",
                     "1.0.0",
                     "a".repeat(64),
                     "A",

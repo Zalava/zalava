@@ -17,7 +17,7 @@ class ModuleLocatorIndexLoaderTest {
         .singleElement()
         .satisfies(
             module -> {
-              assertThat(module.moduleId()).isEqualTo("sea-module-brave-search");
+              assertThat(module.moduleId()).isEqualTo("zalava-module-brave-search");
               assertThat(module.repository())
                   .hasToString("https://github.com/Zalava/zalava-module-brave-search");
               assertThat(module.releaseIndexPath()).isEqualTo("releases/index.yaml");
@@ -56,7 +56,7 @@ class ModuleLocatorIndexLoaderTest {
                   indexRepository: https://github.com/Zalava/zalava-catalog
                   indexPath: catalog.yaml
                 modules:
-                  - moduleId: sea-module-brave-search
+                  - moduleId: zalava-module-brave-search
                     displayName: Brave Search
                     description: Provider-scoped web search backed by Brave Search
                     repository: https://github.com/Zalava/zalava-module-brave-search

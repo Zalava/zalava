@@ -107,7 +107,7 @@ class ModuleDevelopmentRequestTest {
 
   static ModuleDevelopmentContract contract(String version) {
     return new ModuleDevelopmentContract(
-        new ModuleDevelopmentContract.Module("sea-module-example", version),
+        new ModuleDevelopmentContract.Module("zalava-module-example", version),
         "Provide an example capability",
         "1.0",
         List.of(
@@ -130,7 +130,11 @@ class ModuleDevelopmentRequestTest {
         new ModuleDevelopmentContract.OperationalRequirements(
             1_000L, 10_000L, false, List.of(), false, false, "25"),
         new ModuleDevelopmentContract.DeliveryRequirements(
-            "sea-module", "example-*.jar", "1", false, Map.of("moduleId", "sea-module-example")));
+            "sea-module",
+            "example-*.jar",
+            "1",
+            false,
+            Map.of("moduleId", "zalava-module-example")));
   }
 
   private static final class InMemoryStore implements DevelopmentRequestStore {

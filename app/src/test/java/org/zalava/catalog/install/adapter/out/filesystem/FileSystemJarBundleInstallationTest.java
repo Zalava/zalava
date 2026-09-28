@@ -70,7 +70,8 @@ class FileSystemJarBundleInstallationTest {
     Path bundle = workspace.resolve("bundle.jar");
     try (OutputStream output = Files.newOutputStream(bundle);
         JarOutputStream archive = new JarOutputStream(output)) {
-      entry(archive, "META-INF/sea-module-bundle.yaml", manifest.getBytes(StandardCharsets.UTF_8));
+      entry(
+          archive, "META-INF/zalava-module-bundle.yaml", manifest.getBytes(StandardCharsets.UTF_8));
       entry(archive, "module.jar", module);
       entry(archive, "lib/runtime.jar", runtime);
       if (extraMember) {

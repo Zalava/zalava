@@ -135,7 +135,7 @@ public final class JdkModuleLocatorReleaseLocator implements ModuleLocatorReleas
               .timeout(Duration.ofSeconds(20))
               .GET()
               .header("Accept", accept)
-              .header("User-Agent", "sea-module-installer");
+              .header("User-Agent", "zalava-module-installer");
       if (accessToken != null) request.header("Authorization", "Bearer " + accessToken);
       HttpResponse<byte[]> response =
           client.send(request.build(), HttpResponse.BodyHandlers.ofByteArray());

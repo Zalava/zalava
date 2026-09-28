@@ -15,12 +15,12 @@ class ProviderFactoryContextTest {
         new ProviderFactoryContext(
             Map.of(
                 "modules",
-                Map.of("sea-module-tasks", Map.of("factories", Map.of("tasks", Map.of())))),
+                Map.of("zalava-module-tasks", Map.of("factories", Map.of("tasks", Map.of())))),
             FactorySecretAccess.none(),
             Map.of(),
-            Map.of("sea-module-tasks", Map.of(TaskService.class, taskService)));
+            Map.of("zalava-module-tasks", Map.of(TaskService.class, taskService)));
 
-    assertThat(context.forFactory("sea-module-tasks", "tasks").service(TaskService.class))
+    assertThat(context.forFactory("zalava-module-tasks", "tasks").service(TaskService.class))
         .containsSame(taskService);
     assertThat(context.forFactory("other-module", "other").service(TaskService.class)).isEmpty();
   }
@@ -30,12 +30,12 @@ class ProviderFactoryContextTest {
     TaskService taskService = mock(TaskService.class);
     ProviderFactoryContext context =
         new ProviderFactoryContext(
-            Map.of("modules", Map.of("sea-module-tasks", Map.of("factories", Map.of()))),
+            Map.of("modules", Map.of("zalava-module-tasks", Map.of("factories", Map.of()))),
             FactorySecretAccess.none(),
             Map.of(),
-            Map.of("sea-module-tasks", Map.of(TaskService.class, taskService)));
+            Map.of("zalava-module-tasks", Map.of(TaskService.class, taskService)));
 
-    ProviderFactoryContext factory = context.forFactory("sea-module-tasks", "tasks");
+    ProviderFactoryContext factory = context.forFactory("zalava-module-tasks", "tasks");
 
     assertThat(factory.configuration()).isEmpty();
     assertThat(factory.service(TaskService.class)).containsSame(taskService);

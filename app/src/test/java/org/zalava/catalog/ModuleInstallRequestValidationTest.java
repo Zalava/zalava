@@ -96,12 +96,12 @@ class ModuleInstallRequestValidationTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-time",
+        "zalava-module-time",
         "1.0.0",
         "Time",
         "Time provider",
         URI.create("https://example.test/support"),
-        new SourceModuleIndex.Artifact("org.example", "sea-module-time", "1.0.0"),
+        new SourceModuleIndex.Artifact("org.example", "zalava-module-time", "1.0.0"),
         new SourceModuleIndex.Source(URI.create("https://example.test/time.git"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(">=1"),

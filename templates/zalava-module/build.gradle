@@ -1,0 +1,172 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.yaml:snakeyaml:2.5'
+    }
+}
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'org.zalava.modules'
+
+// module-metadata.yaml is the single source of truth for the module version so
+// the embedded metadata always matches the installable JAR's module.properties.
+def moduleMetadataFile = layout.projectDirectory.file('module-metadata.yaml')
+def moduleMetadata = new org.yaml.snakeyaml.Yaml().load(moduleMetadataFile.asFile.getText('UTF-8'))
+def metadataVersion = moduleMetadata?.modules instanceof List && !moduleMetadata.modules.isEmpty()
+        ? moduleMetadata.modules[0]?.version
+        : null
+if (!(metadataVersion instanceof String) || metadataVersion.isBlank()) {
+    throw new GradleException('module-metadata.yaml must declare modules[0].version')
+}
+
+def releaseTag = System.getenv('CI_COMMIT_TAG')
+if (releaseTag != null && !releaseTag.matches('v\\d+\\.\\d+\\.\\d+')) {
+    throw new GradleException('CI_COMMIT_TAG must use v<major>.<minor>.<patch>')
+}
+if (releaseTag != null && metadataVersion != releaseTag.substring(1)) {
+    throw new GradleException("module-metadata.yaml version ${metadataVersion} must match release tag ${releaseTag}")
+}
+version = releaseTag != null ? releaseTag.substring(1) : metadataVersion
+
+def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('1.0.0')
+def moduleApiRepositoryUrl = providers.gradleProperty('moduleApiRepositoryUrl')
+        .orElse('https://maven.pkg.github.com/Zalava/zalava')
+def githubPackagesActor = providers.environmentVariable('GITHUB_ACTOR')
+def githubPackagesToken = providers.environmentVariable('ZALAVA_PUBLISH_TOKEN')
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri(moduleApiRepositoryUrl.get())
+        if (moduleApiRepositoryUrl.get().startsWith('https://maven.pkg.github.com/')) {
+            credentials(PasswordCredentials) {
+                username = githubPackagesActor.orNull
+                password = githubPackagesToken.orNull
+            }
+        }
+    }
+}
+
+dependencies {
+    compileOnlyApi "org.zalava:module-api:${moduleApiVersion.get()}"
+    testImplementation "org.zalava:module-api:${moduleApiVersion.get()}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+processResources {
+    filesMatching('module.properties') {
+        expand(moduleVersion: project.version)
+    }
+}
+
+// Validates module-metadata.yaml and embeds it at the root of the installable
+// JAR so Zalava's local artifact upload can read it without network access.
+tasks.register('validateModuleMetadata') {
+    inputs.file(moduleMetadataFile)
+    doLast {
+        def file = moduleMetadataFile.asFile
+        if (!file.isFile()) {
+            throw new GradleException('module-metadata.yaml is required at the module root')
+        }
+        def root
+        try {
+            root = new org.yaml.snakeyaml.Yaml().load(file.getText('UTF-8'))
+        } catch (Exception exception) {
+            throw new GradleException('module-metadata.yaml must be valid YAML', exception)
+        }
+        if (!(root instanceof Map) || root.schemaVersion != 1) {
+            throw new GradleException('module-metadata.yaml schemaVersion must be 1')
+        }
+        def modules = root.modules
+        if (!(modules instanceof List) || modules.size() != 1) {
+            throw new GradleException('module-metadata.yaml must declare exactly one module')
+        }
+        def module = modules[0]
+        ['moduleId', 'version', 'displayName', 'description', 'supportUrl'].each { key ->
+            if (!(module[key] instanceof String) || module[key].isBlank()) {
+                throw new GradleException("module-metadata.yaml ${key} must be a non-blank string")
+            }
+        }
+        if (!(module.supportUrl ==~ /https:\/\/.+/)) {
+            throw new GradleException('module-metadata.yaml supportUrl must be an HTTPS URL')
+        }
+        def artifact = module.artifact
+        if (!(artifact instanceof Map) || artifact.version != module.version) {
+            throw new GradleException('module-metadata.yaml artifact.version must match the module version')
+        }
+        if (!(module.compatibility instanceof Map) || !(module.compatibility.seaRuntime instanceof String)) {
+            throw new GradleException('module-metadata.yaml compatibility.seaRuntime is required')
+        }
+        if (!(module.configurationSchema instanceof Map)) {
+            throw new GradleException('module-metadata.yaml configurationSchema is required')
+        }
+        if (!(module.factories instanceof List) || module.factories.isEmpty()) {
+            throw new GradleException('module-metadata.yaml factories must not be empty')
+        }
+        if (module.source instanceof Map && module.source.containsKey('revision')) {
+            throw new GradleException('module-metadata.yaml must not declare source.revision')
+        }
+        def tag = System.getenv('CI_COMMIT_TAG')
+        if (tag != null) {
+            def releaseVersion = tag.startsWith('v') ? tag.substring(1) : tag
+            if (module.version != releaseVersion) {
+                throw new GradleException("module-metadata.yaml version ${module.version} must match release tag ${tag}")
+            }
+        }
+    }
+}
+
+tasks.named('jar') {
+    from(moduleMetadataFile)
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('validateModuleMetadata')
+}
+
+publishing {
+    publications {
+        module(MavenPublication) {
+            from components.java
+            artifactId = 'zalava-module-template'
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/Zalava/zalava-module-template')
+            credentials(PasswordCredentials) {
+                username = githubPackagesActor.orNull
+                password = githubPackagesToken.orNull
+            }
+        }
+    }
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    doFirst {
+        if (repository.name == 'GitHubPackages'
+                && (!githubPackagesActor.present || !githubPackagesToken.present)) {
+            throw new GradleException('GitHub Packages publication requires GITHUB_ACTOR and ZALAVA_PUBLISH_TOKEN')
+        }
+    }
+}

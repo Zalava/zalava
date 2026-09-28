@@ -25,7 +25,7 @@ class BinaryModuleInstallationTest {
 
   @Test
   void installsBinaryArtifactUnderManagedRootAndEnablesModule() throws Exception {
-    Path artifact = workspace.resolve("incoming/sea-module-files-1.0.0.jar");
+    Path artifact = workspace.resolve("incoming/zalava-module-files-1.0.0.jar");
     Files.createDirectories(artifact.getParent());
     Files.writeString(artifact, "binary module");
     String digest = digest(artifact);
@@ -40,11 +40,11 @@ class BinaryModuleInstallationTest {
 
     Path installedArtifact =
         workspace.resolve(
-            "source-module-installation/modules/sea-module-files/1.0.0/sea-module-files-1.0.0.jar");
+            "source-module-installation/modules/zalava-module-files/1.0.0/zalava-module-files-1.0.0.jar");
     assertThat(installed)
         .isEqualTo(
             new BinaryModuleInstallation.InstalledBinaryModule(
-                "sea-module-files",
+                "zalava-module-files",
                 "1.0.0",
                 "local-private",
                 installedArtifact.toString(),
@@ -54,12 +54,12 @@ class BinaryModuleInstallationTest {
     assertThat(enablement.enabledModules())
         .containsExactly(
             new ModuleEnablement.EnabledModule(
-                "sea-module-files",
+                "zalava-module-files",
                 "1.0.0",
                 installedArtifact.toString(),
                 digest,
                 ">=0.1.0",
-                "https://github.com/example/sea-module-files.git",
+                "https://github.com/example/zalava-module-files.git",
                 "Apache-2.0",
                 "local-private",
                 List.of("file.read")));
@@ -67,7 +67,7 @@ class BinaryModuleInstallationTest {
 
   @Test
   void rejectsBinaryArtifactWithUnexpectedDigestBeforeEnablement() throws Exception {
-    Path artifact = workspace.resolve("incoming/sea-module-files-1.0.0.jar");
+    Path artifact = workspace.resolve("incoming/zalava-module-files-1.0.0.jar");
     Files.createDirectories(artifact.getParent());
     Files.writeString(artifact, "binary module");
     FileSystemModuleEnablement enablement = new FileSystemModuleEnablement(workspace);
@@ -90,7 +90,7 @@ class BinaryModuleInstallationTest {
 
   @Test
   void installsLocalPrivateArtifactWithoutSourceCloneProvenance() throws Exception {
-    Path artifact = workspace.resolve("incoming/sea-module-files-1.0.0.jar");
+    Path artifact = workspace.resolve("incoming/zalava-module-files-1.0.0.jar");
     Files.createDirectories(artifact.getParent());
     Files.writeString(artifact, "binary module");
     FileSystemModuleEnablement enablement = new FileSystemModuleEnablement(workspace);
@@ -109,7 +109,7 @@ class BinaryModuleInstallationTest {
 
   @Test
   void rejectsNonLocalBinaryInstallWithoutSourceProvenance() throws Exception {
-    Path artifact = workspace.resolve("incoming/sea-module-files-1.0.0.jar");
+    Path artifact = workspace.resolve("incoming/zalava-module-files-1.0.0.jar");
     Files.createDirectories(artifact.getParent());
     Files.writeString(artifact, "binary module");
     BinaryModuleInstallation installation =
@@ -151,14 +151,14 @@ class BinaryModuleInstallationTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-files",
+        "zalava-module-files",
         "1.0.0",
         "Files",
         "Workspace-bound file operations",
-        URI.create("https://github.com/example/sea-module-files"),
-        new SourceModuleIndex.Artifact("ai.sea.modules", "sea-module-files", "1.0.0"),
+        URI.create("https://github.com/example/zalava-module-files"),
+        new SourceModuleIndex.Artifact("ai.sea.modules", "zalava-module-files", "1.0.0"),
         new SourceModuleIndex.Source(
-            URI.create("https://github.com/example/sea-module-files.git"), "Apache-2.0"),
+            URI.create("https://github.com/example/zalava-module-files.git"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of("./gradlew", "build"), List.of("./gradlew", "test")),
         new SourceModuleIndex.Compatibility(">=0.1.0"),
         Map.of("type", "object"),

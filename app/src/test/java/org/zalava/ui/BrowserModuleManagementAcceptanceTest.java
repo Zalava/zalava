@@ -96,9 +96,9 @@ class BrowserModuleManagementAcceptanceTest {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Check catalog"))
           .waitFor();
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Check catalog")).click();
-      page.locator("[data-catalog-module=sea-module-tika]").waitFor();
+      page.locator("[data-catalog-module=zalava-module-tika]").waitFor();
 
-      page.locator("[data-catalog-module=sea-module-tika] [data-catalog-detail-link]").click();
+      page.locator("[data-catalog-module=zalava-module-tika] [data-catalog-detail-link]").click();
       page.locator("[data-release-version]").waitFor();
       assertThat(page.locator("body").innerText()).contains("Catalog releases");
     }
@@ -121,22 +121,22 @@ class BrowserModuleManagementAcceptanceTest {
               AriaRole.HEADING,
               new Page.GetByRoleOptions().setName("Install a local build").setExact(true))
           .waitFor();
-      page.locator("input[name=projectDirectory]").fill("/mounted/modules/sea-module-example");
-      page.locator("input[name=moduleId]").fill("sea-module-example");
+      page.locator("input[name=projectDirectory]").fill("/mounted/modules/zalava-module-example");
+      page.locator("input[name=moduleId]").fill("zalava-module-example");
       page.locator("input[name=version]").fill("1.2.3");
       page.locator("input[name=developmentRequestId]").fill("development-42");
       page.locator("[data-action=prepare-local-module]").click();
 
       page.getByText(
-              "Local module sea-module-example 1.2.3 installed. Restart SEA once to load its classes.")
+              "Local module zalava-module-example 1.2.3 installed. Restart SEA once to load its classes.")
           .waitFor();
     }
 
     assertThat(LOCAL_DEVELOPMENT_REQUEST.get())
         .isEqualTo(
             new LocalDevelopmentProjectInstallation.Request(
-                "/mounted/modules/sea-module-example",
-                "sea-module-example",
+                "/mounted/modules/zalava-module-example",
+                "zalava-module-example",
                 "1.2.3",
                 "development-42"));
   }
@@ -300,7 +300,7 @@ class BrowserModuleManagementAcceptanceTest {
       return new ModuleLocatorReleaseLocator() {
         @Override
         public List<Module> modules() {
-          return List.of(new Module("sea-module-tika", "Tika", "Content extraction"));
+          return List.of(new Module("zalava-module-tika", "Tika", "Content extraction"));
         }
 
         @Override
@@ -332,7 +332,7 @@ class BrowserModuleManagementAcceptanceTest {
         @Override
         public ResolvedArtifact resolve(Request request) {
           try {
-            Path jar = Files.createTempFile("sea-module-release-", ".jar");
+            Path jar = Files.createTempFile("zalava-module-release-", ".jar");
             Files.writeString(jar, "fixture module artifact");
             return new ResolvedArtifact(jar.toString(), "sha256:" + fixtureDigest());
           } catch (IOException ex) {

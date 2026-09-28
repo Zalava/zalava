@@ -15,7 +15,7 @@ class DefaultCatalogQueriesTest {
 
   @Test
   void searchesAndSelectsThroughTheInboundCatalogPort() {
-    SourceModuleIndex.Module module = module("sea-module-time", "1.0.1");
+    SourceModuleIndex.Module module = module("zalava-module-time", "1.0.1");
     SourceModuleCatalog catalog =
         new SourceModuleCatalog(
             1,
@@ -24,23 +24,23 @@ class DefaultCatalogQueriesTest {
             List.of(),
             List.of(
                 new SourceModuleCatalog.Entry(
-                    "sea-module-time",
+                    "zalava-module-time",
                     "time.yaml",
                     "a".repeat(64),
                     new SourceModuleIndex(1, List.of(module)))));
 
     assertThat(queries.search(catalog, "time"))
         .extracting(result -> result.module().moduleId())
-        .containsExactly("sea-module-time");
-    assertThat(queries.selectRelease(releaseIndex(), "sea-module-time", "1.0.1").module())
+        .containsExactly("zalava-module-time");
+    assertThat(queries.selectRelease(releaseIndex(), "zalava-module-time", "1.0.1").module())
         .extracting(SourceModuleIndex.Module::moduleId, SourceModuleIndex.Module::version)
-        .containsExactly("sea-module-time", "1.0.1");
+        .containsExactly("zalava-module-time", "1.0.1");
   }
 
   private static ModuleReleaseIndex releaseIndex() {
     return new ModuleReleaseIndex(
         1,
-        "sea-module-time",
+        "zalava-module-time",
         List.of(
             new ModuleReleaseIndex.Release(
                 "1.0.1",

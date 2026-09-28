@@ -54,7 +54,7 @@ class ModuleReleaseIndexBundleTest {
                         """
                         runtimeArtifacts:
                           - groupId: org.example
-                            artifactId: sea-module-example
+                            artifactId: zalava-module-example
                             version: "1.0.0"
                             sha256: "%s"
                         """
@@ -102,18 +102,18 @@ class ModuleReleaseIndexBundleTest {
   private static String index(String runtimeArtifacts) {
     return """
         schemaVersion: 1
-        moduleId: sea-module-example
+        moduleId: zalava-module-example
         releases:
           - version: "1.0.0"
             releaseTag: "v1.0.0"
             artifact:
               groupId: org.example
-              artifactId: sea-module-example
+              artifactId: zalava-module-example
               version: "1.0.0"
               sha256: "%s"
             %s
             source:
-              repository: https://github.com/example/sea-module-example
+              repository: https://github.com/example/zalava-module-example
               license: MIT
             compatibility:
               seaRuntime: ">=1.0.0"

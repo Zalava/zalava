@@ -27,8 +27,8 @@ class FileSystemBinaryArtifactBundleInstallationTest {
         installation.install(
             new BinaryArtifactInstallation.BundleInstall(
                 List.of(
-                    install("sea-module-example", "sea-module-example", "1.0.0", primary),
-                    install("sea-module-example", "dependency", "2.0.0", runtime))));
+                    install("zalava-module-example", "zalava-module-example", "1.0.0", primary),
+                    install("zalava-module-example", "dependency", "2.0.0", runtime))));
 
     assertThat(bundle.artifacts()).hasSize(2);
     assertThat(bundle.artifacts())
@@ -48,16 +48,17 @@ class FileSystemBinaryArtifactBundleInstallationTest {
                 installation.install(
                     new BinaryArtifactInstallation.BundleInstall(
                         List.of(
-                            install("sea-module-example", "sea-module-example", "1.0.0", primary),
+                            install(
+                                "zalava-module-example", "zalava-module-example", "1.0.0", primary),
                             new BinaryArtifactInstallation.Install(
-                                "sea-module-example",
+                                "zalava-module-example",
                                 coordinate("dependency", "2.0.0"),
                                 runtime.toString(),
                                 "sha256:" + "0".repeat(64))))))
         .isInstanceOf(SourceModuleInstallationException.class)
         .hasMessageContaining("digest");
 
-    Path moduleRoot = workspace.resolve("source-module-installation/modules/sea-module-example");
+    Path moduleRoot = workspace.resolve("source-module-installation/modules/zalava-module-example");
     assertThat(moduleRoot.resolve("1.0.0")).doesNotExist();
     assertThat(Files.list(moduleRoot).map(path -> path.getFileName().toString()))
         .noneMatch(name -> name.contains(".staging-"));

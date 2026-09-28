@@ -121,14 +121,14 @@ class FileSystemModuleReleaseInstallRequestStoreTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-time",
+        "zalava-module-time",
         "1.0.0",
         "Time",
         "Time tools",
-        URI.create("https://github.com/example/sea-module-time"),
-        new SourceModuleIndex.Artifact("org.example", "sea-module-time", "1.0.0"),
+        URI.create("https://github.com/example/zalava-module-time"),
+        new SourceModuleIndex.Artifact("org.example", "zalava-module-time", "1.0.0"),
         new SourceModuleIndex.Source(
-            URI.create("https://github.com/example/sea-module-time"), "Apache-2.0"),
+            URI.create("https://github.com/example/zalava-module-time"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(">=1"),
         Map.of(),

@@ -36,7 +36,8 @@ class DefaultRemoteCapabilityDiscoveryTest {
           @Override
           public List<RemoteModuleCandidate> lookup(String normalizedQuery) {
             lookups.incrementAndGet();
-            return List.of(candidate("sea-module-weather", "1.0.0", "Weather", "Weather forecast"));
+            return List.of(
+                candidate("zalava-module-weather", "1.0.0", "Weather", "Weather forecast"));
           }
         };
     RecordingStore store = new RecordingStore();
@@ -86,8 +87,8 @@ class DefaultRemoteCapabilityDiscoveryTest {
         catalog(
             () ->
                 List.of(
-                    candidate("sea-module-zeta", "2.0.0", "Pollen helper", "Pollen helper"),
-                    candidate("sea-module-alpha", "1.0.0", "Pollen tracker", "Pollen tracker")));
+                    candidate("zalava-module-zeta", "2.0.0", "Pollen helper", "Pollen helper"),
+                    candidate("zalava-module-alpha", "1.0.0", "Pollen tracker", "Pollen tracker")));
     RecordingStore store = new RecordingStore();
     DefaultRemoteCapabilityDiscovery discovery =
         new DefaultRemoteCapabilityDiscovery(
@@ -98,7 +99,7 @@ class DefaultRemoteCapabilityDiscoveryTest {
     assertThat(outcome.classification()).isEqualTo(CapabilityGapClassification.WEAK_MATCH);
     assertThat(outcome.candidates())
         .extracting(CapabilityGapEvidence.RankedCandidate::moduleId)
-        .containsExactly("sea-module-alpha", "sea-module-zeta");
+        .containsExactly("zalava-module-alpha", "zalava-module-zeta");
     assertThat(outcome.candidates())
         .extracting(CapabilityGapEvidence.RankedCandidate::rank)
         .containsExactly(1, 2);
@@ -118,8 +119,8 @@ class DefaultRemoteCapabilityDiscoveryTest {
         catalog(
             () ->
                 List.of(
-                    candidate("sea-module-weather", "1.0.0", "Weather", "Weather forecast"),
-                    candidate("sea-module-weather-extra", "1.0.0", "Extra", "Weather extra")));
+                    candidate("zalava-module-weather", "1.0.0", "Weather", "Weather forecast"),
+                    candidate("zalava-module-weather-extra", "1.0.0", "Extra", "Weather extra")));
     RecordingStore store = new RecordingStore();
     DefaultRemoteCapabilityDiscovery discovery =
         new DefaultRemoteCapabilityDiscovery(
@@ -129,7 +130,7 @@ class DefaultRemoteCapabilityDiscoveryTest {
 
     assertThat(outcome.candidates())
         .extracting(CapabilityGapEvidence.RankedCandidate::moduleId)
-        .startsWith("sea-module-weather");
+        .startsWith("zalava-module-weather");
     assertThat(outcome.candidates().getFirst().reason()).contains("moduleId-exact");
   }
 
@@ -140,9 +141,9 @@ class DefaultRemoteCapabilityDiscoveryTest {
             () ->
                 List.of(
                     candidate(
-                        "sea-module-danger", "1.0.0", "Pollen shell", "Pollen shell", "shell"),
+                        "zalava-module-danger", "1.0.0", "Pollen shell", "Pollen shell", "shell"),
                     candidate(
-                        "sea-module-danger-2",
+                        "zalava-module-danger-2",
                         "1.0.0",
                         "Pollen host",
                         "Pollen host",
@@ -209,7 +210,8 @@ class DefaultRemoteCapabilityDiscoveryTest {
   void repeatedLookupIsIdempotentAndDoesNotMutateAnyInstallState() {
     RemoteModuleCatalog catalog =
         catalog(
-            () -> List.of(candidate("sea-module-weather", "1.0.0", "Weather", "Pollen weather")));
+            () ->
+                List.of(candidate("zalava-module-weather", "1.0.0", "Weather", "Pollen weather")));
     RecordingStore store = new RecordingStore();
     DefaultRemoteCapabilityDiscovery discovery =
         new DefaultRemoteCapabilityDiscovery(
@@ -229,9 +231,9 @@ class DefaultRemoteCapabilityDiscoveryTest {
         catalog(
             () ->
                 List.of(
-                    candidate("sea-module-a", "1.0.0", "Pollen a", "Pollen a"),
-                    candidate("sea-module-b", "1.0.0", "Pollen b", "Pollen b"),
-                    candidate("sea-module-c", "1.0.0", "Pollen c", "Pollen c")));
+                    candidate("zalava-module-a", "1.0.0", "Pollen a", "Pollen a"),
+                    candidate("zalava-module-b", "1.0.0", "Pollen b", "Pollen b"),
+                    candidate("zalava-module-c", "1.0.0", "Pollen c", "Pollen c")));
     RecordingStore store = new RecordingStore();
     DefaultRemoteCapabilityDiscovery discovery =
         new DefaultRemoteCapabilityDiscovery(catalog, new RemoteCandidatePolicy(), store, CLOCK, 2);

@@ -67,7 +67,9 @@ class DevelopmentCandidateValidationGatewayTest {
     var otherDigest =
         new LocalArtifactInspection.InspectedArtifact("/tmp/other.jar", "sha256:" + "b".repeat(64));
     assertThatThrownBy(
-            () -> gateway.requireAccepted(created.id(), otherDigest, "sea-module-example", "1.0.0"))
+            () ->
+                gateway.requireAccepted(
+                    created.id(), otherDigest, "zalava-module-example", "1.0.0"))
         .isInstanceOf(SourceModuleInstallationException.class)
         .hasMessage(
             "Binary has no accepted development-candidate evaluation for the supplied request");
@@ -79,14 +81,15 @@ class DevelopmentCandidateValidationGatewayTest {
         store.save(
             created().recordCandidate(acceptedAttempt(1)).recordEvaluation(acceptedEvaluation()));
 
-    var evidence = gateway.requireAccepted(submitted.id(), ARTIFACT, "sea-module-example", "1.0.0");
+    var evidence =
+        gateway.requireAccepted(submitted.id(), ARTIFACT, "zalava-module-example", "1.0.0");
 
     assertThat(evidence.developmentRequestId()).isEqualTo(submitted.id().value());
     assertThat(evidence.candidateAttemptNumber()).isEqualTo(1);
     assertThat(evidence.decision()).isEqualTo(CandidateEvaluation.Decision.ACCEPTED);
 
     var accepted = gateway.acceptedCandidate(submitted.id(), ARTIFACT);
-    assertThat(accepted.contract().module().moduleId()).isEqualTo("sea-module-example");
+    assertThat(accepted.contract().module().moduleId()).isEqualTo("zalava-module-example");
     assertThat(accepted.evaluation().accepted()).isTrue();
   }
 
@@ -97,7 +100,8 @@ class DevelopmentCandidateValidationGatewayTest {
             created().recordCandidate(acceptedAttempt(1)).recordEvaluation(rejectedEvaluation()));
 
     assertThatThrownBy(
-            () -> gateway.requireAccepted(rejected.id(), ARTIFACT, "sea-module-example", "1.0.0"))
+            () ->
+                gateway.requireAccepted(rejected.id(), ARTIFACT, "zalava-module-example", "1.0.0"))
         .isInstanceOf(SourceModuleInstallationException.class);
   }
 
@@ -142,7 +146,7 @@ class DevelopmentCandidateValidationGatewayTest {
 
   private static ModuleDevelopmentContract contract() {
     return new ModuleDevelopmentContract(
-        new ModuleDevelopmentContract.Module("sea-module-example", "1.0.0"),
+        new ModuleDevelopmentContract.Module("zalava-module-example", "1.0.0"),
         "Provide an example capability",
         "1.0",
         List.of(
@@ -165,7 +169,11 @@ class DevelopmentCandidateValidationGatewayTest {
         new ModuleDevelopmentContract.OperationalRequirements(
             1_000L, 10_000L, false, List.of(), false, false, "25"),
         new ModuleDevelopmentContract.DeliveryRequirements(
-            "sea-module", "example-*.jar", "1", false, Map.of("moduleId", "sea-module-example")));
+            "sea-module",
+            "example-*.jar",
+            "1",
+            false,
+            Map.of("moduleId", "zalava-module-example")));
   }
 
   private static final class InMemoryStore implements DevelopmentRequestStore {

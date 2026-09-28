@@ -18,7 +18,7 @@ class LocalModuleProjectReleaseLocatorTest {
   @Test
   void resolvesTheReleaseIndexedJarUnderBuildLibsWithoutRunningABuild() throws Exception {
     Path project = root.resolve("module");
-    Path jar = project.resolve("build/libs/sea-module-example-1.2.3.jar");
+    Path jar = project.resolve("build/libs/zalava-module-example-1.2.3.jar");
     Files.createDirectories(jar.getParent());
     Files.writeString(jar, "built module binary");
     Files.createDirectories(project.resolve("releases"));
@@ -27,16 +27,16 @@ class LocalModuleProjectReleaseLocatorTest {
     var locator =
         new FileSystemLocalModuleProjectReleaseLocator(
             new FileSystemLocalArtifactInspection(java.util.List.of(root)));
-    var resolved = locator.resolve(project.toString(), "sea-module-example", "1.2.3");
+    var resolved = locator.resolve(project.toString(), "zalava-module-example", "1.2.3");
 
-    assertThat(resolved.release().module().moduleId()).isEqualTo("sea-module-example");
+    assertThat(resolved.release().module().moduleId()).isEqualTo("zalava-module-example");
     assertThat(resolved.artifact().path()).isEqualTo(jar.toRealPath().toString());
   }
 
   @Test
   void rejectsAnArtifactWhoseDigestDoesNotMatchTheImmutableReleaseIndex() throws Exception {
     Path project = root.resolve("module");
-    Path jar = project.resolve("build/libs/sea-module-example-1.2.3.jar");
+    Path jar = project.resolve("build/libs/zalava-module-example-1.2.3.jar");
     Files.createDirectories(jar.getParent());
     Files.writeString(jar, "built module binary");
     Files.createDirectories(project.resolve("releases"));
@@ -46,7 +46,7 @@ class LocalModuleProjectReleaseLocatorTest {
         new FileSystemLocalModuleProjectReleaseLocator(
             new FileSystemLocalArtifactInspection(java.util.List.of(root)));
 
-    assertThatThrownBy(() -> locator.resolve(project.toString(), "sea-module-example", "1.2.3"))
+    assertThatThrownBy(() -> locator.resolve(project.toString(), "zalava-module-example", "1.2.3"))
         .isInstanceOf(SourceModuleInstallationException.class)
         .hasMessage("Built module artifact digest does not match releases/index.yaml");
   }
@@ -59,17 +59,17 @@ class LocalModuleProjectReleaseLocatorTest {
   private static String index(String digest) {
     return """
                 schemaVersion: 1
-                moduleId: sea-module-example
+                moduleId: zalava-module-example
                 releases:
                   - version: 1.2.3
                     releaseTag: v1.2.3
                     artifact:
                       groupId: org.example
-                      artifactId: sea-module-example
+                      artifactId: zalava-module-example
                       version: 1.2.3
                       sha256: %s
                     source:
-                      repository: https://github.com/example/sea-module-example
+                      repository: https://github.com/example/zalava-module-example
                       license: Apache-2.0
                     compatibility:
                       seaRuntime: ">=1.0.0 <2.0.0"

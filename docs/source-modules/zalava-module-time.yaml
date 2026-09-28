@@ -1,0 +1,55 @@
+schemaVersion: 1
+modules:
+  - moduleId: zalava-module-time
+    version: 1.0.0
+    displayName: Time
+    description: Timezone-aware current-time and conversion tools backed by the JDK time API
+    supportUrl: https://github.com/Zalava/zalava-module-time
+    artifact:
+      groupId: org.zalava.modules
+      artifactId: zalava-module-time
+      version: 1.0.0
+    source:
+      repository: https://github.com/Zalava/zalava-module-time.git
+      license: Apache-2.0
+    build:
+      command: ["./gradlew", "build"]
+      verificationCommand: ["./gradlew", "test"]
+    compatibility:
+      seaRuntime: ">=0.1.0"
+    configurationSchema:
+      type: object
+      additionalProperties: false
+    factories:
+      - factoryId: jdk-time
+        providerType: time
+    operations:
+      - name: current_time
+        description: Return the current time for an optional IANA time zone
+        sideEffecting: false
+        inputSchema:
+          type: object
+          properties:
+            zoneId:
+              type: string
+              description: IANA time zone, defaulting to UTC
+          additionalProperties: false
+      - name: convert_time
+        description: Convert an ISO instant or zoned date-time to a target IANA time zone
+        sideEffecting: false
+        inputSchema:
+          type: object
+          required: [targetZoneId]
+          properties:
+            instant:
+              type: string
+              description: ISO-8601 instant, for example 2026-06-17T12:00:00Z
+            zonedDateTime:
+              type: string
+              description: ISO-8601 zoned or offset date-time
+            targetZoneId:
+              type: string
+              description: Target IANA time zone
+          additionalProperties: false
+    security:
+      permissions: []

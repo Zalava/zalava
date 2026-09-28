@@ -19,8 +19,8 @@ class ControlCatalogDiscoveryTest {
           @Override
           public List<Module> modules() {
             return List.of(
-                new Module("sea-module-time", "Time", "Time tools"),
-                new Module("sea-module-tika", "Tika", "Content extraction"));
+                new Module("zalava-module-time", "Time", "Time tools"),
+                new Module("zalava-module-tika", "Tika", "Content extraction"));
           }
 
           @Override
@@ -37,7 +37,7 @@ class ControlCatalogDiscoveryTest {
         (uri, token) ->
             new ModuleReleaseIndex(
                 1,
-                "sea-module-tika",
+                "zalava-module-tika",
                 List.of(release("1.0.1", "v1.0.1"), release("1.1.0", "v1.1.0")));
 
     ControlCatalogDiscovery discovery =
@@ -45,8 +45,8 @@ class ControlCatalogDiscoveryTest {
 
     assertThat(discovery.modules())
         .extracting(ControlCatalogDiscovery.Module::moduleId)
-        .containsExactly("sea-module-time", "sea-module-tika");
-    assertThat(discovery.releases("sea-module-tika"))
+        .containsExactly("zalava-module-time", "zalava-module-tika");
+    assertThat(discovery.releases("zalava-module-tika"))
         .extracting(ControlCatalogDiscovery.Release::version)
         .containsExactly("1.1.0", "1.0.1");
   }

@@ -1,0 +1,31 @@
+schemaVersion: 1
+modules:
+  - moduleId: zalava-module-template
+    version: 1.0.0
+    displayName: Module Template
+    description: Replace this sample external Zalava module metadata.
+    supportUrl: https://github.com/OWNER/zalava-module-template
+    artifact:
+      groupId: org.zalava.modules
+      artifactId: zalava-module-template
+      version: 1.0.0
+    source:
+      repository: https://github.com/OWNER/zalava-module-template.git
+      license: Apache-2.0
+    build:
+      command: ["gradle", "build"]
+      verificationCommand: ["gradle", "test"]
+    compatibility:
+      seaRuntime: ">=1.0.0"
+    configurationSchema:
+      type: object
+      additionalProperties: false
+    factories:
+      - factoryId: template
+        providerType: template
+    services:
+      provided: []
+      required: []
+    operations: []
+    security:
+      permissions: []

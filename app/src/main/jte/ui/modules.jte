@@ -68,7 +68,7 @@
     <form method="post" action="/modules/local-project-installations" class="columns is-multiline">
       <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
       <div class="column is-5"><label class="label is-small" for="local-project-directory">Mounted project directory</label><input class="input" id="local-project-directory" name="projectDirectory" required maxlength="2000" placeholder="/var/lib/zalava/modules/example"></div>
-      <div class="column is-2"><label class="label is-small" for="local-module-id">Module id</label><input class="input" id="local-module-id" name="moduleId" required maxlength="160" placeholder="sea-module-example"></div>
+      <div class="column is-2"><label class="label is-small" for="local-module-id">Module id</label><input class="input" id="local-module-id" name="moduleId" required maxlength="160" placeholder="zalava-module-example"></div>
       <div class="column is-2"><label class="label is-small" for="local-module-version">Version</label><input class="input" id="local-module-version" name="version" required maxlength="160" placeholder="1.0.0"></div>
       <div class="column is-2"><label class="label is-small" for="local-development-request">Accepted development request</label><input class="input" id="local-development-request" name="developmentRequestId" required maxlength="128"></div>
       <div class="column is-1 is-flex is-align-items-flex-end"><button class="button is-link is-fullwidth" type="submit" data-action="prepare-local-module">Prepare</button></div>

@@ -17,7 +17,7 @@ import org.zalava.managed.application.port.in.ManagedServiceInstallation;
 
 class DefaultModuleManagedServiceInstallationTest {
 
-  private static final String MODULE_ID = "sea-module-declared";
+  private static final String MODULE_ID = "zalava-module-declared";
 
   @Test
   void approvesAndDeniesThePendingRequestForAModule() {

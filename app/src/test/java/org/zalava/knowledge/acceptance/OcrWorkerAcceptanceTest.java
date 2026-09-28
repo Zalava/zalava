@@ -64,7 +64,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Opt-in real {@code sea-ocr-worker} acceptance lane.
  *
- * <p>Installs the indexed {@code sea-module-tika} bundle into a disposable SEA workspace, points
+ * <p>Installs the indexed {@code zalava-module-tika} bundle into a disposable SEA workspace, points
  * its service factory at a real {@code sea-ocr-worker} container on a loopback port, restarts, and
  * proves real worker-backed scanned extraction through SEA's owned source lifecycle, including
  * citation identity, sharing, revocation and confirmed deletion. It then drives real worker
@@ -82,7 +82,7 @@ import tools.jackson.databind.ObjectMapper;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class OcrWorkerAcceptanceTest {
 
-  static final String MODULE_ID = "sea-module-tika";
+  static final String MODULE_ID = "zalava-module-tika";
   static final String VERSION = "1.1.0";
   static final String ARTIFACT_DIGEST =
       "sha256:daf22a559661e3dd79eef4e3a62eaef7be5e92b783afae14dc9796b9099bd3cd";

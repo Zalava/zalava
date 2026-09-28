@@ -131,12 +131,12 @@ class SeaControlWorkspaceComponentTest {
 
   @Test
   void localModuleInstallationWithoutAcceptedCandidateRendersAnError() throws Exception {
-    Path artifact = jarArtifact("sea-module-local-1.2.3.jar");
+    Path artifact = jarArtifact("zalava-module-local-1.2.3.jar");
 
     mockMvc
         .perform(
             post("/sea/control/local-module-installations")
-                .param("moduleId", "sea-module-local")
+                .param("moduleId", "zalava-module-local")
                 .param("indexYaml", validIndexYaml())
                 .param("artifactPath", artifact.toString())
                 .param("developmentRequestId", "request-1")
@@ -150,10 +150,10 @@ class SeaControlWorkspaceComponentTest {
 
   @Test
   void deniesAndAllowsLocalModuleInstallationRequestsThroughTheWorkspace() throws Exception {
-    Path artifact = jarArtifact("sea-module-local-1.2.3.jar");
+    Path artifact = jarArtifact("zalava-module-local-1.2.3.jar");
     LocalArtifactInstallRequest request =
         localArtifactInstallations.create(
-            module("sea-module-local", "1.2.3"), artifact.toString(), null);
+            module("zalava-module-local", "1.2.3"), artifact.toString(), null);
 
     mockMvc
         .perform(
@@ -190,7 +190,7 @@ class SeaControlWorkspaceComponentTest {
     mockMvc
         .perform(
             post("/sea/control/module-release-installations")
-                .param("moduleId", "sea-module-unknown")
+                .param("moduleId", "zalava-module-unknown")
                 .param("version", "9.9.9")
                 .with(csrf()))
         .andExpect(status().isOk())
@@ -209,18 +209,18 @@ class SeaControlWorkspaceComponentTest {
     mockMvc
         .perform(
             post("/sea/control/module-release-installations/catalog/select")
-                .param("moduleId", "sea-module-tika")
+                .param("moduleId", "zalava-module-tika")
                 .with(csrf()))
         .andExpect(status().isOk());
 
     mockMvc
         .perform(
             post("/sea/control/module-release-installations")
-                .param("moduleId", "sea-module-tika")
+                .param("moduleId", "zalava-module-tika")
                 .param("version", "1.0.1")
                 .with(csrf()))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("sea-module-tika")));
+        .andExpect(content().string(containsString("zalava-module-tika")));
 
     String requestId = latestModuleReleaseRequestId();
 
@@ -242,13 +242,13 @@ class SeaControlWorkspaceComponentTest {
     mockMvc
         .perform(post("/sea/control/module-release-installations/catalog/refresh").with(csrf()))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("sea-module-tika")))
+        .andExpect(content().string(containsString("zalava-module-tika")))
         .andExpect(content().string(containsString("Time")));
 
     mockMvc
         .perform(
             post("/sea/control/module-release-installations/catalog/select")
-                .param("moduleId", "sea-module-tika")
+                .param("moduleId", "zalava-module-tika")
                 .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("1.0.1")));
@@ -315,7 +315,7 @@ class SeaControlWorkspaceComponentTest {
                 .param("reason", "Build a local fixture module")
                 .with(csrf()))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("sea-module-local")))
+        .andExpect(content().string(containsString("zalava-module-local")))
         .andExpect(content().string(containsString("PREPARED")));
 
     DevelopmentRequestId created = latestDevelopmentRequestId();
@@ -347,7 +347,7 @@ class SeaControlWorkspaceComponentTest {
     mockMvc
         .perform(post("/sea/control/development-requests/" + requestId + "/inspect").with(csrf()))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("sea-module-local")));
+        .andExpect(content().string(containsString("zalava-module-local")));
 
     mockMvc
         .perform(
@@ -405,7 +405,7 @@ class SeaControlWorkspaceComponentTest {
         version,
         "Local Fixture",
         "Locally developed fixture module",
-        URI.create("https://github.com/example/sea-module-local"),
+        URI.create("https://github.com/example/zalava-module-local"),
         new SourceModuleIndex.Artifact("ai.sea.modules", moduleId, version),
         null,
         new SourceModuleIndex.Build(List.of(), List.of()),
@@ -420,14 +420,14 @@ class SeaControlWorkspaceComponentTest {
   private static String validIndexYaml() {
     return "schemaVersion: 1\n"
         + "modules:\n"
-        + "  - moduleId: sea-module-local\n"
+        + "  - moduleId: zalava-module-local\n"
         + "    version: 1.2.3\n"
         + "    displayName: Local Fixture\n"
         + "    description: Locally developed fixture module\n"
-        + "    supportUrl: https://github.com/example/sea-module-local\n"
+        + "    supportUrl: https://github.com/example/zalava-module-local\n"
         + "    artifact:\n"
         + "      groupId: ai.sea.modules\n"
-        + "      artifactId: sea-module-local\n"
+        + "      artifactId: zalava-module-local\n"
         + "      version: 1.2.3\n"
         + "    compatibility:\n"
         + "      seaRuntime: \">=1.0.0\"\n"
@@ -449,7 +449,7 @@ class SeaControlWorkspaceComponentTest {
   private static String contractJson() {
     ModuleDevelopmentContract contract =
         new ModuleDevelopmentContract(
-            new ModuleDevelopmentContract.Module("sea-module-local", "1.2.3"),
+            new ModuleDevelopmentContract.Module("zalava-module-local", "1.2.3"),
             "Fixture evaluation",
             "1.0.0",
             List.of(
@@ -514,8 +514,8 @@ class SeaControlWorkspaceComponentTest {
         @Override
         public List<Module> modules() {
           return List.of(
-              new Module("sea-module-time", "Time", "Time tools"),
-              new Module("sea-module-tika", "Tika", "Content extraction"));
+              new Module("zalava-module-time", "Time", "Time tools"),
+              new Module("zalava-module-tika", "Tika", "Content extraction"));
         }
 
         @Override
@@ -536,7 +536,7 @@ class SeaControlWorkspaceComponentTest {
       return (uri, token) ->
           new ModuleReleaseIndex(
               1,
-              "sea-module-tika",
+              "zalava-module-tika",
               List.of(release("1.0.1", "v1.0.1"), release("1.1.0", "v1.1.0")));
     }
 
@@ -547,7 +547,7 @@ class SeaControlWorkspaceComponentTest {
         @Override
         public ResolvedArtifact resolve(Request request) {
           try {
-            Path jar = Files.createTempFile("sea-module-release-", ".jar");
+            Path jar = Files.createTempFile("zalava-module-release-", ".jar");
             Files.writeString(jar, "fixture module artifact");
             return new ResolvedArtifact(jar.toString(), "sha256:" + fixtureDigest());
           } catch (IOException ex) {

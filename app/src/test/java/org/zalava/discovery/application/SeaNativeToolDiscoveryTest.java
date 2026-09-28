@@ -22,7 +22,7 @@ class SeaNativeToolDiscoveryTest {
         private final ProviderDescriptor descriptor =
             new ProviderDescriptor(
                 "sea-filesystem-provider",
-                "sea-module-filesystem",
+                "zalava-module-filesystem",
                 "filesystem",
                 "SEA Filesystem",
                 "Scoped files.",

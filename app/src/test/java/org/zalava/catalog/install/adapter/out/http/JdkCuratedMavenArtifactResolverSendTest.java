@@ -20,7 +20,7 @@ import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResol
 class JdkCuratedMavenArtifactResolverSendTest {
 
   private static final SourceModuleIndex.Artifact ARTIFACT =
-      new SourceModuleIndex.Artifact("ai.sea.modules", "sea-module-fixture", "1.0.0");
+      new SourceModuleIndex.Artifact("ai.sea.modules", "zalava-module-fixture", "1.0.0");
 
   @TempDir Path workspace;
 

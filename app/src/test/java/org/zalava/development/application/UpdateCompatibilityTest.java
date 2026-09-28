@@ -52,7 +52,7 @@ class UpdateCompatibilityTest {
   private static InstalledModuleAcceptance installed() {
     ModuleDevelopmentContract contract = contract("{\"type\":\"object\"}", "{}");
     return new InstalledModuleAcceptance(
-        "sea-module-example",
+        "zalava-module-example",
         "1.0.0",
         contract,
         contract,
@@ -84,7 +84,7 @@ class UpdateCompatibilityTest {
   private static ModuleDevelopmentContract contractWithTools(
       List<ModuleDevelopmentContract.Tool> tools) {
     return new ModuleDevelopmentContract(
-        new ModuleDevelopmentContract.Module("sea-module-example", "1.0.1"),
+        new ModuleDevelopmentContract.Module("zalava-module-example", "1.0.1"),
         "test",
         "1",
         tools.isEmpty()

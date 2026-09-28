@@ -67,7 +67,7 @@ class ModuleCompatibilityAcceptanceTest {
 
   static final PinnedRelease FILESYSTEM =
       new PinnedRelease(
-          "sea-module-filesystem",
+          "zalava-module-filesystem",
           "1.2.0",
           "c768dec28ccf145825afd97449a3197f63c62ee86b22a473f63ee4dcde1c782c",
           "c768dec28ccf145825afd97449a3197f63c62ee86b22a473f63ee4dcde1c782c",
@@ -75,7 +75,7 @@ class ModuleCompatibilityAcceptanceTest {
           null);
   static final PinnedRelease SHOPPING =
       new PinnedRelease(
-          "sea-module-shopping-list",
+          "zalava-module-shopping-list",
           "1.2.0",
           "d9a622765a5e2af7d35e3fd9aa66592613d7c5d5b36e5043264ae5729dc3ed78",
           "d9a622765a5e2af7d35e3fd9aa66592613d7c5d5b36e5043264ae5729dc3ed78",
@@ -83,7 +83,7 @@ class ModuleCompatibilityAcceptanceTest {
           "shopping-list");
   static final PinnedRelease DOCKER =
       new PinnedRelease(
-          "sea-module-docker",
+          "zalava-module-docker",
           "1.2.2",
           "61ad5bd81e1d9c7ba901d8081096ad127d3133af646fcc081e0634bb39bb94e5",
           "f1d0572a6fe3067181eb6ab9b56fb66c2da05332edace37002cc3c868282b1e3",
@@ -91,7 +91,7 @@ class ModuleCompatibilityAcceptanceTest {
           null);
   static final PinnedRelease HOME_ASSISTANT =
       new PinnedRelease(
-          "sea-module-home-assistant",
+          "zalava-module-home-assistant",
           "1.3.0",
           "0080775f49be88e8e8724b9f4370ff40168f5924a1bc19a5928dcb18ad66548f",
           "0080775f49be88e8e8724b9f4370ff40168f5924a1bc19a5928dcb18ad66548f",
@@ -211,9 +211,9 @@ class ModuleCompatibilityAcceptanceTest {
               "docker-" + DOCKER.version(),
               Map.of(
                   "services",
-                  Map.of("engineEndpoint", "unix:///tmp/sea-module-compat-docker.sock"),
+                  Map.of("engineEndpoint", "unix:///tmp/zalava-module-compat-docker.sock"),
                   "docker-containers",
-                  Map.of("engineEndpoint", "unix:///tmp/sea-module-compat-docker.sock")),
+                  Map.of("engineEndpoint", "unix:///tmp/zalava-module-compat-docker.sock")),
               Map.of()),
           Map.of());
       lifecycle.applyCandidate(DOCKER.moduleId());
@@ -616,7 +616,7 @@ class ModuleCompatibilityAcceptanceTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-module-compat-");
+      Path workspace = Files.createTempDirectory("zalava-module-compat-");
       Files.writeString(
           workspace.resolve("AGENT.md"), "Module compatibility acceptance workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable real-network workspace.");

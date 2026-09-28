@@ -148,7 +148,7 @@ class ModulesControllerComponentTest {
             org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
                     "/modules/local-project-installations")
                 .param("projectDirectory", "/not-mounted/module")
-                .param("moduleId", "sea-module-example")
+                .param("moduleId", "zalava-module-example")
                 .param("version", "1.0.0")
                 .param("developmentRequestId", "development-1")
                 .with(
@@ -164,8 +164,8 @@ class ModulesControllerComponentTest {
         .perform(
             org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
                     "/modules/local-project-installations")
-                .param("projectDirectory", "/mounted/modules/sea-module-example")
-                .param("moduleId", "sea-module-example")
+                .param("projectDirectory", "/mounted/modules/zalava-module-example")
+                .param("moduleId", "zalava-module-example")
                 .param("version", "1.2.3")
                 .param("developmentRequestId", "development-42")
                 .with(
@@ -176,13 +176,13 @@ class ModulesControllerComponentTest {
             flash()
                 .attribute(
                     "marketplaceMessage",
-                    "Local module sea-module-example 1.2.3 installed. Restart SEA once to load its classes."));
+                    "Local module zalava-module-example 1.2.3 installed. Restart SEA once to load its classes."));
 
     assertThat(localDevelopmentProjects.request())
         .isEqualTo(
             new LocalDevelopmentProjectInstallation.Request(
-                "/mounted/modules/sea-module-example",
-                "sea-module-example",
+                "/mounted/modules/zalava-module-example",
+                "zalava-module-example",
                 "1.2.3",
                 "development-42"));
   }
@@ -313,7 +313,7 @@ class ModulesControllerComponentTest {
             registry.toFile(),
             List.of(
                 Map.of(
-                    "moduleId", "sea-module-example",
+                    "moduleId", "zalava-module-example",
                     "version", "1.2.3",
                     "artifactPath", artifact.toString(),
                     "artifactDigest", digest,
@@ -328,7 +328,7 @@ class ModulesControllerComponentTest {
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Enabled external modules")))
         .andExpect(content().string(containsString("data-metric=\"enabled-modules\">1<")))
-        .andExpect(content().string(containsString("sea-module-example")))
+        .andExpect(content().string(containsString("zalava-module-example")))
         .andExpect(content().string(containsString("1.2.3")))
         .andExpect(
             content().string(containsString("https://github.com/Zalava/zalava-module-example")))
@@ -386,7 +386,7 @@ class ModulesControllerComponentTest {
   @Test
   void rendersDeclaredManagedServiceForDirectInstallation() throws Exception {
     mockMvc
-        .perform(get("/modules/sea-module-declared"))
+        .perform(get("/modules/zalava-module-declared"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("data-managed-service=\"declared-service\"")))
         .andExpect(content().string(containsString("Declared, awaiting administrator approval")))
@@ -399,7 +399,7 @@ class ModulesControllerComponentTest {
     mockMvc
         .perform(
             org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                "/modules/sea-module-declared/managed-services/request"))
+                "/modules/zalava-module-declared/managed-services/request"))
         .andExpect(status().is3xxRedirection());
 
     assertThat(managedServiceInstallRequestStore.recent(1))
@@ -415,7 +415,7 @@ class ModulesControllerComponentTest {
             });
 
     mockMvc
-        .perform(get("/modules/sea-module-declared"))
+        .perform(get("/modules/zalava-module-declared"))
         .andExpect(status().isOk())
         .andExpect(
             content()
@@ -576,7 +576,7 @@ class ModulesControllerComponentTest {
   private static Path enabledArtifact() throws IOException {
     Path modulesRoot = WORKSPACE.resolve("source-module-installation/modules");
     Files.createDirectories(modulesRoot);
-    Path artifact = modulesRoot.resolve("sea-module-example.jar");
+    Path artifact = modulesRoot.resolve("zalava-module-example.jar");
     Files.writeString(artifact, "example module artifact");
     return artifact;
   }
@@ -751,7 +751,7 @@ class ModulesControllerComponentTest {
     private static SeaModule declaredModule() {
       ModuleDescriptor descriptor =
           new ModuleDescriptor(
-              "sea-module-declared",
+              "zalava-module-declared",
               "1.0.0",
               "Declared Provider",
               "Declares a managed service without an installation.");

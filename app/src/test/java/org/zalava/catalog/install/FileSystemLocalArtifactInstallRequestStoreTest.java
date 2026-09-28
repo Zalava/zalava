@@ -58,14 +58,14 @@ class FileSystemLocalArtifactInstallRequestStoreTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-example",
+        "zalava-module-example",
         "1.0.0",
         "Example",
         "Example module",
         URI.create("https://example.test/support"),
-        new SourceModuleIndex.Artifact("org.example", "sea-module-example", "1.0.0"),
+        new SourceModuleIndex.Artifact("org.example", "zalava-module-example", "1.0.0"),
         new SourceModuleIndex.Source(
-            URI.create("https://github.com/example/sea-module-example"), "Apache-2.0"),
+            URI.create("https://github.com/example/zalava-module-example"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(">=1"),
         Map.of(),

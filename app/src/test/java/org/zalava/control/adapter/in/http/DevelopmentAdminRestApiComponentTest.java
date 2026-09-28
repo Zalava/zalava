@@ -256,20 +256,20 @@ class DevelopmentAdminRestApiComponentTest {
             post("/api/sea/local-module-installations")
                 .contentType("application/json")
                 .content(
-                    "{\"moduleId\":\"sea-module-local\",\"indexYaml\":\"schemaVersion: 1\\nmodules: []\",\"artifactPath\":\"/tmp/none.jar\",\"developmentRequestId\":\"request-1\"}"))
+                    "{\"moduleId\":\"zalava-module-local\",\"indexYaml\":\"schemaVersion: 1\\nmodules: []\",\"artifactPath\":\"/tmp/none.jar\",\"developmentRequestId\":\"request-1\"}"))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void localModuleInstallationGetAllowAndDenyAreExposed() throws Exception {
-    Path artifact = jarArtifact("sea-module-local-1.2.3.jar");
+    Path artifact = jarArtifact("zalava-module-local-1.2.3.jar");
     LocalArtifactInstallRequest request =
         localArtifactInstallations.create(module(), artifact.toString(), null);
 
     mockMvc
         .perform(get("/api/sea/local-module-installations/" + request.requestId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.moduleId").value("sea-module-local"))
+        .andExpect(jsonPath("$.moduleId").value("zalava-module-local"))
         .andExpect(jsonPath("$.status").value("pending"));
 
     mockMvc
@@ -297,7 +297,7 @@ class DevelopmentAdminRestApiComponentTest {
                 .content(
                     "{\"contract\":" + contractJson + ",\"reason\":\"Build a fixture module\"}"))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.moduleId").value("sea-module-local"))
+        .andExpect(jsonPath("$.moduleId").value("zalava-module-local"))
         .andExpect(jsonPath("$.status").value("prepared"));
 
     // Extract the request id from the persisted store deterministically.
@@ -306,7 +306,7 @@ class DevelopmentAdminRestApiComponentTest {
     mockMvc
         .perform(get("/api/sea/development-requests/" + id))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.moduleId").value("sea-module-local"));
+        .andExpect(jsonPath("$.moduleId").value("zalava-module-local"));
 
     mockMvc
         .perform(
@@ -353,7 +353,7 @@ class DevelopmentAdminRestApiComponentTest {
     mockMvc
         .perform(get("/api/sea/module-release-installations/" + requestId))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.moduleId").value("sea-module-tika"))
+        .andExpect(jsonPath("$.moduleId").value("zalava-module-tika"))
         .andExpect(jsonPath("$.version").value("1.0.1"))
         .andExpect(jsonPath("$.status").value("pending"));
 
@@ -396,9 +396,9 @@ class DevelopmentAdminRestApiComponentTest {
                 post("/api/sea/module-release-installations")
                     .contentType("application/json")
                     .content(
-                        "{\"moduleId\":\"sea-module-tika\",\"version\":\"1.0.1\",\"developmentRequestId\":null}"))
+                        "{\"moduleId\":\"zalava-module-tika\",\"version\":\"1.0.1\",\"developmentRequestId\":null}"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.moduleId").value("sea-module-tika"))
+            .andExpect(jsonPath("$.moduleId").value("zalava-module-tika"))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -420,7 +420,7 @@ class DevelopmentAdminRestApiComponentTest {
   private static String contractJson() {
     ModuleDevelopmentContract contract =
         new ModuleDevelopmentContract(
-            new ModuleDevelopmentContract.Module("sea-module-local", "1.2.3"),
+            new ModuleDevelopmentContract.Module("zalava-module-local", "1.2.3"),
             "Fixture evaluation",
             "1.0.0",
             List.of(
@@ -462,12 +462,12 @@ class DevelopmentAdminRestApiComponentTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-local",
+        "zalava-module-local",
         "1.2.3",
         "Local Fixture",
         "Locally developed fixture module",
-        java.net.URI.create("https://github.com/example/sea-module-local"),
-        new SourceModuleIndex.Artifact("ai.sea.modules", "sea-module-local", "1.2.3"),
+        java.net.URI.create("https://github.com/example/zalava-module-local"),
+        new SourceModuleIndex.Artifact("ai.sea.modules", "zalava-module-local", "1.2.3"),
         null,
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(">=1.0.0"),
@@ -554,7 +554,7 @@ class DevelopmentAdminRestApiComponentTest {
       return new ModuleLocatorReleaseLocator() {
         @Override
         public List<Module> modules() {
-          return List.of(new Module("sea-module-tika", "Tika", "Content extraction"));
+          return List.of(new Module("zalava-module-tika", "Tika", "Content extraction"));
         }
 
         @Override
@@ -575,7 +575,7 @@ class DevelopmentAdminRestApiComponentTest {
       return (uri, token) ->
           new ModuleReleaseIndex(
               1,
-              "sea-module-tika",
+              "zalava-module-tika",
               List.of(
                   new ModuleReleaseIndex.Release(
                       "1.0.1",
@@ -595,7 +595,7 @@ class DevelopmentAdminRestApiComponentTest {
         @Override
         public ResolvedArtifact resolve(Request request) {
           try {
-            Path jar = Files.createTempFile("sea-module-release-", ".jar");
+            Path jar = Files.createTempFile("zalava-module-release-", ".jar");
             Files.writeString(jar, "fixture module artifact");
             return new ResolvedArtifact(jar.toString(), "sha256:" + fixtureDigest());
           } catch (IOException ex) {

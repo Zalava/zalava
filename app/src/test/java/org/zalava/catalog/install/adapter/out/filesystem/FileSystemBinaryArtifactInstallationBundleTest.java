@@ -25,7 +25,7 @@ import org.zalava.catalog.install.application.port.out.BinaryArtifactInstallatio
  */
 class FileSystemBinaryArtifactInstallationBundleTest {
 
-  private static final String MANIFEST_ENTRY = "META-INF/sea-module-bundle.yaml";
+  private static final String MANIFEST_ENTRY = "META-INF/zalava-module-bundle.yaml";
 
   @TempDir Path workspace;
 

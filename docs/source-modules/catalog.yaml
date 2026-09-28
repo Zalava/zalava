@@ -1,0 +1,15 @@
+schemaVersion: 1
+repository:
+  type: source
+  indexRepository: https://github.com/Zalava/zalava
+  indexPath: docs/source-modules/catalog.yaml
+mavenRepositories:
+  - repositoryId: maven-central
+    url: https://repo.maven.apache.org/maven2
+entries:
+  - moduleId: zalava-module-shopping-list
+    path: zalava-module-shopping-list.yaml
+    sha256: 12a285d3fd7ea2e446ba5398d1bbf98597c74814347217eeb92aff5910a06210
+  - moduleId: zalava-module-time
+    path: zalava-module-time.yaml
+    sha256: c1b6523987aa570a03ca1c8be8391fcab72b6fcdabde308eaa7da97ed3587147

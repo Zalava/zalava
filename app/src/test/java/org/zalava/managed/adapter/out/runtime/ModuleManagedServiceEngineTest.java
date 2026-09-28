@@ -101,7 +101,7 @@ class ModuleManagedServiceEngineTest {
         new RuntimeQueries.LoadedSeaService<>(
             new SeaServiceDescriptor(
                 ManagedServiceEngine.CONTRACT.serviceId(),
-                "sea-module-docker",
+                "zalava-module-docker",
                 ManagedServiceEngine.CONTRACT.contractVersion()),
             engine));
   }

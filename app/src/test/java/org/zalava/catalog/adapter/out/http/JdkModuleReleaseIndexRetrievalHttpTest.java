@@ -26,13 +26,13 @@ class JdkModuleReleaseIndexRetrievalHttpTest {
   private static String validIndex() {
     return """
         schemaVersion: 1
-        moduleId: sea-module-example
+        moduleId: zalava-module-example
         releases:
           - version: 1.0.1
             releaseTag: v1.0.1
             artifact:
               groupId: org.zalava.modules
-              artifactId: sea-module-example
+              artifactId: zalava-module-example
               version: 1.0.1
               sha256: %s
             source:

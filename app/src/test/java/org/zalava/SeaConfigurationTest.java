@@ -22,7 +22,7 @@ class SeaConfigurationTest {
     FileSystemModuleConfigurationStore store = new FileSystemModuleConfigurationStore(root);
     store.saveCandidate(
         new ModuleConfigurationSnapshot(
-            "sea-module-brave-search",
+            "zalava-module-brave-search",
             "1.0.0",
             "schema-1",
             Map.of("brave-search", Map.of("apiKeyRef", "brave-key")),
@@ -35,9 +35,10 @@ class SeaConfigurationTest {
                 new SeaModuleProperties(Map.of("other-module", Map.of("factories", Map.of()))),
                 store);
 
-    assertThat(store.candidate("sea-module-brave-search")).isPresent();
-    assertThat(store.active("sea-module-brave-search")).isEmpty();
-    ProviderFactoryContext factory = context.forFactory("sea-module-brave-search", "brave-search");
+    assertThat(store.candidate("zalava-module-brave-search")).isPresent();
+    assertThat(store.active("zalava-module-brave-search")).isEmpty();
+    ProviderFactoryContext factory =
+        context.forFactory("zalava-module-brave-search", "brave-search");
     assertThat(factory.configuration()).isEmpty();
     assertThat(factory.secrets().resolve("brave-key")).isEmpty();
     assertThat(context.forFactory("other-module", "missing").secrets().resolve("brave-key"))
@@ -106,7 +107,7 @@ class SeaConfigurationTest {
   @Test
   void combinesOnlyConfiguredBuiltInsAndExternalModules() {
     SeaModule builtIn = module("test-built-in");
-    SeaModule external = module("sea-module-filesystem");
+    SeaModule external = module("zalava-module-filesystem");
 
     assertThat(SeaConfiguration.mergeSeaModules(Set.of(builtIn), List.of(external)))
         .containsExactlyInAnyOrder(builtIn, external);

@@ -38,6 +38,6 @@ class RemoteCandidatePolicyTest {
 
   private static RemoteModuleCandidate candidate(List<String> permissions) {
     return new RemoteModuleCandidate(
-        "sea-module-example", "1.0.0", "a".repeat(64), "Example", "Example", permissions);
+        "zalava-module-example", "1.0.0", "a".repeat(64), "Example", "Example", permissions);
   }
 }

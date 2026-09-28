@@ -17,11 +17,11 @@ class SourceModuleCatalogSearchTest {
 
     assertThat(results).hasSize(1);
     SourceModuleCatalogSearch.Result result = results.getFirst();
-    assertThat(result.module().moduleId()).isEqualTo("sea-module-time");
+    assertThat(result.module().moduleId()).isEqualTo("zalava-module-time");
     assertThat(result.module().artifact().groupId()).isEqualTo("org.zalava.modules");
-    assertThat(result.module().artifact().artifactId()).isEqualTo("sea-module-time");
+    assertThat(result.module().artifact().artifactId()).isEqualTo("zalava-module-time");
     assertThat(result.catalogEntry().sha256())
-        .isEqualTo("aa34e2556c58a58b513a58ea9216e11f2c29c83ee7e74e422091006b51b23c7b");
+        .isEqualTo("c1b6523987aa570a03ca1c8be8391fcab72b6fcdabde308eaa7da97ed3587147");
     assertThat(result.repositories())
         .containsExactly(
             new SourceModuleCatalog.MavenRepository(
@@ -34,10 +34,10 @@ class SourceModuleCatalogSearchTest {
 
     assertThat(results).hasSize(1);
     SourceModuleCatalogSearch.Result result = results.getFirst();
-    assertThat(result.module().moduleId()).isEqualTo("sea-module-shopping-list");
-    assertThat(result.module().artifact().artifactId()).isEqualTo("sea-module-shopping-list");
+    assertThat(result.module().moduleId()).isEqualTo("zalava-module-shopping-list");
+    assertThat(result.module().artifact().artifactId()).isEqualTo("zalava-module-shopping-list");
     assertThat(result.catalogEntry().sha256())
-        .isEqualTo("86779c237c123982aff458b1c7f419ebf433fec79e727ae692e6835dfa36ef75");
+        .isEqualTo("12a285d3fd7ea2e446ba5398d1bbf98597c74814347217eeb92aff5910a06210");
   }
 
   @Test
@@ -46,7 +46,7 @@ class SourceModuleCatalogSearchTest {
 
     assertThat(results)
         .extracting(result -> result.module().moduleId())
-        .containsExactly("sea-module-time");
+        .containsExactly("zalava-module-time");
   }
 
   @Test
@@ -55,7 +55,7 @@ class SourceModuleCatalogSearchTest {
 
     assertThat(results)
         .extracting(result -> result.module().artifact().artifactId())
-        .containsExactly("sea-module-shopping-list", "sea-module-time");
+        .containsExactly("zalava-module-shopping-list", "zalava-module-time");
   }
 
   @Test
@@ -64,7 +64,7 @@ class SourceModuleCatalogSearchTest {
 
     assertThat(results)
         .extracting(result -> result.module().moduleId())
-        .containsExactly("sea-module-shopping-list", "sea-module-time");
+        .containsExactly("zalava-module-shopping-list", "zalava-module-time");
   }
 
   @Test

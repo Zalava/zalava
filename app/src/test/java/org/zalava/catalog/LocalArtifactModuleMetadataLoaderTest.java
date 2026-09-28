@@ -28,7 +28,7 @@ class LocalArtifactModuleMetadataLoaderTest {
     assertThat(index.schemaVersion()).isEqualTo(1);
     assertThat(index.modules()).hasSize(1);
     SourceModuleIndex.Module module = index.modules().getFirst();
-    assertThat(module.moduleId()).isEqualTo("sea-module-local");
+    assertThat(module.moduleId()).isEqualTo("zalava-module-local");
     assertThat(module.version()).isEqualTo("1.2.3");
     assertThat(module.source()).isNull();
     assertThat(module.build().command()).isEmpty();
@@ -145,7 +145,7 @@ class LocalArtifactModuleMetadataLoaderTest {
   void rejectsArtifactVersionMismatch() {
     String mismatch =
         validMetadata()
-            .replaceFirst("(artifactId: sea-module-local\\n\\s+version: )1\\.2\\.3", "$19.9.9");
+            .replaceFirst("(artifactId: zalava-module-local\\n\\s+version: )1\\.2\\.3", "$19.9.9");
 
     assertThatThrownBy(() -> loader.load(mismatch))
         .isInstanceOf(SourceModuleIndexValidationException.class)
@@ -159,8 +159,8 @@ class LocalArtifactModuleMetadataLoaderTest {
                 loader.load(
                     validMetadata()
                         .replace(
-                            "https://github.com/example/sea-module-local",
-                            "http://github.com/example/sea-module-local")))
+                            "https://github.com/example/zalava-module-local",
+                            "http://github.com/example/zalava-module-local")))
         .isInstanceOf(SourceModuleIndexValidationException.class)
         .hasMessage("modules[0].supportUrl must be a valid HTTPS URI");
   }
@@ -194,14 +194,14 @@ class LocalArtifactModuleMetadataLoaderTest {
 
   private static String validModule() {
     return """
-                  - moduleId: sea-module-local
+                  - moduleId: zalava-module-local
                     version: 1.2.3
                     displayName: Local Fixture
                     description: Locally developed fixture module
-                    supportUrl: https://github.com/example/sea-module-local
+                    supportUrl: https://github.com/example/zalava-module-local
                     artifact:
                       groupId: ai.sea.modules
-                      artifactId: sea-module-local
+                      artifactId: zalava-module-local
                       version: 1.2.3
                     compatibility:
                       seaRuntime: ">=1.0.0"

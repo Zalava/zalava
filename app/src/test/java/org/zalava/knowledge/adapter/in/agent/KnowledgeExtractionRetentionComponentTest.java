@@ -74,14 +74,14 @@ class KnowledgeExtractionRetentionComponentTest {
             .orElseThrow();
 
     KnowledgeDerivation first =
-        lifecycle.beginReprocessing(owner, source.id(), "sea-module-tika", "1");
+        lifecycle.beginReprocessing(owner, source.id(), "zalava-module-tika", "1");
     records.record(KnowledgeExtractionRecord.succeeded(first, text));
     lifecycle.completeReprocessing(owner, first, true);
     assertThat(lifecycle.requireOwned(owner, source.id()).processingState())
         .isEqualTo(SourceProcessingState.READY);
 
     KnowledgeDerivation failed =
-        lifecycle.beginReprocessing(owner, source.id(), "sea-module-tika", "1");
+        lifecycle.beginReprocessing(owner, source.id(), "zalava-module-tika", "1");
     records.record(
         KnowledgeExtractionRecord.failed(
             failed, ContentExtractionFailureCategory.UNAVAILABLE, "OCR worker is unavailable"));

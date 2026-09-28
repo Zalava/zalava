@@ -48,7 +48,7 @@ class ModuleReleaseInstallationTest {
 
     assertThat(useCase.allow(request.requestId()).status())
         .isEqualTo(ModuleReleaseInstallRequest.Status.SUCCEEDED);
-    assertThat(installation.request.module().moduleId()).isEqualTo("sea-module-time");
+    assertThat(installation.request.module().moduleId()).isEqualTo("zalava-module-time");
     assertThat(installation.request.artifactDigest()).isEqualTo(digest());
     assertThat(resolver.discarded).hasSize(1);
   }
@@ -70,7 +70,7 @@ class ModuleReleaseInstallationTest {
             new ModuleReleaseInstallation.Request(
                 URI.create("https://example.test/releases.yaml"),
                 null,
-                "sea-module-time",
+                "zalava-module-time",
                 "1.0.0",
                 "maven-central",
                 URI.create("https://repo.maven.apache.org/maven2"),
@@ -143,7 +143,7 @@ class ModuleReleaseInstallationTest {
 
     assertThat(bundleResolver.resolved)
         .extracting(resolved -> resolved.artifact().artifactId())
-        .containsExactly("sea-module-time", "runtime-dependency");
+        .containsExactly("zalava-module-time", "runtime-dependency");
     assertThat(bundleInstallation.request.runtimeArtifacts()).hasSize(1);
     assertThat(bundleInstallation.request.runtimeArtifacts().getFirst().artifact().artifactId())
         .isEqualTo("runtime-dependency");
@@ -154,7 +154,7 @@ class ModuleReleaseInstallationTest {
     return new ModuleReleaseInstallation.Request(
         URI.create("https://example.test/releases.yaml"),
         "secret",
-        "sea-module-time",
+        "zalava-module-time",
         "1.0.0",
         "maven-central",
         URI.create("https://repo.maven.apache.org/maven2"),
@@ -164,13 +164,13 @@ class ModuleReleaseInstallationTest {
   private static ModuleReleaseIndex index() {
     return new ModuleReleaseIndex(
         1,
-        "sea-module-time",
+        "zalava-module-time",
         List.of(
             new ModuleReleaseIndex.Release(
                 "1.0.0",
                 "v1.0.0",
                 new ModuleReleaseIndex.Artifact(
-                    "org.zalava.modules", "sea-module-time", "1.0.0", digest().substring(7)),
+                    "org.zalava.modules", "zalava-module-time", "1.0.0", digest().substring(7)),
                 new ModuleReleaseIndex.Source(
                     URI.create("https://github.com/Zalava/zalava-module-time"), "Apache-2.0"),
                 new ModuleReleaseIndex.Compatibility(">=1.0.0 <2.0.0"),
@@ -180,13 +180,13 @@ class ModuleReleaseInstallationTest {
   private static ModuleReleaseIndex bundleIndex() {
     return new ModuleReleaseIndex(
         1,
-        "sea-module-time",
+        "zalava-module-time",
         List.of(
             new ModuleReleaseIndex.Release(
                 "1.0.0",
                 "v1.0.0",
                 new ModuleReleaseIndex.Artifact(
-                    "org.zalava.modules", "sea-module-time", "1.0.0", digest().substring(7)),
+                    "org.zalava.modules", "zalava-module-time", "1.0.0", digest().substring(7)),
                 List.of(
                     new ModuleReleaseIndex.Artifact(
                         "org.example", "runtime-dependency", "2.0.0", digest().substring(7))),
@@ -244,7 +244,7 @@ class ModuleReleaseInstallationTest {
     @Override
     public ResolvedArtifact resolve(Request request) {
       resolved.add(request);
-      return new ResolvedArtifact("/tmp/sea-module-time.jar", digest);
+      return new ResolvedArtifact("/tmp/zalava-module-time.jar", digest);
     }
 
     @Override

@@ -21,14 +21,14 @@ class DefaultUploadedModuleInstallationTest {
       """
       schemaVersion: 1
       modules:
-        - moduleId: sea-module-example
+        - moduleId: zalava-module-example
           version: 1.0.0
           displayName: Example
           description: Example module.
           supportUrl: https://github.com/Zalava/zalava-module-example
           artifact:
             groupId: org.zalava.modules
-            artifactId: sea-module-example
+            artifactId: zalava-module-example
             version: 1.0.0
           compatibility:
             seaRuntime: ">=1.0.0"
@@ -52,7 +52,7 @@ class DefaultUploadedModuleInstallationTest {
 
     assertThat(request.artifactBundle()).isFalse();
     assertThat(request.runtimeArtifacts()).isEmpty();
-    assertThat(request.module().moduleId()).isEqualTo("sea-module-example");
+    assertThat(request.module().moduleId()).isEqualTo("zalava-module-example");
     assertThat(request.repositoryId()).isEqualTo("local-upload");
   }
 
@@ -60,7 +60,7 @@ class DefaultUploadedModuleInstallationTest {
   void detectsABundleJarAndMarksTheRequestAsABundle() throws Exception {
     Map<String, byte[]> members = new LinkedHashMap<>();
     members.put("module-metadata.yaml", METADATA.getBytes());
-    members.put("META-INF/sea-module-bundle.yaml", "module:\n  path: module.jar\n".getBytes());
+    members.put("META-INF/zalava-module-bundle.yaml", "module:\n  path: module.jar\n".getBytes());
     members.put("module.jar", "module-bytes".getBytes());
     Path jar = jar(members);
 
@@ -68,7 +68,7 @@ class DefaultUploadedModuleInstallationTest {
 
     assertThat(request.artifactBundle()).isTrue();
     assertThat(request.runtimeArtifacts()).isEmpty();
-    assertThat(request.module().moduleId()).isEqualTo("sea-module-example");
+    assertThat(request.module().moduleId()).isEqualTo("zalava-module-example");
   }
 
   private ModuleReleaseInstallRequest create(Path jar) throws IOException {

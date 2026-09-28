@@ -17,10 +17,10 @@ class SourceModuleIndexLoaderTest {
     assertThat(index.schemaVersion()).isEqualTo(1);
     assertThat(index.modules()).hasSize(1);
     SourceModuleIndex.Module module = index.modules().getFirst();
-    assertThat(module.moduleId()).isEqualTo("sea-module-files");
-    assertThat(module.supportUrl()).hasToString("https://github.com/example/sea-module-files");
+    assertThat(module.moduleId()).isEqualTo("zalava-module-files");
+    assertThat(module.supportUrl()).hasToString("https://github.com/example/zalava-module-files");
     assertThat(module.source().repository())
-        .hasToString("https://github.com/example/sea-module-files.git");
+        .hasToString("https://github.com/example/zalava-module-files.git");
     assertThat(module.build().command()).containsExactly("./gradlew", "build");
     assertThat(module.factories())
         .extracting(SourceModuleIndex.Factory::factoryId)
@@ -36,12 +36,12 @@ class SourceModuleIndexLoaderTest {
   @Test
   void loadsCheckedInTimeModuleIndexEntry() throws Exception {
     SourceModuleIndex index =
-        loader.load(Path.of("..", "docs", "source-modules", "sea-module-time.yaml"));
+        loader.load(Path.of("..", "docs", "source-modules", "zalava-module-time.yaml"));
 
     assertThat(index.schemaVersion()).isEqualTo(1);
     assertThat(index.modules()).hasSize(1);
     SourceModuleIndex.Module module = index.modules().getFirst();
-    assertThat(module.moduleId()).isEqualTo("sea-module-time");
+    assertThat(module.moduleId()).isEqualTo("zalava-module-time");
     assertThat(module.source().repository())
         .hasToString("https://github.com/Zalava/zalava-module-time.git");
     assertThat(module.build().command()).containsExactly("./gradlew", "build");
@@ -60,12 +60,12 @@ class SourceModuleIndexLoaderTest {
   @Test
   void loadsCheckedInShoppingListModuleIndexEntry() throws Exception {
     SourceModuleIndex index =
-        loader.load(Path.of("..", "docs", "source-modules", "sea-module-shopping-list.yaml"));
+        loader.load(Path.of("..", "docs", "source-modules", "zalava-module-shopping-list.yaml"));
 
     assertThat(index.schemaVersion()).isEqualTo(1);
     assertThat(index.modules()).hasSize(1);
     SourceModuleIndex.Module module = index.modules().getFirst();
-    assertThat(module.moduleId()).isEqualTo("sea-module-shopping-list");
+    assertThat(module.moduleId()).isEqualTo("zalava-module-shopping-list");
     assertThat(module.source().repository())
         .hasToString("https://github.com/Zalava/zalava-module-shopping-list.git");
     assertThat(module.build().command()).containsExactly("./gradlew", "build");
@@ -99,8 +99,8 @@ class SourceModuleIndexLoaderTest {
                 loader.load(
                     validIndex()
                         .replace(
-                            "https://github.com/example/sea-module-files.git",
-                            "ssh://git@github.com/example/sea-module-files.git")))
+                            "https://github.com/example/zalava-module-files.git",
+                            "ssh://git@github.com/example/zalava-module-files.git")))
         .isInstanceOf(SourceModuleIndexValidationException.class)
         .hasMessage("modules[0].source.repository must be a valid HTTPS URI");
   }
@@ -148,17 +148,17 @@ class SourceModuleIndexLoaderTest {
 
   private static String validModule() {
     return """
-                  - moduleId: sea-module-files
+                  - moduleId: zalava-module-files
                     version: 1.0.0
                     displayName: Files
                     description: Workspace-bound file operations
-                    supportUrl: https://github.com/example/sea-module-files
+                    supportUrl: https://github.com/example/zalava-module-files
                     artifact:
                       groupId: ai.sea.modules
-                      artifactId: sea-module-files
+                      artifactId: zalava-module-files
                       version: 1.0.0
                     source:
-                      repository: https://github.com/example/sea-module-files.git
+                      repository: https://github.com/example/zalava-module-files.git
                       license: Apache-2.0
                     build:
                       command: ["./gradlew", "build"]

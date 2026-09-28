@@ -23,7 +23,7 @@ class DefaultLocalDevelopmentProjectInstallationTest {
   @Test
   void preparesAcceptedCandidateFromModuleMetadataWithoutReleaseIndexDigest() throws Exception {
     Path project = root.resolve("docker");
-    Path jar = project.resolve("build/libs/sea-module-docker-1.2.2-SNAPSHOT.jar");
+    Path jar = project.resolve("build/libs/zalava-module-docker-1.2.2-SNAPSHOT.jar");
     Files.createDirectories(jar.getParent());
     Files.writeString(jar, "local development artifact");
     Files.writeString(project.resolve("module-metadata.yaml"), metadata());
@@ -35,7 +35,7 @@ class DefaultLocalDevelopmentProjectInstallationTest {
                 new FileSystemLocalArtifactInspection(java.util.List.of(root))))
         .create(
             new LocalDevelopmentProjectInstallation.Request(
-                project.toString(), "sea-module-docker", "1.2.2", "development-42"));
+                project.toString(), "zalava-module-docker", "1.2.2", "development-42"));
 
     verify(installations)
         .create(
@@ -45,7 +45,7 @@ class DefaultLocalDevelopmentProjectInstallationTest {
   @Test
   void installsAcceptedCandidateWithoutAnAdditionalApproval() throws Exception {
     Path project = root.resolve("docker");
-    Path jar = project.resolve("build/libs/sea-module-docker-1.2.2-SNAPSHOT.jar");
+    Path jar = project.resolve("build/libs/zalava-module-docker-1.2.2-SNAPSHOT.jar");
     Files.createDirectories(jar.getParent());
     Files.writeString(jar, "local development artifact");
     Files.writeString(project.resolve("module-metadata.yaml"), metadata());
@@ -61,7 +61,7 @@ class DefaultLocalDevelopmentProjectInstallationTest {
                 new FileSystemLocalArtifactInspection(java.util.List.of(root))))
         .install(
             new LocalDevelopmentProjectInstallation.Request(
-                project.toString(), "sea-module-docker", "1.2.2", "development-42"));
+                project.toString(), "zalava-module-docker", "1.2.2", "development-42"));
 
     verify(installations).allow("local-request");
   }
@@ -70,14 +70,14 @@ class DefaultLocalDevelopmentProjectInstallationTest {
     return """
         schemaVersion: 1
         modules:
-          - moduleId: sea-module-docker
+          - moduleId: zalava-module-docker
             version: 1.2.2
             displayName: Docker
             description: Local Docker development build
             supportUrl: https://example.test/docker
             artifact:
               groupId: org.example
-              artifactId: sea-module-docker
+              artifactId: zalava-module-docker
               version: 1.2.2
             source:
               repository: https://github.com/example/docker.git

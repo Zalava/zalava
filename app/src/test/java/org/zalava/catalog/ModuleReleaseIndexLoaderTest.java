@@ -13,7 +13,7 @@ class ModuleReleaseIndexLoaderTest {
   void loadsImmutableReleaseMetadata() {
     ModuleReleaseIndex index = loader.load(validIndex());
 
-    assertThat(index.moduleId()).isEqualTo("sea-module-time");
+    assertThat(index.moduleId()).isEqualTo("zalava-module-time");
     assertThat(index.releases())
         .singleElement()
         .satisfies(
@@ -51,7 +51,7 @@ class ModuleReleaseIndexLoaderTest {
   private static String validIndex() {
     return """
                 schemaVersion: 1
-                moduleId: sea-module-time
+                moduleId: zalava-module-time
                 releases:
                 %s
                 """
@@ -64,7 +64,7 @@ class ModuleReleaseIndexLoaderTest {
                     releaseTag: v1.0.1
                     artifact:
                       groupId: org.zalava.modules
-                      artifactId: sea-module-time
+                      artifactId: zalava-module-time
                       version: 1.0.1
                       sha256: %s
                     source:

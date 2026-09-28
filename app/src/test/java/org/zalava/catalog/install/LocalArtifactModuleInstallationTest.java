@@ -23,7 +23,7 @@ class LocalArtifactModuleInstallationTest {
 
   @Test
   void createsAndApprovesATrustedLocalJar() throws Exception {
-    Path artifact = workspace.resolve("build/sea-module-time-1.0.0.jar");
+    Path artifact = workspace.resolve("build/zalava-module-time-1.0.0.jar");
     Files.createDirectories(artifact.getParent());
     Files.writeString(artifact, "jar");
     CapturingInstallation binary = new CapturingInstallation();
@@ -70,12 +70,12 @@ class LocalArtifactModuleInstallationTest {
 
   private static SourceModuleIndex.Module module() {
     return new SourceModuleIndex.Module(
-        "sea-module-time",
+        "zalava-module-time",
         "1.0.0",
         "Time",
         "Time",
         URI.create("https://example.test"),
-        new SourceModuleIndex.Artifact("org.example", "sea-module-time", "1.0.0"),
+        new SourceModuleIndex.Artifact("org.example", "zalava-module-time", "1.0.0"),
         new SourceModuleIndex.Source(URI.create("https://github.com/example/time"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of("build"), List.of("test")),
         new SourceModuleIndex.Compatibility(">=1"),

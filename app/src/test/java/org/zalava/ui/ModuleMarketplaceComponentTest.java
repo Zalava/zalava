@@ -47,7 +47,7 @@ import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 @WithMockUser(username = "modules-admin", roles = "ADMIN")
 class ModuleMarketplaceComponentTest {
 
-  private static final String MODULE_ID = "sea-module-tika";
+  private static final String MODULE_ID = "zalava-module-tika";
   private static final Pattern REQUEST_ID =
       Pattern.compile("data-installation-request=\"([^\"]+)\"");
   private static final Path WORKSPACE = createWorkspace();
@@ -95,7 +95,7 @@ class ModuleMarketplaceComponentTest {
     mockMvc
         .perform(get("/modules"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("data-catalog-module=\"sea-module-tika\"")))
+        .andExpect(content().string(containsString("data-catalog-module=\"zalava-module-tika\"")))
         .andExpect(content().string(containsString("Content extraction")))
         .andExpect(content().string(containsString("Check catalog")));
   }
@@ -118,7 +118,7 @@ class ModuleMarketplaceComponentTest {
     refreshCatalog();
     requestInstallation(MODULE_ID, "1.1.0");
     assertThat(modulesHtml())
-        .contains("data-enabled-module=\"sea-module-tika\"")
+        .contains("data-enabled-module=\"zalava-module-tika\"")
         .contains("data-request-status>SUCCEEDED")
         .contains("sha256:");
   }
@@ -155,14 +155,14 @@ class ModuleMarketplaceComponentTest {
     mockMvc
         .perform(post("/modules/installation-requests/" + requestId + "/allow"))
         .andExpect(status().is3xxRedirection());
-    assertThat(modulesHtml()).contains("data-enabled-module=\"sea-module-tika\"");
+    assertThat(modulesHtml()).contains("data-enabled-module=\"zalava-module-tika\"");
 
     mockMvc
         .perform(post("/modules/" + MODULE_ID + "/disable"))
         .andExpect(status().is3xxRedirection());
 
     String afterDisable = modulesHtml();
-    assertThat(afterDisable).doesNotContain("data-enabled-module=\"sea-module-tika\"");
+    assertThat(afterDisable).doesNotContain("data-enabled-module=\"zalava-module-tika\"");
     assertThat(afterDisable).contains("data-metric=\"enabled-modules\">0<");
   }
 
@@ -220,7 +220,7 @@ class ModuleMarketplaceComponentTest {
 
   private static Path createWorkspace() {
     try {
-      Path root = Files.createTempDirectory("sea-module-marketplace-");
+      Path root = Files.createTempDirectory("zalava-module-marketplace-");
       Files.writeString(root.resolve("AGENT.md"), "Module marketplace component workspace.");
       return root;
     } catch (IOException exception) {
@@ -237,7 +237,7 @@ class ModuleMarketplaceComponentTest {
       return new ModuleLocatorReleaseLocator() {
         @Override
         public List<Module> modules() {
-          return List.of(new Module("sea-module-tika", "Tika", "Content extraction"));
+          return List.of(new Module("zalava-module-tika", "Tika", "Content extraction"));
         }
 
         @Override
@@ -269,7 +269,7 @@ class ModuleMarketplaceComponentTest {
         @Override
         public ResolvedArtifact resolve(Request request) {
           try {
-            Path jar = Files.createTempFile("sea-module-release-", ".jar");
+            Path jar = Files.createTempFile("zalava-module-release-", ".jar");
             Files.writeString(jar, "fixture module artifact");
             return new ResolvedArtifact(jar.toString(), "sha256:" + fixtureDigest());
           } catch (IOException ex) {

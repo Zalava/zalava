@@ -64,7 +64,7 @@ class CapabilityGapAdminComponentTest {
         .andExpect(jsonPath("$[0].classification").value("weak_match"))
         .andExpect(jsonPath("$[0].queryDigest", startsWith("sha256:")))
         .andExpect(jsonPath("$[0].installedMatchCount").value(0))
-        .andExpect(jsonPath("$[0].candidates[0].moduleId").value("sea-module-weather"))
+        .andExpect(jsonPath("$[0].candidates[0].moduleId").value("zalava-module-weather"))
         .andExpect(jsonPath("$[0].candidates[0].rank").value(1))
         .andExpect(content().string(not(containsString("forecast pollen"))));
   }
@@ -110,7 +110,7 @@ class CapabilityGapAdminComponentTest {
         public List<RemoteModuleCandidate> lookup(String normalizedQuery) {
           return List.of(
               new RemoteModuleCandidate(
-                  "sea-module-weather",
+                  "zalava-module-weather",
                   "1.0.0",
                   "d".repeat(64),
                   "Weather",

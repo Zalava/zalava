@@ -27,7 +27,7 @@ class DefaultModuleLocatorInstallationTest {
                 URI.create("https://maven.pkg.github.com/Zalava/zalava-module-brave-search"));
 
     new DefaultModuleLocatorInstallation(locator, releases)
-        .create(new ModuleLocatorInstallation.Request("sea-module-brave-search", "1.0.2", null));
+        .create(new ModuleLocatorInstallation.Request("zalava-module-brave-search", "1.0.2", null));
 
     assertThat(releases.request.manifestUri().getPath())
         .contains("33590c1b3211fd6ba4021629460abfaf7c7e98ff");

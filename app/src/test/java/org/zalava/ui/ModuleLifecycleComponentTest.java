@@ -49,7 +49,7 @@ class ModuleLifecycleComponentTest {
 
   private static Path workspace() {
     try {
-      return Files.createTempDirectory("sea-module-lifecycle-component-");
+      return Files.createTempDirectory("zalava-module-lifecycle-component-");
     } catch (java.io.IOException exception) {
       throw new IllegalStateException(exception);
     }

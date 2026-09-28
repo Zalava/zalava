@@ -183,7 +183,7 @@ class ModuleLocatorIndexLoaderRejectTest {
   }
 
   private static String moduleBlock() {
-    return "  - moduleId: sea-module-brave-search\n"
+    return "  - moduleId: zalava-module-brave-search\n"
         + "    displayName: Brave Search\n"
         + "    description: Provider-scoped web search backed by Brave Search\n"
         + "    repository: https://github.com/Zalava/zalava-module-brave-search\n"

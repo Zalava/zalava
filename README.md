@@ -1,6 +1,6 @@
 # Zalava
 
-Zalava is a local-first personal AI platform. A small Java host provides runtime,
+Zalava is a multi-user modular AI platform. A small Java host provides runtime,
 policy, persistence, and user experience; independently released JVM modules
 provide integrations through a stable Module API.
 

@@ -668,7 +668,8 @@ public class SeaConfiguration {
         org.zalava.FactorySecretAccess.none(),
         secrets,
         java.util.Map.of(
-            "sea-module-tasks", java.util.Map.of(org.zalava.tasks.TaskService.class, taskService)));
+            "zalava-module-tasks",
+            java.util.Map.of(org.zalava.tasks.TaskService.class, taskService)));
   }
 
   ProviderFactoryContext seaProviderFactoryContext(

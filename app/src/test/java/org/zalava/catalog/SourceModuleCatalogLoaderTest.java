@@ -33,15 +33,15 @@ class SourceModuleCatalogLoaderTest {
     assertThat(catalog.entries()).hasSize(2);
     assertThat(catalog.entries())
         .extracting(SourceModuleCatalog.Entry::moduleId)
-        .containsExactly("sea-module-shopping-list", "sea-module-time");
+        .containsExactly("zalava-module-shopping-list", "zalava-module-time");
     assertThat(catalog.entries())
         .extracting(SourceModuleCatalog.Entry::path)
-        .containsExactly("sea-module-shopping-list.yaml", "sea-module-time.yaml");
+        .containsExactly("zalava-module-shopping-list.yaml", "zalava-module-time.yaml");
     assertThat(catalog.entries())
         .extracting(SourceModuleCatalog.Entry::sha256)
         .containsExactly(
-            "86779c237c123982aff458b1c7f419ebf433fec79e727ae692e6835dfa36ef75",
-            "aa34e2556c58a58b513a58ea9216e11f2c29c83ee7e74e422091006b51b23c7b");
+            "12a285d3fd7ea2e446ba5398d1bbf98597c74814347217eeb92aff5910a06210",
+            "c1b6523987aa570a03ca1c8be8391fcab72b6fcdabde308eaa7da97ed3587147");
     assertThat(catalog.entries())
         .allSatisfy(
             entry ->
@@ -52,12 +52,12 @@ class SourceModuleCatalogLoaderTest {
 
   @Test
   void rejectsDigestMismatch() throws Exception {
-    Path index = writeIndex("sea-module-files.yaml", "sea-module-files");
+    Path index = writeIndex("zalava-module-files.yaml", "zalava-module-files");
     writeCatalog(
         catalog(
             """
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """));
 
@@ -72,8 +72,8 @@ class SourceModuleCatalogLoaderTest {
     writeCatalog(
         catalog(
             """
-                  - moduleId: sea-module-files
-                    path: ../sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: ../zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """));
 
@@ -87,8 +87,8 @@ class SourceModuleCatalogLoaderTest {
     writeCatalog(
         catalog(
             """
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: ABC
                 """));
 
@@ -99,15 +99,15 @@ class SourceModuleCatalogLoaderTest {
 
   @Test
   void rejectsDuplicateModuleIds() throws Exception {
-    Path index = writeIndex("sea-module-files.yaml", "sea-module-files");
+    Path index = writeIndex("zalava-module-files.yaml", "zalava-module-files");
     String digest = sha256(index);
     writeCatalog(
         catalog(
             """
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: %s
-                  - moduleId: sea-module-files
+                  - moduleId: zalava-module-files
                     path: copy.yaml
                     sha256: %s
                 """
@@ -121,13 +121,13 @@ class SourceModuleCatalogLoaderTest {
 
   @Test
   void rejectsCatalogEntryMissingFromReferencedIndex() throws Exception {
-    Path index = writeIndex("sea-module-files.yaml", "sea-module-files");
+    Path index = writeIndex("zalava-module-files.yaml", "zalava-module-files");
     String digest = sha256(index);
     writeCatalog(
         catalog(
             """
-                  - moduleId: sea-module-time
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-time
+                    path: zalava-module-files.yaml
                     sha256: %s
                 """
                 .formatted(digest)));
@@ -144,7 +144,7 @@ class SourceModuleCatalogLoaderTest {
     writeCatalog(
         catalog(
             """
-                  - moduleId: sea-module-files
+                  - moduleId: zalava-module-files
                     path: broken.yaml
                     sha256: %s
                 """
@@ -165,8 +165,8 @@ class SourceModuleCatalogLoaderTest {
                   indexRepository: https://github.com/example/sea-modules
                   indexPath: catalog.yaml
                 entries:
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """);
 
@@ -185,8 +185,8 @@ class SourceModuleCatalogLoaderTest {
                   indexRepository: ssh://git@github.com/example/sea-modules.git
                   indexPath: catalog.yaml
                 entries:
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """);
 
@@ -205,8 +205,8 @@ class SourceModuleCatalogLoaderTest {
                   indexRepository: https://github.com/example/sea-modules
                   indexPath: ../catalog.yaml
                 entries:
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """);
 
@@ -230,8 +230,8 @@ class SourceModuleCatalogLoaderTest {
                   - repositoryId: maven-central
                     url: https://repo.example.com/maven2
                 entries:
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """);
 
@@ -253,8 +253,8 @@ class SourceModuleCatalogLoaderTest {
                   - repositoryId: maven-central
                     url: http://repo.maven.apache.org/maven2
                 entries:
-                  - moduleId: sea-module-files
-                    path: sea-module-files.yaml
+                  - moduleId: zalava-module-files
+                    path: zalava-module-files.yaml
                     sha256: "0000000000000000000000000000000000000000000000000000000000000000"
                 """);
 
@@ -305,13 +305,13 @@ class SourceModuleCatalogLoaderTest {
                     version: 1.0.0
                     displayName: Files
                     description: Workspace-bound file operations
-                    supportUrl: https://github.com/example/sea-module-files
+                    supportUrl: https://github.com/example/zalava-module-files
                     artifact:
                       groupId: ai.sea.modules
-                      artifactId: sea-module-files
+                      artifactId: zalava-module-files
                       version: 1.0.0
                     source:
-                      repository: https://github.com/example/sea-module-files.git
+                      repository: https://github.com/example/zalava-module-files.git
                       license: Apache-2.0
                     build:
                       command: ["./gradlew", "build"]
