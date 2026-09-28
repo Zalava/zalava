@@ -308,16 +308,16 @@ public final class DevelopmentCandidateEvaluator {
               + requirement);
     JsonNode envelope = JSON.valueToTree(response.content());
     if (!envelope.isObject()
-        || !envelope.path("code").isTextual()
-        || envelope.path("code").asText().isBlank()) {
+        || !envelope.path("code").isString()
+        || envelope.path("code").stringValue("").isBlank()) {
       throw new IllegalStateException("Expected error envelope is invalid for " + requirement);
     }
-    if (!expectedCode.equals(envelope.path("code").asText())) {
+    if (!expectedCode.equals(envelope.path("code").stringValue(""))) {
       throw new IllegalStateException(
           "Expected error code "
               + expectedCode
               + " but observed "
-              + envelope.path("code").asText());
+              + envelope.path("code").stringValue(""));
     }
   }
 
@@ -473,7 +473,7 @@ public final class DevelopmentCandidateEvaluator {
                 sanitized.set(
                     entry.getKey(),
                     isSensitiveKey(entry.getKey())
-                        ? JSON.getNodeFactory().textNode("[REDACTED]")
+                        ? JSON.getNodeFactory().stringNode("[REDACTED]")
                         : sanitize(entry.getValue())));
     return sanitized;
   }

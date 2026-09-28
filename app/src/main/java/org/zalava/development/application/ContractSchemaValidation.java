@@ -56,11 +56,12 @@ final class ContractSchemaValidation {
 
   static List<JsonNode> invalidInputs(String schemaSource, JsonNode validInput) {
     JsonNode schema = schema(schemaSource, "Requested input schema");
-    if (!schema.path("type").asText().equals("object") || !validInput.isObject()) return List.of();
+    if (!schema.path("type").stringValue("").equals("object") || !validInput.isObject())
+      return List.of();
     var probes = new java.util.ArrayList<JsonNode>();
     for (JsonNode required : schema.path("required")) {
       ObjectNode missing = (ObjectNode) validInput.deepCopy();
-      missing.remove(required.asText());
+      missing.remove(required.stringValue(""));
       addIfInvalid(schemaSource, missing, probes);
     }
     schema
@@ -86,17 +87,19 @@ final class ContractSchemaValidation {
 
   private static List<JsonNode> invalidValues(JsonNode definition) {
     var values = new java.util.ArrayList<JsonNode>();
-    switch (definition.path("type").asText()) {
+    switch (definition.path("type").stringValue("")) {
       case "string" -> values.add(JSON.getNodeFactory().numberNode(1));
-      case "integer", "number" -> values.add(JSON.getNodeFactory().textNode("not-a-number"));
-      case "boolean" -> values.add(JSON.getNodeFactory().textNode("not-a-boolean"));
-      case "array" -> values.add(JSON.getNodeFactory().textNode("not-an-array"));
-      case "object" -> values.add(JSON.getNodeFactory().textNode("not-an-object"));
+      case "integer", "number" -> values.add(JSON.getNodeFactory().stringNode("not-a-number"));
+      case "boolean" -> values.add(JSON.getNodeFactory().stringNode("not-a-boolean"));
+      case "array" -> values.add(JSON.getNodeFactory().stringNode("not-an-array"));
+      case "object" -> values.add(JSON.getNodeFactory().stringNode("not-an-object"));
       default -> {}
     }
-    if (definition.has("enum")) values.add(JSON.getNodeFactory().textNode("__sea_invalid_enum__"));
+    if (definition.has("enum"))
+      values.add(JSON.getNodeFactory().stringNode("__sea_invalid_enum__"));
     if (definition.has("format"))
-      values.add(JSON.getNodeFactory().textNode("not-a-" + definition.path("format").asText()));
+      values.add(
+          JSON.getNodeFactory().stringNode("not-a-" + definition.path("format").stringValue("")));
     if (definition.has("minimum"))
       values.add(
           JSON.getNodeFactory()

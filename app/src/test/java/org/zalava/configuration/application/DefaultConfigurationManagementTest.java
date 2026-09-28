@@ -1,7 +1,6 @@
 package org.zalava.configuration.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +27,7 @@ class DefaultConfigurationManagementTest {
 
     management.updateProperties(Map.of("agent.enabled", true, "spring.ai.model", "openai"));
 
-    var writtenConfiguration = forClass(Map.class);
+    var writtenConfiguration = org.mockito.ArgumentCaptor.<Map<String, Object>>captor();
     verify(configurationStore).write(writtenConfiguration.capture());
     assertThat(writtenConfiguration.getValue()).containsEntry("agent", Map.of("enabled", true));
     assertThat(writtenConfiguration.getValue())

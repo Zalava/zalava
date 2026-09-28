@@ -14,6 +14,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.core.io.FileSystemResource;
 
+@SuppressWarnings("deprecation")
 class FileSystemChatMemoryRepositoryTest {
 
   @TempDir Path workspaceDir;

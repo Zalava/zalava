@@ -12,6 +12,7 @@ import org.zalava.memory.AgentMemoryDraft;
 import org.zalava.memory.AgentMemoryScope;
 import org.zalava.memory.AgentMemoryStore;
 
+@SuppressWarnings("deprecation")
 class AgentContextAssemblerTest {
 
   @Test

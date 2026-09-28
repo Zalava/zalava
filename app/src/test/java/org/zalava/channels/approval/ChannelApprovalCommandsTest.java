@@ -25,6 +25,7 @@ import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
 import tools.jackson.databind.ObjectMapper;
 
+@SuppressWarnings("deprecation")
 class ChannelApprovalCommandsTest {
 
   private static final ObjectMapper JSON = new ObjectMapper();

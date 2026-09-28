@@ -80,8 +80,8 @@ class AnthropticClaudeCodeConfigurationTest {
             });
 
     assertThat(chatModel).isNotNull();
-    assertThat(chatModel.getDefaultOptions()).isInstanceOf(AnthropicChatOptions.class);
-    AnthropicChatOptions options = (AnthropicChatOptions) chatModel.getDefaultOptions();
+    assertThat(chatModel.getOptions()).isInstanceOf(AnthropicChatOptions.class);
+    AnthropicChatOptions options = (AnthropicChatOptions) chatModel.getOptions();
     assertThat(options.getApiKey())
         .isEqualTo(AnthropticClaudeCodeConfiguration.CLAUDE_CODE_OATH_TOKEN_PLACEHOLDER);
     assertThat(options.getBaseUrl()).isEqualTo("https://api.anthropic.com");
@@ -103,7 +103,7 @@ class AnthropticClaudeCodeConfigurationTest {
             emptyObservationConvention());
 
     assertThat(chatModel).isNotNull();
-    AnthropicChatOptions options = (AnthropicChatOptions) chatModel.getDefaultOptions();
+    AnthropicChatOptions options = (AnthropicChatOptions) chatModel.getOptions();
     assertThat(options.getApiKey()).isNotBlank();
   }
 

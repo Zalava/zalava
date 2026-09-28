@@ -22,16 +22,18 @@ final class AcceptanceAssertions {
           case "equals", "json_equal" -> expected.equals(actual);
           case "notEquals" -> !expected.equals(actual);
           case "exists" -> !actual.isMissingNode() && !actual.isNull();
-          case "type" -> actualType(actual).equals(expected.asText());
+          case "type" -> actualType(actual).equals(expected.stringValue(""));
           case "matches" ->
-              actual.isTextual()
-                  && Pattern.compile(expected.asText()).matcher(actual.asText()).matches();
+              actual.isString()
+                  && Pattern.compile(expected.stringValue(""))
+                      .matcher(actual.stringValue(""))
+                      .matches();
           case "between" -> within(actual, expected);
           case "minItems" -> actual.isArray() && actual.size() >= expected.asInt();
           case "maxItems" -> actual.isArray() && actual.size() <= expected.asInt();
           case "contains" -> contains(actual, expected);
           case "unique" -> unique(actual);
-          case "orderedBy" -> orderedBy(actual, expected.asText());
+          case "orderedBy" -> orderedBy(actual, expected.stringValue(""));
           default ->
               throw new IllegalStateException(
                   "Unsupported acceptance assertion type: " + assertion.type());
@@ -69,9 +71,9 @@ final class AcceptanceAssertions {
       for (JsonNode value : actual) if (value.equals(expected)) return true;
       return false;
     }
-    return actual.isTextual()
-        && expected.isTextual()
-        && actual.asText().contains(expected.asText());
+    return actual.isString()
+        && expected.isString()
+        && actual.stringValue("").contains(expected.stringValue(""));
   }
 
   private static boolean unique(JsonNode actual) {
@@ -98,14 +100,14 @@ final class AcceptanceAssertions {
   private static int compare(JsonNode left, JsonNode right) {
     if (left.isNumber() && right.isNumber())
       return left.decimalValue().compareTo(right.decimalValue());
-    return left.asText().compareTo(right.asText());
+    return left.stringValue("").compareTo(right.stringValue(""));
   }
 
   private static String actualType(JsonNode actual) {
     if (actual.isMissingNode() || actual.isNull()) return "null";
     if (actual.isObject()) return "object";
     if (actual.isArray()) return "array";
-    if (actual.isTextual()) return "string";
+    if (actual.isString()) return "string";
     if (actual.isBoolean()) return "boolean";
     if (actual.isIntegralNumber()) return "integer";
     if (actual.isNumber()) return "number";

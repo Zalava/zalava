@@ -2,7 +2,6 @@ package org.zalava.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -28,6 +27,7 @@ import org.zalava.memory.AgentMemoryDraft;
 import org.zalava.memory.AgentMemoryScope;
 import org.zalava.memory.AgentMemoryStore;
 
+@SuppressWarnings("deprecation")
 class DefaultAgentTest {
 
   private final ChatClient chatClient = mock(ChatClient.class);
@@ -48,7 +48,10 @@ class DefaultAgentTest {
         .thenReturn(selection(List.of(taskTool, seaCallback)));
     when(chatClient.prompt("question")).thenReturn(request);
     when(request.tools(taskTool, seaCallback)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("answer");
 
@@ -56,7 +59,10 @@ class DefaultAgentTest {
 
     verify(request).tools(taskTool, seaCallback);
     verify(requestTools).resolve("conversation-1", "question");
-    verify(request).advisors(any(java.util.function.Consumer.class));
+    verify(request)
+        .advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any());
     assertThat(runRecorder.recent())
         .singleElement()
         .satisfies(
@@ -90,7 +96,10 @@ class DefaultAgentTest {
         .thenReturn(selection(List.of(taskTool, seaCallback)));
     when(chatClient.prompt("structured")).thenReturn(request);
     when(request.tools(taskTool, seaCallback)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.entity(Result.class)).thenReturn(expected);
 
@@ -118,7 +127,10 @@ class DefaultAgentTest {
     when(requestTools.resolve("conversation-1", "broken")).thenReturn(selection(List.of(taskTool)));
     when(chatClient.prompt("broken")).thenReturn(request);
     when(request.tools(taskTool)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenThrow(new IllegalStateException("model failed"));
 
     assertThatThrownBy(() -> agent.respondTo("conversation-1", "broken"))
@@ -143,7 +155,10 @@ class DefaultAgentTest {
         .thenReturn(selection(List.of(taskTool)));
     when(chatClient.prompt("question b")).thenReturn(request);
     when(request.tools(taskTool)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("answer");
 
@@ -180,7 +195,10 @@ class DefaultAgentTest {
     when(chatClient.prompt(org.mockito.ArgumentMatchers.contains("Selected SEA tool summaries:")))
         .thenReturn(request);
     when(request.tools(taskTool, seaCallback)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("answer");
 
@@ -227,7 +245,10 @@ class DefaultAgentTest {
     when(chatClient.prompt(org.mockito.ArgumentMatchers.contains("Selected SEA tool definitions:")))
         .thenReturn(request);
     when(request.tools(taskTool, seaCallback)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("answer");
 
@@ -264,7 +285,10 @@ class DefaultAgentTest {
     when(chatClient.prompt(org.mockito.ArgumentMatchers.contains("Selected memories:")))
         .thenReturn(request);
     when(request.tools(taskTool)).thenReturn(request);
-    when(request.advisors(any(java.util.function.Consumer.class))).thenReturn(request);
+    when(request.advisors(
+            org.mockito.ArgumentMatchers
+                .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("answer");
 

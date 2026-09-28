@@ -355,25 +355,25 @@ class ModuleCompatibilityAcceptanceTest {
         .as("release preparation must not be rejected by the control endpoint")
         .doesNotContain("alert-danger");
     JsonNode prepared = JSON.readTree(newestRequestFile().toFile());
-    assertThat(prepared.path("module").path("moduleId").asText()).isEqualTo(pin.moduleId());
-    assertThat(prepared.path("module").path("version").asText()).isEqualTo(pin.version());
-    assertThat(prepared.path("artifactDigest").asText())
+    assertThat(prepared.path("module").path("moduleId").stringValue("")).isEqualTo(pin.moduleId());
+    assertThat(prepared.path("module").path("version").stringValue("")).isEqualTo(pin.version());
+    assertThat(prepared.path("artifactDigest").stringValue(""))
         .as("pinned release bundle SHA-256 %s:%s", pin.moduleId(), pin.version())
         .isEqualTo("sha256:" + pin.releaseDigestHex());
-    return prepared.path("requestId").asText();
+    return prepared.path("requestId").stringValue("");
   }
 
   private static void assertPinned(JsonNode enabled, PinnedRelease pin) {
     assertThat(enabled)
         .as("pinned release %s:%s must be enabled", pin.moduleId(), pin.version())
         .isNotNull();
-    assertThat(enabled.path("version").asText())
+    assertThat(enabled.path("version").stringValue(""))
         .as("pinned version for %s", pin.moduleId())
         .isEqualTo(pin.version());
-    assertThat(enabled.path("artifactDigest").asText())
+    assertThat(enabled.path("artifactDigest").stringValue(""))
         .as("installed module JAR SHA-256 %s:%s", pin.moduleId(), pin.version())
         .isEqualTo("sha256:" + pin.installedArtifactDigestHex());
-    assertThat(enabled.path("sourceRepository").asText())
+    assertThat(enabled.path("sourceRepository").stringValue(""))
         .as("pinned source repository for %s", pin.moduleId())
         .isEqualTo(pin.sourceRepository());
   }
@@ -592,7 +592,7 @@ class ModuleCompatibilityAcceptanceTest {
   }
 
   private String latestRequestStatus() throws IOException {
-    return JSON.readTree(newestRequestFile().toFile()).path("status").asText();
+    return JSON.readTree(newestRequestFile().toFile()).path("status").stringValue("");
   }
 
   private Path newestRequestFile() throws IOException {
@@ -609,7 +609,7 @@ class ModuleCompatibilityAcceptanceTest {
     Path registry = WORKSPACE.resolve("source-module-installation/enabled-modules.json");
     if (!Files.isRegularFile(registry)) return null;
     for (JsonNode entry : JSON.readTree(registry.toFile())) {
-      if (moduleId.equals(entry.path("moduleId").asText())) return entry;
+      if (moduleId.equals(entry.path("moduleId").stringValue(""))) return entry;
     }
     return null;
   }

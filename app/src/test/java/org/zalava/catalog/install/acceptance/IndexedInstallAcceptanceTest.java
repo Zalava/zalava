@@ -124,15 +124,15 @@ class IndexedInstallAcceptanceTest {
 
     JsonNode enabled = enabledModule(MODULE_ID);
     assertThat(enabled).isNotNull();
-    assertThat(enabled.path("version").asText()).isEqualTo(VERSION);
-    assertThat(enabled.path("artifactDigest").asText()).isEqualTo(ARTIFACT_DIGEST);
-    assertThat(enabled.path("sourceRepository").asText())
+    assertThat(enabled.path("version").stringValue("")).isEqualTo(VERSION);
+    assertThat(enabled.path("artifactDigest").stringValue("")).isEqualTo(ARTIFACT_DIGEST);
+    assertThat(enabled.path("sourceRepository").stringValue(""))
         .isEqualTo("https://github.com/Zalava/zalava-module-time.git");
-    assertThat(enabled.path("sourceLicense").asText()).isEqualTo("Apache-2.0");
-    assertThat(enabled.path("seaRuntimeCompatibility").asText()).isEqualTo(">=1.0.0 <2.0.0");
-    assertThat(enabled.path("binaryRepositoryId").asText()).isEqualTo("github-packages");
+    assertThat(enabled.path("sourceLicense").stringValue("")).isEqualTo("Apache-2.0");
+    assertThat(enabled.path("seaRuntimeCompatibility").stringValue("")).isEqualTo(">=1.0.0 <2.0.0");
+    assertThat(enabled.path("binaryRepositoryId").stringValue("")).isEqualTo("github-packages");
     assertThat(enabled.path("declaredPermissions")).isEmpty();
-    Path installedJar = Path.of(enabled.path("artifactPath").asText());
+    Path installedJar = Path.of(enabled.path("artifactPath").stringValue(""));
     assertThat(installedJar).exists();
 
     try (var restarted = RestartableSeaApplicationContext.start(WORKSPACE)) {
@@ -252,7 +252,7 @@ class IndexedInstallAcceptanceTest {
   }
 
   private String latestRequestStatus() throws IOException {
-    return JSON.readTree(newestRequestFile().toFile()).path("status").asText();
+    return JSON.readTree(newestRequestFile().toFile()).path("status").stringValue("");
   }
 
   private Path newestRequestFile() throws IOException {
@@ -269,7 +269,7 @@ class IndexedInstallAcceptanceTest {
     Path registry = WORKSPACE.resolve("source-module-installation/enabled-modules.json");
     if (!Files.isRegularFile(registry)) return null;
     for (JsonNode entry : JSON.readTree(registry.toFile())) {
-      if (moduleId.equals(entry.path("moduleId").asText())) return entry;
+      if (moduleId.equals(entry.path("moduleId").stringValue(""))) return entry;
     }
     return null;
   }

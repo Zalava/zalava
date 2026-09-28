@@ -18,6 +18,7 @@ import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 
+@SuppressWarnings("unchecked")
 class KnowledgeLibraryTest {
   private final Actor owner = new Actor(new AccountId(UUID.randomUUID()));
 

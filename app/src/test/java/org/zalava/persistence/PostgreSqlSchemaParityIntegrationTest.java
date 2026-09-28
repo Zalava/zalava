@@ -9,9 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.domain.AccountRole;
@@ -22,8 +22,8 @@ import org.zalava.accounts.domain.AccountRole;
 class PostgreSqlSchemaParityIntegrationTest {
 
   @Container
-  static final PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>(DockerImageName.parse("postgres:18.4-alpine"))
+  static final PostgreSQLContainer postgres =
+      new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
           .withDatabaseName("sea_schema_parity")
           .withUsername("sea_test")
           .withPassword("test-only-password");

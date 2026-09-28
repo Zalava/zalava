@@ -7,9 +7,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Tag("postgresql")
@@ -17,8 +17,8 @@ import org.testcontainers.utility.DockerImageName;
 class PostgreSqlJdbcIntegrationTest {
 
   @Container
-  static final PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>(DockerImageName.parse("postgres:18.4-alpine"))
+  static final PostgreSQLContainer postgres =
+      new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
           .withDatabaseName("sea_test")
           .withUsername("sea_test")
           .withPassword("test-only-password");

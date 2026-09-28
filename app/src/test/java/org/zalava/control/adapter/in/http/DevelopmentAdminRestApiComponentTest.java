@@ -402,7 +402,10 @@ class DevelopmentAdminRestApiComponentTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    return new tools.jackson.databind.ObjectMapper().readTree(body).get("requestId").asText();
+    return new tools.jackson.databind.ObjectMapper()
+        .readTree(body)
+        .get("requestId")
+        .stringValue("");
   }
 
   private String latestDevelopmentRequestId() throws IOException {

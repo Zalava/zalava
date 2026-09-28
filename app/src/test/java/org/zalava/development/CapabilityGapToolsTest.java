@@ -19,10 +19,11 @@ class CapabilityGapToolsTest {
             new CapabilityGapTools()
                 .recommend("pollen forecast", "Can you tell me tomorrow's pollen forecast?"));
 
-    assertThat(result.path("status").asText()).isEqualTo("REVIEW_REQUIRED");
-    assertThat(result.path("capability").asText()).isEqualTo("pollen forecast");
-    assertThat(result.path("userRequest").asText()).contains("pollen forecast");
-    assertThat(result.path("recommendedWorkflow").asText()).isEqualTo("manual_module_development");
+    assertThat(result.path("status").stringValue("")).isEqualTo("REVIEW_REQUIRED");
+    assertThat(result.path("capability").stringValue("")).isEqualTo("pollen forecast");
+    assertThat(result.path("userRequest").stringValue("")).contains("pollen forecast");
+    assertThat(result.path("recommendedWorkflow").stringValue(""))
+        .isEqualTo("manual_module_development");
     assertThat(result.path("confirmationRequired").asBoolean()).isTrue();
     assertThat(result.path("automaticActions")).isEmpty();
     assertThat(result.toString())

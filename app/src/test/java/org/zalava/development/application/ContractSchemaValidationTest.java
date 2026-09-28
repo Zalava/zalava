@@ -30,7 +30,8 @@ class ContractSchemaValidationTest {
         .anySatisfy(value -> assertThat(value.has("name")).isFalse())
         .anySatisfy(value -> assertThat(value.path("name").isNumber()).isTrue())
         .anySatisfy(
-            value -> assertThat(value.path("name").asText()).isEqualTo("__sea_invalid_enum__"))
+            value ->
+                assertThat(value.path("name").stringValue("")).isEqualTo("__sea_invalid_enum__"))
         .anySatisfy(
             value ->
                 assertThat(value.path("count").isNumber() && value.path("count").asInt() < 1)

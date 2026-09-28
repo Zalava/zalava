@@ -28,7 +28,7 @@ class DevelopmentCandidateWorkflowComponentTest {
   void drivesTheAgentFacingCandidateWorkflowAndExposesPersistedInvocationEvidence()
       throws Exception {
     JsonNode created = JSON.readTree(tools.create(contract(), "Verify external fixture workflow"));
-    String requestId = created.path("requestId").asText();
+    String requestId = created.path("requestId").stringValue("");
     Path workspace = workspace();
     Path exportedWorkspace = workspace.resolve("external-module-workspace").toAbsolutePath();
     Path artifact =
@@ -41,15 +41,17 @@ class DevelopmentCandidateWorkflowComponentTest {
     JsonNode submitted = JSON.readTree(tools.submit(requestId, artifact.toString()));
     JsonNode inspected = JSON.readTree(tools.inspect(requestId));
 
-    assertThat(exported.path("workspacePath").asText()).isEqualTo(exportedWorkspace.toString());
+    assertThat(exported.path("workspacePath").stringValue(""))
+        .isEqualTo(exportedWorkspace.toString());
     assertThat(exportedWorkspace.resolve(".sea-request/development-contract.yaml")).exists();
-    assertThat(begun.path("status").asText()).isEqualTo("IN_DEVELOPMENT");
-    assertThat(submitted.path("status").asText()).isEqualTo("READY_TO_INSTALL");
+    assertThat(begun.path("status").stringValue("")).isEqualTo("IN_DEVELOPMENT");
+    assertThat(submitted.path("status").stringValue("")).isEqualTo("READY_TO_INSTALL");
     assertThat(inspected.path("candidateAttempts")).hasSize(1);
     JsonNode invocation = inspected.path("candidateAttempts").get(0).path("invocations").get(0);
-    assertThat(invocation.path("toolName").asText()).isEqualTo("example_lookup");
-    assertThat(invocation.path("inputJson").asText()).isEqualTo("{}");
-    assertThat(invocation.path("responseJson").asText()).isEqualTo("{\"value\":\"fixture\"}");
+    assertThat(invocation.path("toolName").stringValue("")).isEqualTo("example_lookup");
+    assertThat(invocation.path("inputJson").stringValue("")).isEqualTo("{}");
+    assertThat(invocation.path("responseJson").stringValue(""))
+        .isEqualTo("{\"value\":\"fixture\"}");
     assertThat(invocation.path("success").asBoolean()).isTrue();
     assertThat(invocation.path("elapsedMillis").asLong()).isGreaterThanOrEqualTo(0L);
   }

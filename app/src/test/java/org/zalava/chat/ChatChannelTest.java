@@ -28,6 +28,7 @@ import org.zalava.tasks.domain.TaskReference;
 import org.zalava.tools.TaskCreationContext;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("deprecation")
 class ChatChannelTest {
 
   @Mock Agent agent;

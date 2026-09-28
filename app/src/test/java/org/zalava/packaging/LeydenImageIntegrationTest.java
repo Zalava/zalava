@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Tag("leyden-image")
@@ -29,8 +29,8 @@ class LeydenImageIntegrationTest {
     DockerClient dockerClient = DockerClientFactory.instance().client();
 
     try (Network network = Network.newNetwork();
-        PostgreSQLContainer<?> postgres =
-            new PostgreSQLContainer<>(DockerImageName.parse("postgres:18.4-alpine"))
+        PostgreSQLContainer postgres =
+            new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
                 .withDatabaseName("sea_leyden")
                 .withUsername("sea_leyden")
                 .withPassword(databasePassword)

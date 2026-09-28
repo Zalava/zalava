@@ -34,6 +34,7 @@ import org.zalava.operation.application.port.in.ProviderToolOperations;
 import org.zalava.tools.TaskCreationContext;
 import tools.jackson.databind.JsonNode;
 
+@SuppressWarnings("deprecation")
 class ChatApprovalCommandComponentTest {
 
   @Test
@@ -217,8 +218,8 @@ class ChatApprovalCommandComponentTest {
     @Override
     public SeaOperationResult callTool(
         String toolName, JsonNode arguments, InvocationContext context) {
-      calls.add(arguments.get("name").asText());
-      return SeaOperationResult.success(Map.of("name", arguments.get("name").asText()));
+      calls.add(arguments.get("name").stringValue(""));
+      return SeaOperationResult.success(Map.of("name", arguments.get("name").stringValue("")));
     }
 
     private List<String> calls() {

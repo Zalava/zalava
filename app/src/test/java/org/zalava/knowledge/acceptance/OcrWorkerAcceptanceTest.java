@@ -155,8 +155,8 @@ class OcrWorkerAcceptanceTest {
 
     JsonNode enabled = enabledModule(MODULE_ID);
     assertThat(enabled).isNotNull();
-    assertThat(enabled.path("version").asText()).isEqualTo(VERSION);
-    assertThat(enabled.path("artifactDigest").asText()).isEqualTo(MODULE_JAR_DIGEST);
+    assertThat(enabled.path("version").stringValue("")).isEqualTo(VERSION);
+    assertThat(enabled.path("artifactDigest").stringValue("")).isEqualTo(MODULE_JAR_DIGEST);
     assertThat(latestRequestArtifactDigest())
         .as("the release-index bundle artifact SHA-256 the installer verified")
         .isEqualTo(ARTIFACT_DIGEST);
@@ -495,11 +495,11 @@ class OcrWorkerAcceptanceTest {
   }
 
   private String latestRequestStatus() throws IOException {
-    return JSON.readTree(newestRequestFile().toFile()).path("status").asText();
+    return JSON.readTree(newestRequestFile().toFile()).path("status").stringValue("");
   }
 
   private String latestRequestArtifactDigest() throws IOException {
-    return JSON.readTree(newestRequestFile().toFile()).path("artifactDigest").asText();
+    return JSON.readTree(newestRequestFile().toFile()).path("artifactDigest").stringValue("");
   }
 
   private Path newestRequestFile() throws IOException {
@@ -516,7 +516,7 @@ class OcrWorkerAcceptanceTest {
     Path registry = WORKSPACE.resolve("source-module-installation/enabled-modules.json");
     if (!Files.isRegularFile(registry)) return null;
     for (JsonNode entry : JSON.readTree(registry.toFile())) {
-      if (moduleId.equals(entry.path("moduleId").asText())) return entry;
+      if (moduleId.equals(entry.path("moduleId").stringValue(""))) return entry;
     }
     return null;
   }

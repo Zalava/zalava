@@ -1,5 +1,6 @@
 package org.zalava.configuration;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public record ConfigurationChangedEvent(Map<String, Object> allConfig) {
@@ -11,7 +12,14 @@ public record ConfigurationChangedEvent(Map<String, Object> allConfig) {
       Object configItem = map.get(keys[i]);
       if (configItem == null) return null;
       else if (configItem instanceof Map<?, ?> nestedMap) {
-        map = (Map<String, Object>) nestedMap;
+        Map<String, Object> nestedConfiguration = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : nestedMap.entrySet()) {
+          if (!(entry.getKey() instanceof String nestedKey)) {
+            return null;
+          }
+          nestedConfiguration.put(nestedKey, entry.getValue());
+        }
+        map = nestedConfiguration;
       }
     }
     return map.get(keys[keys.length - 1]);

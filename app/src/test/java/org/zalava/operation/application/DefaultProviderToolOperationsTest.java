@@ -480,7 +480,7 @@ class DefaultProviderToolOperationsTest {
       calls.incrementAndGet();
       return SeaOperationResult.success(
           Map.of(
-              "path", arguments.path("path").asText(),
+              "path", arguments.path("path").stringValue(""),
               "confirmed", context.confirmed()));
     }
   }

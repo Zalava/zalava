@@ -109,7 +109,8 @@ public final class JdkModuleLocatorReleaseLocator implements ModuleLocatorReleas
     String revision;
     try {
       JsonNode commits = json.readTree(request(commitUri, "application/vnd.github+json"));
-      revision = commits.isArray() && !commits.isEmpty() ? commits.get(0).path("sha").asText() : "";
+      revision =
+          commits.isArray() && !commits.isEmpty() ? commits.get(0).path("sha").stringValue("") : "";
     } catch (RuntimeException exception) {
       throw new SourceModuleInstallationException(
           "Unable to parse GitHub module revision", exception);

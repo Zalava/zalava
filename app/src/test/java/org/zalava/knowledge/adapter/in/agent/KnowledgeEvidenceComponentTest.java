@@ -105,11 +105,11 @@ class KnowledgeEvidenceComponentTest {
                 var result =
                     new tools.jackson.databind.ObjectMapper()
                         .readTree(callback.call("{\"query\":\"" + marker + "\",\"limit\":1}"));
-                assertThat(result.path("status").asText()).isEqualTo("OK");
+                assertThat(result.path("status").stringValue("")).isEqualTo("OK");
                 var evidence = result.path("sources").get(0);
-                return evidence.path("excerpt").asText()
+                return evidence.path("excerpt").stringValue("")
                     + " [source]("
-                    + evidence.path("citation").asText()
+                    + evidence.path("citation").stringValue("")
                     + ")";
               })
           .when(model)

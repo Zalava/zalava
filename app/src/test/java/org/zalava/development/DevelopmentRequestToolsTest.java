@@ -43,27 +43,29 @@ class DevelopmentRequestToolsTest {
     var tools = new DevelopmentRequestTools(management, exports, candidates);
 
     JsonNode created = JSON.readTree(tools.create(contract(), "Add time capability"));
-    JsonNode inspected = JSON.readTree(tools.inspect(created.path("requestId").asText()));
+    JsonNode inspected = JSON.readTree(tools.inspect(created.path("requestId").stringValue("")));
     JsonNode exported =
         JSON.readTree(
-            tools.export(created.path("requestId").asText(), "/external/zalava-module-time"));
+            tools.export(
+                created.path("requestId").stringValue(""), "/external/zalava-module-time"));
 
-    assertThat(created.path("status").asText()).isEqualTo("PREPARED");
-    assertThat(inspected.path("moduleId").asText()).isEqualTo("zalava-module-time");
-    assertThat(inspected.path("installationApproval").asText()).isEqualTo("not_available");
-    assertThat(exported.path("workspacePath").asText()).isEqualTo("/external/zalava-module-time");
-    assertThat(exported.path("codexCommand").asText())
+    assertThat(created.path("status").stringValue("")).isEqualTo("PREPARED");
+    assertThat(inspected.path("moduleId").stringValue("")).isEqualTo("zalava-module-time");
+    assertThat(inspected.path("installationApproval").stringValue("")).isEqualTo("not_available");
+    assertThat(exported.path("workspacePath").stringValue(""))
+        .isEqualTo("/external/zalava-module-time");
+    assertThat(exported.path("codexCommand").stringValue(""))
         .isEqualTo("cd /external/zalava-module-time && codex");
-    assertThat(exported.path("initialPrompt").asText())
+    assertThat(exported.path("initialPrompt").stringValue(""))
         .isEqualTo("Read .sea-request/CODEX_TASK.md and begin the implementation.");
     assertThat(exported.path("nextSteps")).hasSize(3);
 
     management.transition(
-        new DevelopmentRequestId(created.path("requestId").asText()),
+        new DevelopmentRequestId(created.path("requestId").stringValue("")),
         DevelopmentRequestStatus.EXPORTED);
-    JsonNode started = JSON.readTree(tools.begin(created.path("requestId").asText()));
+    JsonNode started = JSON.readTree(tools.begin(created.path("requestId").stringValue("")));
 
-    assertThat(started.path("status").asText()).isEqualTo("IN_DEVELOPMENT");
+    assertThat(started.path("status").stringValue("")).isEqualTo("IN_DEVELOPMENT");
     assertThat(started.path("candidateAttempts")).isEmpty();
   }
 

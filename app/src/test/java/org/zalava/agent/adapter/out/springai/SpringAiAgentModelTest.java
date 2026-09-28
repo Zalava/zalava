@@ -57,7 +57,8 @@ class SpringAiAgentModelTest {
     AssistantMessage output = mock(AssistantMessage.class);
     when(chatClient.prompt("prompt")).thenReturn(request);
     when(request.tools(any(Object[].class))).thenReturn(request);
-    when(request.advisors(any(Consumer.class))).thenReturn(request);
+    when(request.advisors(org.mockito.ArgumentMatchers.<Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.chatResponse()).thenReturn(chatResponse);
     when(chatResponse.getResult()).thenReturn(generation);
@@ -69,7 +70,7 @@ class SpringAiAgentModelTest {
         .isEqualTo(new TaskAgent.Result(Task.Status.completed, "done"));
 
     ArgumentCaptor<Consumer<ChatClient.AdvisorSpec>> advisor =
-        ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor.<Consumer<ChatClient.AdvisorSpec>>captor();
     verify(request, times(2)).advisors(advisor.capture());
     ChatClient.AdvisorSpec advisorSpec = mock(ChatClient.AdvisorSpec.class);
     advisor.getAllValues().getLast().accept(advisorSpec);
@@ -97,7 +98,8 @@ class SpringAiAgentModelTest {
             .build();
     when(chatClient.prompt("prompt")).thenReturn(request);
     when(request.tools(any(Object[].class))).thenReturn(request);
-    when(request.advisors(any(Consumer.class))).thenReturn(request);
+    when(request.advisors(org.mockito.ArgumentMatchers.<Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.chatResponse()).thenReturn(new ChatResponse(List.of(new Generation(output))));
     when(callback.getToolDefinition()).thenReturn(definition);
@@ -121,7 +123,8 @@ class SpringAiAgentModelTest {
     Result expected = new Result("sea");
     when(chatClient.prompt("prompt")).thenReturn(request);
     when(request.tools(any(Object[].class))).thenReturn(request);
-    when(request.advisors(any(Consumer.class))).thenReturn(request);
+    when(request.advisors(org.mockito.ArgumentMatchers.<Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.advisors(any(Advisor[].class))).thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.entity(eq(Result.class), any())).thenReturn(expected);
@@ -140,7 +143,7 @@ class SpringAiAgentModelTest {
     assertThat(repeats.getInt(advisors.getValue()[0])).isEqualTo(2);
 
     ArgumentCaptor<Consumer<ChatClient.EntityParamSpec>> output =
-        ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor.<Consumer<ChatClient.EntityParamSpec>>captor();
     verify(response).entity(eq(Result.class), output.capture());
     ChatClient.EntityParamSpec parameters = mock(ChatClient.EntityParamSpec.class);
     when(parameters.useProviderStructuredOutput()).thenReturn(parameters);
@@ -198,7 +201,8 @@ class SpringAiAgentModelTest {
     ChatClient.CallResponseSpec response = mock(ChatClient.CallResponseSpec.class);
     when(chatClient.prompt("prompt")).thenReturn(request);
     when(request.tools(any(Object[].class))).thenReturn(request);
-    when(request.advisors(any(Consumer.class))).thenReturn(request);
+    when(request.advisors(org.mockito.ArgumentMatchers.<Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("reply");
 
@@ -222,7 +226,8 @@ class SpringAiAgentModelTest {
             .build();
     when(chatClient.prompt("prompt")).thenReturn(request);
     when(request.tools(any(Object[].class))).thenReturn(request);
-    when(request.advisors(any(Consumer.class))).thenReturn(request);
+    when(request.advisors(org.mockito.ArgumentMatchers.<Consumer<ChatClient.AdvisorSpec>>any()))
+        .thenReturn(request);
     when(request.call()).thenReturn(response);
     when(response.content()).thenReturn("reply");
     when(callback.getToolDefinition()).thenReturn(definition);

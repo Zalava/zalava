@@ -55,14 +55,15 @@ class DevelopmentCandidateSubmissionTest {
             candidates);
     JsonNode created =
         JSON.readTree(tools.create(contract("{\"fail\":true}"), "Fixture manual Codex pilot"));
-    DevelopmentRequestId requestId = new DevelopmentRequestId(created.path("requestId").asText());
+    DevelopmentRequestId requestId =
+        new DevelopmentRequestId(created.path("requestId").stringValue(""));
     Path workspace = managedWorkspace.resolve("exported-workspace").toAbsolutePath();
 
     JsonNode exported = JSON.readTree(tools.export(requestId.value(), workspace.toString()));
     JsonNode begun = JSON.readTree(tools.begin(requestId.value()));
-    assertThat(exported.path("workspacePath").asText()).isEqualTo(workspace.toString());
+    assertThat(exported.path("workspacePath").stringValue("")).isEqualTo(workspace.toString());
     assertThat(workspace.resolve(".sea-request/development-contract.yaml")).exists();
-    assertThat(begun.path("status").asText()).isEqualTo("IN_DEVELOPMENT");
+    assertThat(begun.path("status").stringValue("")).isEqualTo("IN_DEVELOPMENT");
 
     Path rejectedArtifact =
         Files.copy(
