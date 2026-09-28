@@ -1,0 +1,19 @@
+package org.zalava.managed;
+
+import org.zalava.ManagedServiceAuthority;
+import org.zalava.SeaServiceContract;
+
+/**
+ * SEA-owned host facility for module-declared managed-service lifecycle requests.
+ *
+ * <p>The runtime resolves the administrator grant from the authority-bound module identity. This
+ * contract does not expose an engine or grant modules a host command channel.
+ */
+public interface ManagedServiceRuntime {
+
+  SeaServiceContract<ManagedServiceRuntime> CONTRACT =
+      new SeaServiceContract<>("managed-service-runtime", "1", ManagedServiceRuntime.class);
+
+  ManagedServiceLifecycleResult request(
+      ManagedServiceAuthority authority, ManagedServiceDesiredState desiredState);
+}

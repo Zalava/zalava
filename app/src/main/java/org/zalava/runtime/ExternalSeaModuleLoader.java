@@ -1,0 +1,41 @@
+package org.zalava.runtime;
+
+import java.io.IOException;
+import java.util.List;
+import org.zalava.ProviderFactoryContext;
+import org.zalava.SeaModule;
+import org.zalava.catalog.install.application.port.out.EnabledModuleRegistry;
+import org.zalava.catalog.install.application.port.out.ModuleEnablement;
+import org.zalava.runtime.adapter.out.classloading.ExternalModuleClassLoader;
+
+/** Compatibility facade for the external-module loading port. */
+public final class ExternalSeaModuleLoader
+    implements org.zalava.runtime.application.port.in.ExternalModuleLoading {
+
+  private final ExternalModuleClassLoader delegate;
+
+  public ExternalSeaModuleLoader(EnabledModuleRegistry enabledModuleRegistry) {
+    this(enabledModuleRegistry, ProviderFactoryContext.empty());
+  }
+
+  public ExternalSeaModuleLoader(
+      EnabledModuleRegistry enabledModuleRegistry, ProviderFactoryContext providerFactoryContext) {
+    this.delegate = new ExternalModuleClassLoader(enabledModuleRegistry, providerFactoryContext);
+  }
+
+  @Override
+  public List<SeaModule> loadModules() {
+    return delegate.loadModules();
+  }
+
+  /** Retained for runtime-package characterization tests during the compatibility period. */
+  void validateLoadedModules(
+      List<ModuleEnablement.EnabledModule> enabledModules, List<SeaModule> loaded) {
+    delegate.validateLoadedModules(enabledModules, loaded);
+  }
+
+  @Override
+  public void close() throws IOException {
+    delegate.close();
+  }
+}

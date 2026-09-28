@@ -1,0 +1,30 @@
+:root {
+    --bs-primary: #0f766e;
+    --bs-primary-rgb: 15, 118, 110;
+    --bs-link-color: #0b5e58;
+    --bs-link-hover-color: #084c47;
+}
+
+body {
+    min-width: 320px;
+}
+
+.card,
+.list-group,
+.metric-panel {
+    border-radius: 8px;
+}
+
+.metric-panel {
+    min-height: 96px;
+}
+
+.verification-body,
+.invocation-result {
+    max-height: 18rem;
+    overflow: auto;
+    padding: .75rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}

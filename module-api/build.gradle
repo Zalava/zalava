@@ -1,0 +1,76 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+def githubPackagesActor = providers.environmentVariable('GITHUB_ACTOR')
+def githubPackagesToken = providers.environmentVariable('ZALAVA_PUBLISH_TOKEN')
+
+dependencies {
+    api 'tools.jackson.core:jackson-databind'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.mockito:mockito-core'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+      moduleApi(MavenPublication) {
+        from components.java
+        artifactId = 'module-api'
+        pom {
+          licenses {
+            license {
+              name = 'Apache License, Version 2.0'
+              url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+          }
+        }
+        versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/Zalava/zalava')
+            credentials(PasswordCredentials) {
+                username = githubPackagesActor.orNull
+                password = githubPackagesToken.orNull
+            }
+        }
+    }
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    doFirst {
+        if (repository.name == 'GitHubPackages'
+            && (!githubPackagesActor.present || !githubPackagesToken.present)) {
+            throw new GradleException('GitHub Packages publication requires GITHUB_ACTOR and ZALAVA_PUBLISH_TOKEN')
+        }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    boolean publishing =
+        graph.allTasks.any { it.name == 'publishModuleApiPublicationToGitHubPackagesRepository' }
+    if (publishing && (!githubPackagesActor.present || !githubPackagesToken.present)) {
+        throw new GradleException('GitHub Packages publication requires GITHUB_ACTOR and ZALAVA_PUBLISH_TOKEN')
+    }
+}

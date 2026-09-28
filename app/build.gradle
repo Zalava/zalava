@@ -1,0 +1,492 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot'
+    id 'gg.jte.gradle' version '3.2.4'
+}
+
+sourceSets {
+    externalModuleFixture
+    test {
+        runtimeClasspath += files('jte-classes')
+    }
+}
+
+def frontendDirectory = layout.projectDirectory.dir('frontend')
+def frontendOutput = layout.projectDirectory.dir('src/main/resources/static/sea-chat')
+
+tasks.register('installFrontend', Exec) {
+    workingDir frontendDirectory
+    inputs.file(frontendDirectory.file('package.json'))
+    inputs.file(frontendDirectory.file('package-lock.json'))
+    outputs.dir(frontendDirectory.dir('node_modules'))
+    commandLine 'npm', 'ci'
+}
+
+tasks.register('buildFrontend', Exec) {
+    dependsOn tasks.named('installFrontend')
+    workingDir frontendDirectory
+    inputs.dir(frontendDirectory.dir('src'))
+    inputs.file(frontendDirectory.file('index.html'))
+    inputs.file(frontendDirectory.file('vite.config.js'))
+    outputs.dir(frontendOutput)
+    commandLine 'npm', 'run', 'build'
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('buildFrontend')
+}
+
+rootProject.tasks.named('spotlessJava') {
+    mustRunAfter tasks.named('buildFrontend')
+}
+
+dependencies {
+    implementation project(':module-api')
+    externalModuleFixtureImplementation project(':module-api')
+
+    implementation 'com.anthropic:anthropic-java-client-okhttp'
+    implementation 'com.microsoft.playwright:playwright'
+    implementation 'org.webjars.npm:htmx.org:2.0.6'
+    implementation 'org.webjars.npm:htmx-ext-ws:2.0.3'
+    implementation 'com.networknt:json-schema-validator'
+    implementation 'org.apache.commons:commons-lang3'
+    implementation 'org.jobrunr:jobrunr-spring-boot-4-starter'
+    implementation 'org.springaicommunity:spring-ai-agent-utils'
+    implementation 'org.springframework.ai:spring-ai-client-chat'
+    implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
+    implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-tool-search-advisor'
+    implementation 'org.springframework.ai:spring-ai-tool-search-tool'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.modulith:spring-modulith-starter-core'
+    implementation 'org.telegram:telegrambots-client'
+    implementation 'org.telegram:telegrambots-springboot-longpolling-starter'
+    implementation 'gg.jte:jte-spring-boot-starter-4'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'io.netty:netty-resolver-dns-native-macos'
+
+    testImplementation 'org.awaitility:awaitility'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
+    testRuntimeOnly 'org.testcontainers:testcontainers-jdbc'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.register('externalModuleFixtureJar', Jar) {
+    archiveBaseName = 'sea-external-module-fixture'
+    archiveVersion = '1.0.0'
+    from sourceSets.externalModuleFixture.output
+}
+
+springBoot {
+    buildInfo {
+        excludes = ['time']
+    }
+    mainClass = 'org.zalava.SeaApplication'
+}
+
+bootJar {
+    archiveBaseName = 'sea'
+    dependsOn tasks.named('precompileJte')
+    bootInf {
+        into('classes') {
+            from fileTree('jte-classes') {
+                include 'gg/jte/generated/precompiled/**/*.class'
+                include 'gg/jte/generated/precompiled/**/*.bin'
+            }
+        }
+    }
+}
+
+jte {
+    precompile()
+}
+
+tasks.named('bootBuildImage') {
+    imageName = "ghcr.io/zalava/zalava:${project.version}"
+    buildCache {
+        volume {
+            name = 'sea-local-build-cache'
+        }
+    }
+    launchCache {
+        volume {
+            name = 'sea-local-launch-cache'
+        }
+    }
+    def leydenTrainingNetwork = providers.gradleProperty('leyden.training.network')
+    def leydenTrainingJdbcUrl = providers.gradleProperty('leyden.training.jdbc-url')
+    def leydenTrainingUsername = providers.gradleProperty('leyden.training.username')
+    def leydenTrainingPassword = providers.gradleProperty('leyden.training.password')
+
+    network = leydenTrainingNetwork.orNull
+    environment = [
+            'BP_JVM_VERSION': '25.*',
+            'BP_JVM_AOTCACHE_ENABLED': 'true',
+        'SPRING_DATASOURCE_URL': leydenTrainingJdbcUrl.orNull ?: '',
+        'SPRING_DATASOURCE_USERNAME': leydenTrainingUsername.orNull ?: '',
+        'SPRING_DATASOURCE_PASSWORD': leydenTrainingPassword.orNull ?: '',
+            'AGENT_CHANNELS_TELEGRAM_TOKEN': 'false',
+            'AGENT_CHANNELS_TELEGRAM_USERNAME': 'false'
+    ]
+    doFirst {
+        [
+            'leyden.training.network': leydenTrainingNetwork.orNull,
+            'leyden.training.jdbc-url': leydenTrainingJdbcUrl.orNull,
+            'leyden.training.username': leydenTrainingUsername.orNull,
+            'leyden.training.password': leydenTrainingPassword.orNull
+        ].each { name, value ->
+            if (!value) {
+                throw new GradleException("${name} must be supplied by leydenImageIntegrationTest")
+            }
+        }
+    }
+}
+
+tasks.named('test') {
+    def configuredForks = providers.gradleProperty('sea.test.max-parallel-forks').getOrElse('2')
+    maxParallelForks = configuredForks.toInteger()
+    if (maxParallelForks < 1) {
+        throw new GradleException('sea.test.max-parallel-forks must be at least 1')
+    }
+    dependsOn tasks.named('externalModuleFixtureJar')
+    dependsOn tasks.named('bootJar')
+    dependsOn tasks.named('precompileJte')
+    exclude '**/PortsAndAdaptersArchitectureTest.class'
+    exclude '**/Browser*AcceptanceTest.class'
+    useJUnitPlatform {
+        excludeTags 'postgresql'
+        excludeTags 'leyden-image'
+        excludeTags 'indexed-install'
+        excludeTags 'module-compat'
+        excludeTags 'ocr-worker'
+        excludeTags 'retrieval-measurement'
+        excludeTags 'context-measurement'
+        excludeTags 'knowledge-context-acceptance'
+        excludeTags 'structured-output-acceptance'
+        excludeTags 'memory-selection-measurement'
+        excludeTags 'skill-activation-measurement'
+    }
+    systemProperty 'sea.test.external-module-jar',
+            tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
+    systemProperty 'sea.test.boot-jar',
+            tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
+}
+
+tasks.register('architectureTest', Test) {
+    group = 'verification'
+    description = 'Runs the ArchUnit architecture rules excluded from the fast test lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    include '**/PortsAndAdaptersArchitectureTest.class'
+    useJUnitPlatform()
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('architectureTest')
+    dependsOn tasks.named('browserAcceptanceTest')
+}
+
+tasks.register('browserAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs the isolated Playwright browser acceptance journey.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    include '**/Browser*AcceptanceTest.class'
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform()
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('postgresqlIntegrationTest', Test) {
+    group = 'verification'
+    description = 'Runs opt-in PostgreSQL Testcontainers integration tests.'
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    useJUnitPlatform {
+        includeTags 'postgresql'
+    }
+}
+
+tasks.register('indexedInstallAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in real-network indexed module install/restart/use acceptance journey.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'indexed-install'
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+    [
+        'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
+        'sea.indexed-install.github-packages-username': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'sea.indexed-install.github-packages-token': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'sea.indexed-install.module-locator-url': 'SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+    ].each { propertyName, environmentName ->
+        def value = providers.systemProperty(propertyName)
+                .orElse(providers.gradleProperty(propertyName))
+                .orElse(providers.environmentVariable(environmentName))
+        if (value.present) {
+            systemProperty propertyName, value.get()
+        }
+    }
+}
+
+tasks.register('moduleCompatAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in cross-repository released-module compatibility matrix against disposable SEA.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'module-compat'
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+    [
+        'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
+        'sea.indexed-install.github-packages-username': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'sea.indexed-install.github-packages-token': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'sea.indexed-install.module-locator-url': 'SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+    ].each { propertyName, environmentName ->
+        def value = providers.systemProperty(propertyName)
+                .orElse(providers.gradleProperty(propertyName))
+                .orElse(providers.environmentVariable(environmentName))
+        if (value.present) {
+            systemProperty propertyName, value.get()
+        }
+    }
+}
+
+tasks.register('ocrWorkerAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in real sea-ocr-worker acceptance lane against disposable SEA.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    jvmArgs '--add-modules', 'jdk.httpserver'
+    useJUnitPlatform {
+        includeTags 'ocr-worker'
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+    [
+        'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
+        'sea.indexed-install.github-packages-username': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'sea.indexed-install.github-packages-token': 'SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'sea.indexed-install.module-locator-url': 'SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+    ].each { propertyName, environmentName ->
+        def value = providers.systemProperty(propertyName)
+                .orElse(providers.gradleProperty(propertyName))
+                .orElse(providers.environmentVariable(environmentName))
+        if (value.present) {
+            systemProperty propertyName, value.get()
+        }
+    }
+    def workerImage = providers.gradleProperty('sea.ocr-worker.image')
+            .orElse(providers.environmentVariable('SEA_OCR_WORKER_IMAGE'))
+    if (workerImage.present) {
+        systemProperty 'sea.ocr-worker.image', workerImage.get()
+    }
+}
+
+tasks.register('retrievalMeasurementTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in permission-safe household retrieval measurement lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'retrieval-measurement'
+    }
+    testLogging {
+        showStandardStreams = true
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('contextMeasurementTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in CTX-02 progressive-context measurement lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'context-measurement'
+    }
+    testLogging {
+        showStandardStreams = true
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('memorySelectionMeasurementTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in MEM-02 deterministic memory-selection measurement lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'memory-selection-measurement'
+    }
+    testLogging {
+        showStandardStreams = true
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('skillActivationMeasurementTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in SKILL-02 skill-activation measurement lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'skill-activation-measurement'
+    }
+    testLogging {
+        showStandardStreams = true
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('knowledgeContextAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in full-context scripted knowledge-enrichment acceptance lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'knowledge-context-acceptance'
+    }
+    testLogging {
+        showStandardStreams = true
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('structuredOutputAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs the opt-in real-composition scripted structured-output acceptance lane.'
+    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform {
+        includeTags 'structured-output-acceptance'
+    }
+    testLogging {
+        showStandardStreams = true
+    }
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
+tasks.register('leydenImageIntegrationTest', Test) {
+    group = 'verification'
+    description = 'Builds a Leyden-trained image against a disposable PostgreSQL Testcontainer.'
+    dependsOn tasks.named('precompileJte')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    maxParallelForks = 1
+    useJUnitPlatform {
+        includeTags 'leyden-image'
+    }
+    def requestedImageName = providers.gradleProperty('leyden.image-name')
+    if (requestedImageName.present) {
+        systemProperty 'sea.leyden.image-name', requestedImageName.get()
+    }
+}
+
+
+tasks.named('processResources') {
+    from(rootProject.file('docs/module-api-release-guide.md')) {
+        into 'development-workspace/docs'
+    }
+    from(rootProject.file('templates/sea-module')) {
+        into 'development-workspace/examples/minimal-module'
+    }
+    from('src/externalModuleFixture') {
+        into 'development-workspace/examples/minimal-module/src'
+    }
+}
+
+bootRun {
+    dependsOn tasks.named('precompileJte')
+    workingDir = rootProject.projectDir
+    systemProperty 'gg.jte.template-location', 'app/src/main/jte'
+}

@@ -1,0 +1,164 @@
+plugins {
+    id 'com.diffplug.spotless' version '7.2.1'
+    id 'jacoco-report-aggregation'
+    id 'org.springframework.boot' version '4.1.0' apply false
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+spotless {
+    java {
+        target 'app/src/**/*.java', 'module-api/src/**/*.java', 'module-api-test/src/**/*.java', 'templates/sea-module/src/**/*.java'
+        googleJavaFormat('1.36.1')
+    }
+}
+
+description = 'Zalava'
+
+def coverageBaselines = [
+        app         : [line: '0.90', branch: '0.74'],
+        'module-api': [line: '0.90', branch: '0.70'],
+        'module-api-test': [line: '0.90', branch: '0.70']
+]
+
+def nonSpringManagedDependencies = [
+        'com.anthropic:anthropic-java-client-okhttp'             : '2.49.0',
+        'com.microsoft.playwright:playwright'                    : '1.61.0',
+        'com.networknt:json-schema-validator'                    : '3.0.1',
+        'org.jobrunr:jobrunr-spring-boot-4-starter'              : '8.7.1',
+        'org.springaicommunity:spring-ai-agent-utils'            : '0.10.0',
+        'org.telegram:telegrambots-client'                       : '10.0.0',
+        'org.telegram:telegrambots-springboot-longpolling-starter': '10.0.0',
+        'gg.jte:jte-spring-boot-starter-4'                       : '3.2.4',
+        'com.tngtech.archunit:archunit-junit5'                   : '1.4.2'
+]
+
+dependencies {
+    jacocoAggregation project(':app')
+    jacocoAggregation project(':module-api')
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:4.1.0"
+        mavenBom "org.springframework.ai:spring-ai-bom:2.0.0"
+        mavenBom "org.springframework.modulith:spring-modulith-bom:2.1.0"
+    }
+    dependencies {
+        nonSpringManagedDependencies.each { coordinate, version ->
+            dependency "$coordinate:$version"
+        }
+    }
+}
+
+reporting {
+    reports {
+        testCodeCoverageReport(JacocoCoverageReport) {
+            testSuiteName = 'test'
+        }
+    }
+}
+
+tasks.register('coverage') {
+    group = 'verification'
+    description = 'Runs tests, verifies coverage baselines, and generates the aggregate JaCoCo report.'
+    dependsOn tasks.named('testCodeCoverageReport')
+    dependsOn ':app:jacocoTestCoverageVerification'
+    dependsOn ':module-api:jacocoTestCoverageVerification'
+}
+
+allprojects {
+    group = 'org.zalava'
+    def releaseTag = System.getenv('CI_COMMIT_TAG')
+    if (releaseTag != null && !releaseTag.matches('v\\d+\\.\\d+\\.\\d+')) {
+        throw new GradleException('CI_COMMIT_TAG must use v<major>.<minor>.<patch>')
+    }
+    version = releaseTag?.substring(1) ?: '1.0.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.spring.io/snapshot' }
+        maven { url = 'https://repo.spring.io/milestone' }
+        maven {
+            name = 'central-portal-snapshots'
+            url = 'https://central.sonatype.com/repository/maven-snapshots/'
+        }
+    }
+}
+
+// Explicitly configure only real projects
+configure(subprojects.findAll { it.buildFile.exists() }) { selectedProject ->
+    apply plugin: 'io.spring.dependency-management'
+    def coverageBaseline = coverageBaselines[selectedProject.name]
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:4.1.0"
+            mavenBom "org.springframework.ai:spring-ai-bom:2.0.0"
+            mavenBom "org.springframework.modulith:spring-modulith-bom:2.1.0"
+        }
+        dependencies {
+            nonSpringManagedDependencies.each { coordinate, version ->
+                dependency "$coordinate:$version"
+            }
+        }
+    }
+
+    plugins.withType(JavaPlugin) {
+        selectedProject.pluginManager.apply('jacoco')
+
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(25)
+            }
+        }
+
+        tasks.named('test') {
+            useJUnitPlatform()
+            finalizedBy tasks.named('jacocoTestReport')
+        }
+
+        jacoco {
+            toolVersion = '0.8.14'
+        }
+
+        tasks.named('jacocoTestReport') {
+            dependsOn tasks.named('test')
+            reports {
+                xml.required = true
+                html.required = true
+                csv.required = false
+            }
+        }
+
+        tasks.named('jacocoTestCoverageVerification') {
+            dependsOn tasks.named('test')
+            violationRules {
+                rule {
+                    limit {
+                        counter = 'LINE'
+                        value = 'COVEREDRATIO'
+                        minimum = coverageBaseline.line as BigDecimal
+                    }
+                    limit {
+                        counter = 'BRANCH'
+                        value = 'COVEREDRATIO'
+                        minimum = coverageBaseline.branch as BigDecimal
+                    }
+                }
+            }
+        }
+
+        tasks.named('check') {
+            dependsOn rootProject.tasks.named('spotlessCheck')
+            dependsOn tasks.named('jacocoTestCoverageVerification')
+        }
+    }
+}
+
+project(':app') {
+    plugins.withType(JavaPlugin) {
+        tasks.named('check') {
+            dependsOn rootProject.tasks.named('coverage')
+        }
+    }
+}

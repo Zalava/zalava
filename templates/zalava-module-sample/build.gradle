@@ -1,0 +1,29 @@
+plugins {
+  id 'java-library'
+}
+
+def repositoryUrl = providers.gradleProperty('zalavaRepositoryUrl')
+if (!repositoryUrl.present) {
+  throw new GradleException('zalavaRepositoryUrl must identify the public Maven-layout repository')
+}
+
+repositories {
+  maven { url = uri(repositoryUrl.get()) }
+  mavenCentral()
+}
+
+dependencies {
+  compileOnly 'org.zalava:module-api:0.1.0-alpha.1'
+  testImplementation 'org.zalava:module-api:0.1.0-alpha.1'
+  testImplementation 'org.zalava:module-api-test:0.1.0-alpha.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+  toolchain { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+tasks.withType(Test).configureEach {
+  useJUnitPlatform()
+}

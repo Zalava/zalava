@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ZALAVA_POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${ZALAVA_POSTGRES_DATABASE:-zalava}
+      POSTGRES_USER: ${ZALAVA_POSTGRES_USER:-zalava}
+      POSTGRES_PASSWORD: ${ZALAVA_POSTGRES_PASSWORD:?Set ZALAVA_POSTGRES_PASSWORD in an untracked environment file}
+    volumes:
+      - zalava-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  zalava-postgres-data:

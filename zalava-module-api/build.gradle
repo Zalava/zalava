@@ -1,0 +1,122 @@
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+}
+
+def zalavaVersion = providers.gradleProperty('zalavaVersion').orElse('0.1.0-alpha.1')
+def generatedSources = layout.buildDirectory.dir('generated/sources/zalava/main/java')
+def generatedTestSources = layout.buildDirectory.dir('generated/sources/zalava/test/java')
+
+version = zalavaVersion.get()
+
+if (!(version ==~ /0\.1\.0-alpha\.[1-9][0-9]*/)) {
+  throw new GradleException('zalavaVersion must be immutable 0.1.0-alpha.N, where N is positive')
+}
+
+dependencies {
+  api 'tools.jackson.core:jackson-databind'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+  withJavadocJar()
+  withSourcesJar()
+}
+
+sourceSets {
+  main {
+    java.srcDir(generatedSources)
+  }
+  test {
+    java.srcDir(generatedTestSources)
+  }
+}
+
+tasks.register('generateZalavaApiSources', Sync) {
+  from project(':module-api').layout.projectDirectory.dir('src/main/java')
+  into generatedSources
+  include '**/*.java'
+  eachFile { details ->
+    details.path = details.path.replace('org/zalava/', 'org/zalava/')
+  }
+  filter { line -> line.replace('org.zalava', 'org.zalava') }
+}
+tasks.register('generateZalavaApiTestSources', Sync) {
+  from project(':module-api').layout.projectDirectory.dir('src/test/java')
+  into generatedTestSources
+  include '**/*.java'
+  eachFile { details ->
+    details.path = details.path.replace('org/zalava/', 'org/zalava/')
+  }
+  filter { line -> line.replace('org.zalava', 'org.zalava') }
+}
+
+tasks.named('compileJava') {
+  dependsOn tasks.named('generateZalavaApiSources')
+}
+tasks.named('compileTestJava') {
+  dependsOn tasks.named('generateZalavaApiTestSources')
+}
+tasks.named('sourcesJar') {
+  dependsOn tasks.named('generateZalavaApiSources')
+}
+tasks.named('javadoc') {
+  dependsOn tasks.named('generateZalavaApiSources')
+}
+tasks.withType(Test).configureEach {
+  useJUnitPlatform()
+}
+
+publishing {
+  publications {
+    zalavaModuleApi(MavenPublication) {
+      from components.java
+      groupId = 'org.zalava'
+      artifactId = 'module-api'
+      pom {
+        name = 'Zalava Module API'
+        description = 'Stable public SPI for independently developed Zalava modules.'
+        url = 'https://github.com/Zalava/zalava'
+        licenses {
+          license {
+            name = 'Apache License, Version 2.0'
+            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+        scm {
+          connection = 'scm:git:https://github.com/Zalava/zalava.git'
+          developerConnection = 'scm:git:ssh://git@github.com/Zalava/zalava.git'
+          url = 'https://github.com/Zalava/zalava'
+        }
+      }
+      versionMapping {
+        usage('java-api') {
+          fromResolutionOf('runtimeClasspath')
+        }
+        usage('java-runtime') {
+          fromResolutionResult()
+        }
+      }
+    }
+  }
+  repositories {
+    maven {
+      name = 'ZalavaStatic'
+      url = rootProject.layout.buildDirectory.dir('zalava-maven')
+    }
+  }
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+  doFirst {
+    if (repository.name == 'ZalavaStatic') {
+      def coordinate = new File(repository.url).toPath().resolve('org/zalava/module-api/' + version).toFile()
+      if (coordinate.exists()) {
+        throw new GradleException('Refusing to overwrite immutable Zalava coordinate org.zalava:module-api:' + version)
+      }
+    }
+  }
+}

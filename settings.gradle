@@ -1,0 +1,7 @@
+rootProject.name = 'Zalava'
+
+include 'module-api'
+include 'module-api-test'
+include 'zalava-module-api'
+include 'zalava-module-api-test'
+include 'app'

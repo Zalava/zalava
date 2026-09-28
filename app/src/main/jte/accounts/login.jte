@@ -1,0 +1,2 @@
+@param org.springframework.security.web.csrf.CsrfToken csrf
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>SEA sign in</title></head><body><main><h1>SEA sign in</h1><form method="post" action="/login"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><label>Login <input name="username" autocomplete="username" required></label><label>Password <input type="password" name="password" autocomplete="current-password" required></label><button type="submit">Sign in</button></form></main></body></html>

@@ -1,0 +1,14 @@
+package org.zalava.catalog.install.application.port.out;
+
+import java.util.List;
+import org.zalava.catalog.LocalArtifactInstallRequest;
+
+public interface LocalArtifactInstallRequestStore {
+  LocalArtifactInstallRequest create(LocalArtifactInstallRequest request);
+
+  LocalArtifactInstallRequest get(String requestId);
+
+  List<LocalArtifactInstallRequest> recent(int limit);
+
+  LocalArtifactInstallRequest save(LocalArtifactInstallRequest request);
+}

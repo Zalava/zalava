@@ -1,0 +1,214 @@
+{
+  "description": "Synthetic permission-safe household retrieval corpus for KNOW-SEM-01. Actors, documents and queries are fabricated fixtures; no real household text is retained. Query categories: exact (identifiers), keyword (in-contract lexical keywords), paraphrase (synonym-only lexical stressors) and ranking (multi-match recency probe).",
+  "actors": {
+    "alice": "household member who owns most fixture documents",
+    "bob": "second household member who owns private documents and can read group-shared documents"
+  },
+  "documents": [
+    {
+      "label": "insurance-home",
+      "actor": "alice",
+      "visibility": "PRIVATE",
+      "displayName": "home-insurance.txt",
+      "text": "Home insurance insurance insurance insurance policy HP-556 renewal due 2027-01-15."
+    },
+    {
+      "label": "insurance-car",
+      "actor": "alice",
+      "visibility": "PRIVATE",
+      "displayName": "car-insurance.txt",
+      "text": "Car insurance policy CI-889 renewal due 2026-09-30."
+    },
+    {
+      "label": "invoice-plumber",
+      "actor": "alice",
+      "visibility": "PRIVATE",
+      "displayName": "plumber-invoice.txt",
+      "text": "Invoice INV-2026-104 from the plumber total 89 euros due 2026-10-01."
+    },
+    {
+      "label": "warranty",
+      "actor": "alice",
+      "visibility": "PRIVATE",
+      "displayName": "washer-warranty.txt",
+      "text": "Washing machine warranty expires 2028-05-31. Model WM-3410."
+    },
+    {
+      "label": "reservation",
+      "actor": "alice",
+      "visibility": "PRIVATE",
+      "displayName": "hotel-reservation.txt",
+      "text": "Hotel reservation ABC-784 check-in 2026-12-20 for two nights."
+    },
+    {
+      "label": "recipe",
+      "actor": "alice",
+      "visibility": "GROUP_SHARED",
+      "displayName": "family-recipe.txt",
+      "text": "Family pizza dough recipe with flour, water, yeast and salt."
+    },
+    {
+      "label": "school",
+      "actor": "alice",
+      "visibility": "GROUP_SHARED",
+      "displayName": "school-trip.txt",
+      "text": "School trip departs 2026-10-14 at 08:30 from the north gate."
+    },
+    {
+      "label": "router",
+      "actor": "alice",
+      "visibility": "GROUP_SHARED",
+      "displayName": "router-manual.txt",
+      "text": "Router reset: hold the rear button for ten seconds. Model RT-88."
+    },
+    {
+      "label": "bob-car",
+      "actor": "bob",
+      "visibility": "PRIVATE",
+      "displayName": "bob-car.txt",
+      "text": "Invoice INV-2026-777 car service total 240 euros."
+    },
+    {
+      "label": "bob-passport",
+      "actor": "bob",
+      "visibility": "PRIVATE",
+      "displayName": "bob-passport.txt",
+      "text": "Passport renewal appointment 2026-11-02 at the city office."
+    },
+    {
+      "label": "bob-recipe",
+      "actor": "bob",
+      "visibility": "PRIVATE",
+      "displayName": "bob-recipe.txt",
+      "text": "Bob pizza secret recipe with sourdough starter overnight."
+    }
+  ],
+  "queries": [
+    {
+      "label": "exact-invoice",
+      "actor": "alice",
+      "text": "INV-2026-104",
+      "category": "exact",
+      "expect": ["invoice-plumber"]
+    },
+    {
+      "label": "exact-warranty-model",
+      "actor": "alice",
+      "text": "WM-3410",
+      "category": "exact",
+      "expect": ["warranty"]
+    },
+    {
+      "label": "exact-reservation",
+      "actor": "alice",
+      "text": "ABC-784",
+      "category": "exact",
+      "expect": ["reservation"]
+    },
+    {
+      "label": "exact-policy",
+      "actor": "alice",
+      "text": "HP-556",
+      "category": "exact",
+      "expect": ["insurance-home"]
+    },
+    {
+      "label": "exact-bob-invoice",
+      "actor": "bob",
+      "text": "INV-2026-777",
+      "category": "exact",
+      "expect": ["bob-car"]
+    },
+    {
+      "label": "keyword-warranty",
+      "actor": "alice",
+      "text": "washing machine warranty",
+      "category": "keyword",
+      "expect": ["warranty"]
+    },
+    {
+      "label": "keyword-school",
+      "actor": "alice",
+      "text": "school trip",
+      "category": "keyword",
+      "expect": ["school"]
+    },
+    {
+      "label": "keyword-router",
+      "actor": "bob",
+      "text": "router reset",
+      "category": "keyword",
+      "expect": ["router"]
+    },
+    {
+      "label": "keyword-recipe",
+      "actor": "bob",
+      "text": "sourdough starter",
+      "category": "keyword",
+      "expect": ["bob-recipe"]
+    },
+    {
+      "label": "keyword-home-insurance",
+      "actor": "alice",
+      "text": "home insurance",
+      "category": "keyword",
+      "expect": ["insurance-home"]
+    },
+    {
+      "label": "paraphrase-accommodation",
+      "actor": "alice",
+      "text": "overnight accommodation",
+      "category": "paraphrase",
+      "expect": ["reservation"]
+    },
+    {
+      "label": "paraphrase-guarantee",
+      "actor": "alice",
+      "text": "appliance guarantee",
+      "category": "paraphrase",
+      "expect": ["warranty"]
+    },
+    {
+      "label": "paraphrase-vehicle",
+      "actor": "bob",
+      "text": "vehicle maintenance",
+      "category": "paraphrase",
+      "expect": ["bob-car"]
+    },
+    {
+      "label": "paraphrase-excursion",
+      "actor": "alice",
+      "text": "children excursion",
+      "category": "paraphrase",
+      "expect": ["school"]
+    },
+    {
+      "label": "ranking-insurance",
+      "actor": "alice",
+      "text": "insurance",
+      "category": "ranking",
+      "expect": ["insurance-home", "insurance-car"],
+      "primary": "insurance-home"
+    }
+  ],
+  "private_exclusion": [
+    {
+      "label": "private-alice-reads-bob-invoice",
+      "actor": "alice",
+      "text": "INV-2026-777",
+      "expect": []
+    },
+    {
+      "label": "private-alice-reads-bob-recipe",
+      "actor": "alice",
+      "text": "sourdough starter",
+      "expect": []
+    },
+    {
+      "label": "private-bob-reads-alice-reservation",
+      "actor": "bob",
+      "text": "ABC-784",
+      "expect": []
+    }
+  ]
+}
