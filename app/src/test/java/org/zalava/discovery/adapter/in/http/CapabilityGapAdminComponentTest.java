@@ -12,10 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import org.zalava.discovery.CapabilityGapClassification;
-import org.zalava.discovery.RemoteModuleCandidate;
-import org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery;
-import org.zalava.discovery.application.port.out.RemoteModuleCatalog;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +24,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.discovery.CapabilityGapClassification;
+import org.zalava.discovery.RemoteModuleCandidate;
+import org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery;
+import org.zalava.discovery.application.port.out.RemoteModuleCatalog;
 
 @SpringBootTest
 @AutoConfigureMockMvc

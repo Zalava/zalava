@@ -5,14 +5,14 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.out.ActorTaskApprovalDecisions;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class UiExecutionStateQueriesTest {
   private final ActorTaskCommands tasks = Mockito.mock(ActorTaskCommands.class);

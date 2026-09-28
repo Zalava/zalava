@@ -3,9 +3,9 @@ package org.zalava.knowledge.adapter.out.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.knowledge.application.port.out.KnowledgeSearchStore;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
-import org.springframework.jdbc.core.simple.JdbcClient;
 
 /** PostgreSQL full-text candidates only; callers must apply SEA visibility before disclosure. */
 public final class JdbcKnowledgeSearchStore implements KnowledgeSearchStore {

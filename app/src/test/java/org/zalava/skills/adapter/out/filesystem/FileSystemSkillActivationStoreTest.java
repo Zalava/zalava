@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.skills.domain.SkillActivation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class FileSystemSkillActivationStoreTest {
 

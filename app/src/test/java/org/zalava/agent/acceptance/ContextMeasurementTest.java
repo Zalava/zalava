@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.tool.ToolCallback;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.agent.AgentRequestTools;
 import org.zalava.agent.InMemoryAgentRunRecorder;
@@ -29,9 +32,6 @@ import org.zalava.discovery.application.port.in.ToolDiscovery;
 import org.zalava.memory.application.port.in.MemoryQueries;
 import org.zalava.memory.domain.Memory;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.tool.ToolCallback;
 
 /**
  * Opt-in CTX-02 progressive-context measurement lane.

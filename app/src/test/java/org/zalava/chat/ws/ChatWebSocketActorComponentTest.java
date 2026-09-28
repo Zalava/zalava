@@ -7,10 +7,6 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.Account;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.support.SecureSeaComponentTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
@@ -18,6 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.Account;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.support.SecureSeaComponentTest;
 
 /**
  * Full-context component test for the actor-scoped web chat bootstrap. It drives the real {@link

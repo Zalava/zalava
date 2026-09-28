@@ -1,8 +1,6 @@
 package org.zalava.private_state;
 
 import java.io.IOException;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.Actor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.io.Resource;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.Actor;
 
 @Configuration
 public class PrivateStateConfiguration {

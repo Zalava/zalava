@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.RequirementMode;
 import org.zalava.SeaModule;
@@ -12,7 +13,6 @@ import org.zalava.SeaServiceContract;
 import org.zalava.SeaServiceDescriptor;
 import org.zalava.SeaServiceFactory;
 import org.zalava.SeaServiceRequirement;
-import org.junit.jupiter.api.Test;
 
 class ModuleServiceRuntimeTest {
   private static final SeaServiceContract<Service> A =
@@ -120,8 +120,7 @@ class ModuleServiceRuntimeTest {
   }
 
   private static ModuleServiceRuntime runtime(SeaModule... modules) {
-    return new ModuleServiceRuntime(
-        List.of(modules), org.zalava.ProviderFactoryContext.empty());
+    return new ModuleServiceRuntime(List.of(modules), org.zalava.ProviderFactoryContext.empty());
   }
 
   private static SeaModule module(

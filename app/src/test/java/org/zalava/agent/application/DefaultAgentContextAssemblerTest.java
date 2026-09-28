@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
@@ -21,7 +22,6 @@ import org.zalava.memory.domain.MemoryScope;
 import org.zalava.skills.application.SkillActivationMetrics;
 import org.zalava.skills.application.port.in.SkillActivations;
 import org.zalava.skills.domain.SkillActivation;
-import org.junit.jupiter.api.Test;
 
 /**
  * Covers the branch paths of the port-based agent context assembler: budget truncation,

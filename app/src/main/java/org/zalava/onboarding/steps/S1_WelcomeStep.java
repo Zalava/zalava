@@ -1,9 +1,9 @@
 package org.zalava.onboarding.steps;
 
 import java.util.Map;
-import org.zalava.onboarding.OnboardingProvider;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.zalava.onboarding.OnboardingProvider;
 
 @Component
 @Order(10)

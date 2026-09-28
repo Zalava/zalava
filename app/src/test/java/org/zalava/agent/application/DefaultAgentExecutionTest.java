@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
 import org.zalava.agent.ConversationChannelContext;
 import org.zalava.agent.application.port.out.AgentClock;
 import org.zalava.agent.application.port.out.AgentContextAssembler;
@@ -19,7 +20,6 @@ import org.zalava.agent.application.port.out.StructuredRunEvidence;
 import org.zalava.agent.domain.AgentContext;
 import org.zalava.agent.domain.AgentRun;
 import org.zalava.agent.domain.AgentToolSelection;
-import org.junit.jupiter.api.Test;
 
 class DefaultAgentExecutionTest {
 

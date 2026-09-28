@@ -11,11 +11,11 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import org.junit.jupiter.api.Test;
 import org.zalava.agent.adapter.out.springai.SpringAiAgentModel;
 import org.zalava.agent.application.ModelBoundary;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.Task;
-import org.junit.jupiter.api.Test;
 
 /**
  * Covers the streamed redaction in {@link ModelBoundaryAgentModel}: no configured secret may ever

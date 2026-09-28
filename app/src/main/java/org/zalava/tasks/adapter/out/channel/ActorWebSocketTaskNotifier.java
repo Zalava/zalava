@@ -1,13 +1,13 @@
 package org.zalava.tasks.adapter.out.channel;
 
 import java.io.IOException;
+import org.springframework.stereotype.Component;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.chat.ChatHtml;
 import org.zalava.chat.Htmx;
 import org.zalava.chat.ws.ActorWebSocketSessions;
 import org.zalava.tasks.application.port.out.ActorTaskNotifier;
 import org.zalava.tasks.domain.Task;
-import org.springframework.stereotype.Component;
 
 /** Delivers actor-owned task results only to that actor's active product socket. */
 @Component

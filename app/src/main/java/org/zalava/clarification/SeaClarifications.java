@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.clarification.adapter.out.filesystem.FileSystemClarificationRequestStore;
 import org.zalava.clarification.application.port.out.ClarificationStore;
 import org.zalava.clarification.domain.ClarificationDraft;
 import org.zalava.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskReference;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
 
 /**
  * Actor-owned clarification authority. It persists typed questions/choices, enforces single-use

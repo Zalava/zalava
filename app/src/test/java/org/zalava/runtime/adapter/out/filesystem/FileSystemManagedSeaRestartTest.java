@@ -7,9 +7,9 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import org.zalava.runtime.application.port.in.ManagedSeaRestart;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.runtime.application.port.in.ManagedSeaRestart;
 
 class FileSystemManagedSeaRestartTest {
   @TempDir Path workspace;

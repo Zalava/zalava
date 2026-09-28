@@ -10,6 +10,10 @@ import static org.mockito.Mockito.when;
 
 import java.security.Principal;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.accounts.security.AuthenticatedActorResolver;
@@ -20,10 +24,6 @@ import org.zalava.chat.application.port.in.ActorChatStreamListener;
 import org.zalava.chat.domain.ActorChatTurn;
 import org.zalava.chat.domain.ChatMessage;
 import org.zalava.conversation.domain.ConversationReference;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 import tools.jackson.databind.ObjectMapper;
 
 class UiChatWebSocketHandlerTest {

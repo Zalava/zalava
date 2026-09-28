@@ -1,13 +1,6 @@
 package org.zalava.ui;
 
 import java.util.List;
-import org.zalava.accounts.security.AuthenticatedActorResolver;
-import org.zalava.knowledge.application.KnowledgeIngestion;
-import org.zalava.knowledge.application.KnowledgeLibrary;
-import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
-import org.zalava.knowledge.domain.KnowledgeSourceId;
-import org.zalava.knowledge.domain.KnowledgeVisibility;
-import org.zalava.knowledge.domain.SourceProcessingState;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -19,6 +12,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.zalava.accounts.security.AuthenticatedActorResolver;
+import org.zalava.knowledge.application.KnowledgeIngestion;
+import org.zalava.knowledge.application.KnowledgeLibrary;
+import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
+import org.zalava.knowledge.domain.KnowledgeSourceId;
+import org.zalava.knowledge.domain.KnowledgeVisibility;
+import org.zalava.knowledge.domain.SourceProcessingState;
 
 /** Authenticated product read surface for SEA-owned knowledge metadata. */
 @Controller

@@ -6,10 +6,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import org.zalava.catalog.install.SourceModuleInstallationException;
-import org.zalava.catalog.install.application.port.out.ModuleEnablement.EnabledModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.catalog.install.SourceModuleInstallationException;
+import org.zalava.catalog.install.application.port.out.ModuleEnablement.EnabledModule;
 
 class FileSystemModuleEnablementTest {
 

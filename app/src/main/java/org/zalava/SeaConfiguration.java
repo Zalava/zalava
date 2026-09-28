@@ -9,6 +9,26 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.springaicommunity.agent.tools.SkillsTool;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.model.SpringAIModelProperties;
+import org.springframework.ai.tool.toolsearch.ToolIndex;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.application.port.out.AccountStore;
 import org.zalava.agent.Agent;
@@ -140,26 +160,6 @@ import org.zalava.tools.TaskCreationContext;
 import org.zalava.web.adapter.out.runtime.SeaRuntimeWebExtensionModuleCatalog;
 import org.zalava.web.application.DefaultWebExtensionRoutes;
 import org.zalava.web.application.port.in.WebExtensionRoutes;
-import org.springaicommunity.agent.tools.SkillsTool;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.model.SpringAIModelProperties;
-import org.springframework.ai.tool.toolsearch.ToolIndex;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.Resource;
 
 @Configuration
 @EnableConfigurationProperties(SeaModuleProperties.class)
@@ -461,27 +461,22 @@ public class SeaConfiguration {
   }
 
   @Bean
-  public org.zalava.channels.application.port.in.ChannelApprovalCommands
-      channelApprovalCommandPort(
-          SeaToolApprovalRequests approvals,
-          ProviderToolOperations operations,
-          TaskCommands taskCommands,
-          TaskQueries taskQueries) {
+  public org.zalava.channels.application.port.in.ChannelApprovalCommands channelApprovalCommandPort(
+      SeaToolApprovalRequests approvals,
+      ProviderToolOperations operations,
+      TaskCommands taskCommands,
+      TaskQueries taskQueries) {
     return new org.zalava.channels.application.DefaultChannelApprovalCommands(
         new org.zalava.channels.adapter.out.approval.SeaChannelApprovalStore(approvals),
-        new org.zalava.channels.adapter.out.approval.ProviderOperationChannelAdapter(
-            operations),
-        new org.zalava.channels.adapter.out.tasks.TaskChannelAdapter(
-            taskCommands, taskQueries));
+        new org.zalava.channels.adapter.out.approval.ProviderOperationChannelAdapter(operations),
+        new org.zalava.channels.adapter.out.tasks.TaskChannelAdapter(taskCommands, taskQueries));
   }
 
   @Bean
   public org.zalava.onboarding.application.OnboardingWorkflow onboardingWorkflow(
       List<org.zalava.onboarding.OnboardingProvider> steps,
-      org.zalava.configuration.application.port.in.ConfigurationCommands
-          configurationCommands) {
-    return new org.zalava.onboarding.application.OnboardingWorkflow(
-        steps, configurationCommands);
+      org.zalava.configuration.application.port.in.ConfigurationCommands configurationCommands) {
+    return new org.zalava.onboarding.application.OnboardingWorkflow(steps, configurationCommands);
   }
 
   public static final String AGENT_MD = "AGENT.private.md";
@@ -673,8 +668,7 @@ public class SeaConfiguration {
         org.zalava.FactorySecretAccess.none(),
         secrets,
         java.util.Map.of(
-            "sea-module-tasks",
-            java.util.Map.of(org.zalava.tasks.TaskService.class, taskService)));
+            "sea-module-tasks", java.util.Map.of(org.zalava.tasks.TaskService.class, taskService)));
   }
 
   ProviderFactoryContext seaProviderFactoryContext(

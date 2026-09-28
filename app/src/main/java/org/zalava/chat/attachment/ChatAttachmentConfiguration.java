@@ -2,16 +2,16 @@ package org.zalava.chat.attachment;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.zalava.chat.attachment.adapter.out.filesystem.FileSystemChatAttachmentStore;
 import org.zalava.chat.attachment.adapter.out.knowledge.KnowledgeImportAdapter;
 import org.zalava.chat.attachment.application.ChatAttachments;
 import org.zalava.chat.attachment.application.port.out.ChatAttachmentStore;
 import org.zalava.chat.attachment.application.port.out.KnowledgeImportPort;
 import org.zalava.knowledge.application.KnowledgeIngestion;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 @Configuration
 class ChatAttachmentConfiguration {

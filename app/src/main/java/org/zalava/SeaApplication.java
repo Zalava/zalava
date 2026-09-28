@@ -1,6 +1,5 @@
 package org.zalava;
 
-import org.zalava.configuration.ConfigurationChangedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -12,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.zalava.configuration.ConfigurationChangedEvent;
 
 @SpringBootApplication
 public class SeaApplication {

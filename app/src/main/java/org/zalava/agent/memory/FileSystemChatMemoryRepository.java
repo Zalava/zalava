@@ -9,12 +9,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.zalava.conversation.adapter.out.springai.AppendableChatMemoryRepository;
-import org.zalava.files.YamlDocument;
-import org.zalava.files.YamlParser;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.zalava.conversation.adapter.out.springai.AppendableChatMemoryRepository;
+import org.zalava.files.YamlDocument;
+import org.zalava.files.YamlParser;
 
 /**
  * Persists chat conversation history as YAML files inside the agent workspace.

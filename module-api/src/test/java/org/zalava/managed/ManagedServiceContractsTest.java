@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
-import org.zalava.SeaServiceFactoryContext;
 import org.junit.jupiter.api.Test;
+import org.zalava.SeaServiceFactoryContext;
 
 class ManagedServiceContractsTest {
 

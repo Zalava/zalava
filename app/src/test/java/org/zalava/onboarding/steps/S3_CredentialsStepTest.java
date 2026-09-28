@@ -8,9 +8,9 @@ import static org.mockito.Mockito.verify;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.zalava.SupportedProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
+import org.zalava.SupportedProvider;
 
 class S3_CredentialsStepTest {
 
@@ -145,8 +145,7 @@ class S3_CredentialsStepTest {
 
   @Test
   void saveConfigurationIsAReleaseOnlyStepAndPersistsNothing() throws Exception {
-    var commands =
-        mock(org.zalava.configuration.application.port.in.ConfigurationCommands.class);
+    var commands = mock(org.zalava.configuration.application.port.in.ConfigurationCommands.class);
 
     step.saveConfiguration(new HashMap<>(), commands);
 

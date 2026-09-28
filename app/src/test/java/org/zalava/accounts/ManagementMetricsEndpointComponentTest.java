@@ -7,8 +7,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import org.zalava.support.SeaComponentTestConfiguration;
-import org.zalava.support.SeaComponentTestInitializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
@@ -17,6 +15,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.support.SeaComponentTestConfiguration;
+import org.zalava.support.SeaComponentTestInitializer;
 
 /**
  * Regression for the managed metrics stack: Prometheus scrapes the loopback management server

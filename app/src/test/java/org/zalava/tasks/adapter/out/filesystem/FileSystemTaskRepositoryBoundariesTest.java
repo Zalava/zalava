@@ -8,13 +8,13 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import org.zalava.tasks.domain.RecurringTask;
-import org.zalava.tasks.domain.Task;
-import org.zalava.tasks.domain.TaskNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.FileSystemResource;
+import org.zalava.tasks.domain.RecurringTask;
+import org.zalava.tasks.domain.Task;
+import org.zalava.tasks.domain.TaskNotFoundException;
 
 /**
  * Covers the {@link FileSystemTaskRepository} boundary branches left out of the base test:

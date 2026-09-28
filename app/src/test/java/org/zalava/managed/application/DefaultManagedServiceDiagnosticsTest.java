@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
@@ -18,7 +19,6 @@ import org.zalava.managed.ManagedServiceResourceGrant;
 import org.zalava.managed.application.port.in.ManagedServiceDiagnostics;
 import org.zalava.managed.application.port.out.ManagedServiceStateStore;
 import org.zalava.managed.application.port.out.OciServiceEngine;
-import org.junit.jupiter.api.Test;
 
 class DefaultManagedServiceDiagnosticsTest {
 

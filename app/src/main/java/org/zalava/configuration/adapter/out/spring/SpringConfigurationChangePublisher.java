@@ -1,9 +1,9 @@
 package org.zalava.configuration.adapter.out.spring;
 
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.zalava.configuration.ConfigurationChangedEvent;
 import org.zalava.configuration.application.port.out.ConfigurationChangePublisher;
-import org.springframework.context.ApplicationEventPublisher;
 
 public final class SpringConfigurationChangePublisher implements ConfigurationChangePublisher {
 

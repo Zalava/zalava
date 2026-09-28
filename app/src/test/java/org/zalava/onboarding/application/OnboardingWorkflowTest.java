@@ -5,9 +5,9 @@ import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.configuration.application.port.in.ConfigurationCommands;
 import org.zalava.onboarding.OnboardingProvider;
-import org.junit.jupiter.api.Test;
 
 class OnboardingWorkflowTest {
   @Test

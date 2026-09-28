@@ -9,14 +9,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.support.AuthenticatedSeaComponentTest;
-import org.zalava.support.ComponentTestAccounts;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.ComponentTestAccounts;
 
 @AuthenticatedSeaComponentTest
 class SeaLogsControllerComponentTest {

@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
-import org.zalava.observability.application.port.out.OperationalMetrics;
 import org.junit.jupiter.api.Test;
+import org.zalava.observability.application.port.out.OperationalMetrics;
 
 class MicrometerOperationalMetricsTest {
   @Test

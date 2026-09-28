@@ -9,12 +9,12 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.development.CandidateEvaluation;
 import org.zalava.development.InstalledModuleAcceptance;
 import org.zalava.development.ModuleDevelopmentContract;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class FileSystemInstalledModuleAcceptanceStoreTest {
 

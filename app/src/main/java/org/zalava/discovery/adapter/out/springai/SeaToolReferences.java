@@ -2,10 +2,10 @@ package org.zalava.discovery.adapter.out.springai;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.ai.tool.toolsearch.ToolReference;
 import org.zalava.ProviderDescriptor;
 import org.zalava.SeaToolDescriptor;
 import org.zalava.discovery.application.port.in.ToolDiscovery;
-import org.springframework.ai.tool.toolsearch.ToolReference;
 
 public final class SeaToolReferences {
 

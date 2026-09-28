@@ -1,11 +1,11 @@
 package org.zalava.knowledge.adapter.out.jobrunr;
 
 import java.util.UUID;
+import org.jobrunr.scheduling.JobScheduler;
+import org.springframework.stereotype.Component;
 import org.zalava.knowledge.adapter.in.jobrunr.KnowledgeExtractionHandler;
 import org.zalava.knowledge.application.port.out.KnowledgeIngestionScheduler;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
-import org.jobrunr.scheduling.JobScheduler;
-import org.springframework.stereotype.Component;
 
 /** Uses the source id as the durable job key, making enqueue/cancel idempotent. */
 @Component

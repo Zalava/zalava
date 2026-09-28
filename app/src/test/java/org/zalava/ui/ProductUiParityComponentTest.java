@@ -10,10 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.zalava.support.AuthenticatedSeaComponentTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.support.AuthenticatedSeaComponentTest;
 
 @AuthenticatedSeaComponentTest
 class ProductUiParityComponentTest {

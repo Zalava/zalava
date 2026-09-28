@@ -10,6 +10,15 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.ManagedServiceDeclaration;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderDescriptor;
@@ -34,15 +43,6 @@ import org.zalava.runtime.LoadedSeaProvider;
 import org.zalava.runtime.ManagedSeaRuntime;
 import org.zalava.runtime.SeaRuntime;
 import org.zalava.runtime.application.port.in.ManagedSeaRestart;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class ModulesController {

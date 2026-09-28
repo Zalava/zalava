@@ -11,13 +11,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.catalog.install.application.port.in.LocalArtifactModuleInstallation;
-import org.zalava.control.application.AdministratorControlAuthorization;
-import org.zalava.support.SecureSeaComponentTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -31,6 +24,13 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.accounts.application.ActorExecutionContext;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.accounts.domain.Actor;
+import org.zalava.catalog.install.application.port.in.LocalArtifactModuleInstallation;
+import org.zalava.control.application.AdministratorControlAuthorization;
+import org.zalava.support.SecureSeaComponentTest;
 
 @SecureSeaComponentTest
 @ResourceLock("secure-component-runtime")

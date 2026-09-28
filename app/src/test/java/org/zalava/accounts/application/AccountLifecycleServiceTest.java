@@ -9,12 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.zalava.accounts.application.port.out.AccountStore;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
-import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 class AccountLifecycleServiceTest {
   private final InMemoryStore store = new InMemoryStore();

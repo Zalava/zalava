@@ -11,6 +11,8 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.files.YamlDocument;
@@ -19,8 +21,6 @@ import org.zalava.memory.domain.Memory;
 import org.zalava.memory.domain.MemoryDraft;
 import org.zalava.memory.domain.MemoryProvenance;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
  * MEM-01 ownership, visibility, provenance, retention/deletion and backward-compatibility evidence

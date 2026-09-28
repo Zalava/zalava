@@ -6,6 +6,12 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
 import org.zalava.catalog.adapter.out.http.JdkModuleReleaseIndexRetrieval;
 import org.zalava.catalog.application.DefaultCatalogQueries;
 import org.zalava.catalog.application.port.in.CatalogQueries;
@@ -54,12 +60,6 @@ import org.zalava.runtime.adapter.out.filesystem.FileSystemManagedSeaRestart;
 import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
 import org.zalava.runtime.application.AdministratorAuthorizedManagedSeaRestart;
 import org.zalava.runtime.application.port.in.ManagedSeaRestart;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.Resource;
 
 @Configuration
 public class SourceModuleInstallationConfiguration {

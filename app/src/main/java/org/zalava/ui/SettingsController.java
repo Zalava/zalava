@@ -9,12 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
-import org.zalava.SupportedProvider;
-import org.zalava.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.channels.application.port.in.TelegramConfiguration;
-import org.zalava.channels.application.port.in.TelegramConfigurationStatus;
-import org.zalava.channels.application.port.in.TelegramConfigurationUpdate;
-import org.zalava.runtime.SeaRuntime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -25,6 +19,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.zalava.SupportedProvider;
+import org.zalava.catalog.FileSystemModuleConfigurationStore;
+import org.zalava.channels.application.port.in.TelegramConfiguration;
+import org.zalava.channels.application.port.in.TelegramConfigurationStatus;
+import org.zalava.channels.application.port.in.TelegramConfigurationUpdate;
+import org.zalava.runtime.SeaRuntime;
 
 @Controller
 public class SettingsController {

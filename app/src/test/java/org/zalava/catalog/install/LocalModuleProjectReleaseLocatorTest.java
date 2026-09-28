@@ -7,10 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HexFormat;
-import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInspection;
-import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalModuleProjectReleaseLocator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInspection;
+import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalModuleProjectReleaseLocator;
 
 class LocalModuleProjectReleaseLocatorTest {
   @TempDir Path root;

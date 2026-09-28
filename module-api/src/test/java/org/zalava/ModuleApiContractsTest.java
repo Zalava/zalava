@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.tasks.RecurringTaskSummary;
 import org.zalava.tasks.TaskReference;
 import org.zalava.tasks.TaskServiceResult;
 import org.zalava.web.SeaWebRequest;
 import org.zalava.web.SeaWebResponse;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
 class ModuleApiContractsTest {

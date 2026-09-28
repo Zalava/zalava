@@ -8,10 +8,10 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.memory.application.port.out.MemoryStore;
 import org.zalava.memory.domain.Memory;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Test;
 
 class DefaultMemoryQueriesTest {
 

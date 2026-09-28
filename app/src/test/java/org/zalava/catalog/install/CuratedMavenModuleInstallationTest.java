@@ -6,13 +6,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.SourceModuleCatalog;
 import org.zalava.catalog.SourceModuleCatalogSearch;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.application.DefaultCuratedMavenModuleInstallation;
 import org.zalava.catalog.install.application.port.in.BinaryModuleInstallation;
 import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver;
-import org.junit.jupiter.api.Test;
 
 class CuratedMavenModuleInstallationTest {
 

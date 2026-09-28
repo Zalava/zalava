@@ -7,13 +7,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.agent.AgentRequestTools;
 import org.zalava.tools.ActorTaskCreationContext;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.tool.ToolCallbackProvider;
 
 /**
  * Covers the policy adapter that converts a request-scoped tool resolution into the agent-domain

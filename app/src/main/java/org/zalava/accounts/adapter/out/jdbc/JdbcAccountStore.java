@@ -5,12 +5,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.accounts.application.port.out.AccountStore;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.persistence.OptimisticLockConflictException;
-import org.springframework.jdbc.core.simple.JdbcClient;
 
 public final class JdbcAccountStore implements AccountStore {
   private static final String ACCOUNT_COLUMNS =

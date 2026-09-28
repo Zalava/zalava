@@ -2,9 +2,9 @@ package org.zalava.voice.adapter.out;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.junit.jupiter.api.Test;
 import org.zalava.voice.application.port.out.VoiceClip;
 import org.zalava.voice.application.port.out.VoiceTranscriptionException;
-import org.junit.jupiter.api.Test;
 
 class DisabledVoiceTranscriptionTest {
 

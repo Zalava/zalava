@@ -5,17 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.tool.definition.ToolDefinition;
+import org.springframework.ai.tool.metadata.ToolMetadata;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tools.ActorTaskCreationContext;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.tool.definition.ToolDefinition;
-import org.springframework.ai.tool.metadata.ToolMetadata;
 
 /**
  * Covers the streamed-turn context bridge: tool callbacks executing on other threads (as Spring AI

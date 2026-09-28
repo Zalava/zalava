@@ -8,14 +8,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
 import org.zalava.managed.application.ManagedServiceUpgradeRequest;
 import org.zalava.managed.application.ManagedServiceUpgradeRequest.Phase;
 import org.zalava.managed.application.ManagedServiceUpgradeRequest.Status;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class FileSystemManagedServiceUpgradeRequestStoreTest {
   @TempDir Path root;

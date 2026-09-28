@@ -5,16 +5,6 @@ import static java.util.Optional.ofNullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.zalava.agent.Agent;
-import org.zalava.channels.Channel;
-import org.zalava.channels.ChannelMessageReceivedEvent;
-import org.zalava.channels.ChannelRegistry;
-import org.zalava.channels.approval.ChannelApprovalCommands;
-import org.zalava.voice.VoiceProperties;
-import org.zalava.voice.adapter.out.DisabledVoiceTranscription;
-import org.zalava.voice.application.port.out.VoiceClip;
-import org.zalava.voice.application.port.out.VoiceTranscriptionException;
-import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
@@ -27,6 +17,16 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+import org.zalava.agent.Agent;
+import org.zalava.channels.Channel;
+import org.zalava.channels.ChannelMessageReceivedEvent;
+import org.zalava.channels.ChannelRegistry;
+import org.zalava.channels.approval.ChannelApprovalCommands;
+import org.zalava.voice.VoiceProperties;
+import org.zalava.voice.adapter.out.DisabledVoiceTranscription;
+import org.zalava.voice.application.port.out.VoiceClip;
+import org.zalava.voice.application.port.out.VoiceTranscriptionException;
+import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 
 public class TelegramChannel
     implements Channel, SpringLongPollingBot, LongPollingSingleThreadUpdateConsumer {

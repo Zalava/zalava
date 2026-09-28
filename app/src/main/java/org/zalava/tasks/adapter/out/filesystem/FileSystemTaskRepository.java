@@ -16,6 +16,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 import org.zalava.files.YamlDocument;
 import org.zalava.files.YamlParser;
 import org.zalava.tasks.application.port.out.TaskStore;
@@ -23,9 +26,6 @@ import org.zalava.tasks.domain.RecurringTask;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskNotFoundException;
 import org.zalava.tasks.domain.TaskReference;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
 
 @Component
 public class FileSystemTaskRepository implements TaskStore {

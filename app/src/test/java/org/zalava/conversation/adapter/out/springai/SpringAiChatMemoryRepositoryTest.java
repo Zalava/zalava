@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.conversation.application.port.in.ActorConversations;
@@ -11,8 +13,6 @@ import org.zalava.conversation.application.port.in.ConversationRepository;
 import org.zalava.conversation.domain.ActorConversationId;
 import org.zalava.conversation.domain.ConversationMessage;
 import org.zalava.conversation.domain.ConversationReference;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.messages.UserMessage;
 
 class SpringAiChatMemoryRepositoryTest {
   @Test

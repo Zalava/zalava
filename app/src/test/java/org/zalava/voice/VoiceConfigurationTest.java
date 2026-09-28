@@ -2,9 +2,6 @@ package org.zalava.voice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.zalava.voice.adapter.out.DisabledVoiceTranscription;
-import org.zalava.voice.adapter.out.springai.SpringAiVoiceTranscription;
-import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
@@ -13,6 +10,9 @@ import org.springframework.ai.audio.transcription.TranscriptionModel;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.zalava.voice.adapter.out.DisabledVoiceTranscription;
+import org.zalava.voice.adapter.out.springai.SpringAiVoiceTranscription;
+import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 
 class VoiceConfigurationTest {
 

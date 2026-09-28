@@ -3,6 +3,7 @@ package org.zalava.runtime.application;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
@@ -13,7 +14,6 @@ import org.zalava.SeaModule;
 import org.zalava.SeaProvider;
 import org.zalava.SeaToolDescriptor;
 import org.zalava.runtime.application.port.out.RuntimeModuleRegistry;
-import org.junit.jupiter.api.Test;
 
 class DefaultRuntimeQueriesTest {
 

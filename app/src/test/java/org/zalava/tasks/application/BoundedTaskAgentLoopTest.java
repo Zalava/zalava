@@ -6,9 +6,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.Task;
-import org.junit.jupiter.api.Test;
 
 class BoundedTaskAgentLoopTest {
 

@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
@@ -23,7 +24,6 @@ import org.zalava.skills.domain.SkillProvenance;
 import org.zalava.skills.domain.SkillStaleVersionException;
 import org.zalava.skills.domain.SkillStatus;
 import org.zalava.skills.domain.SkillVisibility;
-import org.junit.jupiter.api.Test;
 
 class SeaSkillActivationsTest {
 

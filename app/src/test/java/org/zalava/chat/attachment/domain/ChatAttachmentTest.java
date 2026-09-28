@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
-import org.junit.jupiter.api.Test;
 
 class ChatAttachmentTest {
 

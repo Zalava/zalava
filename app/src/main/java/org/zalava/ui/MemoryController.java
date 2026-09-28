@@ -2,15 +2,6 @@ package org.zalava.ui;
 
 import java.util.List;
 import java.util.Set;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.accounts.security.AuthenticatedActorResolver;
-import org.zalava.memory.application.port.in.ActorMemoryQueries;
-import org.zalava.memory.application.port.in.MemoryManagement;
-import org.zalava.memory.application.port.in.MemoryPromotions;
-import org.zalava.memory.domain.Memory;
-import org.zalava.memory.domain.MemoryProposal;
-import org.zalava.memory.domain.MemoryProposalDraft;
-import org.zalava.memory.domain.MemoryScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -22,6 +13,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.zalava.accounts.domain.Actor;
+import org.zalava.accounts.security.AuthenticatedActorResolver;
+import org.zalava.memory.application.port.in.ActorMemoryQueries;
+import org.zalava.memory.application.port.in.MemoryManagement;
+import org.zalava.memory.application.port.in.MemoryPromotions;
+import org.zalava.memory.domain.Memory;
+import org.zalava.memory.domain.MemoryProposal;
+import org.zalava.memory.domain.MemoryProposalDraft;
+import org.zalava.memory.domain.MemoryScope;
 
 /**
  * Authenticated product surface for actor-private durable memory: browse/search, inspect, edit and

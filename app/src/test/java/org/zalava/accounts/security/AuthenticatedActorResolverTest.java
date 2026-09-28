@@ -7,14 +7,14 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.Account;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.AccountRole;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.Account;
+import org.zalava.accounts.domain.AccountId;
+import org.zalava.accounts.domain.AccountRole;
 
 class AuthenticatedActorResolverTest {
   private final AccountLifecycle accounts = Mockito.mock(AccountLifecycle.class);

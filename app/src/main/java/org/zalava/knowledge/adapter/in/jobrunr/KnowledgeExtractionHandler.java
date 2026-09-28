@@ -1,8 +1,8 @@
 package org.zalava.knowledge.adapter.in.jobrunr;
 
-import org.zalava.knowledge.application.KnowledgeExtractionJob;
 import org.jobrunr.jobs.annotations.Job;
 import org.springframework.stereotype.Component;
+import org.zalava.knowledge.application.KnowledgeExtractionJob;
 
 /** JobRunr inbound adapter; the application use case remains framework-free. */
 @Component

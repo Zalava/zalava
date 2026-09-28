@@ -15,13 +15,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.agent.application.port.out.AgentRunStore;
-import org.zalava.agent.domain.AgentRun;
-import org.zalava.support.SeaComponentTestConfiguration;
-import org.zalava.tasks.application.port.out.TaskStore;
-import org.zalava.tasks.domain.Task;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -34,6 +27,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.agent.application.port.out.AgentRunStore;
+import org.zalava.agent.domain.AgentRun;
+import org.zalava.support.SeaComponentTestConfiguration;
+import org.zalava.tasks.application.port.out.TaskStore;
+import org.zalava.tasks.domain.Task;
 
 /**
  * Real-browser acceptance for the administrator Monitoring screen. It proves live work renders, a

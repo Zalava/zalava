@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
@@ -24,7 +25,6 @@ import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.RecurringTask;
 import org.zalava.tasks.domain.TaskReference;
 import org.zalava.tools.ActorTaskCreationContext;
-import org.junit.jupiter.api.Test;
 
 class SeaTaskServiceActorBoundariesTest {
 

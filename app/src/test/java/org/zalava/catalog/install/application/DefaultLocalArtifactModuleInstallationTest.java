@@ -12,19 +12,18 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.LocalArtifactInstallRequest;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.application.port.out.LocalArtifactInspection;
 import org.zalava.catalog.install.application.port.out.LocalArtifactInstallRequestStore;
 import org.zalava.development.CandidateEvaluation;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 class DefaultLocalArtifactModuleInstallationTest {
 
-  private org.zalava.catalog.install.application.port.out.LocalArtifactInstallRequestStore
-      requests;
+  private org.zalava.catalog.install.application.port.out.LocalArtifactInstallRequestStore requests;
   private org.zalava.catalog.install.application.port.in.BinaryModuleInstallation installation;
   private LocalArtifactInspection artifacts;
   private org.zalava.development.application.DevelopmentCandidateValidationGateway

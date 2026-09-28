@@ -16,13 +16,6 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.catalog.ModuleReleaseIndex;
-import org.zalava.catalog.application.port.out.ModuleReleaseIndexRetrieval;
-import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver;
-import org.zalava.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
-import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +30,13 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.catalog.ModuleReleaseIndex;
+import org.zalava.catalog.application.port.out.ModuleReleaseIndexRetrieval;
+import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver;
+import org.zalava.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
+import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 
 @SpringBootTest
 @AutoConfigureMockMvc

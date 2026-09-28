@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
@@ -25,7 +26,6 @@ import org.zalava.managed.application.port.out.ManagedServiceInstallRequestStore
 import org.zalava.managed.application.port.out.ManagedServiceStateStore;
 import org.zalava.managed.application.port.out.ManagedServiceUpgradeRequestStore;
 import org.zalava.managed.application.port.out.OciServiceEngine;
-import org.junit.jupiter.api.Test;
 
 class DefaultManagedServiceUpgradeTest {
 
@@ -264,8 +264,7 @@ class DefaultManagedServiceUpgradeTest {
     String installRequestId =
         installation
             .plan(
-                new org.zalava.managed.application.port.in.ManagedServiceInstallation
-                    .PlanRequest(
+                new org.zalava.managed.application.port.in.ManagedServiceInstallation.PlanRequest(
                     List.of(
                         new org.zalava.managed.application.port.in.ManagedServiceInstallation
                             .PlannedRequest(

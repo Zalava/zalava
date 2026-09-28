@@ -9,14 +9,14 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.LocalArtifactInstallRequest;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInspection;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInstallRequestStore;
 import org.zalava.catalog.install.application.DefaultLocalArtifactModuleInstallation;
 import org.zalava.catalog.install.application.port.in.BinaryModuleInstallation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class LocalArtifactModuleInstallationTest {
   @TempDir Path workspace;
@@ -107,8 +107,7 @@ class LocalArtifactModuleInstallationTest {
       @Override
       public Evidence requireAccepted(
           org.zalava.development.DevelopmentRequestId id,
-          org.zalava.catalog.install.application.port.out.LocalArtifactInspection
-                  .InspectedArtifact
+          org.zalava.catalog.install.application.port.out.LocalArtifactInspection.InspectedArtifact
               artifact,
           String moduleId,
           String version) {

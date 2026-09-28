@@ -5,14 +5,14 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.security.AuthenticatedActorResolver;
-import org.zalava.control.application.AdministratorControlAuthorization;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.zalava.accounts.application.ActorExecutionContext;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.accounts.security.AuthenticatedActorResolver;
+import org.zalava.control.application.AdministratorControlAuthorization;
 
 /** Spring Security adapter for the administrator control application port. */
 @Component

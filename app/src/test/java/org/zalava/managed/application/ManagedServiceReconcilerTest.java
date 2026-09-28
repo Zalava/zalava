@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import org.zalava.ManagedServiceAuthority;
 import org.zalava.SeaServiceFactoryContext;
 import org.zalava.managed.ManagedServiceDesiredState;
@@ -19,7 +20,6 @@ import org.zalava.managed.ManagedServiceLimits;
 import org.zalava.managed.ManagedServiceResourceGrant;
 import org.zalava.managed.application.port.out.ManagedServiceStateStore;
 import org.zalava.managed.application.port.out.OciServiceEngine;
-import org.junit.jupiter.api.Test;
 
 class ManagedServiceReconcilerTest {
   private final FakeStore states = new FakeStore();

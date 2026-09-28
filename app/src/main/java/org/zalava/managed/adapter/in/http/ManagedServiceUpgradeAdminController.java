@@ -1,11 +1,6 @@
 package org.zalava.managed.adapter.in.http;
 
 import java.util.List;
-import org.zalava.managed.application.ManagedServiceUpgradeException;
-import org.zalava.managed.application.ManagedServiceUpgradeRequest;
-import org.zalava.managed.application.ManagedServiceUpgradeValidationException;
-import org.zalava.managed.application.port.in.ManagedServiceDiagnostics;
-import org.zalava.managed.application.port.in.ManagedServiceUpgrade;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.zalava.managed.application.ManagedServiceUpgradeException;
+import org.zalava.managed.application.ManagedServiceUpgradeRequest;
+import org.zalava.managed.application.ManagedServiceUpgradeValidationException;
+import org.zalava.managed.application.port.in.ManagedServiceDiagnostics;
+import org.zalava.managed.application.port.in.ManagedServiceUpgrade;
 
 /**
  * Administrator HTTP surface for managed-service upgrades and bounded diagnostics (dev/test

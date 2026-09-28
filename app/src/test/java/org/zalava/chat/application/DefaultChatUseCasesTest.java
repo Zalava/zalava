@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.chat.application.port.out.ChatAgent;
 import org.zalava.chat.application.port.out.ChatApprovalCommands;
 import org.zalava.chat.application.port.out.ChatConversationIdGenerator;
@@ -15,7 +16,6 @@ import org.zalava.chat.application.port.out.ChatConversationStore;
 import org.zalava.chat.application.port.out.ChatMessageEvents;
 import org.zalava.chat.domain.ChatMessage;
 import org.zalava.chat.domain.ChatTurn;
-import org.junit.jupiter.api.Test;
 
 class DefaultChatUseCasesTest {
   private final ChatAgent agent = mock(ChatAgent.class);

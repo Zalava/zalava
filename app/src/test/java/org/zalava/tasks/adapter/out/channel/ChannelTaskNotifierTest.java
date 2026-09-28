@@ -7,10 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Test;
 import org.zalava.channels.Channel;
 import org.zalava.channels.ChannelRegistry;
 import org.zalava.tasks.domain.Task;
-import org.junit.jupiter.api.Test;
 
 class ChannelTaskNotifierTest {
 

@@ -13,12 +13,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.zalava.managed.application.ManagedServiceObservedState;
-import org.zalava.managed.application.ManagedServiceRecord;
-import org.zalava.managed.application.port.out.ManagedServiceStateStore;
-import org.zalava.managed.application.port.out.OciServiceEngine;
-import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
-import org.zalava.support.PostgreSqlTestDatabase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +27,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.managed.application.ManagedServiceObservedState;
+import org.zalava.managed.application.ManagedServiceRecord;
+import org.zalava.managed.application.port.out.ManagedServiceStateStore;
+import org.zalava.managed.application.port.out.OciServiceEngine;
+import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
+import org.zalava.support.PostgreSqlTestDatabase;
 
 @SpringBootTest
 @AutoConfigureMockMvc

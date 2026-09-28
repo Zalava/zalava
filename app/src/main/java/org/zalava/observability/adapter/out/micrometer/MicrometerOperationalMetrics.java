@@ -4,10 +4,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.zalava.observability.application.port.out.OperationalMetrics;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.zalava.observability.application.port.out.OperationalMetrics;
 
 /** Micrometer adapter with SEA-owned cardinality and privacy constraints. */
 @Component

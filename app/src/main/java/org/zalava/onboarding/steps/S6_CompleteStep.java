@@ -2,10 +2,10 @@ package org.zalava.onboarding.steps;
 
 import java.io.IOException;
 import java.util.Map;
-import org.zalava.configuration.application.port.in.ConfigurationCommands;
-import org.zalava.onboarding.OnboardingProvider;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.zalava.configuration.application.port.in.ConfigurationCommands;
+import org.zalava.onboarding.OnboardingProvider;
 
 @Component
 @Order(Integer.MAX_VALUE)

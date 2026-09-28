@@ -3,12 +3,12 @@ package org.zalava;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.Future;
-import org.zalava.support.SeaComponentTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.zalava.support.SeaComponentTest;
 
 @SeaComponentTest
 class VirtualThreadRuntimeConfigurationTest {

@@ -2,14 +2,14 @@ package org.zalava.agent.adapter.out.policy;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.tasks.domain.ActorTaskReference;
-import org.zalava.tools.ActorTaskCreationContext;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.zalava.accounts.application.ActorExecutionContext;
+import org.zalava.tasks.domain.ActorTaskReference;
+import org.zalava.tools.ActorTaskCreationContext;
 
 /**
  * Propagates SEA's ThreadLocal request contexts into streamed model turns.

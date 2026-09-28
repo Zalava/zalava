@@ -3,6 +3,14 @@ package org.zalava.managed;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
 import org.zalava.control.application.AdministratorControlAuthorization;
 import org.zalava.managed.adapter.out.filesystem.FileSystemManagedServiceBackupAdapter;
 import org.zalava.managed.adapter.out.filesystem.FileSystemManagedServiceInstallRequestStore;
@@ -30,14 +38,6 @@ import org.zalava.managed.application.port.out.ManagedServiceStateStore;
 import org.zalava.managed.application.port.out.ManagedServiceUpgradeRequestStore;
 import org.zalava.managed.application.port.out.OciServiceEngine;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.Resource;
 
 /**
  * Wires the managed-service reconciler to the module-provided engine and exposes the administrator
@@ -158,8 +158,7 @@ class ManagedServiceConfiguration {
     return new ManagedServiceInstallation() {
       @Override
       public org.zalava.managed.application.ManagedServiceInstallRequest plan(
-          org.zalava.managed.application.port.in.ManagedServiceInstallation.PlanRequest
-              request) {
+          org.zalava.managed.application.port.in.ManagedServiceInstallation.PlanRequest request) {
         return authorization.call("managed-service-install:plan", () -> delegate.plan(request));
       }
 
@@ -170,21 +169,18 @@ class ManagedServiceConfiguration {
       }
 
       @Override
-      public List<org.zalava.managed.application.ManagedServiceInstallRequest> recent(
-          int limit) {
+      public List<org.zalava.managed.application.ManagedServiceInstallRequest> recent(int limit) {
         return authorization.call("managed-service-install:recent", () -> delegate.recent(limit));
       }
 
       @Override
-      public org.zalava.managed.application.ManagedServiceInstallRequest allow(
-          String requestId) {
+      public org.zalava.managed.application.ManagedServiceInstallRequest allow(String requestId) {
         return authorization.call(
             "managed-service-install-allow:" + requestId, () -> delegate.allow(requestId));
       }
 
       @Override
-      public org.zalava.managed.application.ManagedServiceInstallRequest deny(
-          String requestId) {
+      public org.zalava.managed.application.ManagedServiceInstallRequest deny(String requestId) {
         return authorization.call(
             "managed-service-install-deny:" + requestId, () -> delegate.deny(requestId));
       }

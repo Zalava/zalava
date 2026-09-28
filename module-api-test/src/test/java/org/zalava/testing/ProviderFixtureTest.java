@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.SeaOperationResult;
 import org.zalava.SeaToolDescriptor;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.node.JsonNodeFactory;
 
 class ProviderFixtureTest {

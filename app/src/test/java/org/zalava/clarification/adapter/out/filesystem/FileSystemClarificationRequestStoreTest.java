@@ -8,9 +8,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.zalava.clarification.domain.ClarificationRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.clarification.domain.ClarificationRequest;
 
 /**
  * Covers the filesystem clarification store: atomic save, newest-first loading, deletion and the

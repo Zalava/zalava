@@ -1,14 +1,14 @@
 package org.zalava.agent;
 
 import java.time.Instant;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.zalava.agent.application.port.in.AgentExecution;
 import org.zalava.agent.application.port.out.AgentModel;
 import org.zalava.agent.application.port.out.AgentRunStore;
 import org.zalava.agent.domain.AgentContext;
 import org.zalava.agent.domain.AgentToolSelection;
 import org.zalava.tasks.application.port.out.TaskAgent;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
 
 /**
  * Compatibility facade retained while task, chat, and channel callers migrate to the execution

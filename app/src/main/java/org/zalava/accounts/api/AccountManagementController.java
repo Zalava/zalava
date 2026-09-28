@@ -1,9 +1,6 @@
 package org.zalava.accounts.api;
 
 import java.util.UUID;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.AccountRole;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.AccountId;
+import org.zalava.accounts.domain.AccountRole;
 
 /** Administrator-only HTML adapter for managed SEA group accounts. */
 @Controller

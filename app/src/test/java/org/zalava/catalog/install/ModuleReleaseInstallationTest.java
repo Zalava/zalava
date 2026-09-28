@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.ModuleReleaseIndex;
 import org.zalava.catalog.ModuleReleaseInstallRequest;
 import org.zalava.catalog.application.DefaultCatalogQueries;
@@ -19,7 +20,6 @@ import org.zalava.catalog.install.application.port.in.BinaryModuleInstallation;
 import org.zalava.catalog.install.application.port.in.ModuleReleaseInstallation;
 import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver;
 import org.zalava.catalog.install.application.port.out.ModuleReleaseInstallRequestStore;
-import org.junit.jupiter.api.Test;
 
 class ModuleReleaseInstallationTest {
   private final CapturingResolver resolver = new CapturingResolver(digest());
@@ -222,8 +222,7 @@ class ModuleReleaseInstallationTest {
       @Override
       public Evidence requireAccepted(
           org.zalava.development.DevelopmentRequestId id,
-          org.zalava.catalog.install.application.port.out.LocalArtifactInspection
-                  .InspectedArtifact
+          org.zalava.catalog.install.application.port.out.LocalArtifactInspection.InspectedArtifact
               artifact,
           String moduleId,
           String version) {

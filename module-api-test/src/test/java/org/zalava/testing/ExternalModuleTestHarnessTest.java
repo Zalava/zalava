@@ -14,9 +14,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
-import org.zalava.SeaModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.SeaModule;
 
 class ExternalModuleTestHarnessTest {
 

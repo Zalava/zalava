@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.SeaOperationResult;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
@@ -18,7 +19,6 @@ import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.TaskExecutionContext;
 import org.zalava.tasks.domain.TaskReference;
-import org.junit.jupiter.api.Test;
 
 class SeaProviderToolInvokerTest {
 

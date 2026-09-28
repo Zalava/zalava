@@ -3,11 +3,11 @@ package org.zalava.knowledge.adapter.out.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.content.ContentExtractionFailureCategory;
 import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
 import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
-import org.springframework.jdbc.core.simple.JdbcClient;
 
 public final class JdbcKnowledgeExtractionRecordStore implements KnowledgeExtractionRecordStore {
   private final JdbcClient jdbc;

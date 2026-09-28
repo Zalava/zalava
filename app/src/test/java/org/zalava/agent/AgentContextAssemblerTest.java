@@ -6,11 +6,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.memory.AgentMemory;
 import org.zalava.memory.AgentMemoryDraft;
 import org.zalava.memory.AgentMemoryScope;
 import org.zalava.memory.AgentMemoryStore;
-import org.junit.jupiter.api.Test;
 
 class AgentContextAssemblerTest {
 

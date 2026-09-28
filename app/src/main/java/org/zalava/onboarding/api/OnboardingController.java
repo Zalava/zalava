@@ -4,11 +4,6 @@ import jakarta.servlet.http.HttpSession;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.zalava.SupportedProvider;
-import org.zalava.onboarding.application.OnboardingWorkflow;
-import org.zalava.onboarding.domain.OnboardingPage;
-import org.zalava.onboarding.domain.OnboardingSubmission;
-import org.zalava.onboarding.steps.S5StarterModulesStep;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,6 +12,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.zalava.SupportedProvider;
+import org.zalava.onboarding.application.OnboardingWorkflow;
+import org.zalava.onboarding.domain.OnboardingPage;
+import org.zalava.onboarding.domain.OnboardingSubmission;
+import org.zalava.onboarding.steps.S5StarterModulesStep;
 
 @Controller
 public class OnboardingController {

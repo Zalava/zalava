@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
 import org.zalava.SeaProvider;
@@ -13,7 +14,6 @@ import org.zalava.discovery.adapter.out.springai.SeaToolCallbackCatalog;
 import org.zalava.operation.adapter.in.agent.SeaProviderToolInvoker;
 import org.zalava.operation.application.port.out.ProviderCatalog;
 import org.zalava.tasks.domain.TaskExecutionContext;
-import org.junit.jupiter.api.Test;
 
 class SeaNativeToolDiscoveryTest {
 

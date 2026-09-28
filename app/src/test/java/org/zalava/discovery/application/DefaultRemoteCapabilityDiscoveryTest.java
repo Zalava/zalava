@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
 import org.zalava.discovery.CapabilityGapClassification;
 import org.zalava.discovery.CapabilityGapEvidence;
 import org.zalava.discovery.RemoteCatalogException;
@@ -16,7 +17,6 @@ import org.zalava.discovery.RemoteModuleCandidate;
 import org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.discovery.application.port.out.CapabilityGapEvidenceStore;
 import org.zalava.discovery.application.port.out.RemoteModuleCatalog;
-import org.junit.jupiter.api.Test;
 
 class DefaultRemoteCapabilityDiscoveryTest {
 

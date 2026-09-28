@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.application.port.out.AccountStore;
 import org.zalava.accounts.domain.Account;
@@ -20,7 +21,6 @@ import org.zalava.conversation.application.port.in.ActorConversations;
 import org.zalava.conversation.domain.ConversationReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tools.ActorTaskCreationContext;
-import org.junit.jupiter.api.Test;
 
 class ActorChatUseCasesTest {
   @Test

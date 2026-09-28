@@ -11,11 +11,11 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.application.port.out.BinaryArtifactInstallation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class FileSystemJarBundleInstallationTest {
   @TempDir Path workspace;

@@ -3,10 +3,10 @@ package org.zalava.support;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 /** Creates activated SEA accounts and matching MockMvc identities for component tests. */
 public final class ComponentTestAccounts {

@@ -6,12 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.ModuleReleaseIndex;
 import org.zalava.catalog.application.port.out.ModuleReleaseIndexRetrieval;
 import org.zalava.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
 import org.zalava.discovery.RemoteCatalogException;
 import org.zalava.discovery.RemoteModuleCandidate;
-import org.junit.jupiter.api.Test;
 
 class JdkModuleLocatorRemoteModuleCatalogTest {
 

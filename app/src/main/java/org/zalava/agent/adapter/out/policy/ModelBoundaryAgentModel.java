@@ -2,12 +2,12 @@ package org.zalava.agent.adapter.out.policy;
 
 import java.util.List;
 import java.util.function.Consumer;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 import org.zalava.agent.adapter.out.springai.SpringAiAgentModel;
 import org.zalava.agent.application.ModelBoundary;
 import org.zalava.agent.application.port.out.AgentModel;
 import org.zalava.tasks.application.port.out.TaskAgent;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 

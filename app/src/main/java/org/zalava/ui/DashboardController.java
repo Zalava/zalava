@@ -7,6 +7,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.accounts.security.AuthenticatedActorResolver;
 import org.zalava.approval.SeaToolApprovalRequests;
@@ -14,10 +18,6 @@ import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.Task;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class DashboardController {

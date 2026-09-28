@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 import java.util.List;
-import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore.DesiredState;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore.DesiredState;
 
 class FileSystemModuleLifecycleStoreTest {
   @TempDir Path workspace;

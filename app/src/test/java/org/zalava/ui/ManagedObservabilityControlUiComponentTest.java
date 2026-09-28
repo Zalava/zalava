@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.zalava.support.SeaComponentTestConfiguration;
-import org.zalava.support.SeaComponentTestInitializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,6 +13,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.support.SeaComponentTestConfiguration;
+import org.zalava.support.SeaComponentTestInitializer;
 
 /** Proves the SEA Control Metrics link only appears when a viewer resolves. */
 @SpringBootTest(properties = "sea.observability.mode=managed")

@@ -3,13 +3,13 @@ package org.zalava.control.adapter.in.actuator;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import org.zalava.runtime.SeaRuntime;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
+import org.zalava.runtime.SeaRuntime;
 
 @Component
 @EnableConfigurationProperties(ProductionReleaseProperties.class)

@@ -15,6 +15,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.agent.application.port.out.AgentRunStore;
@@ -29,13 +36,6 @@ import org.zalava.tasks.application.port.in.TaskQueries;
 import org.zalava.tasks.domain.RecurringTask;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * Full-context MockMvc component test for the administrator Monitoring screen. It drives the real

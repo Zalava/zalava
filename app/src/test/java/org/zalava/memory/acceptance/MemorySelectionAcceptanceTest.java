@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
@@ -21,9 +24,6 @@ import org.zalava.memory.domain.Memory;
 import org.zalava.memory.domain.MemoryDraft;
 import org.zalava.memory.domain.MemoryProvenance;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Opt-in MEM-02 measurement/acceptance lane.

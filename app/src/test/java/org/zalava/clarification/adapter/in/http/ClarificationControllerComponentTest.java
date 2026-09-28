@@ -9,6 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
@@ -20,10 +24,6 @@ import org.zalava.support.ComponentTestAccounts;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * Full-context MockMvc component test for the actor-owned clarification surface. It drives the real

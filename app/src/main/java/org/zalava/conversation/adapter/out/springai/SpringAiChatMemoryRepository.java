@@ -1,14 +1,14 @@
 package org.zalava.conversation.adapter.out.springai;
 
 import java.util.List;
-import org.zalava.conversation.application.port.in.ActorConversations;
-import org.zalava.conversation.application.port.in.ConversationRepository;
-import org.zalava.conversation.domain.ActorConversationId;
-import org.zalava.conversation.domain.ConversationMessage;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.zalava.conversation.application.port.in.ActorConversations;
+import org.zalava.conversation.application.port.in.ConversationRepository;
+import org.zalava.conversation.domain.ActorConversationId;
+import org.zalava.conversation.domain.ConversationMessage;
 
 public final class SpringAiChatMemoryRepository implements AppendableChatMemoryRepository {
   private final ConversationRepository conversations;

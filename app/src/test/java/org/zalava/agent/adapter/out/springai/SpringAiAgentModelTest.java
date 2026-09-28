@@ -17,10 +17,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.zalava.agent.application.port.out.StructuredOutputSchemaException;
-import org.zalava.agent.application.port.out.StructuredRunEvidence;
-import org.zalava.tasks.application.port.out.TaskAgent;
-import org.zalava.tasks.domain.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -38,6 +34,10 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
+import org.zalava.agent.application.port.out.StructuredOutputSchemaException;
+import org.zalava.agent.application.port.out.StructuredRunEvidence;
+import org.zalava.tasks.application.port.out.TaskAgent;
+import org.zalava.tasks.domain.Task;
 import reactor.core.publisher.Flux;
 
 class SpringAiAgentModelTest {

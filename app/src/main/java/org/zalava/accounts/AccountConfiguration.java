@@ -1,11 +1,6 @@
 package org.zalava.accounts;
 
 import java.time.Clock;
-import org.zalava.accounts.adapter.out.jdbc.JdbcAccountStore;
-import org.zalava.accounts.application.AccountLifecycleService;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.application.port.out.AccountStore;
-import org.zalava.accounts.security.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,6 +12,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.zalava.accounts.adapter.out.jdbc.JdbcAccountStore;
+import org.zalava.accounts.application.AccountLifecycleService;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.application.port.out.AccountStore;
+import org.zalava.accounts.security.*;
 
 @Configuration
 public class AccountConfiguration {

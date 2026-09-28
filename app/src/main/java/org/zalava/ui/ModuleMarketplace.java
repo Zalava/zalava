@@ -5,9 +5,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 import org.zalava.catalog.ModuleReleaseVersion;
 import org.zalava.catalog.install.application.ControlCatalogDiscovery;
-import org.springframework.stereotype.Component;
 
 /**
  * Bounded, refreshed view of the module catalog for the product Modules screen. A page view never

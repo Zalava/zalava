@@ -11,8 +11,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import org.zalava.agent.application.port.out.AgentRunStore;
-import org.zalava.agent.domain.AgentRun;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +23,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.agent.application.port.out.AgentRunStore;
+import org.zalava.agent.domain.AgentRun;
 
 @SpringBootTest
 @AutoConfigureMockMvc

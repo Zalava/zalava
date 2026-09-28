@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.zalava.accounts.domain.Actor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.zalava.accounts.domain.Actor;
 
 /** Active product WebSocket sessions, partitioned by the authenticated SEA actor. */
 @Component

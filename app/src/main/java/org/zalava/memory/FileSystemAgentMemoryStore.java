@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.zalava.files.YamlDocument;
-import org.zalava.files.YamlParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.zalava.files.YamlDocument;
+import org.zalava.files.YamlParser;
 
 @Component
 public class FileSystemAgentMemoryStore implements AgentMemoryStore {

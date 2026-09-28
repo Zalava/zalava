@@ -11,11 +11,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Component;
 import org.zalava.development.DevelopmentRequestException;
 import org.zalava.development.DevelopmentWorkspace;
 import org.zalava.development.ModuleDevelopmentRequest;
 import org.zalava.development.application.port.out.DevelopmentWorkspacePort;
-import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 /** Materializes only SEA-owned request inputs below {@code .sea-request}. */

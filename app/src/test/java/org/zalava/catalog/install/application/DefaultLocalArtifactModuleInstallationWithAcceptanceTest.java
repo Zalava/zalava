@@ -14,6 +14,8 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.LocalArtifactInstallRequest;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.application.port.out.LocalArtifactInspection;
@@ -24,8 +26,6 @@ import org.zalava.development.InstalledModuleAcceptance;
 import org.zalava.development.ModuleDevelopmentContract;
 import org.zalava.development.application.DevelopmentCandidateValidationGateway;
 import org.zalava.development.application.port.out.InstalledModuleAcceptanceStore;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 class DefaultLocalArtifactModuleInstallationWithAcceptanceTest {
 

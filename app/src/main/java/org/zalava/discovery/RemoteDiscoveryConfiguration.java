@@ -6,6 +6,10 @@ import java.time.Clock;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.zalava.catalog.adapter.out.http.JdkModuleReleaseIndexRetrieval;
 import org.zalava.catalog.install.adapter.out.http.JdkModuleLocatorReleaseLocator;
 import org.zalava.discovery.adapter.out.filesystem.FileSystemCapabilityGapEvidenceStore;
@@ -17,10 +21,6 @@ import org.zalava.discovery.application.port.in.CapabilityGapEvidenceQueries;
 import org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.discovery.application.port.out.CapabilityGapEvidenceStore;
 import org.zalava.discovery.application.port.out.RemoteModuleCatalog;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 @Configuration
 public class RemoteDiscoveryConfiguration {

@@ -115,6 +115,5 @@ public class DevelopmentCandidateValidationGateway {
   }
 
   public record AcceptedCandidate(
-      org.zalava.development.ModuleDevelopmentContract contract,
-      CandidateEvaluation evaluation) {}
+      org.zalava.development.ModuleDevelopmentContract contract, CandidateEvaluation evaluation) {}
 }

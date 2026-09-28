@@ -1,5 +1,6 @@
 package org.zalava.chat.ws;
 
+import org.springframework.stereotype.Component;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.accounts.security.AuthenticatedActorResolver;
@@ -9,7 +10,6 @@ import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 import org.zalava.ui.protocol.UiCommand;
-import org.springframework.stereotype.Component;
 
 /** Applies a UI approval intent through the existing owner-scoped SEA authority. */
 @Component

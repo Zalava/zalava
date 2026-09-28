@@ -5,8 +5,8 @@ import org.zalava.ManagedServiceDeclaration;
 
 /**
  * Reads the managed services loaded modules declare through {@link
- * org.zalava.SeaModule#managedServices()}. SEA owns validation, grant derivation and
- * installation; modules only declare their desired state.
+ * org.zalava.SeaModule#managedServices()}. SEA owns validation, grant derivation and installation;
+ * modules only declare their desired state.
  */
 public interface DeclaredManagedServices {
 

@@ -3,11 +3,11 @@ package org.zalava.channels.application;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.channels.application.port.out.ChannelApprovalStore;
 import org.zalava.channels.application.port.out.ChannelProviderOperations;
 import org.zalava.channels.application.port.out.ChannelTasks;
 import org.zalava.channels.domain.ChannelApproval;
-import org.junit.jupiter.api.Test;
 
 class PermissionPolicyChannelCommandsTest {
 

@@ -9,10 +9,10 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
-import org.zalava.catalog.install.SourceModuleInstallationException;
-import org.zalava.catalog.install.application.port.out.ModuleEnablement;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.catalog.install.SourceModuleInstallationException;
+import org.zalava.catalog.install.application.port.out.ModuleEnablement;
 
 class FileSystemModuleBundleEnablementTest {
   @TempDir Path workspace;

@@ -14,6 +14,10 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.springframework.core.io.FileSystemResource;
 import org.zalava.tasks.adapter.out.filesystem.FileSystemTaskRepository;
 import org.zalava.tasks.application.port.in.TaskExecution;
 import org.zalava.tasks.application.port.out.TaskAgent;
@@ -22,10 +26,6 @@ import org.zalava.tasks.application.port.out.TaskNotifier;
 import org.zalava.tasks.application.port.out.TaskStore;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
-import org.springframework.core.io.FileSystemResource;
 
 class DefaultTaskExecutionTest {
 

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
@@ -17,7 +18,6 @@ import org.zalava.accounts.domain.Actor;
 import org.zalava.knowledge.application.KnowledgeEvidenceQueries;
 import org.zalava.knowledge.application.port.out.KnowledgeEvidenceStore;
 import org.zalava.knowledge.domain.KnowledgeEvidence;
-import org.junit.jupiter.api.Test;
 
 class KnowledgeContextEnrichmentTest {
   private final KnowledgeEvidenceStore store = mock(KnowledgeEvidenceStore.class);

@@ -12,14 +12,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.assertj.core.api.Assertions;
-import org.zalava.support.OnboardingWorkspaceComponentTest;
-import org.zalava.support.SeaComponentTestInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.zalava.support.OnboardingWorkspaceComponentTest;
+import org.zalava.support.SeaComponentTestInitializer;
 
 @OnboardingWorkspaceComponentTest
 class OnboardingControllerTest {

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.ModuleConfigurationDescriptor;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
@@ -22,8 +24,6 @@ import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
 import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore.DesiredState;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class ManagedSeaRuntimeTest {
   private static final AtomicInteger SERVICE_FACTORY_CREATIONS = new AtomicInteger();

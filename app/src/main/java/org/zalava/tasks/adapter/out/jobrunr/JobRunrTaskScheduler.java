@@ -2,9 +2,6 @@ package org.zalava.tasks.adapter.out.jobrunr;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.zalava.tasks.adapter.in.jobrunr.RecurringTaskHandler;
-import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
-import org.zalava.tasks.application.port.out.TaskScheduler;
 import org.jobrunr.jobs.Job;
 import org.jobrunr.jobs.context.JobContext;
 import org.jobrunr.jobs.states.StateName;
@@ -12,6 +9,9 @@ import org.jobrunr.scheduling.JobScheduler;
 import org.jobrunr.storage.Paging;
 import org.jobrunr.storage.StorageProvider;
 import org.springframework.stereotype.Component;
+import org.zalava.tasks.adapter.in.jobrunr.RecurringTaskHandler;
+import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
+import org.zalava.tasks.application.port.out.TaskScheduler;
 
 @Component
 public class JobRunrTaskScheduler implements TaskScheduler {

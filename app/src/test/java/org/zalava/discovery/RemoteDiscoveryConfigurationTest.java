@@ -3,13 +3,13 @@ package org.zalava.discovery;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.core.io.FileSystemResource;
 import org.zalava.discovery.application.RemoteCandidatePolicy;
 import org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.discovery.application.port.out.CapabilityGapEvidenceStore;
 import org.zalava.discovery.application.port.out.RemoteModuleCatalog;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.springframework.core.io.FileSystemResource;
 
 class RemoteDiscoveryConfigurationTest {
 

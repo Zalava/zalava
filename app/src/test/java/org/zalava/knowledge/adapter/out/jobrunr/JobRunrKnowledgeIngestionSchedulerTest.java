@@ -4,11 +4,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.zalava.knowledge.adapter.in.jobrunr.KnowledgeExtractionHandler;
-import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.jobrunr.jobs.lambdas.IocJobLambda;
 import org.jobrunr.scheduling.JobScheduler;
 import org.junit.jupiter.api.Test;
+import org.zalava.knowledge.adapter.in.jobrunr.KnowledgeExtractionHandler;
+import org.zalava.knowledge.domain.KnowledgeSourceId;
 
 class JobRunrKnowledgeIngestionSchedulerTest {
   @Test

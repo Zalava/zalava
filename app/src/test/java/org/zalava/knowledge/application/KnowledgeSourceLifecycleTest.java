@@ -6,11 +6,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.*;
 import org.zalava.knowledge.domain.*;
-import org.junit.jupiter.api.Test;
 
 class KnowledgeSourceLifecycleTest {
   private final Actor owner = new Actor(new AccountId(UUID.randomUUID()));

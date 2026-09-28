@@ -4,14 +4,14 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.application.port.out.AccountStore;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 
 public class AccountLifecycleService implements AccountLifecycle {
   private final AccountStore accounts;

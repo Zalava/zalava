@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.RequirementMode;
@@ -16,7 +17,6 @@ import org.zalava.SeaServiceDescriptor;
 import org.zalava.SeaServiceFactory;
 import org.zalava.SeaServiceFactoryContext;
 import org.zalava.SeaServiceRequirement;
-import org.junit.jupiter.api.Test;
 
 class ServiceFixtureTest {
   private static final String MODULE_ID = "fixture-service-module";

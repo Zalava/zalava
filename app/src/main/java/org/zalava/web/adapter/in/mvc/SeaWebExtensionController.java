@@ -5,10 +5,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.zalava.web.SeaWebRequest;
-import org.zalava.web.SeaWebResponse;
-import org.zalava.web.application.RouteInvocation;
-import org.zalava.web.application.port.in.WebExtensionRoutes;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +18,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.zalava.web.SeaWebRequest;
+import org.zalava.web.SeaWebResponse;
+import org.zalava.web.application.RouteInvocation;
+import org.zalava.web.application.port.in.WebExtensionRoutes;
 
 @Controller
 public final class SeaWebExtensionController {

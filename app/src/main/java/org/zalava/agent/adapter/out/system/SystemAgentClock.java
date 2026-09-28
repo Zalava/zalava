@@ -1,8 +1,8 @@
 package org.zalava.agent.adapter.out.system;
 
 import java.time.Instant;
-import org.zalava.agent.application.port.out.AgentClock;
 import org.springframework.stereotype.Component;
+import org.zalava.agent.application.port.out.AgentClock;
 
 @Component
 public final class SystemAgentClock implements AgentClock {

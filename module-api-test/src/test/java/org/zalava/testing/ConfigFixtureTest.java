@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.FactorySecretAccess;
 import org.zalava.ProviderFactoryContext;
-import org.junit.jupiter.api.Test;
 
 class ConfigFixtureTest {
 

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeIngestionScheduler;
@@ -17,7 +18,6 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.junit.jupiter.api.Test;
 
 class KnowledgeIngestionTest {
 

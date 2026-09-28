@@ -1,6 +1,11 @@
 package org.zalava.development;
 
 import java.time.Clock;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.zalava.catalog.install.application.port.out.LocalArtifactInspection;
 import org.zalava.control.application.AdministratorControlAuthorization;
 import org.zalava.development.application.AdministratorAuthorizedDevelopmentRequests;
@@ -14,11 +19,6 @@ import org.zalava.development.application.port.in.DevelopmentRequestManagement;
 import org.zalava.development.application.port.in.DevelopmentWorkspaceExport;
 import org.zalava.development.application.port.out.DevelopmentRequestStore;
 import org.zalava.development.application.port.out.DevelopmentWorkspacePort;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class DevelopmentRequestConfiguration {

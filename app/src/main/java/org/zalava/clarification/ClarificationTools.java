@@ -2,14 +2,14 @@ package org.zalava.clarification;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.clarification.domain.ClarificationDraft;
 import org.zalava.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.TaskExecutionContext;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
 import tools.jackson.databind.ObjectMapper;
 
 /**

@@ -10,11 +10,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.tool.ToolCallback;
 import org.zalava.discovery.adapter.out.springai.SeaToolCallbackCatalog;
 import org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.discovery.application.port.in.ToolDiscovery;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.tool.ToolCallback;
 
 class AgentRequestToolsTest {
 

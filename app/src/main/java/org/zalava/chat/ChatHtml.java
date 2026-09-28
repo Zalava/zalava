@@ -2,9 +2,9 @@ package org.zalava.chat;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.util.HtmlUtils;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.TaskReference;
-import org.springframework.web.util.HtmlUtils;
 
 /** Chat message bubble HTML fragment helpers. */
 public class ChatHtml {

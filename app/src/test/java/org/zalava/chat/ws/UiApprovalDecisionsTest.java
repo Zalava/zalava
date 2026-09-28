@@ -5,6 +5,8 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
@@ -15,8 +17,6 @@ import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 import org.zalava.ui.protocol.UiCommand;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class UiApprovalDecisionsTest {
   private final AuthenticatedActorResolver actors = Mockito.mock(AuthenticatedActorResolver.class);

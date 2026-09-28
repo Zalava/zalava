@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
@@ -18,7 +19,6 @@ import org.zalava.tasks.application.port.in.TaskQueries;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.TaskReference;
 import org.zalava.tools.ActorTaskCreationContext;
-import org.junit.jupiter.api.Test;
 
 class SeaTaskServiceTest {
   @Test

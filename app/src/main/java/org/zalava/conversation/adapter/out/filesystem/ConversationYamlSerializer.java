@@ -3,9 +3,9 @@ package org.zalava.conversation.adapter.out.filesystem;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.zalava.conversation.domain.ConversationMessage;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.zalava.conversation.domain.ConversationMessage;
 
 final class ConversationYamlSerializer {
   static List<ConversationMessage> deserialize(String body) {

@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
@@ -29,8 +31,6 @@ import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.content.ContentExtractor;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.JsonNode;
 
 class ExternalSeaModuleLoaderTest {

@@ -9,14 +9,14 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.application.port.out.BinaryArtifactInstallation.BundleInstall;
 import org.zalava.catalog.install.application.port.out.BinaryArtifactInstallation.Install;
 import org.zalava.catalog.install.application.port.out.BinaryArtifactInstallation.InstalledArtifact;
 import org.zalava.catalog.install.application.port.out.BinaryArtifactInstallation.InstalledBundle;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Covers the bundle installation paths of {@link FileSystemBinaryArtifactInstallation}: the

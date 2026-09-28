@@ -9,9 +9,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.zalava.configuration.application.port.out.ConfigurationStore;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.zalava.configuration.application.port.out.ConfigurationStore;
 
 public final class FileSystemConfigurationStore implements ConfigurationStore {
 

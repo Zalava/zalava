@@ -3,8 +3,6 @@ package org.zalava.discovery.adapter.in.http;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import org.zalava.discovery.CapabilityGapEvidence;
-import org.zalava.discovery.application.port.in.CapabilityGapEvidenceQueries;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.zalava.discovery.CapabilityGapEvidence;
+import org.zalava.discovery.application.port.in.CapabilityGapEvidenceQueries;
 
 /** Development/test-only, read-only inspection of persisted capability-gap evidence. */
 @RestController

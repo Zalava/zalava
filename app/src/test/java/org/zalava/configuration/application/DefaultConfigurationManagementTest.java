@@ -8,9 +8,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.configuration.application.port.out.ConfigurationChangePublisher;
 import org.zalava.configuration.application.port.out.ConfigurationStore;
-import org.junit.jupiter.api.Test;
 
 class DefaultConfigurationManagementTest {
 

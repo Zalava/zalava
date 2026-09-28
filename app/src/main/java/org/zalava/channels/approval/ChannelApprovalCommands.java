@@ -1,6 +1,8 @@
 package org.zalava.channels.approval;
 
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.channels.adapter.out.approval.ProviderOperationChannelAdapter;
 import org.zalava.channels.adapter.out.approval.SeaChannelApprovalStore;
@@ -9,8 +11,6 @@ import org.zalava.channels.application.DefaultChannelApprovalCommands;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
 import org.zalava.tasks.application.port.in.TaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /** Compatibility adapter retained for existing channel and chat callers. */
 @Component

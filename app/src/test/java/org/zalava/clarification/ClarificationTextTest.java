@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import org.zalava.clarification.domain.ClarificationRequest;
 import org.junit.jupiter.api.Test;
+import org.zalava.clarification.domain.ClarificationRequest;
 
 class ClarificationTextTest {
 

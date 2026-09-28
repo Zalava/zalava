@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import org.zalava.SeaServiceDescriptor;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceEngine;
@@ -21,7 +22,6 @@ import org.zalava.managed.application.ManagedServiceObservedState;
 import org.zalava.managed.application.ManagedServiceRecord;
 import org.zalava.managed.application.port.out.OciServiceEngine;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
-import org.junit.jupiter.api.Test;
 
 class ModuleManagedServiceEngineTest {
   private static final String SERVICE_ID = "home-service";

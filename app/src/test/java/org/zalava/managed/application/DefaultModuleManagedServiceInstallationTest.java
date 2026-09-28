@@ -8,12 +8,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
 import org.zalava.managed.ManagedServiceResourceGrant;
 import org.zalava.managed.application.port.in.ManagedServiceInstallation;
-import org.junit.jupiter.api.Test;
 
 class DefaultModuleManagedServiceInstallationTest {
 

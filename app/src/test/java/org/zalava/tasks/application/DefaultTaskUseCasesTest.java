@@ -13,12 +13,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.tasks.application.port.out.TaskScheduler;
 import org.zalava.tasks.application.port.out.TaskStore;
 import org.zalava.tasks.domain.RecurringTask;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
-import org.junit.jupiter.api.Test;
 
 class DefaultTaskUseCasesTest {
 

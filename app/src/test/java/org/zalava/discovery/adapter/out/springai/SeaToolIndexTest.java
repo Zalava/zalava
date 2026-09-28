@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.discovery.application.port.in.ToolDiscovery;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.toolsearch.ToolReference;
 import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
+import org.zalava.discovery.application.port.in.ToolDiscovery;
 
 class SeaToolIndexTest {
 

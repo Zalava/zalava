@@ -4,6 +4,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.jobrunr.jobs.context.JobContext;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.private_state.BootstrapPrivateStateBridge;
@@ -12,8 +14,6 @@ import org.zalava.tasks.application.port.in.TaskExecution;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
-import org.jobrunr.jobs.context.JobContext;
-import org.junit.jupiter.api.Test;
 
 class TaskHandlerTest {
 

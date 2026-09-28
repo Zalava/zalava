@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.SeaModule;
@@ -14,7 +15,6 @@ import org.zalava.web.SeaWebRequest;
 import org.zalava.web.SeaWebResponse;
 import org.zalava.web.WebExtensionDescriptor;
 import org.zalava.web.WebExtensionRegistry;
-import org.junit.jupiter.api.Test;
 
 class WebExtensionFixtureTest {
   private static final String MODULE_ID = "fixture-web-module";

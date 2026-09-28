@@ -6,9 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.ModuleReleaseSelection;
 import org.zalava.catalog.SourceModuleIndex;
-import org.junit.jupiter.api.Test;
 
 class ModuleReleaseBinaryInstallRequestFactoryTest {
 

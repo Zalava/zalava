@@ -7,6 +7,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.knowledge.domain.DerivationState;
@@ -14,7 +15,6 @@ import org.zalava.knowledge.domain.KnowledgeDerivation;
 import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
-import org.junit.jupiter.api.Test;
 
 /**
  * Covers the knowledge lifecycle branches left out of the base test: visibility changes for both

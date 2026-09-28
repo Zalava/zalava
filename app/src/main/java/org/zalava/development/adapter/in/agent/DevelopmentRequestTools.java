@@ -2,6 +2,8 @@ package org.zalava.development.adapter.in.agent;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.development.DevelopmentRequestId;
 import org.zalava.development.DevelopmentRequestStatus;
 import org.zalava.development.DevelopmentWorkspace;
@@ -10,8 +12,6 @@ import org.zalava.development.ModuleDevelopmentRequest;
 import org.zalava.development.application.port.in.DevelopmentCandidateSubmission;
 import org.zalava.development.application.port.in.DevelopmentRequestManagement;
 import org.zalava.development.application.port.in.DevelopmentWorkspaceExport;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
 import tools.jackson.databind.ObjectMapper;
 
 /** Bounded agent adapter for the manual external-module development workflow. */

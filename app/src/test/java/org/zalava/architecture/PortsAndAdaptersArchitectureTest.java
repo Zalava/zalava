@@ -8,10 +8,10 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import org.junit.jupiter.api.Test;
 import org.zalava.architecture.fixture.application.FileSystemCoupledApplicationFixture;
 import org.zalava.architecture.fixture.domain.AdapterCoupledDomainFixture;
 import org.zalava.architecture.fixture.domain.SpringCoupledDomainFixture;
-import org.junit.jupiter.api.Test;
 
 @AnalyzeClasses(packages = "org.zalava", importOptions = ImportOption.DoNotIncludeTests.class)
 class PortsAndAdaptersArchitectureTest {
@@ -100,8 +100,7 @@ class PortsAndAdaptersArchitectureTest {
           .resideInAnyPackage("org.zalava.tasks.domain..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage(
-              "org.zalava.tasks.application..", "org.zalava.tasks.adapter..");
+          .resideInAnyPackage("org.zalava.tasks.application..", "org.zalava.tasks.adapter..");
 
   @ArchTest
   static final ArchRule task_application_must_not_depend_on_task_adapters_or_jobrunr =
@@ -121,9 +120,7 @@ class PortsAndAdaptersArchitectureTest {
               .should()
               .dependOnClassesThat()
               .resideInAnyPackage(
-                  "org.zalava.configuration.adapter..",
-                  "org.springframework..",
-                  "java.nio.file..");
+                  "org.zalava.configuration.adapter..", "org.springframework..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule configuration_ports_must_be_framework_independent =
@@ -170,8 +167,7 @@ class PortsAndAdaptersArchitectureTest {
           .resideInAnyPackage("org.zalava.catalog.application..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage(
-              "org.zalava.catalog.adapter..", "java.net.http..", "java.nio.file..");
+          .resideInAnyPackage("org.zalava.catalog.adapter..", "java.net.http..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule catalog_ports_must_be_framework_independent =

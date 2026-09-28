@@ -12,6 +12,11 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.accounts.security.AuthenticatedActorResolver;
@@ -19,11 +24,6 @@ import org.zalava.chat.ChatChannel;
 import org.zalava.chat.application.port.in.ActorChatCommands;
 import org.zalava.chat.application.port.in.ActorChatQueries;
 import org.zalava.conversation.domain.ConversationReference;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 import tools.jackson.databind.ObjectMapper;
 
 /**

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.tasks.application.port.out.ActorTaskAgent;
@@ -16,7 +17,6 @@ import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskNotFoundException;
-import org.junit.jupiter.api.Test;
 
 class ActorTaskExecutionApprovalPathsTest {
 

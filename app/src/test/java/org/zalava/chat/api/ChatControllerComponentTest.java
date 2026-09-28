@@ -12,10 +12,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import org.zalava.chat.ChatChannel;
-import org.zalava.chat.ChatTurnResult;
-import org.zalava.discovery.adapter.out.springai.SeaToolCallbackNames;
-import org.zalava.runtime.SeaRuntime;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -37,6 +33,10 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.chat.ChatChannel;
+import org.zalava.chat.ChatTurnResult;
+import org.zalava.discovery.adapter.out.springai.SeaToolCallbackNames;
+import org.zalava.runtime.SeaRuntime;
 import reactor.core.publisher.Flux;
 
 @SpringBootTest
@@ -239,8 +239,7 @@ class ChatControllerComponentTest {
                 String toolName,
                 tools.jackson.databind.JsonNode arguments,
                 org.zalava.InvocationContext context) {
-              return org.zalava.SeaOperationResult.success(
-                  java.util.Map.of("time", "12:34:56Z"));
+              return org.zalava.SeaOperationResult.success(java.util.Map.of("time", "12:34:56Z"));
             }
           };
       return new org.zalava.SeaModule() {

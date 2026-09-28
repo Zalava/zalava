@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import org.zalava.agent.domain.AgentRun;
 import org.junit.jupiter.api.Test;
+import org.zalava.agent.domain.AgentRun;
 
 /**
  * Covers the remaining guard and eviction behavior of the in-memory run store that the shared

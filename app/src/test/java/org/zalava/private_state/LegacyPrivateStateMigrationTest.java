@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.accounts.domain.AccountId;
+import org.zalava.accounts.domain.Actor;
 
 class LegacyPrivateStateMigrationTest {
   @TempDir Path workspace;

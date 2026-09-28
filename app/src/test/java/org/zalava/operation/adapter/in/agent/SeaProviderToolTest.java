@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactory;
@@ -25,7 +26,6 @@ import org.zalava.runtime.DefaultSeaRuntime;
 import org.zalava.runtime.StaticSeaModuleRegistry;
 import org.zalava.tasks.domain.TaskExecutionContext;
 import org.zalava.tasks.domain.TaskReference;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
 class SeaProviderToolTest {

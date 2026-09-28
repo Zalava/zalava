@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.ModuleConfigurationDescriptor;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
@@ -13,9 +16,6 @@ import org.zalava.SeaModule;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.runtime.SeaRuntime;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class S5StarterModulesStepTest {
 
@@ -122,8 +122,7 @@ class S5StarterModulesStepTest {
 
   @Test
   void selectionUpdateIsDetectedFromAnEmptyNextStepId() {
-    var submission =
-        new org.zalava.onboarding.domain.OnboardingSubmission("starters", "", null);
+    var submission = new org.zalava.onboarding.domain.OnboardingSubmission("starters", "", null);
 
     assertThat(S5StarterModulesStep.isSelectionUpdate(submission)).isTrue();
     assertThat(

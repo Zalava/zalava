@@ -6,6 +6,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.conversation.application.port.in.ActorConversations;
@@ -13,11 +18,6 @@ import org.zalava.conversation.application.port.in.ConversationRepository;
 import org.zalava.conversation.domain.ActorConversationId;
 import org.zalava.conversation.domain.ConversationMessage;
 import org.zalava.conversation.domain.ConversationReference;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.ToolResponseMessage;
-import org.springframework.ai.chat.messages.UserMessage;
 
 /**
  * Covers the Spring AI compatibility-edge branches: role mapping for every supported message type,

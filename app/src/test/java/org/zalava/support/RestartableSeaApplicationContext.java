@@ -3,10 +3,10 @@ package org.zalava.support;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.zalava.SeaApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.zalava.SeaApplication;
 
 /** Starts an isolated SEA application context against the shared PostgreSQL test database. */
 public final class RestartableSeaApplicationContext {

@@ -8,8 +8,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import org.zalava.tasks.adapter.in.jobrunr.RecurringTaskHandler;
-import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
 import org.jobrunr.configuration.JobRunr;
 import org.jobrunr.jobs.context.JobContext;
 import org.jobrunr.jobs.states.StateName;
@@ -22,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentCaptor;
+import org.zalava.tasks.adapter.in.jobrunr.RecurringTaskHandler;
+import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
 
 @Isolated
 class JobRunrTaskSchedulerTest {

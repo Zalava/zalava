@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Set;
-import org.zalava.discovery.RemoteModuleCandidate;
 import org.junit.jupiter.api.Test;
+import org.zalava.discovery.RemoteModuleCandidate;
 
 class RemoteCandidatePolicyTest {
 

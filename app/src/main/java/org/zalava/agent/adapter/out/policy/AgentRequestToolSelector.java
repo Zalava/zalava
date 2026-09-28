@@ -1,10 +1,10 @@
 package org.zalava.agent.adapter.out.policy;
 
+import org.springframework.stereotype.Component;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.agent.AgentRequestTools;
 import org.zalava.agent.application.port.out.AgentToolSelector;
 import org.zalava.agent.domain.AgentToolSelection;
-import org.springframework.stereotype.Component;
 
 @Component
 public final class AgentRequestToolSelector implements AgentToolSelector {

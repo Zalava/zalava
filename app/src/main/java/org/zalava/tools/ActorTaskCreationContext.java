@@ -3,8 +3,8 @@ package org.zalava.tools;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import org.zalava.tasks.domain.ActorTaskReference;
 import org.springframework.stereotype.Component;
+import org.zalava.tasks.domain.ActorTaskReference;
 
 /** Captures opaque actor-owned jobs created during a product chat turn. */
 @Component

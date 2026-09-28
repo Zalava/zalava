@@ -8,9 +8,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.ModuleLocatorIndexLoader;
 import org.zalava.catalog.install.SourceModuleInstallationException;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
 class JdkModuleLocatorReleaseLocatorTest {

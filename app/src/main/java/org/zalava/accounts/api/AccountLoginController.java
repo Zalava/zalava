@@ -1,6 +1,5 @@
 package org.zalava.accounts.api;
 
-import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
 
 @Controller
 @RequestMapping

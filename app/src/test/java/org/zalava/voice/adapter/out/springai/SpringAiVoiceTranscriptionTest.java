@@ -3,13 +3,13 @@ package org.zalava.voice.adapter.out.springai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.zalava.voice.application.port.out.VoiceClip;
-import org.zalava.voice.application.port.out.VoiceTranscriptionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.audio.transcription.AudioTranscription;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.audio.transcription.TranscriptionModel;
+import org.zalava.voice.application.port.out.VoiceClip;
+import org.zalava.voice.application.port.out.VoiceTranscriptionException;
 
 class SpringAiVoiceTranscriptionTest {
 

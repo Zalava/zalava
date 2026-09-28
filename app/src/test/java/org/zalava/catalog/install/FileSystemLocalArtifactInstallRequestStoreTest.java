@@ -8,12 +8,12 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.LocalArtifactInstallRequest;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInstallRequestStore;
 import org.zalava.development.CandidateEvaluation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 

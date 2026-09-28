@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
-import org.junit.jupiter.api.Test;
 
 class KnowledgeSourceTest {
   private static final Instant CREATED = Instant.parse("2026-08-27T20:00:00Z");

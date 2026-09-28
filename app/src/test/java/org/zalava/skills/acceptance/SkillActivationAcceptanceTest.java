@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
@@ -27,9 +30,6 @@ import org.zalava.skills.domain.SkillActivation;
 import org.zalava.skills.domain.SkillActivationDeniedException;
 import org.zalava.skills.domain.SkillContentPolicy;
 import org.zalava.skills.domain.SkillStaleVersionException;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Opt-in SKILL-02 measurement/acceptance lane.

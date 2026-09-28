@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.URI;
 import java.util.List;
-import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.junit.jupiter.api.Test;
+import org.zalava.catalog.install.SourceModuleInstallationException;
 
 class ModuleReleaseSelectionTest {
 

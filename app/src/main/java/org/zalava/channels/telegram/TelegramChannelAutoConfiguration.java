@@ -1,15 +1,15 @@
 package org.zalava.channels.telegram;
 
-import org.zalava.agent.Agent;
-import org.zalava.channels.ChannelRegistry;
-import org.zalava.channels.approval.ChannelApprovalCommands;
-import org.zalava.voice.VoiceProperties;
-import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.zalava.agent.Agent;
+import org.zalava.channels.ChannelRegistry;
+import org.zalava.channels.approval.ChannelApprovalCommands;
+import org.zalava.voice.VoiceProperties;
+import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 
 @AutoConfiguration
 public class TelegramChannelAutoConfiguration {

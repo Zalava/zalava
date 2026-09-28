@@ -6,12 +6,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.zalava.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.catalog.ModuleConfigurationSnapshot;
-import org.zalava.runtime.SeaModuleProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.env.MockEnvironment;
+import org.zalava.catalog.FileSystemModuleConfigurationStore;
+import org.zalava.catalog.ModuleConfigurationSnapshot;
+import org.zalava.runtime.SeaModuleProperties;
 
 class SeaConfigurationTest {
 

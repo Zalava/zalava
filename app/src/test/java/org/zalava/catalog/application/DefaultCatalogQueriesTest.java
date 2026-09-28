@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.ModuleReleaseIndex;
 import org.zalava.catalog.SourceModuleCatalog;
 import org.zalava.catalog.SourceModuleIndex;
-import org.junit.jupiter.api.Test;
 
 class DefaultCatalogQueriesTest {
   private final DefaultCatalogQueries queries = new DefaultCatalogQueries();

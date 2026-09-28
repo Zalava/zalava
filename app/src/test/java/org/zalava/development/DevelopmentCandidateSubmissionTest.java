@@ -12,6 +12,8 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemBinaryArtifactInstallation;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInspection;
@@ -28,8 +30,6 @@ import org.zalava.development.application.DevelopmentCandidateEvaluator;
 import org.zalava.development.application.DevelopmentCandidateValidationGateway;
 import org.zalava.development.application.port.out.DevelopmentRequestStore;
 import org.zalava.runtime.ExternalSeaModuleLoader;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 

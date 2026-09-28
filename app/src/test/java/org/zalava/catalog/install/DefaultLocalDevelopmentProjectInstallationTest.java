@@ -8,14 +8,14 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalArtifactInspection;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemLocalDevelopmentProjectArtifactLocator;
 import org.zalava.catalog.install.application.DefaultLocalDevelopmentProjectInstallation;
 import org.zalava.catalog.install.application.port.in.LocalArtifactModuleInstallation;
 import org.zalava.catalog.install.application.port.in.LocalDevelopmentProjectInstallation;
 import org.zalava.development.DevelopmentRequestId;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class DefaultLocalDevelopmentProjectInstallationTest {
   @TempDir Path root;

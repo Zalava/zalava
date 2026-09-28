@@ -17,14 +17,6 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.zalava.agent.Agent;
-import org.zalava.channels.ChannelRegistry;
-import org.zalava.channels.approval.ChannelApprovalCommands;
-import org.zalava.voice.VoiceProperties;
-import org.zalava.voice.application.port.out.VoiceClip;
-import org.zalava.voice.application.port.out.VoiceTranscriptionException;
-import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
-import org.zalava.voice.application.port.out.VoiceTranscriptionResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -37,6 +29,14 @@ import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+import org.zalava.agent.Agent;
+import org.zalava.channels.ChannelRegistry;
+import org.zalava.channels.approval.ChannelApprovalCommands;
+import org.zalava.voice.VoiceProperties;
+import org.zalava.voice.application.port.out.VoiceClip;
+import org.zalava.voice.application.port.out.VoiceTranscriptionException;
+import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
+import org.zalava.voice.application.port.out.VoiceTranscriptionResult;
 
 @ExtendWith(MockitoExtension.class)
 class TelegramChannelTest {

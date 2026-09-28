@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.chat.attachment.application.port.out.ChatAttachmentStore;
@@ -16,7 +17,6 @@ import org.zalava.chat.attachment.application.port.out.KnowledgeImportPort;
 import org.zalava.chat.attachment.domain.ChatAttachment;
 import org.zalava.chat.attachment.domain.ChatAttachmentIntent;
 import org.zalava.chat.attachment.domain.ChatAttachmentNotFoundException;
-import org.junit.jupiter.api.Test;
 
 class ChatAttachmentsTest {
   private final InMemoryStore store = new InMemoryStore();

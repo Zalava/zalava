@@ -2,11 +2,6 @@ package org.zalava.clarification.adapter.in.http;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.accounts.security.AuthenticatedActorResolver;
-import org.zalava.clarification.ClarificationText;
-import org.zalava.clarification.SeaClarifications;
-import org.zalava.clarification.application.port.in.ClarificationResponses;
-import org.zalava.clarification.domain.ClarificationRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.zalava.accounts.security.AuthenticatedActorResolver;
+import org.zalava.clarification.ClarificationText;
+import org.zalava.clarification.SeaClarifications;
+import org.zalava.clarification.application.port.in.ClarificationResponses;
+import org.zalava.clarification.domain.ClarificationRequest;
 
 /**
  * Actor-owned web surface for persisted clarifications. The authenticated principal is the only

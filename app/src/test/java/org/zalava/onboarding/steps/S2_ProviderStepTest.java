@@ -8,10 +8,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.zalava.SupportedProvider;
-import org.zalava.configuration.application.port.in.ConfigurationCommands;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
+import org.zalava.SupportedProvider;
+import org.zalava.configuration.application.port.in.ConfigurationCommands;
 
 class S2_ProviderStepTest {
 

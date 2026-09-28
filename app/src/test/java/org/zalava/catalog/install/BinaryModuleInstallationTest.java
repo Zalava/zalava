@@ -10,14 +10,14 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemBinaryArtifactInstallation;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.catalog.install.application.DefaultBinaryModuleInstallation;
 import org.zalava.catalog.install.application.port.in.BinaryModuleInstallation;
 import org.zalava.catalog.install.application.port.out.ModuleEnablement;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class BinaryModuleInstallationTest {
 

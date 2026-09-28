@@ -11,11 +11,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import org.zalava.agent.Agent;
-import org.zalava.channels.ChannelRegistry;
-import org.zalava.channels.approval.ChannelApprovalCommands;
-import org.zalava.tasks.domain.TaskReference;
-import org.zalava.tools.TaskCreationContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +21,11 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.zalava.agent.Agent;
+import org.zalava.channels.ChannelRegistry;
+import org.zalava.channels.approval.ChannelApprovalCommands;
+import org.zalava.tasks.domain.TaskReference;
+import org.zalava.tools.TaskCreationContext;
 
 @ExtendWith(MockitoExtension.class)
 class ChatChannelTest {

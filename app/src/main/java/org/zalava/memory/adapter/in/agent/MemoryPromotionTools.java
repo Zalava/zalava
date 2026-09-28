@@ -2,6 +2,8 @@ package org.zalava.memory.adapter.in.agent;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.memory.application.SeaMemoryPromotions;
@@ -9,8 +11,6 @@ import org.zalava.memory.application.port.in.MemoryPromotions;
 import org.zalava.memory.domain.MemoryContentPolicy;
 import org.zalava.memory.domain.MemoryProposal;
 import org.zalava.memory.domain.MemoryProposalDraft;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
 import tools.jackson.databind.ObjectMapper;
 
 /**

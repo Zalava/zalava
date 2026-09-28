@@ -8,6 +8,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.SeaModule;
@@ -23,7 +24,6 @@ import org.zalava.content.ContentExtractor;
 import org.zalava.content.ContentProcessor;
 import org.zalava.content.ContentSourceInput;
 import org.zalava.content.ContentSourceMetadata;
-import org.junit.jupiter.api.Test;
 
 class ServiceContractSpiTest {
   private static final String MODULE_ID = "fixture-extractor-module";

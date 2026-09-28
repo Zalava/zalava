@@ -2,14 +2,14 @@ package org.zalava.knowledge.adapter.in.agent;
 
 import java.util.List;
 import java.util.function.Function;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.agent.application.ModelBoundary;
 import org.zalava.knowledge.application.KnowledgeEvidenceQueries;
 import org.zalava.knowledge.application.KnowledgeToolObservation;
 import org.zalava.knowledge.domain.KnowledgeEvidence;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
 import tools.jackson.databind.ObjectMapper;
 
 /** Explicit document reads under SEA actor authorization, model boundary and redacted audit. */

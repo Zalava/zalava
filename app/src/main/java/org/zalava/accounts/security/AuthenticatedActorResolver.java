@@ -1,13 +1,13 @@
 package org.zalava.accounts.security;
 
 import java.util.Optional;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.accounts.domain.Actor;
 
 /** Resolves the current authenticated principal to SEA's application-owned actor identity. */
 @Component

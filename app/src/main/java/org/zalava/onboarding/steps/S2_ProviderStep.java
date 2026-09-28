@@ -3,12 +3,12 @@ package org.zalava.onboarding.steps;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.zalava.SupportedProvider;
-import org.zalava.configuration.application.port.in.ConfigurationCommands;
-import org.zalava.onboarding.OnboardingProvider;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.zalava.SupportedProvider;
+import org.zalava.configuration.application.port.in.ConfigurationCommands;
+import org.zalava.onboarding.OnboardingProvider;
 
 @Component
 @Order(20)

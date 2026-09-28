@@ -11,11 +11,6 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import org.zalava.agent.domain.AgentRun;
-import org.zalava.memory.AgentMemory;
-import org.zalava.memory.AgentMemoryDraft;
-import org.zalava.memory.AgentMemoryScope;
-import org.zalava.memory.AgentMemoryStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,6 +22,11 @@ import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.ai.tool.toolsearch.ToolIndex;
 import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
 import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
+import org.zalava.agent.domain.AgentRun;
+import org.zalava.memory.AgentMemory;
+import org.zalava.memory.AgentMemoryDraft;
+import org.zalava.memory.AgentMemoryScope;
+import org.zalava.memory.AgentMemoryStore;
 
 class DefaultAgentTest {
 

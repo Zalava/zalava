@@ -2,13 +2,6 @@ package org.zalava.managed.adapter.in.http;
 
 import java.net.URI;
 import java.util.List;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceResourceGrant;
-import org.zalava.managed.application.ManagedServiceInstallException;
-import org.zalava.managed.application.ManagedServiceInstallPlanningException;
-import org.zalava.managed.application.ManagedServiceInstallRequest;
-import org.zalava.managed.application.port.in.ManagedServiceInstallation;
-import org.zalava.managed.application.port.in.ManagedServiceInstallation.PlannedRequest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.zalava.managed.ManagedServiceDesiredState;
+import org.zalava.managed.ManagedServiceResourceGrant;
+import org.zalava.managed.application.ManagedServiceInstallException;
+import org.zalava.managed.application.ManagedServiceInstallPlanningException;
+import org.zalava.managed.application.ManagedServiceInstallRequest;
+import org.zalava.managed.application.port.in.ManagedServiceInstallation;
+import org.zalava.managed.application.port.in.ManagedServiceInstallation.PlannedRequest;
 
 /** Administrator HTTP surface for the managed-service install workflow (dev/test profiles). */
 @RestController

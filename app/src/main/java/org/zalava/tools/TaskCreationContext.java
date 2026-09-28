@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import org.zalava.tasks.domain.TaskReference;
 import org.springframework.stereotype.Component;
+import org.zalava.tasks.domain.TaskReference;
 
 @Component
 public class TaskCreationContext implements TaskEventHandler {

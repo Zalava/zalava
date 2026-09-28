@@ -1,11 +1,11 @@
 package org.zalava.voice.adapter.out.springai;
 
+import org.springframework.ai.audio.transcription.TranscriptionModel;
+import org.springframework.core.io.ByteArrayResource;
 import org.zalava.voice.application.port.out.VoiceClip;
 import org.zalava.voice.application.port.out.VoiceTranscriptionException;
 import org.zalava.voice.application.port.out.VoiceTranscriptionPort;
 import org.zalava.voice.application.port.out.VoiceTranscriptionResult;
-import org.springframework.ai.audio.transcription.TranscriptionModel;
-import org.springframework.core.io.ByteArrayResource;
 
 public final class SpringAiVoiceTranscription implements VoiceTranscriptionPort {
 

@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.ModuleReleaseInstallRequest;
 import org.zalava.catalog.install.application.DefaultModuleLocatorInstallation;
 import org.zalava.catalog.install.application.port.in.ModuleLocatorInstallation;
 import org.zalava.catalog.install.application.port.in.ModuleReleaseInstallation;
 import org.zalava.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
-import org.junit.jupiter.api.Test;
 
 class DefaultModuleLocatorInstallationTest {
 

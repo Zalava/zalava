@@ -128,8 +128,7 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
               request.runtimeArtifacts().stream()
                   .map(
                       runtime ->
-                          new org.zalava.catalog.install.BinaryModuleInstallRequest
-                              .RuntimeArtifact(
+                          new org.zalava.catalog.install.BinaryModuleInstallRequest.RuntimeArtifact(
                               runtime.artifact(), runtime.artifactPath(), runtime.artifactDigest()))
                   .toList()));
       return save(request, ModuleReleaseInstallRequest.Status.SUCCEEDED, "Module enabled");

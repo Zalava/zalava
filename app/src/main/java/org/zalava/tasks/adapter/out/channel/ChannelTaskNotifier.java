@@ -1,12 +1,12 @@
 package org.zalava.tasks.adapter.out.channel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.zalava.channels.Channel;
 import org.zalava.channels.ChannelRegistry;
 import org.zalava.tasks.application.port.out.TaskNotifier;
 import org.zalava.tasks.domain.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ChannelTaskNotifier implements TaskNotifier {

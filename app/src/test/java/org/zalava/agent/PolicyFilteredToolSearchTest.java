@@ -4,16 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.discovery.adapter.out.springai.SeaToolCallbackNames;
-import org.zalava.discovery.adapter.out.springai.SeaToolIndex;
-import org.zalava.discovery.adapter.out.springai.SeaToolReferences;
-import org.zalava.discovery.application.port.in.ToolDiscovery;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.toolsearch.ToolIndex;
 import org.springframework.ai.tool.toolsearch.ToolReference;
 import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
 import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.discovery.adapter.out.springai.SeaToolCallbackNames;
+import org.zalava.discovery.adapter.out.springai.SeaToolIndex;
+import org.zalava.discovery.adapter.out.springai.SeaToolReferences;
+import org.zalava.discovery.application.port.in.ToolDiscovery;
 
 class PolicyFilteredToolSearchTest {
 

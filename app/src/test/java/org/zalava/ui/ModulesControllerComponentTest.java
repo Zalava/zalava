@@ -19,6 +19,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.ManagedServiceDeclaration;
 import org.zalava.ModuleConfigurationDescriptor;
 import org.zalava.ModuleDescriptor;
@@ -40,25 +59,6 @@ import org.zalava.runtime.LoadedSeaProvider;
 import org.zalava.runtime.SeaRuntime;
 import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 import org.zalava.support.ComponentTestAccounts;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest
@@ -330,7 +330,8 @@ class ModulesControllerComponentTest {
         .andExpect(content().string(containsString("data-metric=\"enabled-modules\">1<")))
         .andExpect(content().string(containsString("sea-module-example")))
         .andExpect(content().string(containsString("1.2.3")))
-        .andExpect(content().string(containsString("https://github.com/Zalava/zalava-module-example")))
+        .andExpect(
+            content().string(containsString("https://github.com/Zalava/zalava-module-example")))
         .andExpect(content().string(containsString("Permissions")))
         .andExpect(content().string(containsString(">1</p>")));
   }
@@ -407,8 +408,7 @@ class ModulesControllerComponentTest {
             request -> {
               assertThat(request.status())
                   .isEqualTo(
-                      org.zalava.managed.application.ManagedServiceInstallRequest.Status
-                          .EXECUTING);
+                      org.zalava.managed.application.ManagedServiceInstallRequest.Status.EXECUTING);
               assertThat(request.services())
                   .anySatisfy(
                       service -> assertThat(service.serviceId()).isEqualTo("declared-service"));

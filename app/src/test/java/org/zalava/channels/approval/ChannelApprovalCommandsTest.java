@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
@@ -22,7 +23,6 @@ import org.zalava.tasks.application.port.in.TaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
 class ChannelApprovalCommandsTest {

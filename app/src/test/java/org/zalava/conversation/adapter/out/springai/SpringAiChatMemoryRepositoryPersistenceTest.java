@@ -11,15 +11,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.zalava.conversation.adapter.out.filesystem.FileSystemConversationStore;
-import org.zalava.conversation.application.port.in.ConversationRepository;
-import org.zalava.conversation.domain.ConversationMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.zalava.conversation.adapter.out.filesystem.FileSystemConversationStore;
+import org.zalava.conversation.application.port.in.ConversationRepository;
+import org.zalava.conversation.domain.ConversationMessage;
 
 class SpringAiChatMemoryRepositoryPersistenceTest {
 

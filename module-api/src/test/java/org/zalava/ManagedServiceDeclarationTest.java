@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 import java.time.Duration;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
-import org.junit.jupiter.api.Test;
 
 class ManagedServiceDeclarationTest {
 

@@ -1,8 +1,8 @@
 package org.zalava.agent.adapter.out.system;
 
 import java.util.UUID;
-import org.zalava.agent.application.port.out.AgentRunIdGenerator;
 import org.springframework.stereotype.Component;
+import org.zalava.agent.application.port.out.AgentRunIdGenerator;
 
 @Component
 public final class UuidAgentRunIdGenerator implements AgentRunIdGenerator {

@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeSearchStore;
@@ -15,8 +17,6 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class KnowledgeLibraryTest {
   private final Actor owner = new Actor(new AccountId(UUID.randomUUID()));

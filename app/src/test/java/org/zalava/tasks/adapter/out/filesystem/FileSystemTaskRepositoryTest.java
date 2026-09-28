@@ -12,14 +12,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Stream;
-import org.zalava.tasks.domain.RecurringTask;
-import org.zalava.tasks.domain.Task;
-import org.zalava.tasks.domain.TaskNotFoundException;
-import org.zalava.tasks.domain.TaskReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.FileSystemResource;
+import org.zalava.tasks.domain.RecurringTask;
+import org.zalava.tasks.domain.Task;
+import org.zalava.tasks.domain.TaskNotFoundException;
+import org.zalava.tasks.domain.TaskReference;
 
 class FileSystemTaskRepositoryTest {
 

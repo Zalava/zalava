@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.zalava.SeaServiceDescriptor;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
@@ -29,7 +30,6 @@ import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
-import org.junit.jupiter.api.Test;
 
 class KnowledgeExtractionJobTest {
   private final Actor owner = new Actor(new AccountId(UUID.randomUUID()));

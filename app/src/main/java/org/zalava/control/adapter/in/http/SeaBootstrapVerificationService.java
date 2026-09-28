@@ -2,8 +2,8 @@ package org.zalava.control.adapter.in.http;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.control.application.port.in.BootstrapVerificationQueries;
 import org.springframework.stereotype.Service;
+import org.zalava.control.application.port.in.BootstrapVerificationQueries;
 
 /** Compatibility adapter for existing local-control consumers. */
 @Service

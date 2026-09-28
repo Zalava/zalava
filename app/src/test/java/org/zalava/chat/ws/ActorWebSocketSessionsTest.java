@@ -5,10 +5,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.WebSocketSession;
+import org.zalava.accounts.domain.AccountId;
+import org.zalava.accounts.domain.Actor;
 
 class ActorWebSocketSessionsTest {
   @Test

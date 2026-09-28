@@ -1,10 +1,10 @@
 package org.zalava.tasks.adapter.out.approval;
 
 import java.util.List;
+import org.springframework.stereotype.Component;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.tasks.application.port.out.TaskApprovalDecisions;
 import org.zalava.tasks.domain.TaskReference;
-import org.springframework.stereotype.Component;
 
 @Component
 public class SeaTaskApprovalDecisions implements TaskApprovalDecisions {

@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import java.util.Map;
-import org.zalava.tasks.TaskService;
 import org.junit.jupiter.api.Test;
+import org.zalava.tasks.TaskService;
 
 class ProviderFactoryContextTest {
   @Test

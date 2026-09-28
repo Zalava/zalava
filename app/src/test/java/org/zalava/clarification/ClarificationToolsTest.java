@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
@@ -13,7 +14,6 @@ import org.zalava.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.TaskExecutionContext;
-import org.junit.jupiter.api.Test;
 
 class ClarificationToolsTest {
 

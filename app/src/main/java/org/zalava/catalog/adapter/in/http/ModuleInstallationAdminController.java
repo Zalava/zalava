@@ -1,15 +1,6 @@
 package org.zalava.catalog.adapter.in.http;
 
 import java.net.URI;
-import org.zalava.catalog.LocalArtifactInstallRequest;
-import org.zalava.catalog.LocalArtifactModuleMetadataLoader;
-import org.zalava.catalog.ModuleReleaseInstallRequest;
-import org.zalava.catalog.SourceModuleIndex;
-import org.zalava.catalog.install.SourceModuleInstallationException;
-import org.zalava.catalog.install.application.port.in.LocalArtifactModuleInstallation;
-import org.zalava.catalog.install.application.port.in.ModuleLocatorInstallation;
-import org.zalava.catalog.install.application.port.in.ModuleReleaseInstallation;
-import org.zalava.development.DevelopmentRequestId;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +11,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.zalava.catalog.LocalArtifactInstallRequest;
+import org.zalava.catalog.LocalArtifactModuleMetadataLoader;
+import org.zalava.catalog.ModuleReleaseInstallRequest;
+import org.zalava.catalog.SourceModuleIndex;
+import org.zalava.catalog.install.SourceModuleInstallationException;
+import org.zalava.catalog.install.application.port.in.LocalArtifactModuleInstallation;
+import org.zalava.catalog.install.application.port.in.ModuleLocatorInstallation;
+import org.zalava.catalog.install.application.port.in.ModuleReleaseInstallation;
+import org.zalava.development.DevelopmentRequestId;
 
 @RestController
 @RequestMapping("/api/sea")

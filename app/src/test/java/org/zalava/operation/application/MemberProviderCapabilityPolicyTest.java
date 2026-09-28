@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
@@ -16,7 +17,6 @@ import org.zalava.SeaToolDescriptor;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
 import org.zalava.operation.application.port.out.ToolApprovalPort;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
 class MemberProviderCapabilityPolicyTest {

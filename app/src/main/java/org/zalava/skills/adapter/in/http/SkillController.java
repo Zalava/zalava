@@ -1,9 +1,6 @@
 package org.zalava.skills.adapter.in.http;
 
 import java.util.List;
-import org.zalava.accounts.security.AuthenticatedActorResolver;
-import org.zalava.skills.application.port.in.SkillQueries;
-import org.zalava.skills.domain.SkillDescriptor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,6 +10,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.zalava.accounts.security.AuthenticatedActorResolver;
+import org.zalava.skills.application.port.in.SkillQueries;
+import org.zalava.skills.domain.SkillDescriptor;
 
 /**
  * Read-only, actor/policy-aware skill metadata discovery. It returns descriptors only and never

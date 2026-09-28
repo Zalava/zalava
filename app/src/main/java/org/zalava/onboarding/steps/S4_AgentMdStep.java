@@ -7,12 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
-import org.zalava.configuration.application.port.in.ConfigurationCommands;
-import org.zalava.onboarding.OnboardingProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.zalava.configuration.application.port.in.ConfigurationCommands;
+import org.zalava.onboarding.OnboardingProvider;
 
 @Component
 @Order(40)

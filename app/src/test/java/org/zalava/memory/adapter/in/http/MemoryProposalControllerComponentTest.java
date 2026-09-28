@@ -6,6 +6,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
@@ -16,10 +20,6 @@ import org.zalava.memory.domain.MemoryProposalDraft;
 import org.zalava.memory.domain.MemoryScope;
 import org.zalava.support.AuthenticatedSeaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * Full-context MockMvc component test for the actor-owned memory-proposal review surface. It drives

@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.memory.adapter.out.filesystem.FileSystemMemoryProposalStore;
@@ -15,8 +17,6 @@ import org.zalava.memory.domain.MemoryContentPolicy;
 import org.zalava.memory.domain.MemoryProposal;
 import org.zalava.memory.domain.MemoryProposalDraft;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class SeaMemoryPromotionsTest {
 

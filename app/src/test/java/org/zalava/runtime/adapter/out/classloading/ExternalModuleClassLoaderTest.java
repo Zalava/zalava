@@ -8,10 +8,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import org.zalava.catalog.install.application.port.out.ModuleEnablement;
-import org.zalava.runtime.ExternalSeaModuleLoadingException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.catalog.install.application.port.out.ModuleEnablement;
+import org.zalava.runtime.ExternalSeaModuleLoadingException;
 
 class ExternalModuleClassLoaderTest {
 
@@ -146,7 +146,6 @@ class ExternalModuleClassLoaderTest {
             ExternalModuleClassLoader.requiresExclusiveOwnership(
                 "com/fasterxml/jackson/databind/deser"))
         .isFalse();
-    assertThat(ExternalModuleClassLoader.requiresExclusiveOwnership("org/zalava/fixture"))
-        .isTrue();
+    assertThat(ExternalModuleClassLoader.requiresExclusiveOwnership("org/zalava/fixture")).isTrue();
   }
 }

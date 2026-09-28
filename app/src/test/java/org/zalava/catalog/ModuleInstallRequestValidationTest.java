@@ -6,8 +6,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import org.zalava.development.CandidateEvaluation;
 import org.junit.jupiter.api.Test;
+import org.zalava.development.CandidateEvaluation;
 
 class ModuleInstallRequestValidationTest {
 

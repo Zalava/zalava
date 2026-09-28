@@ -1,10 +1,10 @@
 package org.zalava.chat.adapter.out.springai;
 
 import java.util.List;
-import org.zalava.chat.application.port.out.ChatConversationStore;
-import org.zalava.chat.domain.ChatMessage;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
+import org.zalava.chat.application.port.out.ChatConversationStore;
+import org.zalava.chat.domain.ChatMessage;
 
 /** Compatibility adapter for callers still supplying Spring AI's legacy repository. */
 public final class SpringAiChatConversationStore implements ChatConversationStore {

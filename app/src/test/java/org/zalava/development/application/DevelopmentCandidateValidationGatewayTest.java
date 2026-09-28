@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.application.port.out.LocalArtifactInspection;
 import org.zalava.development.CandidateEvaluation;
@@ -17,7 +18,6 @@ import org.zalava.development.DevelopmentRequestStatus;
 import org.zalava.development.ModuleDevelopmentContract;
 import org.zalava.development.ModuleDevelopmentRequest;
 import org.zalava.development.application.port.out.DevelopmentRequestStore;
-import org.junit.jupiter.api.Test;
 
 /**
  * Covers the acceptance-evidence gateway: submit bookkeeping, identity matching, digest-scoped

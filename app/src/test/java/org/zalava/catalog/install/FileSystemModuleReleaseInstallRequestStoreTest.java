@@ -9,11 +9,11 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.ModuleReleaseInstallRequest;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemModuleReleaseInstallRequestStore;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class FileSystemModuleReleaseInstallRequestStoreTest {
 

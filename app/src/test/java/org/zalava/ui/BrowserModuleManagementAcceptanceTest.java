@@ -17,13 +17,6 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.catalog.ModuleReleaseIndex;
-import org.zalava.catalog.application.port.out.ModuleReleaseIndexRetrieval;
-import org.zalava.catalog.install.application.port.in.LocalDevelopmentProjectInstallation;
-import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver;
-import org.zalava.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -38,6 +31,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.catalog.ModuleReleaseIndex;
+import org.zalava.catalog.application.port.out.ModuleReleaseIndexRetrieval;
+import org.zalava.catalog.install.application.port.in.LocalDevelopmentProjectInstallation;
+import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver;
+import org.zalava.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
 
 /**
  * Real-browser acceptance for the product module marketplace: an administrator refreshes the

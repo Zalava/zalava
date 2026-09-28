@@ -3,12 +3,12 @@ package org.zalava.agent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.zalava.memory.AgentMemoryStore;
-import org.zalava.memory.application.port.in.MemoryQueries;
-import org.zalava.memory.domain.Memory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.zalava.memory.AgentMemoryStore;
+import org.zalava.memory.application.port.in.MemoryQueries;
+import org.zalava.memory.domain.Memory;
 
 @Component
 public final class DefaultAgentContextAssembler implements AgentContextAssembler {
@@ -57,8 +57,7 @@ public final class DefaultAgentContextAssembler implements AgentContextAssembler
                         memory ->
                             new Memory(
                                 memory.id(),
-                                org.zalava.memory.domain.MemoryScope.valueOf(
-                                    memory.scope().name()),
+                                org.zalava.memory.domain.MemoryScope.valueOf(memory.scope().name()),
                                 memory.text(),
                                 memory.metadata(),
                                 memory.createdAt()))
@@ -72,8 +71,7 @@ public final class DefaultAgentContextAssembler implements AgentContextAssembler
                         memory ->
                             new Memory(
                                 memory.id(),
-                                org.zalava.memory.domain.MemoryScope.valueOf(
-                                    memory.scope().name()),
+                                org.zalava.memory.domain.MemoryScope.valueOf(memory.scope().name()),
                                 memory.text(),
                                 memory.metadata(),
                                 memory.createdAt()))

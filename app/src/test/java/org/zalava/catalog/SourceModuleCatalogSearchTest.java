@@ -51,8 +51,7 @@ class SourceModuleCatalogSearchTest {
 
   @Test
   void findsInstallableModuleByArtifactCoordinates() {
-    List<SourceModuleCatalogSearch.Result> results =
-        search.search(catalog, "org.zalava.modules");
+    List<SourceModuleCatalogSearch.Result> results = search.search(catalog, "org.zalava.modules");
 
     assertThat(results)
         .extracting(result -> result.module().artifact().artifactId())

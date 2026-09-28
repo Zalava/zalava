@@ -2,6 +2,12 @@ package org.zalava.runtime.adapter.in.http;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.zalava.ModuleDescriptor;
 import org.zalava.PromptDescriptor;
 import org.zalava.ProviderCapabilities;
@@ -12,12 +18,6 @@ import org.zalava.SeaProvider;
 import org.zalava.SeaToolDescriptor;
 import org.zalava.runtime.LoadedSeaProvider;
 import org.zalava.runtime.SeaRuntime;
-import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/sea")

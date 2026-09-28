@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import org.zalava.agent.domain.AgentRun;
 import org.junit.jupiter.api.Test;
+import org.zalava.agent.domain.AgentRun;
 
 class AgentRunRecorderTest {
 

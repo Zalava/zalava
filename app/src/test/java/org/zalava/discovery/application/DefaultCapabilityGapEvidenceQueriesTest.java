@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.zalava.discovery.CapabilityGapClassification;
 import org.zalava.discovery.CapabilityGapEvidence;
 import org.zalava.discovery.application.port.in.CapabilityGapEvidenceQueries;
 import org.zalava.discovery.application.port.out.CapabilityGapEvidenceStore;
-import org.junit.jupiter.api.Test;
 
 class DefaultCapabilityGapEvidenceQueriesTest {
 

@@ -3,8 +3,8 @@ package org.zalava.knowledge.domain;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
-import org.zalava.content.ContentExtractionFailureCategory;
 import org.junit.jupiter.api.Test;
+import org.zalava.content.ContentExtractionFailureCategory;
 
 class KnowledgeExtractionRecordTest {
   private final KnowledgeDerivation derivation =

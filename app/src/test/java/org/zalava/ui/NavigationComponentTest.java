@@ -6,12 +6,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.support.AuthenticatedSeaComponentTest;
-import org.zalava.support.ComponentTestAccounts;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.ComponentTestAccounts;
 
 /**
  * Proves the product navigation is one shared, authority-driven fragment: every page shows the same

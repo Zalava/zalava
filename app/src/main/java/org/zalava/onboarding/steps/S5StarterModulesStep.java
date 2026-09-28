@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 import org.zalava.ModuleConfigurationStatus;
 import org.zalava.SeaModule;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.onboarding.OnboardingProvider;
 import org.zalava.runtime.SeaRuntime;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 /** Host-owned optional starter selection; modules cannot contribute wizard steps. */
 @Component

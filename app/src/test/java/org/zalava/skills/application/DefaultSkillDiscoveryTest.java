@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.skills.application.port.out.SkillCatalog;
 import org.zalava.skills.domain.SkillDescriptor;
 import org.zalava.skills.domain.SkillProvenance;
 import org.zalava.skills.domain.SkillStatus;
 import org.zalava.skills.domain.SkillVisibility;
-import org.junit.jupiter.api.Test;
 
 class DefaultSkillDiscoveryTest {
 

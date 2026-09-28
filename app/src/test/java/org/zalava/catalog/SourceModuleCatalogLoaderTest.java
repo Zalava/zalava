@@ -23,7 +23,8 @@ class SourceModuleCatalogLoaderTest {
 
     assertThat(catalog.schemaVersion()).isEqualTo(1);
     assertThat(catalog.repository().type()).isEqualTo("source");
-    assertThat(catalog.repository().indexRepository()).isEqualTo("https://github.com/Zalava/zalava");
+    assertThat(catalog.repository().indexRepository())
+        .isEqualTo("https://github.com/Zalava/zalava");
     assertThat(catalog.repository().indexPath()).isEqualTo("docs/source-modules/catalog.yaml");
     assertThat(catalog.mavenRepositories())
         .containsExactly(

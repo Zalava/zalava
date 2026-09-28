@@ -4,8 +4,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.zalava.agent.application.port.in.AgentRunQueries;
-import org.zalava.agent.domain.AgentRun;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.zalava.agent.application.port.in.AgentRunQueries;
+import org.zalava.agent.domain.AgentRun;
 
 @RestController
 @RequestMapping("/api/agent/runs")

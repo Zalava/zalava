@@ -14,12 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.catalog.SourceModuleIndex;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver.Request;
 import org.zalava.catalog.install.application.port.out.CuratedMavenArtifactResolver.ResolvedArtifact;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class JdkCuratedMavenArtifactResolverExtendedTest {
 

@@ -1,11 +1,11 @@
 package org.zalava.control.adapter.in.spring;
 
 import java.time.Instant;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 import org.zalava.control.application.InvocationLog;
 import org.zalava.control.application.port.in.InvocationLogQueries.Entry;
 import org.zalava.runtime.SeaToolInvocationAuditEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
 
 @Component
 public final class SeaToolInvocationAuditListener {

@@ -7,14 +7,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.files.YamlParser;
 import org.zalava.memory.domain.Memory;
 import org.zalava.memory.domain.MemoryDraft;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Covers the remaining filesystem memory-store branches: scope/metadata search matching, recent

@@ -6,9 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import org.zalava.ModuleConfigurationStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.ModuleConfigurationStatus;
 
 class FileSystemModuleConfigurationStoreTest {
 

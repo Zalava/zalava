@@ -24,8 +24,7 @@ class BootJarPackagingTest {
       assertThat(attributes.getValue("Main-Class"))
           .isEqualTo("org.springframework.boot.loader.launch.JarLauncher");
       assertThat(attributes.getValue("Start-Class")).isEqualTo("org.zalava.SeaApplication");
-      assertThat(bootJar.getEntry("BOOT-INF/classes/org/zalava/SeaApplication.class"))
-          .isNotNull();
+      assertThat(bootJar.getEntry("BOOT-INF/classes/org/zalava/SeaApplication.class")).isNotNull();
       assertThat(bootJar.getEntry("BOOT-INF/lib/module-api-1.0.0-SNAPSHOT.jar")).isNotNull();
     }
   }

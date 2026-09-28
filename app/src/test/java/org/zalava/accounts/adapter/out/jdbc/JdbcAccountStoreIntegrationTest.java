@@ -7,17 +7,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.UUID;
-import org.zalava.accounts.application.port.out.AccountStore;
-import org.zalava.accounts.domain.Account;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.persistence.OptimisticLockConflictException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.accounts.application.port.out.AccountStore;
+import org.zalava.accounts.domain.Account;
+import org.zalava.accounts.domain.AccountId;
+import org.zalava.accounts.domain.AccountRole;
+import org.zalava.persistence.OptimisticLockConflictException;
 
 @SpringBootTest
 class JdbcAccountStoreIntegrationTest {

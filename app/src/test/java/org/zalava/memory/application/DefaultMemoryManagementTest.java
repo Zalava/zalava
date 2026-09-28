@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.memory.adapter.out.filesystem.FileSystemMemoryStore;
@@ -13,8 +15,6 @@ import org.zalava.memory.domain.Memory;
 import org.zalava.memory.domain.MemoryContentPolicy;
 import org.zalava.memory.domain.MemoryDraft;
 import org.zalava.memory.domain.MemoryScope;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class DefaultMemoryManagementTest {
 

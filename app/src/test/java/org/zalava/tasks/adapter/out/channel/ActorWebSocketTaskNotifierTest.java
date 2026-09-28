@@ -2,12 +2,12 @@ package org.zalava.tasks.adapter.out.channel;
 
 import static org.mockito.Mockito.verify;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.chat.ws.ActorWebSocketSessions;
 import org.zalava.tasks.domain.Task;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class ActorWebSocketTaskNotifierTest {
   @Test

@@ -5,10 +5,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeEvidenceStore;
 import org.zalava.knowledge.domain.KnowledgeEvidence;
-import org.springframework.jdbc.core.simple.JdbcClient;
 
 public final class JdbcKnowledgeEvidenceStore implements KnowledgeEvidenceStore {
   private static final String SELECT =

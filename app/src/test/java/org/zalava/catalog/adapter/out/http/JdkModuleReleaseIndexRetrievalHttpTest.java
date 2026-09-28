@@ -10,8 +10,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.junit.jupiter.api.Test;
+import org.zalava.catalog.install.SourceModuleInstallationException;
 
 /**
  * Covers the bounded JDK HTTP release-index adapter with a deterministic fake client: URL

@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.clarification.adapter.out.filesystem.FileSystemClarificationRequestStore;
@@ -16,8 +18,6 @@ import org.zalava.clarification.application.port.out.ClarificationStore;
 import org.zalava.clarification.domain.ClarificationDraft;
 import org.zalava.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskReference;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class SeaClarificationsTest {
 

@@ -1,12 +1,12 @@
 package org.zalava.tasks.adapter.out.agent;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.zalava.agent.Agent;
 import org.zalava.tasks.application.BoundedTaskAgentLoop;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.TaskExecutionContext;
 import org.zalava.tasks.domain.TaskReference;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class AgentTaskAgent implements TaskAgent {

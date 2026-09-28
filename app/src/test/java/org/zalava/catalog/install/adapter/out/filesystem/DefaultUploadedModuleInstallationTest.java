@@ -9,10 +9,10 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.zalava.catalog.ModuleReleaseInstallRequest;
-import org.zalava.catalog.install.application.port.in.UploadedModuleInstallation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.catalog.ModuleReleaseInstallRequest;
+import org.zalava.catalog.install.application.port.in.UploadedModuleInstallation;
 
 /** Covers bundle detection for approval-gated administrator JAR uploads. */
 class DefaultUploadedModuleInstallationTest {

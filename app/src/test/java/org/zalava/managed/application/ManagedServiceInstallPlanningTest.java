@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
 import org.zalava.SeaServiceFactoryContext;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
 import org.zalava.managed.ManagedServiceResourceGrant;
-import org.junit.jupiter.api.Test;
 
 class ManagedServiceInstallPlanningTest {
 

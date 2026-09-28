@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
-import org.junit.jupiter.api.Test;
 
 /** Covers context propagation, nested restore, and clearing behavior of the trusted context. */
 class ActorExecutionContextTest {

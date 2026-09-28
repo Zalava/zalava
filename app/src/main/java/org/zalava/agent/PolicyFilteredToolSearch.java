@@ -4,13 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.ai.tool.toolsearch.ToolIndex;
+import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
+import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.discovery.adapter.out.springai.SeaToolCallbackNames;
 import org.zalava.discovery.adapter.out.springai.SeaToolReferences;
 import org.zalava.discovery.application.port.in.ToolDiscovery;
-import org.springframework.ai.tool.toolsearch.ToolIndex;
-import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
-import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
 
 /**
  * Optional policy-filtered Tool Search over an already bounded candidate set.
