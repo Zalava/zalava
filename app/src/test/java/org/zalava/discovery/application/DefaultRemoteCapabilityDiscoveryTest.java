@@ -126,7 +126,7 @@ class DefaultRemoteCapabilityDiscoveryTest {
         new DefaultRemoteCapabilityDiscovery(
             catalog, new RemoteCandidatePolicy(), store, CLOCK, 10);
 
-    RemoteCapabilityDiscovery.Outcome outcome = discovery.discover("sea module weather", 0);
+    RemoteCapabilityDiscovery.Outcome outcome = discovery.discover("zalava module weather", 0);
 
     assertThat(outcome.candidates())
         .extracting(CapabilityGapEvidence.RankedCandidate::moduleId)
