@@ -9,12 +9,12 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
-import org.zalava.web.SeaWebExtension;
-import org.zalava.web.SeaWebRequest;
-import org.zalava.web.SeaWebResponse;
+import org.zalava.ZalavaModule;
 import org.zalava.web.WebExtensionDescriptor;
 import org.zalava.web.WebExtensionRegistry;
+import org.zalava.web.ZalavaWebExtension;
+import org.zalava.web.ZalavaWebRequest;
+import org.zalava.web.ZalavaWebResponse;
 
 class WebExtensionFixtureTest {
   private static final String MODULE_ID = "fixture-web-module";
@@ -33,17 +33,17 @@ class WebExtensionFixtureTest {
         .containsExactly(tuple("GET", "/overview"), tuple("POST", "/overview/submit"));
     assertThat(fixture.routesFor("overview")).hasSize(2);
 
-    SeaWebResponse get =
+    ZalavaWebResponse get =
         fixture.invoke(
             "GET",
             "/overview",
-            new SeaWebRequest(
+            new ZalavaWebRequest(
                 "GET", "/overview", Map.of("name", List.of("Ada")), Map.of(), Map.of(), Map.of()));
     assertThat(get.status()).isEqualTo(200);
     assertThat(get.contentType()).isEqualTo("text/html");
     assertThat(get.body()).contains("Hello Ada");
 
-    SeaWebResponse post = fixture.submit("/overview/submit", Map.of("note", List.of("hi")));
+    ZalavaWebResponse post = fixture.submit("/overview/submit", Map.of("note", List.of("hi")));
     assertThat(post.body()).contains("Saved hi");
 
     assertThatIllegalArgumentException()
@@ -51,7 +51,7 @@ class WebExtensionFixtureTest {
         .withMessage("Module does not register route GET /missing");
   }
 
-  private static final class FixtureModule implements SeaModule {
+  private static final class FixtureModule implements ZalavaModule {
     @Override
     public ModuleDescriptor descriptor() {
       return new ModuleDescriptor(MODULE_ID, "1.0.0", "Web fixture", "Web fixture module");
@@ -63,12 +63,12 @@ class WebExtensionFixtureTest {
     }
 
     @Override
-    public List<SeaWebExtension> webExtensions() {
+    public List<ZalavaWebExtension> webExtensions() {
       return List.of(new FixtureExtension());
     }
   }
 
-  private static final class FixtureExtension implements SeaWebExtension {
+  private static final class FixtureExtension implements ZalavaWebExtension {
     @Override
     public WebExtensionDescriptor descriptor() {
       return new WebExtensionDescriptor(
@@ -85,12 +85,12 @@ class WebExtensionFixtureTest {
           .get(
               "/overview",
               request ->
-                  SeaWebResponse.html(
+                  ZalavaWebResponse.html(
                       "Hello " + request.firstQueryParameter("name").orElse("world")))
           .post(
               "/overview/submit",
               request ->
-                  SeaWebResponse.html("Saved " + request.firstFormParameter("note").orElse("")));
+                  ZalavaWebResponse.html("Saved " + request.firstFormParameter("note").orElse("")));
     }
   }
 }

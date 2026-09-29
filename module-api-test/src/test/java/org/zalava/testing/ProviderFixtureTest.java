@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaToolDescriptor;
 import tools.jackson.databind.node.JsonNodeFactory;
 
 class ProviderFixtureTest {
@@ -25,10 +25,10 @@ class ProviderFixtureTest {
               fixture.requireProvider(ContractFixtureModule.PROVIDER_ID).descriptor().providerId())
           .isEqualTo(ContractFixtureModule.PROVIDER_ID);
       assertThat(fixture.tools(ContractFixtureModule.PROVIDER_ID))
-          .extracting(SeaToolDescriptor::name)
+          .extracting(ZalavaToolDescriptor::name)
           .containsExactly(ContractFixtureModule.TOOL_NAME);
 
-      SeaOperationResult result =
+      ZalavaOperationResult result =
           fixture.invoke(
               ContractFixtureModule.PROVIDER_ID,
               ContractFixtureModule.TOOL_NAME,
@@ -36,7 +36,7 @@ class ProviderFixtureTest {
       assertThat(result.success()).isTrue();
       assertThat(result.content()).isEqualTo(Map.of("value", "fixture", "configured", "hola"));
 
-      SeaOperationResult failure =
+      ZalavaOperationResult failure =
           fixture.invoke(
               ContractFixtureModule.PROVIDER_ID,
               ContractFixtureModule.TOOL_NAME,

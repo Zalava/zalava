@@ -120,7 +120,7 @@ class DevelopmentCandidateSubmissionTest {
               .createProviders(org.zalava.ProviderFactoryContext.empty())
               .getFirst();
       assertThat(provider.listTools())
-          .extracting(org.zalava.SeaToolDescriptor::name)
+          .extracting(org.zalava.ZalavaToolDescriptor::name)
           .contains("example_lookup");
       assertThat(
               provider

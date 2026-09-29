@@ -9,14 +9,14 @@ import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import tools.jackson.databind.JsonNode;
 
 /** In-process module fixture used by the contract-kit tests without compiling an artifact. */
-final class ContractFixtureModule implements SeaModule {
+final class ContractFixtureModule implements ZalavaModule {
   static final String MODULE_ID = "fixture-contract-module";
   static final String PROVIDER_ID = "fixture-provider";
   static final String TOOL_NAME = "lookup";
@@ -47,12 +47,12 @@ final class ContractFixtureModule implements SeaModule {
     }
 
     @Override
-    public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+    public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
       return List.of(new FixtureProvider(context.configuration(), closed));
     }
   }
 
-  private static final class FixtureProvider implements SeaProvider {
+  private static final class FixtureProvider implements ZalavaProvider {
     private final Map<String, Object> configuration;
     private final boolean[] closed;
 
@@ -81,17 +81,17 @@ final class ContractFixtureModule implements SeaModule {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
-      return List.of(new SeaToolDescriptor(TOOL_NAME, "Looks up fixture data", false));
+    public List<ZalavaToolDescriptor> listTools() {
+      return List.of(new ZalavaToolDescriptor(TOOL_NAME, "Looks up fixture data", false));
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, InvocationContext context) {
       if (arguments.path("fail").asBoolean(false)) {
-        return SeaOperationResult.failure(Map.of("status", "FIXTURE_FAILURE"));
+        return ZalavaOperationResult.failure(Map.of("status", "FIXTURE_FAILURE"));
       }
-      return SeaOperationResult.success(
+      return ZalavaOperationResult.success(
           Map.of("value", "fixture", "configured", configuration.getOrDefault("greeting", "none")));
     }
 

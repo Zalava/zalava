@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.zalava.ManagedServiceAuthority;
-import org.zalava.SeaServiceFactoryContext;
+import org.zalava.ZalavaServiceFactoryContext;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.application.port.in.ManagedServiceDiagnostics;
@@ -109,6 +109,6 @@ public final class DefaultManagedServiceDiagnostics implements ManagedServiceDia
   }
 
   private static ManagedServiceAuthority authority(String moduleId) {
-    return new SeaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
+    return new ZalavaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
   }
 }

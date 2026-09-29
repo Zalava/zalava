@@ -33,7 +33,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.zalava.InvocationContext;
 import org.zalava.ModuleConfigurationStatus;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.managed.ManagedServiceEngine;
@@ -410,7 +410,7 @@ class ModuleCompatibilityAcceptanceTest {
     assertThat(provider.module().moduleId()).isEqualTo(pin.moduleId());
     assertThat(provider.provider().listTools())
         .as("tool parity for %s:%s", pin.moduleId(), pin.version())
-        .extracting(SeaToolDescriptor::name)
+        .extracting(ZalavaToolDescriptor::name)
         .containsExactlyInAnyOrderElementsOf(tools);
   }
 

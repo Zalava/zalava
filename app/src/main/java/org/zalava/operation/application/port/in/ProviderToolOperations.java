@@ -2,7 +2,7 @@ package org.zalava.operation.application.port.in;
 
 import java.util.Objects;
 import org.zalava.InvocationContext;
-import org.zalava.SeaOperationResult;
+import org.zalava.ZalavaOperationResult;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.tasks.domain.TaskReference;
 
@@ -60,8 +60,8 @@ public interface ProviderToolOperations {
   }
 
   record ToolInvocationOutcome(
-      ToolInvocationStatus status, SeaOperationResult result, ToolApproval approval) {
-    public static ToolInvocationOutcome executed(SeaOperationResult result) {
+      ToolInvocationStatus status, ZalavaOperationResult result, ToolApproval approval) {
+    public static ToolInvocationOutcome executed(ZalavaOperationResult result) {
       return new ToolInvocationOutcome(ToolInvocationStatus.EXECUTED, result, null);
     }
 

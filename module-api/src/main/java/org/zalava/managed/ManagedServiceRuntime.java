@@ -1,7 +1,7 @@
 package org.zalava.managed;
 
 import org.zalava.ManagedServiceAuthority;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaServiceContract;
 
 /**
  * SEA-owned host facility for module-declared managed-service lifecycle requests.
@@ -11,8 +11,8 @@ import org.zalava.SeaServiceContract;
  */
 public interface ManagedServiceRuntime {
 
-  SeaServiceContract<ManagedServiceRuntime> CONTRACT =
-      new SeaServiceContract<>("managed-service-runtime", "1", ManagedServiceRuntime.class);
+  ZalavaServiceContract<ManagedServiceRuntime> CONTRACT =
+      new ZalavaServiceContract<>("managed-service-runtime", "1", ManagedServiceRuntime.class);
 
   ManagedServiceLifecycleResult request(
       ManagedServiceAuthority authority, ManagedServiceDesiredState desiredState);

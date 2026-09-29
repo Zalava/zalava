@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
 /**
  * Entry point for exercising an external module at the stable {@code module-api} boundary without a
@@ -16,9 +16,9 @@ import org.zalava.SeaModule;
  */
 public final class ModuleContractKit implements AutoCloseable {
   private final ExternalModuleTestHarness harness;
-  private final SeaModule module;
+  private final ZalavaModule module;
 
-  private ModuleContractKit(ExternalModuleTestHarness harness, SeaModule module) {
+  private ModuleContractKit(ExternalModuleTestHarness harness, ZalavaModule module) {
     this.harness = harness;
     this.module = module;
   }
@@ -45,11 +45,11 @@ public final class ModuleContractKit implements AutoCloseable {
   }
 
   /** Exercises a module already available on the test classpath, without an artifact. */
-  public static ModuleContractKit of(SeaModule module) {
+  public static ModuleContractKit of(ZalavaModule module) {
     return new ModuleContractKit(null, Objects.requireNonNull(module, "module"));
   }
 
-  public SeaModule module() {
+  public ZalavaModule module() {
     return module;
   }
 

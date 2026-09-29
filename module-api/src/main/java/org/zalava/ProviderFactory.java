@@ -6,5 +6,5 @@ public interface ProviderFactory {
 
   ProviderFactoryDescriptor descriptor();
 
-  List<SeaProvider> createProviders(ProviderFactoryContext context);
+  List<ZalavaProvider> createProviders(ProviderFactoryContext context);
 }

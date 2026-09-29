@@ -4,25 +4,25 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Scoped service view passed only to a factory whose module declared the dependency. */
-public final class SeaServiceFactoryContext {
+public final class ZalavaServiceFactoryContext {
 
   private final String moduleId;
-  private final Map<SeaServiceContract<?>, Object> services;
-  private final Map<String, SeaServiceRequirement> requirements;
+  private final Map<ZalavaServiceContract<?>, Object> services;
+  private final Map<String, ZalavaServiceRequirement> requirements;
   private final Map<String, Object> configuration;
   private final FactorySecretAccess secrets;
 
-  public SeaServiceFactoryContext(
+  public ZalavaServiceFactoryContext(
       String moduleId,
-      Map<SeaServiceContract<?>, Object> services,
-      Map<String, SeaServiceRequirement> requirements) {
+      Map<ZalavaServiceContract<?>, Object> services,
+      Map<String, ZalavaServiceRequirement> requirements) {
     this(moduleId, services, requirements, Map.of(), FactorySecretAccess.none());
   }
 
-  public SeaServiceFactoryContext(
+  public ZalavaServiceFactoryContext(
       String moduleId,
-      Map<SeaServiceContract<?>, Object> services,
-      Map<String, SeaServiceRequirement> requirements,
+      Map<ZalavaServiceContract<?>, Object> services,
+      Map<String, ZalavaServiceRequirement> requirements,
       Map<String, Object> configuration,
       FactorySecretAccess secrets) {
     if (moduleId == null || moduleId.isBlank())
@@ -54,8 +54,8 @@ public final class SeaServiceFactoryContext {
     return new ManagedServiceAuthority(moduleId);
   }
 
-  public <T> Optional<T> service(SeaServiceContract<T> contract) {
-    SeaServiceRequirement requirement = requirements.get(contract.serviceId());
+  public <T> Optional<T> service(ZalavaServiceContract<T> contract) {
+    ZalavaServiceRequirement requirement = requirements.get(contract.serviceId());
     if (requirement == null) {
       throw new IllegalStateException(
           "Module " + moduleId + " did not declare service " + contract.serviceId());

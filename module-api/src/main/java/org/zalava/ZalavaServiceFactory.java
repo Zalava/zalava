@@ -1,13 +1,13 @@
 package org.zalava;
 
 /** Creates one explicitly declared service without access to host internals. */
-public interface SeaServiceFactory<T> extends AutoCloseable {
+public interface ZalavaServiceFactory<T> extends AutoCloseable {
 
-  SeaServiceDescriptor descriptor();
+  ZalavaServiceDescriptor descriptor();
 
-  SeaServiceContract<T> contract();
+  ZalavaServiceContract<T> contract();
 
-  T create(SeaServiceFactoryContext context);
+  T create(ZalavaServiceFactoryContext context);
 
   @Override
   default void close() throws Exception {

@@ -3,7 +3,7 @@ package org.zalava.operation.adapter.in.agent;
 import java.util.List;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.zalava.SeaOperationResult;
+import org.zalava.ZalavaOperationResult;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.agent.DynamicToolActivationPolicy;
@@ -95,7 +95,7 @@ public final class SeaProviderTool {
             Pass tool arguments as a JSON object string. Side-effecting operations
             are routed through SEA's out-of-band approval workflow.
             """)
-  public SeaOperationResult invokeSeaProviderTool(
+  public ZalavaOperationResult invokeSeaProviderTool(
       String providerId, String toolName, String argumentsJson) {
     return invoker.invoke(providerId, toolName, argumentsJson, "sea-provider-tool");
   }

@@ -19,8 +19,8 @@ import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaProvider;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaProvider;
 import org.zalava.catalog.install.application.port.out.EnabledModuleRegistry;
 import org.zalava.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.runtime.ExternalSeaModuleLoadingException;
@@ -33,7 +33,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
 
   private static final RuntimeVersion CURRENT_RUNTIME = RuntimeVersion.parse("1.0.0");
   private static final String RETIRED_PREVIEW_SERVICE_DESCRIPTOR =
-      "META-INF/services/org.zalava.sea.SeaModule";
+      "META-INF/services/org.zalava.sea.ZalavaModule";
   private static final Set<String> FORBIDDEN_HOST_PACKAGES =
       Set.of(
           "accounts",
@@ -80,13 +80,13 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
         providerFactoryContext == null ? ProviderFactoryContext.empty() : providerFactoryContext;
   }
 
-  public synchronized List<SeaModule> loadModules() {
+  public synchronized List<ZalavaModule> loadModules() {
     if (loaded) {
       throw new IllegalStateException("External SEA modules have already been loaded");
     }
     loaded = true;
     List<ModuleEnablement.EnabledModule> enabledModules = enabledModuleRegistry.enabledModules();
-    List<SeaModule> loadedModules = new ArrayList<>();
+    List<ZalavaModule> loadedModules = new ArrayList<>();
     Map<String, String> packageOwners = new HashMap<>();
     for (ModuleEnablement.EnabledModule enabled : enabledModules) {
       try {
@@ -104,19 +104,19 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     return List.copyOf(loadedModules);
   }
 
-  private List<SeaModule> loadModule(
+  private List<ZalavaModule> loadModule(
       ModuleEnablement.EnabledModule enabled, Map<String, String> packageOwners) {
     List<Path> artifacts = artifactPaths(enabled);
     Set<String> claimedPackages = validatePackageOwnership(enabled, artifacts, packageOwners);
     URLClassLoader classLoader =
-        new URLClassLoader(artifactUrls(artifacts), SeaModule.class.getClassLoader());
+        new URLClassLoader(artifactUrls(artifacts), ZalavaModule.class.getClassLoader());
     classLoaders.add(classLoader);
     try {
       if (classLoader.getResource(RETIRED_PREVIEW_SERVICE_DESCRIPTOR) != null) {
         throw loadingFailure(previewServiceDescriptorError(enabled.moduleId()));
       }
-      List<SeaModule> modules =
-          ServiceLoader.load(SeaModule.class, classLoader).stream()
+      List<ZalavaModule> modules =
+          ServiceLoader.load(ZalavaModule.class, classLoader).stream()
               .map(ServiceLoader.Provider::get)
               .toList();
       validateLoadedModules(List.of(enabled), modules);
@@ -258,11 +258,11 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
   }
 
   public void validateLoadedModules(
-      List<ModuleEnablement.EnabledModule> enabledModules, List<SeaModule> loaded) {
+      List<ModuleEnablement.EnabledModule> enabledModules, List<ZalavaModule> loaded) {
     List<String> expected =
         enabledModules.stream().map(ModuleEnablement.EnabledModule::moduleId).sorted().toList();
     List<String> actual = new ArrayList<>();
-    for (SeaModule module : loaded) {
+    for (ZalavaModule module : loaded) {
       ModuleDescriptor moduleDescriptor = requireModuleDescriptor(module);
       ModuleEnablement.EnabledModule enabled =
           enabledModules.stream()
@@ -293,7 +293,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     }
   }
 
-  private ModuleDescriptor requireModuleDescriptor(SeaModule module) {
+  private ModuleDescriptor requireModuleDescriptor(ZalavaModule module) {
     if (module == null) {
       throw loadingFailure("External SEA module service must not be null");
     }
@@ -310,7 +310,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     return descriptor;
   }
 
-  private void validateProviderContracts(SeaModule module, ModuleDescriptor moduleDescriptor) {
+  private void validateProviderContracts(ZalavaModule module, ModuleDescriptor moduleDescriptor) {
     List<ProviderFactory> factories = module.providerFactories();
     if (factories == null) {
       throw loadingFailure(
@@ -354,7 +354,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
       ModuleDescriptor moduleDescriptor,
       ProviderFactory factory,
       ProviderFactoryDescriptor factoryDescriptor) {
-    List<SeaProvider> providers;
+    List<ZalavaProvider> providers;
     try {
       providers =
           factory.createProviders(
@@ -374,7 +374,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
               + " providers must not be null");
     }
     try {
-      for (SeaProvider provider : providers) {
+      for (ZalavaProvider provider : providers) {
         if (provider == null) {
           throw loadingFailure(
               "External provider factory "
@@ -417,9 +417,9 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     }
   }
 
-  private void closeValidatedProviders(List<SeaProvider> providers) {
+  private void closeValidatedProviders(List<ZalavaProvider> providers) {
     for (int index = providers.size() - 1; index >= 0; index--) {
-      SeaProvider provider = providers.get(index);
+      ZalavaProvider provider = providers.get(index);
       if (provider == null) {
         continue;
       }
@@ -510,7 +510,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
         + " uses retired preview SPI service descriptor "
         + RETIRED_PREVIEW_SERVICE_DESCRIPTOR
         + "; rebuild it against org.zalava:module-api:1.0.0 "
-        + "and register META-INF/services/org.zalava.SeaModule";
+        + "and register META-INF/services/org.zalava.ZalavaModule";
   }
 
   private ExternalSeaModuleLoadingException loadingFailure(String message) {

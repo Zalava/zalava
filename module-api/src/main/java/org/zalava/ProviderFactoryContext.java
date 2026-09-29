@@ -10,8 +10,8 @@ public final class ProviderFactoryContext {
   private final FactorySecretAccess secrets;
   private final Map<String, FactorySecretAccess> moduleSecrets;
   private final Map<String, Map<Class<?>, Object>> moduleServices;
-  private final Map<String, SeaServiceFactoryContext> typedServices;
-  private final SeaServiceFactoryContext scopedTypedServices;
+  private final Map<String, ZalavaServiceFactoryContext> typedServices;
+  private final ZalavaServiceFactoryContext scopedTypedServices;
 
   public ProviderFactoryContext(
       Map<String, Object> configuration,
@@ -26,8 +26,8 @@ public final class ProviderFactoryContext {
       FactorySecretAccess secrets,
       Map<String, FactorySecretAccess> moduleSecrets,
       Map<String, Map<Class<?>, Object>> moduleServices,
-      Map<String, SeaServiceFactoryContext> typedServices,
-      SeaServiceFactoryContext scopedTypedServices) {
+      Map<String, ZalavaServiceFactoryContext> typedServices,
+      ZalavaServiceFactoryContext scopedTypedServices) {
     this.configuration = configuration == null ? Map.of() : Map.copyOf(configuration);
     this.secrets = secrets == null ? FactorySecretAccess.none() : secrets;
     this.moduleSecrets = moduleSecrets == null ? Map.of() : Map.copyOf(moduleSecrets);
@@ -71,7 +71,8 @@ public final class ProviderFactoryContext {
     return moduleServices;
   }
 
-  public ProviderFactoryContext withTypedServices(Map<String, SeaServiceFactoryContext> services) {
+  public ProviderFactoryContext withTypedServices(
+      Map<String, ZalavaServiceFactoryContext> services) {
     return new ProviderFactoryContext(
         configuration, secrets, moduleSecrets, moduleServices, services, null);
   }
@@ -103,7 +104,7 @@ public final class ProviderFactoryContext {
     return Optional.empty();
   }
 
-  public <T> Optional<T> service(SeaServiceContract<T> contract) {
+  public <T> Optional<T> service(ZalavaServiceContract<T> contract) {
     if (scopedTypedServices == null)
       throw new IllegalStateException("No typed SEA service scope is available");
     return scopedTypedServices.service(contract);

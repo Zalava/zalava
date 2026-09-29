@@ -12,7 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.zalava.ModuleConfigurationDescriptor;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.runtime.SeaRuntime;
@@ -149,9 +149,9 @@ class S5StarterModulesStepTest {
     return new S5StarterModulesStep(runtime, store, curatedIds);
   }
 
-  private static SeaModule catalogModule(
+  private static ZalavaModule catalogModule(
       String id, String displayName, Map<String, Object> schema) {
-    return new SeaModule() {
+    return new ZalavaModule() {
       @Override
       public ModuleDescriptor descriptor() {
         return new ModuleDescriptor(id, "1.0.0", displayName, displayName);
@@ -177,10 +177,10 @@ class S5StarterModulesStepTest {
         Map.of("city", Map.of("type", "string", "description", "City to report")));
   }
 
-  private static SeaRuntime runtimeWith(SeaModule... modules) {
+  private static SeaRuntime runtimeWith(ZalavaModule... modules) {
     return new SeaRuntime() {
       @Override
-      public List<SeaModule> modules() {
+      public List<ZalavaModule> modules() {
         return List.of(modules);
       }
 

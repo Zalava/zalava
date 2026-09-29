@@ -1,6 +1,6 @@
 package org.zalava.web;
 
-public interface SeaWebExtension {
+public interface ZalavaWebExtension {
 
   WebExtensionDescriptor descriptor();
 

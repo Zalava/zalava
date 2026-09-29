@@ -19,9 +19,9 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.agent.Agent;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.channels.ChannelRegistry;
@@ -186,7 +186,7 @@ class ChatApprovalCommandComponentTest {
     }
   }
 
-  private static final class RecordingProvider implements SeaProvider {
+  private static final class RecordingProvider implements ZalavaProvider {
 
     private final List<String> calls = new ArrayList<>();
 
@@ -210,16 +210,16 @@ class ChatApprovalCommandComponentTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
+    public List<ZalavaToolDescriptor> listTools() {
       return List.of(
-          new SeaToolDescriptor("add_item", "Adds an item.", true, List.of("shopping-list")));
+          new ZalavaToolDescriptor("add_item", "Adds an item.", true, List.of("shopping-list")));
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, InvocationContext context) {
       calls.add(arguments.get("name").stringValue(""));
-      return SeaOperationResult.success(Map.of("name", arguments.get("name").stringValue("")));
+      return ZalavaOperationResult.success(Map.of("name", arguments.get("name").stringValue("")));
     }
 
     private List<String> calls() {

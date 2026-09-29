@@ -1,9 +1,9 @@
 package org.zalava.web.application.port.out;
 
 import java.util.List;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
 public interface WebExtensionModuleCatalog {
 
-  List<SeaModule> modules();
+  List<ZalavaModule> modules();
 }

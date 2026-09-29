@@ -2,7 +2,7 @@ package org.zalava.fixture.speech;
 
 import java.util.Map;
 import java.util.Optional;
-import org.zalava.SeaServiceFactoryContext;
+import org.zalava.ZalavaServiceFactoryContext;
 import org.zalava.speech.SpeechException;
 
 /** Shared scoped configuration and secret lookup for the fixture speech providers. */
@@ -19,7 +19,7 @@ final class MockSpeechConfiguration {
    * Resolves the optional scoped secret reference. When a {@code credentialRef} is configured but
    * the secret cannot be resolved, creation fails closed with the typed contract exception.
    */
-  static void requireSecret(SeaServiceFactoryContext context) {
+  static void requireSecret(ZalavaServiceFactoryContext context) {
     Object reference = context.configuration().get(CREDENTIAL_REFERENCE);
     if (reference == null) {
       return;

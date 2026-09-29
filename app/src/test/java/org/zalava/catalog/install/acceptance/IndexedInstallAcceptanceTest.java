@@ -29,7 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.zalava.InvocationContext;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
 import org.zalava.runtime.LoadedSeaProvider;
@@ -137,7 +137,7 @@ class IndexedInstallAcceptanceTest {
 
     try (var restarted = RestartableSeaApplicationContext.start(WORKSPACE)) {
       SeaRuntime runtime = restarted.getBean(SeaRuntime.class);
-      List<SeaModule> installedModules =
+      List<ZalavaModule> installedModules =
           runtime.modules().stream()
               .filter(module -> module.descriptor().moduleId().equals(MODULE_ID))
               .toList();
@@ -151,7 +151,7 @@ class IndexedInstallAcceptanceTest {
               .orElseThrow(() -> new AssertionError("not loaded"));
       assertThat(loaded.module().moduleId()).isEqualTo(MODULE_ID);
       assertThat(loaded.provider().listTools())
-          .extracting(org.zalava.SeaToolDescriptor::name)
+          .extracting(org.zalava.ZalavaToolDescriptor::name)
           .contains("current_time", "convert_time");
 
       ProviderToolOperations operations = restarted.getBean(ProviderToolOperations.class);
@@ -182,7 +182,7 @@ class IndexedInstallAcceptanceTest {
               + exception.code()
               + " "
               + exception.getMessage()
-              + ". The published artifact still targets the retired Jackson 2 SeaProvider SPI;"
+              + ". The published artifact still targets the retired Jackson 2 ZalavaProvider SPI;"
               + " publish a module-api 1.3.0+ (Jackson 3) compatible release and re-run this lane.",
           exception);
     }
@@ -274,7 +274,7 @@ class IndexedInstallAcceptanceTest {
     return null;
   }
 
-  private static List<URI> moduleClassLoaderUrls(SeaModule module) {
+  private static List<URI> moduleClassLoaderUrls(ZalavaModule module) {
     ClassLoader classLoader = module.getClass().getClassLoader();
     assertThat(classLoader).isInstanceOf(URLClassLoader.class);
     return java.util.Arrays.stream(((URLClassLoader) classLoader).getURLs())

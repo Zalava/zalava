@@ -4,20 +4,20 @@ import java.util.List;
 import java.util.Map;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 
-final class TemplateProvider implements SeaProvider {
+final class TemplateProvider implements ZalavaProvider {
 
   @Override
   public ProviderDescriptor descriptor() {
     return new ProviderDescriptor(
         "template",
-        TemplateSeaModule.MODULE_ID,
+        TemplateZalavaModule.MODULE_ID,
         "template",
         "Template Provider",
         "Replace this sample provider.",
-        TemplateSeaModule.version(),
+        TemplateZalavaModule.version(),
         ProviderCapabilities.toolsOnly(),
         List.of("template"),
         Map.of());
@@ -29,7 +29,7 @@ final class TemplateProvider implements SeaProvider {
   }
 
   @Override
-  public List<SeaToolDescriptor> listTools() {
+  public List<ZalavaToolDescriptor> listTools() {
     return List.of();
   }
 }

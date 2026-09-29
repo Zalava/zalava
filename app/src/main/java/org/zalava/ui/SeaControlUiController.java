@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.catalog.LocalArtifactInstallRequest;
 import org.zalava.catalog.LocalArtifactModuleMetadataLoader;
@@ -411,7 +411,7 @@ public class SeaControlUiController {
         : normalized.substring(0, MAX_ERROR_LENGTH) + "...";
   }
 
-  private static ModuleEntry toModuleEntry(org.zalava.SeaModule module) {
+  private static ModuleEntry toModuleEntry(org.zalava.ZalavaModule module) {
     ModuleDescriptor descriptor = module.descriptor();
     return new ModuleEntry(
         descriptor.moduleId(),
@@ -441,7 +441,7 @@ public class SeaControlUiController {
         tools);
   }
 
-  private static ToolEntry toToolEntry(SeaToolDescriptor tool) {
+  private static ToolEntry toToolEntry(ZalavaToolDescriptor tool) {
     return new ToolEntry(
         tool.name(),
         tool.description(),
@@ -475,7 +475,7 @@ public class SeaControlUiController {
         json(step.body()));
   }
 
-  private static String classification(SeaToolDescriptor descriptor) {
+  private static String classification(ZalavaToolDescriptor descriptor) {
     return "sea_backed";
   }
 

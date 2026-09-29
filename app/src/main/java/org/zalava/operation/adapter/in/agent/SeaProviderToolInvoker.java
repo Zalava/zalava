@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.zalava.InvocationContext;
-import org.zalava.SeaOperationResult;
+import org.zalava.ZalavaOperationResult;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.agent.ConversationChannelContext;
 import org.zalava.approval.SeaToolApprovalRequests;
@@ -34,7 +34,7 @@ public final class SeaProviderToolInvoker {
     this.actorExecutionContext = actorExecutionContext;
   }
 
-  public SeaOperationResult invoke(
+  public ZalavaOperationResult invoke(
       String providerId, String toolName, String argumentsJson, String source) {
     Optional<TaskReference> taskReference = taskExecutionContext.currentTaskReference();
     Optional<ActorTaskExecutionReference> actorTaskReference =
@@ -55,10 +55,10 @@ public final class SeaProviderToolInvoker {
     return switch (outcome.status()) {
       case EXECUTED -> outcome.result();
       case DENIED ->
-          SeaOperationResult.failure(
+          ZalavaOperationResult.failure(
               Map.of("status", "denied", "approvalRequestId", outcome.approval().requestId()));
       case PENDING_APPROVAL ->
-          SeaOperationResult.failure(
+          ZalavaOperationResult.failure(
               Map.of(
                   "status",
                   "pending_approval",

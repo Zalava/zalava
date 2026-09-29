@@ -66,8 +66,8 @@ class ModuleContractKitTest {
             + " import java.util.List;"
             + " import org.zalava.ModuleDescriptor;"
             + " import org.zalava.ProviderFactory;"
-            + " import org.zalava.SeaModule;"
-            + " public final class ArtifactModule implements SeaModule {"
+            + " import org.zalava.ZalavaModule;"
+            + " public final class ArtifactModule implements ZalavaModule {"
             + " public ModuleDescriptor descriptor() { return new ModuleDescriptor(\""
             + moduleId
             + "\", \""
@@ -79,7 +79,7 @@ class ModuleContractKitTest {
     return jar(
         classes,
         workspace.resolve(moduleId + "/module.jar"),
-        List.of("META-INF/services/org.zalava.SeaModule=fixture.artifact.ArtifactModule\n"));
+        List.of("META-INF/services/org.zalava.ZalavaModule=fixture.artifact.ArtifactModule\n"));
   }
 
   private static void compile(Path output, List<Path> sources) throws IOException {

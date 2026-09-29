@@ -36,23 +36,23 @@ public final class DevelopmentCandidateEvaluator {
     List<CandidateEvaluation.Requirement> requirements = new ArrayList<>();
     try (ExternalSeaModuleLoader loader =
         new ExternalSeaModuleLoader(() -> List.of(enabled(request, artifact)))) {
-      List<SeaModule> modules = loader.loadModules();
+      List<ZalavaModule> modules = loader.loadModules();
       ModuleDevelopmentContract contract = request.currentRevision().contract();
-      SeaModule module = modules.getFirst();
+      ZalavaModule module = modules.getFirst();
       if (!contract.module().moduleId().equals(module.descriptor().moduleId()))
         throw new IllegalStateException("Requested module identity was not exposed");
-      List<SeaProvider> providers =
+      List<ZalavaProvider> providers =
           module.providerFactories().stream()
               .flatMap(factory -> factory.createProviders(ProviderFactoryContext.empty()).stream())
               .toList();
-      SeaProvider provider =
+      ZalavaProvider provider =
           providers.stream()
               .filter(candidate -> candidate.capabilities().supportsTools())
               .findFirst()
               .orElseThrow(() -> new IllegalStateException("No tool-capable provider was exposed"));
       requireRequestedToolContracts(contract, provider);
       ModuleDevelopmentContract.Tool requestedTool = contract.tools().getFirst();
-      SeaToolDescriptor tool =
+      ZalavaToolDescriptor tool =
           provider.listTools().stream()
               .filter(candidate -> candidate.name().equals(requestedTool.name()))
               .findFirst()
@@ -66,7 +66,7 @@ public final class DevelopmentCandidateEvaluator {
       ContractSchemaValidation.requireValid(
           requestedTool.inputSchema(), input, "Requested tool example");
       InvocationExecution execution = callWithinLimit(provider, tool.name(), input, contract);
-      SeaOperationResult response = execution.response();
+      ZalavaOperationResult response = execution.response();
       invocations.add(
           new CandidateEvaluation.Invocation(
               tool.name(),
@@ -113,10 +113,10 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private static void requireRequestedToolContracts(
-      ModuleDevelopmentContract contract, SeaProvider provider) {
-    Map<String, SeaToolDescriptor> exposed =
+      ModuleDevelopmentContract contract, ZalavaProvider provider) {
+    Map<String, ZalavaToolDescriptor> exposed =
         provider.listTools().stream()
-            .collect(java.util.stream.Collectors.toMap(SeaToolDescriptor::name, tool -> tool));
+            .collect(java.util.stream.Collectors.toMap(ZalavaToolDescriptor::name, tool -> tool));
     if (!exposed
         .keySet()
         .equals(
@@ -132,8 +132,8 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private void verifyGeneratedInvalidInputs(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       ModuleDevelopmentContract.Tool requestedTool,
       ModuleDevelopmentContract contract,
       JsonNode input,
@@ -142,7 +142,7 @@ public final class DevelopmentCandidateEvaluator {
     for (JsonNode invalidInput :
         ContractSchemaValidation.invalidInputs(requestedTool.inputSchema(), input)) {
       InvocationExecution invalid = callWithinLimit(provider, tool.name(), invalidInput, contract);
-      SeaOperationResult response = invalid.response();
+      ZalavaOperationResult response = invalid.response();
       invocations.add(
           new CandidateEvaluation.Invocation(
               tool.name(),
@@ -163,16 +163,16 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private InvocationExecution callWithinLimit(
-      SeaProvider provider, String tool, JsonNode input, ModuleDevelopmentContract contract) {
+      ZalavaProvider provider, String tool, JsonNode input, ModuleDevelopmentContract contract) {
     long timeout =
         contract.operationalRequirements().timeoutMs() == null
             ? 1_000L
             : contract.operationalRequirements().timeoutMs();
     long startedAt = System.nanoTime();
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      Future<SeaOperationResult> invocation =
+      Future<ZalavaOperationResult> invocation =
           executor.submit(() -> provider.callTool(tool, input, InvocationContext.system()));
-      SeaOperationResult result = invocation.get(timeout, TimeUnit.MILLISECONDS);
+      ZalavaOperationResult result = invocation.get(timeout, TimeUnit.MILLISECONDS);
       String responseJson = boundedSanitizedJson(JSON.valueToTree(result.content()));
       Long maximumResponseBytes = contract.operationalRequirements().maximumResponseBytes();
       if (maximumResponseBytes != null
@@ -208,8 +208,8 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private void verifyAcceptanceScenarios(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       ModuleDevelopmentContract.Tool requestedTool,
       ModuleDevelopmentContract contract,
       List<CandidateEvaluation.Invocation> invocations,
@@ -218,7 +218,7 @@ public final class DevelopmentCandidateEvaluator {
     for (ModuleDevelopmentContract.AcceptanceScenario scenario : contract.acceptanceScenarios()) {
       JsonNode input = JSON.readTree(scenario.requestJson());
       InvocationExecution execution = callWithinLimit(provider, tool.name(), input, contract);
-      SeaOperationResult response = execution.response();
+      ZalavaOperationResult response = execution.response();
       invocations.add(
           new CandidateEvaluation.Invocation(
               tool.name(),
@@ -256,11 +256,11 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private void verifyExpectedUnknownToolError(
-      SeaProvider provider,
+      ZalavaProvider provider,
       ModuleDevelopmentContract contract,
       List<CandidateEvaluation.Requirement> requirements) {
     if (contract.expectedErrors().isEmpty()) return;
-    SeaOperationResult response =
+    ZalavaOperationResult response =
         provider.callTool(
             "__sea_expected_error__", JSON.createObjectNode(), InvocationContext.system());
     String expected = contract.expectedErrors().getFirst().code();
@@ -273,14 +273,14 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private void verifyRepeatedInvocation(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       JsonNode input,
       ModuleDevelopmentContract contract,
       List<CandidateEvaluation.Invocation> invocations,
       List<CandidateEvaluation.Requirement> requirements) {
     InvocationExecution repeated = callWithinLimit(provider, tool.name(), input, contract);
-    SeaOperationResult response = repeated.response();
+    ZalavaOperationResult response = repeated.response();
     invocations.add(
         new CandidateEvaluation.Invocation(
             tool.name(),
@@ -299,7 +299,7 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private static void requireExpectedError(
-      SeaOperationResult response, String expectedCode, String requirement) {
+      ZalavaOperationResult response, String expectedCode, String requirement) {
     if (response == null || response.success())
       throw new IllegalStateException(
           "Expected error "
@@ -491,7 +491,7 @@ public final class DevelopmentCandidateEvaluator {
   }
 
   private record InvocationExecution(
-      SeaOperationResult response,
+      ZalavaOperationResult response,
       long elapsedMillis,
       String responseJson,
       String failureMessage) {}

@@ -13,10 +13,10 @@ import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.discovery.application.DefaultInstalledToolDiscovery;
 import org.zalava.operation.adapter.out.approval.SeaToolApprovalAdapter;
@@ -83,7 +83,7 @@ class SeaProviderToolTest {
   void createsJobScopedApprovalForSideEffectingToolCall() {
     TaskReference reference = TaskReference.parse("2026-06-08", "120000-write-file.md");
 
-    SeaOperationResult result =
+    ZalavaOperationResult result =
         taskExecutionContext.call(
             reference,
             () ->
@@ -112,7 +112,7 @@ class SeaProviderToolTest {
     String requestId = approvals.pendingFor(reference).getFirst().requestId();
     approvals.allow(requestId, reference);
 
-    SeaOperationResult result =
+    ZalavaOperationResult result =
         taskExecutionContext.call(
             reference,
             () ->
@@ -134,7 +134,7 @@ class SeaProviderToolTest {
     String requestId = approvals.pendingFor(reference).getFirst().requestId();
     approvals.deny(requestId, reference);
 
-    SeaOperationResult result =
+    ZalavaOperationResult result =
         taskExecutionContext.call(
             reference,
             () ->
@@ -150,7 +150,7 @@ class SeaProviderToolTest {
 
   @Test
   void doesNotExecuteSideEffectingToolOutsideTrustedTaskContext() {
-    SeaOperationResult result =
+    ZalavaOperationResult result =
         tool.invokeSeaProviderTool("mutable-provider", "write", "{\"path\":\"notes/a.txt\"}");
 
     assertThat(result.success()).isFalse();
@@ -167,7 +167,7 @@ class SeaProviderToolTest {
         .hasMessage("SEA provider tool arguments must be valid JSON");
   }
 
-  private static final class MutableProvider implements SeaProvider {
+  private static final class MutableProvider implements ZalavaProvider {
 
     private final AtomicInteger calls = new AtomicInteger();
 
@@ -191,9 +191,9 @@ class SeaProviderToolTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
+    public List<ZalavaToolDescriptor> listTools() {
       return List.of(
-          new SeaToolDescriptor(
+          new ZalavaToolDescriptor(
               "write",
               "Writes test content.",
               true,
@@ -205,17 +205,17 @@ class SeaProviderToolTest {
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, org.zalava.InvocationContext context) {
       calls.incrementAndGet();
-      return SeaOperationResult.success(
+      return ZalavaOperationResult.success(
           Map.of(
               "path", arguments.path("path").stringValue(""),
               "confirmed", context.confirmed()));
     }
   }
 
-  private record SingleProviderModule(SeaProvider provider) implements SeaModule {
+  private record SingleProviderModule(ZalavaProvider provider) implements ZalavaModule {
 
     @Override
     public org.zalava.ModuleDescriptor descriptor() {
@@ -238,7 +238,7 @@ class SeaProviderToolTest {
             }
 
             @Override
-            public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+            public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
               return List.of(provider);
             }
           });

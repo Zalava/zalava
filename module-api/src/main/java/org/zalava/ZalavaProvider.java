@@ -3,15 +3,15 @@ package org.zalava;
 import java.util.List;
 import tools.jackson.databind.JsonNode;
 
-public interface SeaProvider extends AutoCloseable {
+public interface ZalavaProvider extends AutoCloseable {
 
   ProviderDescriptor descriptor();
 
   ProviderCapabilities capabilities();
 
-  List<SeaToolDescriptor> listTools();
+  List<ZalavaToolDescriptor> listTools();
 
-  default SeaOperationResult callTool(
+  default ZalavaOperationResult callTool(
       String toolName, JsonNode arguments, InvocationContext context) {
     throw new UnsupportedOperationException(
         "Tool execution is not implemented for provider " + descriptor().providerId());
@@ -21,7 +21,7 @@ public interface SeaProvider extends AutoCloseable {
     return List.of();
   }
 
-  default SeaOperationResult readResource(String uri, InvocationContext context) {
+  default ZalavaOperationResult readResource(String uri, InvocationContext context) {
     throw new UnsupportedOperationException(
         "Resource reads are not implemented for provider " + descriptor().providerId());
   }
@@ -30,7 +30,7 @@ public interface SeaProvider extends AutoCloseable {
     return List.of();
   }
 
-  default SeaOperationResult resolvePrompt(
+  default ZalavaOperationResult resolvePrompt(
       String promptName, JsonNode arguments, InvocationContext context) {
     throw new UnsupportedOperationException(
         "Prompt resolution is not implemented for provider " + descriptor().providerId());

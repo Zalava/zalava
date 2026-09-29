@@ -37,13 +37,13 @@ import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactoryDescriptor;
 import org.zalava.ResourceDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
-import org.zalava.SeaVerificationContributor;
-import org.zalava.SeaVerificationDescriptor;
-import org.zalava.SeaVerificationStep;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
+import org.zalava.ZalavaVerificationContributor;
+import org.zalava.ZalavaVerificationDescriptor;
+import org.zalava.ZalavaVerificationStep;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.catalog.LocalArtifactInstallRequest;
 import org.zalava.catalog.ModuleReleaseIndex;
@@ -481,8 +481,8 @@ class DevelopmentAdminRestApiComponentTest {
         new SourceModuleIndex.Security(List.of()));
   }
 
-  private static SeaProvider scopedProvider() {
-    SeaProvider provider = mock(SeaProvider.class);
+  private static ZalavaProvider scopedProvider() {
+    ZalavaProvider provider = mock(ZalavaProvider.class);
     ProviderDescriptor descriptor =
         new ProviderDescriptor(
             "scoped-provider",
@@ -499,7 +499,7 @@ class DevelopmentAdminRestApiComponentTest {
     when(provider.listTools())
         .thenReturn(
             List.of(
-                new SeaToolDescriptor(
+                new ZalavaToolDescriptor(
                     "write",
                     "Writes scoped data",
                     true,
@@ -512,17 +512,17 @@ class DevelopmentAdminRestApiComponentTest {
     when(provider.readResource(
             org.mockito.ArgumentMatchers.eq("sea://scoped/example"),
             org.mockito.ArgumentMatchers.any()))
-        .thenReturn(SeaOperationResult.success(Map.of("content", "example")));
+        .thenReturn(ZalavaOperationResult.success(Map.of("content", "example")));
     when(provider.resolvePrompt(
             org.mockito.ArgumentMatchers.eq("example"),
             org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.any()))
-        .thenReturn(SeaOperationResult.success(Map.of("prompt", "resolved")));
+        .thenReturn(ZalavaOperationResult.success(Map.of("prompt", "resolved")));
     when(provider.callTool(
             org.mockito.ArgumentMatchers.eq("write"),
             org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.any()))
-        .thenReturn(SeaOperationResult.success(Map.of("written", true)));
+        .thenReturn(ZalavaOperationResult.success(Map.of("written", true)));
     return provider;
   }
 
@@ -627,8 +627,8 @@ class DevelopmentAdminRestApiComponentTest {
     @Bean
     @Primary
     SeaRuntime loadedSeaRuntime() {
-      SeaModule module =
-          new SeaModule() {
+      ZalavaModule module =
+          new ZalavaModule() {
             @Override
             public ModuleDescriptor descriptor() {
               return new ModuleDescriptor("test-module", "1.0.0", "Test Module", "Test module.");
@@ -640,16 +640,16 @@ class DevelopmentAdminRestApiComponentTest {
             }
 
             @Override
-            public List<SeaVerificationContributor> verificationContributors() {
+            public List<ZalavaVerificationContributor> verificationContributors() {
               return List.of(
                   () ->
                       List.of(
-                          new SeaVerificationDescriptor(
+                          new ZalavaVerificationDescriptor(
                               "fixture-toolset",
                               "scoped-provider",
                               List.of("write"),
                               List.of(
-                                  new SeaVerificationStep(
+                                  new ZalavaVerificationStep(
                                       "Write check",
                                       "POST",
                                       "/api/sea/providers/scoped-provider/tools/write/invoke",
@@ -657,12 +657,12 @@ class DevelopmentAdminRestApiComponentTest {
                                       true,
                                       true,
                                       Map.of("type", "object")))),
-                          new SeaVerificationDescriptor(
+                          new ZalavaVerificationDescriptor(
                               "missing-tool-toolset",
                               "scoped-provider",
                               List.of("write", "absent-tool"),
                               List.of()),
-                          new SeaVerificationDescriptor(
+                          new ZalavaVerificationDescriptor(
                               "unloaded-toolset", "missing-provider", List.of("run"), List.of())));
             }
           };
@@ -670,7 +670,7 @@ class DevelopmentAdminRestApiComponentTest {
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
       return new SeaRuntime() {
         @Override
-        public List<SeaModule> modules() {
+        public List<ZalavaModule> modules() {
           return List.of(module);
         }
 

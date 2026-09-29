@@ -14,8 +14,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.approval.adapter.out.filesystem.FileSystemApprovalRequestStore;
 import tools.jackson.databind.ObjectMapper;
 
@@ -271,8 +271,8 @@ class SeaToolApprovalRequestsTest {
 
   @Test
   void durableToolPolicyRequiresTheSameActorChannelAndModule() {
-    SeaProvider provider = provider("module-one");
-    SeaToolDescriptor tool = new SeaToolDescriptor("write", "Writes data", true);
+    ZalavaProvider provider = provider("module-one");
+    ZalavaToolDescriptor tool = new ZalavaToolDescriptor("write", "Writes data", true);
     InvocationContext telegramActor =
         new InvocationContext(
             "actor-one", false, Map.of(SeaToolApprovalRequests.POLICY_CHANNEL_ID, "telegram"));
@@ -306,8 +306,8 @@ class SeaToolApprovalRequestsTest {
 
   @Test
   void revokedDurablePolicyDoesNotMatchAfterReload() {
-    SeaProvider provider = provider("module-one");
-    SeaToolDescriptor tool = new SeaToolDescriptor("write", "Writes data", true);
+    ZalavaProvider provider = provider("module-one");
+    ZalavaToolDescriptor tool = new ZalavaToolDescriptor("write", "Writes data", true);
     InvocationContext context =
         new InvocationContext(
             "actor-one", false, Map.of(SeaToolApprovalRequests.POLICY_CHANNEL_ID, "telegram"));
@@ -330,8 +330,8 @@ class SeaToolApprovalRequestsTest {
 
   @Test
   void expiredAndMalformedDurablePolicyExpiryFailsClosedAfterReload() {
-    SeaProvider provider = provider("module-one");
-    SeaToolDescriptor tool = new SeaToolDescriptor("write", "Writes data", true);
+    ZalavaProvider provider = provider("module-one");
+    ZalavaToolDescriptor tool = new ZalavaToolDescriptor("write", "Writes data", true);
     InvocationContext expired =
         new InvocationContext(
             "actor-one",
@@ -368,8 +368,8 @@ class SeaToolApprovalRequestsTest {
 
   @Test
   void selectsTheNarrowestMatchingPolicyDeterministically() {
-    SeaProvider provider = provider("module-one", Map.of("root", "workspace", "tenant", "home"));
-    SeaToolDescriptor tool = new SeaToolDescriptor("write", "Writes data", true);
+    ZalavaProvider provider = provider("module-one", Map.of("root", "workspace", "tenant", "home"));
+    ZalavaToolDescriptor tool = new ZalavaToolDescriptor("write", "Writes data", true);
     InvocationContext context =
         new InvocationContext(
             "actor-one", false, Map.of(SeaToolApprovalRequests.POLICY_CHANNEL_ID, "telegram"));
@@ -393,8 +393,8 @@ class SeaToolApprovalRequestsTest {
 
   @Test
   void narrowsAnActivePolicyWithoutAllowingScopeOrExpiryWidening() {
-    SeaProvider provider = provider("module-one", Map.of("root", "workspace", "tenant", "home"));
-    SeaToolDescriptor tool = new SeaToolDescriptor("write", "Writes data", true);
+    ZalavaProvider provider = provider("module-one", Map.of("root", "workspace", "tenant", "home"));
+    ZalavaToolDescriptor tool = new ZalavaToolDescriptor("write", "Writes data", true);
     InvocationContext context =
         new InvocationContext(
             "actor-one", false, Map.of(SeaToolApprovalRequests.POLICY_CHANNEL_ID, "telegram"));
@@ -430,8 +430,8 @@ class SeaToolApprovalRequestsTest {
 
   private static SeaToolApprovalRequests.Entry policyEntry(
       String requestId,
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       Map<String, String> scope) {
     return new SeaToolApprovalRequests.Entry(
@@ -458,12 +458,12 @@ class SeaToolApprovalRequestsTest {
         SeaToolApprovalRequests.ApprovalScope.TOOL);
   }
 
-  private static SeaProvider provider(String moduleId) {
+  private static ZalavaProvider provider(String moduleId) {
     return provider(moduleId, Map.of());
   }
 
-  private static SeaProvider provider(String moduleId, Map<String, String> scope) {
-    return new SeaProvider() {
+  private static ZalavaProvider provider(String moduleId, Map<String, String> scope) {
+    return new ZalavaProvider() {
       @Override
       public ProviderDescriptor descriptor() {
         return new ProviderDescriptor(
@@ -484,7 +484,7 @@ class SeaToolApprovalRequestsTest {
       }
 
       @Override
-      public List<SeaToolDescriptor> listTools() {
+      public List<ZalavaToolDescriptor> listTools() {
         return List.of();
       }
     };

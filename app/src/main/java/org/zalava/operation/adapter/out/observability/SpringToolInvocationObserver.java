@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
-import org.zalava.SeaOperationResult;
+import org.zalava.ZalavaOperationResult;
 import org.zalava.observability.application.port.out.OperationalMetrics;
 import org.zalava.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.operation.application.port.out.ToolInvocationObserver;
@@ -56,7 +56,7 @@ public final class SpringToolInvocationObserver implements ToolInvocationObserve
     }
   }
 
-  private static String resultPreview(SeaOperationResult result) {
+  private static String resultPreview(ZalavaOperationResult result) {
     if (result == null) {
       return null;
     }

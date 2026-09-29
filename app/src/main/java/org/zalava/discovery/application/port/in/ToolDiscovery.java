@@ -2,7 +2,7 @@ package org.zalava.discovery.application.port.in;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.SeaToolInputSchemas;
+import org.zalava.ZalavaToolInputSchemas;
 
 public interface ToolDiscovery {
 
@@ -40,7 +40,7 @@ public interface ToolDiscovery {
       policyTags = List.copyOf(policyTags);
       providerPolicyTags = List.copyOf(providerPolicyTags);
       scope = Map.copyOf(scope);
-      inputSchema = SeaToolInputSchemas.immutable(inputSchema);
+      inputSchema = ZalavaToolInputSchemas.immutable(inputSchema);
     }
   }
 }

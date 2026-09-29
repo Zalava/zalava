@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import org.zalava.ModuleDescriptor;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
 /**
  * Loads an external module under SEA's isolated module classloader boundary for repository tests.
  *
- * <p>The host supplies the stable {@link SeaModule} API through the parent classloader. Every
+ * <p>The host supplies the stable {@link ZalavaModule} API through the parent classloader. Every
  * supplied artifact is loaded only by one child loader, matching the current single-module
  * production boundary.
  */
@@ -33,7 +33,7 @@ public final class ExternalModuleTestHarness implements AutoCloseable {
     try {
       URL[] urls = artifacts.stream().map(ExternalModuleTestHarness::toUrl).toArray(URL[]::new);
       return new ExternalModuleTestHarness(
-          new URLClassLoader(urls, SeaModule.class.getClassLoader()));
+          new URLClassLoader(urls, ZalavaModule.class.getClassLoader()));
     } catch (RuntimeException exception) {
       throw exception;
     }
@@ -43,9 +43,9 @@ public final class ExternalModuleTestHarness implements AutoCloseable {
     requireText(expectedModuleId, "expected module id");
     requireText(expectedVersion, "expected module version");
 
-    List<SeaModule> modules = new ArrayList<>();
+    List<ZalavaModule> modules = new ArrayList<>();
     try {
-      ServiceLoader.load(SeaModule.class, classLoader).stream()
+      ServiceLoader.load(ZalavaModule.class, classLoader).stream()
           .map(ServiceLoader.Provider::get)
           .forEach(modules::add);
     } catch (ServiceConfigurationError | RuntimeException exception) {
@@ -58,7 +58,7 @@ public final class ExternalModuleTestHarness implements AutoCloseable {
           "Expected exactly one external SEA module service but discovered " + modules.size());
     }
 
-    SeaModule module = modules.getFirst();
+    ZalavaModule module = modules.getFirst();
     ModuleDescriptor descriptor;
     try {
       descriptor = module.descriptor();
@@ -138,5 +138,5 @@ public final class ExternalModuleTestHarness implements AutoCloseable {
     }
   }
 
-  public record LoadedModule(SeaModule module, ClassLoader moduleClassLoader) {}
+  public record LoadedModule(ZalavaModule module, ClassLoader moduleClassLoader) {}
 }

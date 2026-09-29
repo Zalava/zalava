@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.discovery.application.port.in.ToolDiscovery;
 import org.zalava.operation.application.port.out.ProviderCatalog;
 
@@ -35,12 +35,12 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
 
     List<String> queryTerms = Arrays.stream(normalizedQuery.split(" ")).distinct().toList();
     List<ScoredMatch> matches = new ArrayList<>();
-    for (SeaProvider provider : providerCatalog.providers()) {
+    for (ZalavaProvider provider : providerCatalog.providers()) {
       if (!searchable(provider)) {
         continue;
       }
-      List<SeaToolDescriptor> tools = provider.listTools();
-      for (SeaToolDescriptor tool : tools) {
+      List<ZalavaToolDescriptor> tools = provider.listTools();
+      for (ZalavaToolDescriptor tool : tools) {
         int score = score(provider.descriptor(), tool, normalizedQuery, queryTerms);
         if (score > 0) {
           matches.add(new ScoredMatch(score, match(provider.descriptor(), tool)));
@@ -61,7 +61,7 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
 
   @Override
   public ToolDefinition load(String providerId, String toolName) {
-    SeaProvider provider =
+    ZalavaProvider provider =
         providerCatalog
             .findProvider(providerId)
             .orElseThrow(
@@ -70,7 +70,7 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
       throw new IllegalArgumentException(
           "SEA provider is not available for tool discovery: " + providerId);
     }
-    SeaToolDescriptor tool =
+    ZalavaToolDescriptor tool =
         provider.listTools().stream()
             .filter(candidate -> candidate.name().equals(toolName))
             .findFirst()
@@ -91,12 +91,15 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
         tool.inputSchema());
   }
 
-  private static boolean searchable(SeaProvider provider) {
+  private static boolean searchable(ZalavaProvider provider) {
     return provider.capabilities().supportsTools();
   }
 
   private static int score(
-      ProviderDescriptor provider, SeaToolDescriptor tool, String query, List<String> queryTerms) {
+      ProviderDescriptor provider,
+      ZalavaToolDescriptor tool,
+      String query,
+      List<String> queryTerms) {
     String toolName = normalize(tool.name());
     String toolDescription = normalize(tool.description());
     String toolPolicyTags = normalize(String.join(" ", tool.policyTags()));
@@ -142,7 +145,7 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
     return (" " + candidate + " ").contains(" " + phrase + " ");
   }
 
-  private static ToolMatch match(ProviderDescriptor provider, SeaToolDescriptor tool) {
+  private static ToolMatch match(ProviderDescriptor provider, ZalavaToolDescriptor tool) {
     return new ToolMatch(
         provider.providerId(),
         provider.displayName(),

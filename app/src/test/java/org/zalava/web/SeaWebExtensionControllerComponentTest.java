@@ -23,7 +23,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -97,12 +97,12 @@ class SeaWebExtensionControllerComponentTest {
   static class TestWebExtensionConfiguration {
 
     @Bean
-    SeaModule testWebModule() {
+    ZalavaModule testWebModule() {
       return new TestWebModule();
     }
   }
 
-  private static final class TestWebModule implements SeaModule {
+  private static final class TestWebModule implements ZalavaModule {
 
     @Override
     public ModuleDescriptor descriptor() {
@@ -119,12 +119,12 @@ class SeaWebExtensionControllerComponentTest {
     }
 
     @Override
-    public List<SeaWebExtension> webExtensions() {
+    public List<ZalavaWebExtension> webExtensions() {
       return List.of(new ShoppingListExtension());
     }
   }
 
-  private static final class ShoppingListExtension implements SeaWebExtension {
+  private static final class ShoppingListExtension implements ZalavaWebExtension {
 
     @Override
     public WebExtensionDescriptor descriptor() {
@@ -145,7 +145,7 @@ class SeaWebExtensionControllerComponentTest {
           .get(
               "/",
               request ->
-                  SeaWebResponse.html(
+                  ZalavaWebResponse.html(
                       """
                             <section class="box dashboard-activity">
                                 <h1 class="title is-3">Fixture Shopping List</h1>
@@ -159,7 +159,7 @@ class SeaWebExtensionControllerComponentTest {
           .post(
               "/items/{id}/bought",
               request ->
-                  SeaWebResponse.html(
+                  ZalavaWebResponse.html(
                       """
                             <section class="box dashboard-activity">
                                 <h1 class="title is-3">Fixture Shopping List</h1>

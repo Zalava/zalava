@@ -11,25 +11,26 @@ import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.RequirementMode;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceDescriptor;
-import org.zalava.SeaServiceFactory;
-import org.zalava.SeaServiceFactoryContext;
-import org.zalava.SeaServiceRequirement;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceDescriptor;
+import org.zalava.ZalavaServiceFactory;
+import org.zalava.ZalavaServiceFactoryContext;
+import org.zalava.ZalavaServiceRequirement;
 
 class ServiceFixtureTest {
   private static final String MODULE_ID = "fixture-service-module";
 
   interface Prefix {
-    SeaServiceContract<Prefix> CONTRACT = new SeaServiceContract<>("prefix", "1", Prefix.class);
+    ZalavaServiceContract<Prefix> CONTRACT =
+        new ZalavaServiceContract<>("prefix", "1", Prefix.class);
 
     String apply(String name);
   }
 
   interface Greeting {
-    SeaServiceContract<Greeting> CONTRACT =
-        new SeaServiceContract<>("greeting", "1", Greeting.class);
+    ZalavaServiceContract<Greeting> CONTRACT =
+        new ZalavaServiceContract<>("greeting", "1", Greeting.class);
 
     String greet(String name);
   }
@@ -70,12 +71,12 @@ class ServiceFixtureTest {
             ConfigFixture.empty(),
             Map.of(Prefix.CONTRACT, (Prefix) name -> name))) {
       assertThatIllegalArgumentException()
-          .isThrownBy(() -> fixture.service(new SeaServiceContract<>("other", "1", Other.class)))
+          .isThrownBy(() -> fixture.service(new ZalavaServiceContract<>("other", "1", Other.class)))
           .withMessage("Module does not provide service: other");
     }
   }
 
-  private static final class FixtureModule implements SeaModule {
+  private static final class FixtureModule implements ZalavaModule {
     private final List<String> closed;
 
     FixtureModule(List<String> closed) {
@@ -93,17 +94,17 @@ class ServiceFixtureTest {
     }
 
     @Override
-    public List<SeaServiceFactory<?>> serviceFactories() {
+    public List<ZalavaServiceFactory<?>> serviceFactories() {
       return List.of(new GreetingFactory(closed));
     }
 
     @Override
-    public List<SeaServiceRequirement> serviceRequirements() {
-      return List.of(new SeaServiceRequirement("prefix", "1", RequirementMode.REQUIRED));
+    public List<ZalavaServiceRequirement> serviceRequirements() {
+      return List.of(new ZalavaServiceRequirement("prefix", "1", RequirementMode.REQUIRED));
     }
   }
 
-  private static final class GreetingFactory implements SeaServiceFactory<Greeting> {
+  private static final class GreetingFactory implements ZalavaServiceFactory<Greeting> {
     private final List<String> closed;
 
     GreetingFactory(List<String> closed) {
@@ -111,17 +112,17 @@ class ServiceFixtureTest {
     }
 
     @Override
-    public SeaServiceDescriptor descriptor() {
-      return new SeaServiceDescriptor("greeting", MODULE_ID, "1");
+    public ZalavaServiceDescriptor descriptor() {
+      return new ZalavaServiceDescriptor("greeting", MODULE_ID, "1");
     }
 
     @Override
-    public SeaServiceContract<Greeting> contract() {
+    public ZalavaServiceContract<Greeting> contract() {
       return Greeting.CONTRACT;
     }
 
     @Override
-    public Greeting create(SeaServiceFactoryContext context) {
+    public Greeting create(ZalavaServiceFactoryContext context) {
       Prefix prefix =
           context
               .service(Prefix.CONTRACT)

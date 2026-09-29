@@ -8,23 +8,23 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.RequirementMode;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceDescriptor;
-import org.zalava.SeaServiceFactory;
-import org.zalava.SeaServiceRequirement;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceDescriptor;
+import org.zalava.ZalavaServiceFactory;
+import org.zalava.ZalavaServiceRequirement;
 
 class ModuleServiceRuntimeTest {
-  private static final SeaServiceContract<Service> A =
-      new SeaServiceContract<>("service-a", "1", Service.class);
-  private static final SeaServiceContract<Service> B =
-      new SeaServiceContract<>("service-b", "1", Service.class);
+  private static final ZalavaServiceContract<Service> A =
+      new ZalavaServiceContract<>("service-a", "1", Service.class);
+  private static final ZalavaServiceContract<Service> B =
+      new ZalavaServiceContract<>("service-b", "1", Service.class);
 
   @Test
   void createsDependenciesBeforeConsumersAndClosesServicesThenFactoriesInReverseOrder() {
     List<String> events = new ArrayList<>();
-    SeaModule provider = module("provider", List.of(factory("provider", A, events)), List.of());
-    SeaModule consumer =
+    ZalavaModule provider = module("provider", List.of(factory("provider", A, events)), List.of());
+    ZalavaModule consumer =
         module("consumer", List.of(factory("consumer", B, events)), List.of(required(A)));
 
     ModuleServiceRuntime runtime = runtime(consumer, provider);
@@ -48,7 +48,7 @@ class ModuleServiceRuntimeTest {
             module(
                 "optional",
                 List.of(),
-                List.of(new SeaServiceRequirement("missing", "1", RequirementMode.OPTIONAL))))
+                List.of(new ZalavaServiceRequirement("missing", "1", RequirementMode.OPTIONAL))))
         .close();
   }
 
@@ -64,10 +64,12 @@ class ModuleServiceRuntimeTest {
               assertThat(loaded.descriptor().serviceId()).isEqualTo(A.serviceId());
               assertThat(loaded.service()).isInstanceOf(Service.class);
             });
-    assertThat(runtime.findService(new SeaServiceContract<Service>("missing", "1", Service.class)))
+    assertThat(
+            runtime.findService(new ZalavaServiceContract<Service>("missing", "1", Service.class)))
         .isEmpty();
     assertThat(
-            runtime.findService(new SeaServiceContract<Service>(A.serviceId(), "2", Service.class)))
+            runtime.findService(
+                new ZalavaServiceContract<Service>(A.serviceId(), "2", Service.class)))
         .isEmpty();
 
     runtime.close();
@@ -81,9 +83,9 @@ class ModuleServiceRuntimeTest {
                     module("one", List.of(factory("one", A, new ArrayList<>())), List.of()),
                     module("two", List.of(factory("two", A, new ArrayList<>())), List.of())))
         .hasMessageContaining("Multiple SEA service providers");
-    SeaModule one =
+    ZalavaModule one =
         module("one", List.of(factory("one", A, new ArrayList<>())), List.of(required(B)));
-    SeaModule two =
+    ZalavaModule two =
         module("two", List.of(factory("two", B, new ArrayList<>())), List.of(required(A)));
     assertThatThrownBy(() -> runtime(one, two))
         .hasMessageContaining("Cyclic SEA service dependency");
@@ -91,18 +93,18 @@ class ModuleServiceRuntimeTest {
 
   @Test
   void deniesUndeclaredServiceAccessAndExposesAnOptionalAbsentService() {
-    SeaModule optional =
+    ZalavaModule optional =
         module(
             "optional",
             List.of(),
-            List.of(new SeaServiceRequirement("missing", "1", RequirementMode.OPTIONAL)));
+            List.of(new ZalavaServiceRequirement("missing", "1", RequirementMode.OPTIONAL)));
     ModuleServiceRuntime runtime = runtime(optional);
 
     assertThat(
             runtime
                 .providerContext(org.zalava.ProviderFactoryContext.empty())
                 .forFactory("optional", "factory")
-                .service(new SeaServiceContract<>("missing", "1", Service.class)))
+                .service(new ZalavaServiceContract<>("missing", "1", Service.class)))
         .isEmpty();
     assertThatThrownBy(
             () ->
@@ -114,18 +116,20 @@ class ModuleServiceRuntimeTest {
     runtime.close();
   }
 
-  private static SeaServiceRequirement required(SeaServiceContract<?> contract) {
-    return new SeaServiceRequirement(
+  private static ZalavaServiceRequirement required(ZalavaServiceContract<?> contract) {
+    return new ZalavaServiceRequirement(
         contract.serviceId(), contract.contractVersion(), RequirementMode.REQUIRED);
   }
 
-  private static ModuleServiceRuntime runtime(SeaModule... modules) {
+  private static ModuleServiceRuntime runtime(ZalavaModule... modules) {
     return new ModuleServiceRuntime(List.of(modules), org.zalava.ProviderFactoryContext.empty());
   }
 
-  private static SeaModule module(
-      String id, List<SeaServiceFactory<?>> factories, List<SeaServiceRequirement> requirements) {
-    return new SeaModule() {
+  private static ZalavaModule module(
+      String id,
+      List<ZalavaServiceFactory<?>> factories,
+      List<ZalavaServiceRequirement> requirements) {
+    return new ZalavaModule() {
       @Override
       public ModuleDescriptor descriptor() {
         return new ModuleDescriptor(id, "1", id, id);
@@ -137,32 +141,32 @@ class ModuleServiceRuntimeTest {
       }
 
       @Override
-      public List<SeaServiceFactory<?>> serviceFactories() {
+      public List<ZalavaServiceFactory<?>> serviceFactories() {
         return factories;
       }
 
       @Override
-      public List<SeaServiceRequirement> serviceRequirements() {
+      public List<ZalavaServiceRequirement> serviceRequirements() {
         return requirements;
       }
     };
   }
 
-  private static SeaServiceFactory<Service> factory(
-      String owner, SeaServiceContract<Service> contract, List<String> events) {
-    return new SeaServiceFactory<>() {
+  private static ZalavaServiceFactory<Service> factory(
+      String owner, ZalavaServiceContract<Service> contract, List<String> events) {
+    return new ZalavaServiceFactory<>() {
       @Override
-      public SeaServiceDescriptor descriptor() {
-        return new SeaServiceDescriptor(contract.serviceId(), owner, contract.contractVersion());
+      public ZalavaServiceDescriptor descriptor() {
+        return new ZalavaServiceDescriptor(contract.serviceId(), owner, contract.contractVersion());
       }
 
       @Override
-      public SeaServiceContract<Service> contract() {
+      public ZalavaServiceContract<Service> contract() {
         return contract;
       }
 
       @Override
-      public Service create(org.zalava.SeaServiceFactoryContext context) {
+      public Service create(org.zalava.ZalavaServiceFactoryContext context) {
         events.add("create-" + contract.serviceId());
         return new Service(contract.serviceId(), events);
       }

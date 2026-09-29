@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.zalava.InvocationContext;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.approval.adapter.out.filesystem.FileSystemApprovalRequestStore;
 import org.zalava.approval.application.port.out.ApprovalRequestStore;
@@ -54,13 +54,16 @@ public class SeaToolApprovalRequests {
   }
 
   public synchronized Entry create(
-      SeaProvider provider, SeaToolDescriptor tool, InvocationContext context, JsonNode arguments) {
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      InvocationContext context,
+      JsonNode arguments) {
     return create(provider, tool, context, arguments, null);
   }
 
   public synchronized Entry create(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       JsonNode arguments,
       TaskReference taskReference) {
@@ -173,7 +176,7 @@ public class SeaToolApprovalRequests {
   }
 
   public synchronized Optional<Entry> findAllowedToolPolicy(
-      InvocationContext context, SeaProvider provider, SeaToolDescriptor tool) {
+      InvocationContext context, ZalavaProvider provider, ZalavaToolDescriptor tool) {
     String channel = channel(context.attributes());
     return entries.stream()
         .filter(entry -> entry.matchesPolicy(context.actorId(), provider, tool, channel))
@@ -265,8 +268,8 @@ public class SeaToolApprovalRequests {
   }
 
   private Entry add(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       JsonNode arguments,
       String argumentsJson,
@@ -473,7 +476,7 @@ public class SeaToolApprovalRequests {
     }
 
     boolean matchesPolicy(
-        String actorId, SeaProvider provider, SeaToolDescriptor tool, String channel) {
+        String actorId, ZalavaProvider provider, ZalavaToolDescriptor tool, String channel) {
       return isActiveToolPolicy()
           && this.actorId.equals(actorId)
           && this.providerId.equals(provider.descriptor().providerId())

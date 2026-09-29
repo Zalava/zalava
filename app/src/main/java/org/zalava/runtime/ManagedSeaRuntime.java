@@ -12,8 +12,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.zalava.FactorySecretAccess;
 import org.zalava.ProviderFactoryContext;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.catalog.ModuleConfigurationValidator;
@@ -33,7 +33,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
 
   public record ModuleState(State state, String failure) {}
 
-  private final List<SeaModule> loaded;
+  private final List<ZalavaModule> loaded;
   private final Set<String> builtIns;
   private final FileSystemModuleLifecycleStore lifecycle;
   private final FileSystemModuleConfigurationStore configurations;
@@ -49,7 +49,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
 
   public ManagedSeaRuntime(
       SeaModuleRegistry registry,
-      Set<SeaModule> builtInModules,
+      Set<ZalavaModule> builtInModules,
       EnabledModuleRegistry enabled,
       FileSystemModuleLifecycleStore lifecycle,
       FileSystemModuleConfigurationStore configurations,
@@ -67,7 +67,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
     Set<String> starting = new HashSet<>(this.builtIns);
     this.current = build(starting, null, null);
     this.activeIds = Set.copyOf(starting);
-    for (SeaModule module : loaded) {
+    for (ZalavaModule module : loaded) {
       String id = module.descriptor().moduleId();
       if (this.builtIns.contains(id)
           || lifecycle.desired(id).orElse(DesiredState.STOPPED) != DesiredState.RUNNING) continue;
@@ -80,7 +80,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
   }
 
   public synchronized ModuleState state(String moduleId) {
-    SeaModule module = requireLoaded(moduleId);
+    ZalavaModule module = requireLoaded(moduleId);
     if (activeIds.contains(moduleId)) return new ModuleState(State.RUNNING, "");
     String failure = failures.get(moduleId);
     if (failure != null) {
@@ -99,7 +99,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
   public synchronized void start(String moduleId) {
     requireExternal(moduleId);
     if (activeIds.contains(moduleId)) return;
-    SeaModule module = requireLoaded(moduleId);
+    ZalavaModule module = requireLoaded(moduleId);
     if (configurationRequired(module) && configurations.active(moduleId).isEmpty()) {
       IllegalStateException failure =
           new IllegalStateException(
@@ -167,9 +167,9 @@ public final class ManagedSeaRuntime implements SeaRuntime {
       Set<String> active,
       ModuleConfigurationSnapshot override,
       FactorySecretAccess overrideSecrets) {
-    List<SeaModule> modules =
+    List<ZalavaModule> modules =
         loaded.stream().filter(module -> active.contains(module.descriptor().moduleId())).toList();
-    for (SeaModule module : modules) {
+    for (ZalavaModule module : modules) {
       ModuleConfigurationSnapshot snapshot =
           override != null && override.moduleId().equals(module.descriptor().moduleId())
               ? override
@@ -217,7 +217,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
         TimeUnit.SECONDS);
   }
 
-  private SeaModule requireLoaded(String moduleId) {
+  private ZalavaModule requireLoaded(String moduleId) {
     return loaded.stream()
         .filter(module -> module.descriptor().moduleId().equals(moduleId))
         .findFirst()
@@ -236,7 +236,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
     return reference -> Optional.ofNullable(values.get(reference)).map(char[]::clone);
   }
 
-  private void validateConfiguration(SeaModule module, ModuleConfigurationSnapshot snapshot) {
+  private void validateConfiguration(ZalavaModule module, ModuleConfigurationSnapshot snapshot) {
     if (!module.descriptor().moduleId().equals(snapshot.moduleId())
         || !module.descriptor().version().equals(snapshot.version())) {
       throw new IllegalArgumentException("Configuration does not match the loaded module version");
@@ -244,7 +244,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
     validator.validateDocument(module.configuration(), snapshot.factories());
   }
 
-  private static boolean configurationRequired(SeaModule module) {
+  private static boolean configurationRequired(ZalavaModule module) {
     Object properties = module.configuration().jsonSchema().get("properties");
     return properties instanceof Map<?, ?> map && !map.isEmpty();
   }
@@ -260,12 +260,12 @@ public final class ManagedSeaRuntime implements SeaRuntime {
   }
 
   @Override
-  public List<SeaModule> modules() {
+  public List<ZalavaModule> modules() {
     return loaded;
   }
 
   @Override
-  public List<SeaModule> activeModules() {
+  public List<ZalavaModule> activeModules() {
     Set<String> active = activeIds;
     return loaded.stream()
         .filter(module -> active.contains(module.descriptor().moduleId()))
@@ -280,7 +280,7 @@ public final class ManagedSeaRuntime implements SeaRuntime {
   @Override
   public <T>
       Optional<org.zalava.runtime.application.port.in.RuntimeQueries.LoadedSeaService<T>>
-          findService(SeaServiceContract<T> contract) {
+          findService(ZalavaServiceContract<T> contract) {
     return current.findService(contract);
   }
 

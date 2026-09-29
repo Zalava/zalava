@@ -5,13 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.zalava.SeaModule;
-import org.zalava.web.SeaWebExtension;
-import org.zalava.web.SeaWebHandler;
-import org.zalava.web.SeaWebRequest;
-import org.zalava.web.SeaWebResponse;
+import org.zalava.ZalavaModule;
 import org.zalava.web.WebExtensionRegistry;
 import org.zalava.web.WebPageRegistration;
+import org.zalava.web.ZalavaWebExtension;
+import org.zalava.web.ZalavaWebHandler;
+import org.zalava.web.ZalavaWebRequest;
+import org.zalava.web.ZalavaWebResponse;
 
 /**
  * Registers a module's web extensions and invokes their handlers with synthetic requests. It
@@ -28,10 +28,10 @@ public final class WebExtensionFixture {
     this.routes = routes;
   }
 
-  public static WebExtensionFixture register(SeaModule module) {
+  public static WebExtensionFixture register(ZalavaModule module) {
     Objects.requireNonNull(module, "module");
     Registry registry = new Registry();
-    for (SeaWebExtension extension : module.webExtensions()) {
+    for (ZalavaWebExtension extension : module.webExtensions()) {
       Objects.requireNonNull(extension, "web extension");
       extension.register(registry);
     }
@@ -51,7 +51,7 @@ public final class WebExtensionFixture {
     return routes.stream().filter(route -> route.pageId().equals(pageId)).toList();
   }
 
-  public SeaWebResponse invoke(String method, String path, SeaWebRequest request) {
+  public ZalavaWebResponse invoke(String method, String path, ZalavaWebRequest request) {
     Objects.requireNonNull(method, "method");
     Objects.requireNonNull(path, "path");
     RegisteredRoute route =
@@ -67,22 +67,23 @@ public final class WebExtensionFixture {
     return route.handler().handle(request);
   }
 
-  public SeaWebResponse invoke(String method, String path) {
+  public ZalavaWebResponse invoke(String method, String path) {
     return invoke(
-        method, path, new SeaWebRequest(method, path, Map.of(), Map.of(), Map.of(), Map.of()));
+        method, path, new ZalavaWebRequest(method, path, Map.of(), Map.of(), Map.of(), Map.of()));
   }
 
-  public SeaWebResponse submit(String path, Map<String, List<String>> formParameters) {
+  public ZalavaWebResponse submit(String path, Map<String, List<String>> formParameters) {
     return invoke(
         "POST",
         path,
-        new SeaWebRequest("POST", path, Map.of(), formParameters, Map.of(), Map.of()));
+        new ZalavaWebRequest("POST", path, Map.of(), formParameters, Map.of(), Map.of()));
   }
 
   public record RegisteredPage(
       String pageId, String title, String description, String navSection) {}
 
-  public record RegisteredRoute(String pageId, String method, String path, SeaWebHandler handler) {}
+  public record RegisteredRoute(
+      String pageId, String method, String path, ZalavaWebHandler handler) {}
 
   private static final class Registry implements WebExtensionRegistry {
     private final Map<String, PageState> pages = new LinkedHashMap<>();
@@ -124,13 +125,13 @@ public final class WebExtensionFixture {
       }
 
       @Override
-      public WebPageRegistration get(String path, SeaWebHandler handler) {
+      public WebPageRegistration get(String path, ZalavaWebHandler handler) {
         routes.add(new RegisteredRoute(state.pageId, "GET", path, handler));
         return this;
       }
 
       @Override
-      public WebPageRegistration post(String path, SeaWebHandler handler) {
+      public WebPageRegistration post(String path, ZalavaWebHandler handler) {
         routes.add(new RegisteredRoute(state.pageId, "POST", path, handler));
         return this;
       }

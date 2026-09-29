@@ -2,13 +2,13 @@ package org.zalava.operation.application.port.out;
 
 import java.util.List;
 import java.util.Optional;
-import org.zalava.SeaProvider;
+import org.zalava.ZalavaProvider;
 
 public interface ProviderCatalog {
 
-  Optional<SeaProvider> findProvider(String providerId);
+  Optional<ZalavaProvider> findProvider(String providerId);
 
-  default List<SeaProvider> providers() {
+  default List<ZalavaProvider> providers() {
     return List.of();
   }
 }

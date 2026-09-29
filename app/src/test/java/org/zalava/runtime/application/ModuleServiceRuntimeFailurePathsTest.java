@@ -9,33 +9,33 @@ import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.RequirementMode;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceDescriptor;
-import org.zalava.SeaServiceFactory;
-import org.zalava.SeaServiceRequirement;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceDescriptor;
+import org.zalava.ZalavaServiceFactory;
+import org.zalava.ZalavaServiceRequirement;
 
 class ModuleServiceRuntimeFailurePathsTest {
 
-  private static final SeaServiceContract<Service> A =
-      new SeaServiceContract<>("service-a", "1", Service.class);
+  private static final ZalavaServiceContract<Service> A =
+      new ZalavaServiceContract<>("service-a", "1", Service.class);
 
   @Test
   void versionMismatchAndWildcardRangesDecideAvailability() {
-    SeaModule consumer =
+    ZalavaModule consumer =
         module(
             "consumer",
             List.of(),
-            List.of(new SeaServiceRequirement("service-a", "9", RequirementMode.REQUIRED)));
+            List.of(new ZalavaServiceRequirement("service-a", "9", RequirementMode.REQUIRED)));
 
     assertThatThrownBy(() -> runtime(consumer, provider()))
         .hasMessageContaining("requires unavailable SEA service service-a");
 
-    SeaModule rangedConsumer =
+    ZalavaModule rangedConsumer =
         module(
             "ranged",
             List.of(),
-            List.of(new SeaServiceRequirement("service-a", "*", RequirementMode.REQUIRED)));
+            List.of(new ZalavaServiceRequirement("service-a", "*", RequirementMode.REQUIRED)));
     ModuleServiceRuntime ranged = runtime(rangedConsumer, provider());
     assertThat(
             ranged
@@ -48,49 +48,49 @@ class ModuleServiceRuntimeFailurePathsTest {
 
   @Test
   void anIncompatibleFactoryResultFailsClosedAndClosesCreatedServices() {
-    SeaModule provider =
+    ZalavaModule provider =
         module(
             "provider",
             List.of(
-                new SeaServiceFactory<Service>() {
+                new ZalavaServiceFactory<Service>() {
                   @Override
-                  public SeaServiceDescriptor descriptor() {
-                    return new SeaServiceDescriptor("service-a", "provider", "1");
+                  public ZalavaServiceDescriptor descriptor() {
+                    return new ZalavaServiceDescriptor("service-a", "provider", "1");
                   }
 
                   @Override
-                  public SeaServiceContract<Service> contract() {
+                  public ZalavaServiceContract<Service> contract() {
                     return A;
                   }
 
                   @Override
-                  public Service create(org.zalava.SeaServiceFactoryContext context) {
+                  public Service create(org.zalava.ZalavaServiceFactoryContext context) {
                     return new Service("service-a", new ArrayList<>());
                   }
                 }),
             List.of());
-    SeaModule incompatibleConsumer =
+    ZalavaModule incompatibleConsumer =
         module(
             "consumer",
             List.of(
-                new SeaServiceFactory<Service>() {
+                new ZalavaServiceFactory<Service>() {
                   @Override
-                  public SeaServiceDescriptor descriptor() {
-                    return new SeaServiceDescriptor("service-b", "consumer", "1");
+                  public ZalavaServiceDescriptor descriptor() {
+                    return new ZalavaServiceDescriptor("service-b", "consumer", "1");
                   }
 
                   @Override
-                  public SeaServiceContract<Service> contract() {
-                    return new SeaServiceContract<>("service-b", "1", Service.class);
+                  public ZalavaServiceContract<Service> contract() {
+                    return new ZalavaServiceContract<>("service-b", "1", Service.class);
                   }
 
                   @Override
-                  public Service create(org.zalava.SeaServiceFactoryContext context) {
+                  public Service create(org.zalava.ZalavaServiceFactoryContext context) {
                     // Returns null, which is not an instance of Service.
                     return null;
                   }
                 }),
-            List.of(new SeaServiceRequirement("service-a", "1", RequirementMode.REQUIRED)));
+            List.of(new ZalavaServiceRequirement("service-a", "1", RequirementMode.REQUIRED)));
 
     assertThatThrownBy(() -> runtime(incompatibleConsumer, provider))
         .isInstanceOf(IllegalStateException.class)
@@ -99,23 +99,23 @@ class ModuleServiceRuntimeFailurePathsTest {
 
   @Test
   void factoriesWithoutADescriptorOrContractAreRejected() {
-    SeaModule broken =
+    ZalavaModule broken =
         module(
             "broken",
             List.of(
-                new SeaServiceFactory<Service>() {
+                new ZalavaServiceFactory<Service>() {
                   @Override
-                  public SeaServiceDescriptor descriptor() {
+                  public ZalavaServiceDescriptor descriptor() {
                     return null;
                   }
 
                   @Override
-                  public SeaServiceContract<Service> contract() {
+                  public ZalavaServiceContract<Service> contract() {
                     return A;
                   }
 
                   @Override
-                  public Service create(org.zalava.SeaServiceFactoryContext context) {
+                  public Service create(org.zalava.ZalavaServiceFactoryContext context) {
                     return new Service("service-a", new ArrayList<>());
                   }
                 }),
@@ -128,7 +128,7 @@ class ModuleServiceRuntimeFailurePathsTest {
 
   @Test
   void descriptorsOwnedByAnotherModuleAreRejected() {
-    SeaModule mismatched =
+    ZalavaModule mismatched =
         module("other-module", List.of(factory("provider", A, new ArrayList<>())), List.of());
 
     assertThatThrownBy(() -> runtime(mismatched))
@@ -139,24 +139,24 @@ class ModuleServiceRuntimeFailurePathsTest {
   @Test
   void descriptorAndContractDisagreementIsRejected() {
     List<String> events = new ArrayList<>();
-    SeaServiceFactory<Service> factory =
-        new SeaServiceFactory<>() {
+    ZalavaServiceFactory<Service> factory =
+        new ZalavaServiceFactory<>() {
           @Override
-          public SeaServiceDescriptor descriptor() {
-            return new SeaServiceDescriptor("service-a", "module", "2");
+          public ZalavaServiceDescriptor descriptor() {
+            return new ZalavaServiceDescriptor("service-a", "module", "2");
           }
 
           @Override
-          public SeaServiceContract<Service> contract() {
+          public ZalavaServiceContract<Service> contract() {
             return A;
           }
 
           @Override
-          public Service create(org.zalava.SeaServiceFactoryContext context) {
+          public Service create(org.zalava.ZalavaServiceFactoryContext context) {
             return new Service("service-a", events);
           }
         };
-    SeaModule module = module("module", List.of(factory), List.of());
+    ZalavaModule module = module("module", List.of(factory), List.of());
 
     assertThatThrownBy(() -> runtime(module))
         .isInstanceOf(IllegalStateException.class)
@@ -165,13 +165,13 @@ class ModuleServiceRuntimeFailurePathsTest {
 
   @Test
   void duplicateRequirementsInsideOneModuleAreRejected() {
-    SeaModule module =
+    ZalavaModule module =
         module(
             "consumer",
             List.of(),
             List.of(
-                new SeaServiceRequirement("service-a", "1", RequirementMode.REQUIRED),
-                new SeaServiceRequirement("service-a", "*", RequirementMode.OPTIONAL)));
+                new ZalavaServiceRequirement("service-a", "1", RequirementMode.REQUIRED),
+                new ZalavaServiceRequirement("service-a", "*", RequirementMode.OPTIONAL)));
 
     assertThatThrownBy(() -> runtime(module, provider()))
         .isInstanceOf(IllegalStateException.class)
@@ -181,20 +181,20 @@ class ModuleServiceRuntimeFailurePathsTest {
   @Test
   void closeWithAFailingCloseableSuppressesAndReportsTheFailure() {
     List<String> events = new ArrayList<>();
-    SeaServiceFactory<Service> factory =
-        new SeaServiceFactory<>() {
+    ZalavaServiceFactory<Service> factory =
+        new ZalavaServiceFactory<>() {
           @Override
-          public SeaServiceDescriptor descriptor() {
-            return new SeaServiceDescriptor("service-a", "module", "1");
+          public ZalavaServiceDescriptor descriptor() {
+            return new ZalavaServiceDescriptor("service-a", "module", "1");
           }
 
           @Override
-          public SeaServiceContract<Service> contract() {
+          public ZalavaServiceContract<Service> contract() {
             return A;
           }
 
           @Override
-          public Service create(org.zalava.SeaServiceFactoryContext context) {
+          public Service create(org.zalava.ZalavaServiceFactoryContext context) {
             return new Service("service-a", events) {
               @Override
               public void close() {
@@ -216,38 +216,40 @@ class ModuleServiceRuntimeFailurePathsTest {
         .hasSuppressedException(new IllegalStateException("close failed"));
   }
 
-  private static SeaServiceFactory<Service> factory(
-      String owner, SeaServiceContract<Service> contract, List<String> events) {
-    return new SeaServiceFactory<>() {
+  private static ZalavaServiceFactory<Service> factory(
+      String owner, ZalavaServiceContract<Service> contract, List<String> events) {
+    return new ZalavaServiceFactory<>() {
       @Override
-      public SeaServiceDescriptor descriptor() {
-        return new SeaServiceDescriptor(contract.serviceId(), owner, contract.contractVersion());
+      public ZalavaServiceDescriptor descriptor() {
+        return new ZalavaServiceDescriptor(contract.serviceId(), owner, contract.contractVersion());
       }
 
       @Override
-      public SeaServiceContract<Service> contract() {
+      public ZalavaServiceContract<Service> contract() {
         return contract;
       }
 
       @Override
-      public Service create(org.zalava.SeaServiceFactoryContext context) {
+      public Service create(org.zalava.ZalavaServiceFactoryContext context) {
         events.add("create-" + contract.serviceId());
         return new Service(contract.serviceId(), events);
       }
     };
   }
 
-  private static SeaModule provider() {
+  private static ZalavaModule provider() {
     return module("provider", List.of(factory("provider", A, new ArrayList<>())), List.of());
   }
 
-  private static ModuleServiceRuntime runtime(SeaModule... modules) {
+  private static ModuleServiceRuntime runtime(ZalavaModule... modules) {
     return new ModuleServiceRuntime(List.of(modules), ProviderFactoryContext.empty());
   }
 
-  private static SeaModule module(
-      String id, List<SeaServiceFactory<?>> factories, List<SeaServiceRequirement> requirements) {
-    return new SeaModule() {
+  private static ZalavaModule module(
+      String id,
+      List<ZalavaServiceFactory<?>> factories,
+      List<ZalavaServiceRequirement> requirements) {
+    return new ZalavaModule() {
       @Override
       public ModuleDescriptor descriptor() {
         return new ModuleDescriptor(id, "1", id, id);
@@ -259,12 +261,12 @@ class ModuleServiceRuntimeFailurePathsTest {
       }
 
       @Override
-      public List<SeaServiceFactory<?>> serviceFactories() {
+      public List<ZalavaServiceFactory<?>> serviceFactories() {
         return factories;
       }
 
       @Override
-      public List<SeaServiceRequirement> serviceRequirements() {
+      public List<ZalavaServiceRequirement> serviceRequirements() {
         return requirements;
       }
     };

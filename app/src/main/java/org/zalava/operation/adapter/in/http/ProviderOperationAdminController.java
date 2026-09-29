@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.zalava.InvocationContext;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
@@ -106,7 +106,7 @@ public class ProviderOperationAdminController {
                     resolutionRequest.toInvocationContext()));
   }
 
-  private SeaProvider findProvider(String providerId) {
+  private ZalavaProvider findProvider(String providerId) {
     return seaRuntime
         .findLoadedProvider(providerId)
         .map(org.zalava.runtime.LoadedSeaProvider::provider)
@@ -132,7 +132,7 @@ public class ProviderOperationAdminController {
     }
   }
 
-  private OperationResultResponse executeOperation(Supplier<SeaOperationResult> operation) {
+  private OperationResultResponse executeOperation(Supplier<ZalavaOperationResult> operation) {
     try {
       return OperationResultResponse.from(operation.get());
     } catch (ResponseStatusException ex) {
@@ -196,7 +196,7 @@ public class ProviderOperationAdminController {
 
   public record OperationResultResponse(
       boolean success, Object content, Map<String, Object> metadata) {
-    static OperationResultResponse from(SeaOperationResult result) {
+    static OperationResultResponse from(ZalavaOperationResult result) {
       return new OperationResultResponse(result.success(), result.content(), result.metadata());
     }
   }

@@ -14,19 +14,20 @@ import org.junit.jupiter.api.Test;
 import org.zalava.tasks.RecurringTaskSummary;
 import org.zalava.tasks.TaskReference;
 import org.zalava.tasks.TaskServiceResult;
-import org.zalava.web.SeaWebRequest;
-import org.zalava.web.SeaWebResponse;
+import org.zalava.web.ZalavaWebRequest;
+import org.zalava.web.ZalavaWebResponse;
 import tools.jackson.databind.ObjectMapper;
 
 class ModuleApiContractsTest {
 
   @Test
   void scopesDeclaredTypedServicesAndEnforcesTheirVersionAndType() {
-    SeaServiceContract<String> contract = new SeaServiceContract<>("tasks", "v1", String.class);
-    SeaServiceRequirement compatible =
-        new SeaServiceRequirement("tasks", "v1", RequirementMode.REQUIRED);
-    SeaServiceFactoryContext context =
-        new SeaServiceFactoryContext(
+    ZalavaServiceContract<String> contract =
+        new ZalavaServiceContract<>("tasks", "v1", String.class);
+    ZalavaServiceRequirement compatible =
+        new ZalavaServiceRequirement("tasks", "v1", RequirementMode.REQUIRED);
+    ZalavaServiceFactoryContext context =
+        new ZalavaServiceFactoryContext(
             "module", Map.of(contract, "service"), Map.of("tasks", compatible), Map.of(), null);
 
     assertThat(context.moduleId()).isEqualTo("module");
@@ -34,38 +35,39 @@ class ModuleApiContractsTest {
     assertThat(context.secrets().resolve("missing")).isEmpty();
     assertThat(context.service(contract)).contains("service");
     assertThat(
-            new SeaServiceFactoryContext("module", Map.of(), Map.of("tasks", compatible))
+            new ZalavaServiceFactoryContext("module", Map.of(), Map.of("tasks", compatible))
                 .service(contract))
         .isEmpty();
     assertThat(
-            new SeaServiceFactoryContext(
+            new ZalavaServiceFactoryContext(
                     "module",
                     Map.of(contract, "service"),
                     Map.of(
-                        "tasks", new SeaServiceRequirement("tasks", "*", RequirementMode.OPTIONAL)))
+                        "tasks",
+                        new ZalavaServiceRequirement("tasks", "*", RequirementMode.OPTIONAL)))
                 .service(contract))
         .contains("service");
 
     assertThatIllegalStateException()
         .isThrownBy(
-            () -> new SeaServiceFactoryContext("module", Map.of(), Map.of()).service(contract))
+            () -> new ZalavaServiceFactoryContext("module", Map.of(), Map.of()).service(contract))
         .withMessageContaining("did not declare service tasks");
     assertThatIllegalStateException()
         .isThrownBy(
             () ->
-                new SeaServiceFactoryContext(
+                new ZalavaServiceFactoryContext(
                         "module",
                         Map.of(),
                         Map.of(
                             "tasks",
-                            new SeaServiceRequirement("tasks", "v2", RequirementMode.REQUIRED)))
+                            new ZalavaServiceRequirement("tasks", "v2", RequirementMode.REQUIRED)))
                     .service(contract))
         .withMessageContaining("did not declare compatible service tasks");
     @SuppressWarnings({"rawtypes", "unchecked"})
-    SeaServiceContract rawContract = contract;
+    ZalavaServiceContract rawContract = contract;
     assertThatThrownBy(
             () ->
-                new SeaServiceFactoryContext(
+                new ZalavaServiceFactoryContext(
                         "module", Map.of(rawContract, 42), Map.of("tasks", compatible))
                     .service(contract))
         .isInstanceOf(ClassCastException.class);
@@ -74,25 +76,25 @@ class ModuleApiContractsTest {
   @Test
   void validatesServiceDeclarationsAndDefensivelyCopiesContextInputs() {
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceContract<>(" ", "v1", String.class));
+        .isThrownBy(() -> new ZalavaServiceContract<>(" ", "v1", String.class));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceContract<>("tasks", " ", String.class));
+        .isThrownBy(() -> new ZalavaServiceContract<>("tasks", " ", String.class));
     assertThatNullPointerException()
-        .isThrownBy(() -> new SeaServiceContract<>("tasks", "v1", null));
+        .isThrownBy(() -> new ZalavaServiceContract<>("tasks", "v1", null));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceDescriptor("", "module", "v1"));
+        .isThrownBy(() -> new ZalavaServiceDescriptor("", "module", "v1"));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceDescriptor("tasks", "", "v1"));
+        .isThrownBy(() -> new ZalavaServiceDescriptor("tasks", "", "v1"));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceDescriptor("tasks", "module", ""));
+        .isThrownBy(() -> new ZalavaServiceDescriptor("tasks", "module", ""));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceRequirement("", "v1", RequirementMode.REQUIRED));
+        .isThrownBy(() -> new ZalavaServiceRequirement("", "v1", RequirementMode.REQUIRED));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceRequirement("tasks", "", RequirementMode.REQUIRED));
+        .isThrownBy(() -> new ZalavaServiceRequirement("tasks", "", RequirementMode.REQUIRED));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceRequirement("tasks", "v1", null));
+        .isThrownBy(() -> new ZalavaServiceRequirement("tasks", "v1", null));
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> new SeaServiceFactoryContext(" ", Map.of(), Map.of()));
+        .isThrownBy(() -> new ZalavaServiceFactoryContext(" ", Map.of(), Map.of()));
 
     Map<String, Object> configuration = new HashMap<>(Map.of("enabled", true));
     ProviderFactoryContext context = new ProviderFactoryContext(configuration, null, null, null);
@@ -105,10 +107,11 @@ class ModuleApiContractsTest {
     assertThatIllegalArgumentException().isThrownBy(() -> context.forFactory(null, "factory"));
     assertThatIllegalArgumentException().isThrownBy(() -> context.forFactory("module", " "));
     assertThatIllegalStateException()
-        .isThrownBy(() -> context.service(new SeaServiceContract<>("tasks", "v1", String.class)));
+        .isThrownBy(
+            () -> context.service(new ZalavaServiceContract<>("tasks", "v1", String.class)));
 
-    SeaServiceContract<String> typedContract =
-        new SeaServiceContract<>("typed-tasks", "v1", String.class);
+    ZalavaServiceContract<String> typedContract =
+        new ZalavaServiceContract<>("typed-tasks", "v1", String.class);
     ProviderFactoryContext typedContext =
         new ProviderFactoryContext(
                 Map.of(
@@ -117,12 +120,12 @@ class ModuleApiContractsTest {
             .withTypedServices(
                 Map.of(
                     "module",
-                    new SeaServiceFactoryContext(
+                    new ZalavaServiceFactoryContext(
                         "module",
                         Map.of(typedContract, "typed-service"),
                         Map.of(
                             "typed-tasks",
-                            new SeaServiceRequirement(
+                            new ZalavaServiceRequirement(
                                 "typed-tasks", "v1", RequirementMode.REQUIRED)))));
     assertThat(typedContext.forFactory("module", "factory").service(typedContract))
         .contains("typed-service");
@@ -160,8 +163,8 @@ class ModuleApiContractsTest {
     Map<String, Object> schema =
         new HashMap<>(Map.of("properties", Map.of("name", nested), "enum", values));
 
-    SeaToolDescriptor descriptor =
-        new SeaToolDescriptor("tool", "description", false, null, schema);
+    ZalavaToolDescriptor descriptor =
+        new ZalavaToolDescriptor("tool", "description", false, null, schema);
     nested.put("changed", true);
     values.clear();
     assertThat(descriptor.policyTags()).isEmpty();
@@ -173,20 +176,22 @@ class ModuleApiContractsTest {
     Map<String, Object> copiedName = (Map<String, Object>) copiedProperties.get("name");
     assertThat(copiedName).containsExactly(Map.entry("type", "string")).isUnmodifiable();
     assertThat((List<?>) descriptor.inputSchema().get("enum")).hasSize(1).isUnmodifiable();
-    assertThatThrownBy(() -> new SeaToolDescriptor("tool", "description", false, List.of(), null))
+    assertThatThrownBy(
+            () -> new ZalavaToolDescriptor("tool", "description", false, List.of(), null))
         .isInstanceOf(NullPointerException.class);
     Map<String, Object> nullValue = new HashMap<>();
     nullValue.put("value", null);
-    assertThatNullPointerException().isThrownBy(() -> SeaToolInputSchemas.immutable(nullValue));
+    assertThatNullPointerException().isThrownBy(() -> ZalavaToolInputSchemas.immutable(nullValue));
 
-    assertThat(SeaToolInputSchemas.object(Map.of("name", SeaToolInputSchemas.string()), "name"))
+    assertThat(
+            ZalavaToolInputSchemas.object(Map.of("name", ZalavaToolInputSchemas.string()), "name"))
         .containsEntry("type", "object")
         .containsEntry("additionalProperties", false);
-    assertThat(SeaToolInputSchemas.integer()).containsEntry("type", "integer");
-    assertThat(SeaToolInputSchemas.bool()).containsEntry("type", "boolean");
-    assertThat(SeaToolInputSchemas.stringArray())
+    assertThat(ZalavaToolInputSchemas.integer()).containsEntry("type", "integer");
+    assertThat(ZalavaToolInputSchemas.bool()).containsEntry("type", "boolean");
+    assertThat(ZalavaToolInputSchemas.stringArray())
         .containsEntry("type", "array")
-        .containsEntry("items", SeaToolInputSchemas.string());
+        .containsEntry("items", ZalavaToolInputSchemas.string());
 
     Map<String, Object> moduleSchema = new HashMap<>(Map.of("type", "object"));
     ModuleConfigurationDescriptor configuration = new ModuleConfigurationDescriptor(moduleSchema);
@@ -198,8 +203,8 @@ class ModuleApiContractsTest {
 
   @Test
   void exposesProviderAndModuleDefaultsAsSafeNoOpContracts() throws Exception {
-    SeaProvider provider =
-        new SeaProvider() {
+    ZalavaProvider provider =
+        new ZalavaProvider() {
           @Override
           public ProviderDescriptor descriptor() {
             return new ProviderDescriptor(
@@ -220,7 +225,7 @@ class ModuleApiContractsTest {
           }
 
           @Override
-          public List<SeaToolDescriptor> listTools() {
+          public List<ZalavaToolDescriptor> listTools() {
             return List.of();
           }
         };
@@ -241,8 +246,8 @@ class ModuleApiContractsTest {
         .isInstanceOf(UnsupportedOperationException.class);
     provider.close();
 
-    SeaModule module =
-        new SeaModule() {
+    ZalavaModule module =
+        new ZalavaModule() {
           @Override
           public ModuleDescriptor descriptor() {
             return new ModuleDescriptor("module", "v1", "Module", "");
@@ -266,7 +271,7 @@ class ModuleApiContractsTest {
   void normalizesWebRequestsAndProvidesResponseAndTaskResultFactories() {
     Map<String, List<String>> query =
         new HashMap<>(Map.of("q", new ArrayList<>(List.of("first", "second"))));
-    SeaWebRequest request = new SeaWebRequest("GET", "/path", query, null, null, null);
+    ZalavaWebRequest request = new ZalavaWebRequest("GET", "/path", query, null, null, null);
     query.get("q").clear();
     assertThat(request.queryParameters())
         .containsEntry("q", List.of("first", "second"))
@@ -275,7 +280,7 @@ class ModuleApiContractsTest {
     assertThat(request.firstQueryParameter("missing")).isEmpty();
     assertThat(request.firstFormParameter("missing")).isEmpty();
     assertThat(
-            new SeaWebRequest(
+            new ZalavaWebRequest(
                     "POST",
                     "/",
                     Map.of(),
@@ -284,13 +289,15 @@ class ModuleApiContractsTest {
                     Map.of("actor", "a"))
                 .firstFormParameter("name"))
         .contains("sea");
-    assertThat(new SeaWebRequest("GET", "/", null, null, null, null).queryParameters()).isEmpty();
+    assertThat(new ZalavaWebRequest("GET", "/", null, null, null, null).queryParameters())
+        .isEmpty();
     assertThatThrownBy(
-            () -> new SeaWebRequest("GET", "/", Map.of("q", null), Map.of(), Map.of(), Map.of()))
+            () -> new ZalavaWebRequest("GET", "/", Map.of("q", null), Map.of(), Map.of(), Map.of()))
         .isInstanceOf(NullPointerException.class);
-    assertThat(SeaWebResponse.html("body")).isEqualTo(new SeaWebResponse(200, "text/html", "body"));
-    assertThat(SeaWebResponse.html(201, "body"))
-        .isEqualTo(new SeaWebResponse(201, "text/html", "body"));
+    assertThat(ZalavaWebResponse.html("body"))
+        .isEqualTo(new ZalavaWebResponse(200, "text/html", "body"));
+    assertThat(ZalavaWebResponse.html(201, "body"))
+        .isEqualTo(new ZalavaWebResponse(201, "text/html", "body"));
 
     TaskReference reference = new TaskReference("task-1");
     RecurringTaskSummary recurring = new RecurringTaskSummary("recurring-1", "Name", "Description");
@@ -309,11 +316,11 @@ class ModuleApiContractsTest {
   @Test
   void copiesResultAndDescriptorCollectionsAndBuildsVerificationInvocation() {
     Map<String, Object> metadata = new HashMap<>(Map.of("source", "module"));
-    SeaOperationResult success = new SeaOperationResult(true, "content", metadata);
+    ZalavaOperationResult success = new ZalavaOperationResult(true, "content", metadata);
     metadata.clear();
     assertThat(success.metadata()).containsEntry("source", "module").isUnmodifiable();
-    assertThat(SeaOperationResult.success("content").success()).isTrue();
-    assertThat(SeaOperationResult.failure("content").success()).isFalse();
+    assertThat(ZalavaOperationResult.success("content").success()).isTrue();
+    assertThat(ZalavaOperationResult.failure("content").success()).isFalse();
 
     List<String> tags = new ArrayList<>(List.of("safe"));
     Map<String, String> scope = new HashMap<>(Map.of("group", "home"));
@@ -333,37 +340,37 @@ class ModuleApiContractsTest {
     assertThat(provider.policyTags()).containsExactly("safe").isUnmodifiable();
     assertThat(provider.scope()).containsEntry("group", "home").isUnmodifiable();
 
-    SeaVerificationStep step =
-        SeaVerificationStep.toolInvocation(
+    ZalavaVerificationStep step =
+        ZalavaVerificationStep.toolInvocation(
             "Run", "provider", "tool", true, true, Map.of("input", "value"));
     assertThat(step.path()).isEqualTo("/api/sea/providers/provider/tools/tool/invoke");
     assertThat(step.method()).isEqualTo("POST");
     assertThat(
-            new SeaVerificationDescriptor("tools", "provider", List.of("tool"), List.of(step))
+            new ZalavaVerificationDescriptor("tools", "provider", List.of("tool"), List.of(step))
                 .requiredTools())
         .containsExactly("tool");
   }
 
   @Test
   void allowsServiceFactoriesWithoutRetainedResourcesToClose() throws Exception {
-    SeaServiceFactory<String> factory =
-        new SeaServiceFactory<>() {
+    ZalavaServiceFactory<String> factory =
+        new ZalavaServiceFactory<>() {
           @Override
-          public SeaServiceDescriptor descriptor() {
-            return new SeaServiceDescriptor("service", "module", "v1");
+          public ZalavaServiceDescriptor descriptor() {
+            return new ZalavaServiceDescriptor("service", "module", "v1");
           }
 
           @Override
-          public SeaServiceContract<String> contract() {
-            return new SeaServiceContract<>("service", "v1", String.class);
+          public ZalavaServiceContract<String> contract() {
+            return new ZalavaServiceContract<>("service", "v1", String.class);
           }
 
           @Override
-          public String create(SeaServiceFactoryContext context) {
+          public String create(ZalavaServiceFactoryContext context) {
             return context.moduleId();
           }
         };
-    assertThat(factory.create(new SeaServiceFactoryContext("module", null, null)))
+    assertThat(factory.create(new ZalavaServiceFactoryContext("module", null, null)))
         .isEqualTo("module");
     factory.close();
   }

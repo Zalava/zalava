@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.zalava.ManagedServiceAuthority;
-import org.zalava.SeaServiceFactoryContext;
+import org.zalava.ZalavaServiceFactoryContext;
 import org.zalava.managed.application.port.in.ManagedServiceInstallation;
 import org.zalava.managed.application.port.out.ManagedServiceInstallRequestStore;
 import org.zalava.managed.application.port.out.ManagedServiceStateStore;
@@ -181,7 +181,7 @@ public final class DefaultManagedServiceInstallation implements ManagedServiceIn
   }
 
   private static ManagedServiceAuthority authority(String moduleId) {
-    return new SeaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
+    return new ZalavaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
   }
 
   private void rejectPendingOverlap(ManagedServiceInstallPlanning.Plan plan) {

@@ -3,7 +3,7 @@ package org.zalava.runtime;
 import java.io.IOException;
 import java.util.List;
 import org.zalava.ProviderFactoryContext;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.catalog.install.application.port.out.EnabledModuleRegistry;
 import org.zalava.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.runtime.adapter.out.classloading.ExternalModuleClassLoader;
@@ -24,13 +24,13 @@ public final class ExternalSeaModuleLoader
   }
 
   @Override
-  public List<SeaModule> loadModules() {
+  public List<ZalavaModule> loadModules() {
     return delegate.loadModules();
   }
 
   /** Retained for runtime-package characterization tests during the compatibility period. */
   void validateLoadedModules(
-      List<ModuleEnablement.EnabledModule> enabledModules, List<SeaModule> loaded) {
+      List<ModuleEnablement.EnabledModule> enabledModules, List<ZalavaModule> loaded) {
     delegate.validateLoadedModules(enabledModules, loaded);
   }
 

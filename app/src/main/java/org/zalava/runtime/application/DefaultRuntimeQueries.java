@@ -3,9 +3,9 @@ package org.zalava.runtime.application;
 import java.util.ArrayList;
 import java.util.List;
 import org.zalava.ProviderFactoryContext;
-import org.zalava.SeaModule;
-import org.zalava.SeaProvider;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaServiceContract;
 import org.zalava.runtime.LoadedSeaProvider;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
 import org.zalava.runtime.application.port.out.RuntimeModuleRegistry;
@@ -13,7 +13,7 @@ import org.zalava.runtime.application.port.out.RuntimeModuleRegistry;
 /** Instantiates and closes provider lifecycles without transport or filesystem concerns. */
 public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseable {
 
-  private final List<SeaModule> modules;
+  private final List<ZalavaModule> modules;
   private final List<LoadedSeaProvider> loadedProviders;
   private final ModuleServiceRuntime services;
 
@@ -50,7 +50,7 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
   }
 
   @Override
-  public List<SeaModule> modules() {
+  public List<ZalavaModule> modules() {
     return modules;
   }
 
@@ -60,7 +60,8 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
   }
 
   @Override
-  public <T> java.util.Optional<LoadedSeaService<T>> findService(SeaServiceContract<T> contract) {
+  public <T> java.util.Optional<LoadedSeaService<T>> findService(
+      ZalavaServiceContract<T> contract) {
     return services.findService(contract);
   }
 
@@ -68,7 +69,7 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
   public void close() {
     List<Exception> failures = new ArrayList<>();
     for (int index = loadedProviders.size() - 1; index >= 0; index--) {
-      SeaProvider provider = loadedProviders.get(index).provider();
+      ZalavaProvider provider = loadedProviders.get(index).provider();
       try {
         provider.close();
       } catch (Exception exception) {

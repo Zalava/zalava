@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.zalava.web.SeaWebRequest;
-import org.zalava.web.SeaWebResponse;
+import org.zalava.web.ZalavaWebRequest;
+import org.zalava.web.ZalavaWebResponse;
 import org.zalava.web.application.RouteInvocation;
 import org.zalava.web.application.port.in.WebExtensionRoutes;
 
@@ -53,12 +53,12 @@ public final class SeaWebExtensionController {
                 () ->
                     new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "SEA module app route not found"));
-    SeaWebResponse response =
+    ZalavaWebResponse response =
         invocation
             .route()
             .handler()
             .handle(
-                new SeaWebRequest(
+                new ZalavaWebRequest(
                     servletRequest.getMethod(),
                     invocation.path(),
                     queryParameters(servletRequest),

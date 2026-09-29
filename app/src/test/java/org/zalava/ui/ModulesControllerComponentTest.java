@@ -42,7 +42,7 @@ import org.zalava.ManagedServiceDeclaration;
 import org.zalava.ModuleConfigurationDescriptor;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
@@ -673,9 +673,9 @@ class ModulesControllerComponentTest {
     @Bean
     @Primary
     SeaRuntime configuredSeaRuntime() {
-      SeaModule filesystem =
+      ZalavaModule filesystem =
           module("sea-filesystem", "SEA Filesystem", ModuleConfigurationDescriptor.none());
-      SeaModule configuredSearch =
+      ZalavaModule configuredSearch =
           module(
               "configured-search",
               "Configured Search",
@@ -695,7 +695,7 @@ class ModulesControllerComponentTest {
                                           Map.of(
                                               "type", "string", "title", "Credential reference")),
                               "required", List.of("endpoint", "credentialRef"))))));
-      SeaModule configuredFilesystem =
+      ZalavaModule configuredFilesystem =
           module(
               "configured-filesystem",
               "Configured Filesystem",
@@ -710,10 +710,10 @@ class ModulesControllerComponentTest {
                               "type", "object",
                               "properties", Map.of("roots", Map.of("type", "array")),
                               "required", List.of("roots"))))));
-      SeaModule declaredModule = declaredModule();
+      ZalavaModule declaredModule = declaredModule();
       return new SeaRuntime() {
         @Override
-        public List<SeaModule> modules() {
+        public List<ZalavaModule> modules() {
           return List.of(filesystem, configuredSearch, configuredFilesystem, declaredModule);
         }
 
@@ -727,10 +727,10 @@ class ModulesControllerComponentTest {
       };
     }
 
-    private static SeaModule module(
+    private static ZalavaModule module(
         String id, String name, ModuleConfigurationDescriptor configuration) {
       ModuleDescriptor descriptor = new ModuleDescriptor(id, "1.0.0", name, name + " module.");
-      return new SeaModule() {
+      return new ZalavaModule() {
         @Override
         public ModuleDescriptor descriptor() {
           return descriptor;
@@ -748,7 +748,7 @@ class ModulesControllerComponentTest {
       };
     }
 
-    private static SeaModule declaredModule() {
+    private static ZalavaModule declaredModule() {
       ModuleDescriptor descriptor =
           new ModuleDescriptor(
               "zalava-module-declared",
@@ -770,7 +770,7 @@ class ModulesControllerComponentTest {
               2);
       ManagedServiceDeclaration declaration =
           new ManagedServiceDeclaration("declared-service", desired);
-      return new SeaModule() {
+      return new ZalavaModule() {
         @Override
         public ModuleDescriptor descriptor() {
           return descriptor;

@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.zalava.InvocationContext;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
@@ -47,8 +47,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
 
   @Override
   public ToolInvocationOutcome invoke(ToolInvocationCommand command) {
-    SeaProvider provider = findProvider(command.providerId());
-    SeaToolDescriptor tool = findTool(provider, command.toolName());
+    ZalavaProvider provider = findProvider(command.providerId());
+    ZalavaToolDescriptor tool = findTool(provider, command.toolName());
     memberCapabilities.requireAllowed(provider, tool, command.context());
     JsonNode arguments = parseArguments(command.argumentsJson());
 
@@ -124,8 +124,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   }
 
   private ToolInvocationOutcome executeUnscopedApproval(ToolApproval approval) {
-    SeaProvider provider = findProvider(approval.providerId());
-    SeaToolDescriptor tool = findTool(provider, approval.toolName());
+    ZalavaProvider provider = findProvider(approval.providerId());
+    ZalavaToolDescriptor tool = findTool(provider, approval.toolName());
     JsonNode arguments = parseArguments(approval.argumentsJson());
     InvocationContext context =
         new InvocationContext(
@@ -140,7 +140,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return approvalDecision(() -> approvalPort.denyUnscoped(requestId));
   }
 
-  private SeaProvider findProvider(String providerId) {
+  private ZalavaProvider findProvider(String providerId) {
     return providerCatalog
         .findProvider(providerId)
         .orElseThrow(
@@ -150,7 +150,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
                     "SEA provider not found: " + providerId));
   }
 
-  private static SeaToolDescriptor findTool(SeaProvider provider, String toolName) {
+  private static ZalavaToolDescriptor findTool(ZalavaProvider provider, String toolName) {
     return provider.listTools().stream()
         .filter(tool -> tool.name().equals(toolName))
         .findFirst()
@@ -162,8 +162,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   }
 
   private ToolInvocationOutcome denied(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       ToolApproval approval) {
     Map<String, String> attributes = new LinkedHashMap<>(context.attributes());
@@ -181,12 +181,15 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return ToolInvocationOutcome.denied(approval);
   }
 
-  private SeaOperationResult execute(
-      SeaProvider provider, SeaToolDescriptor tool, JsonNode arguments, InvocationContext context) {
+  private ZalavaOperationResult execute(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      JsonNode arguments,
+      InvocationContext context) {
     memberCapabilities.requireAllowed(provider, tool, context);
     long startedAt = System.nanoTime();
     try {
-      SeaOperationResult result = provider.callTool(tool.name(), arguments, context);
+      ZalavaOperationResult result = provider.callTool(tool.name(), arguments, context);
       observe(provider, tool, context, true, null, null, result, startedAt);
       return result;
     } catch (UnsupportedOperationException ex) {
@@ -204,8 +207,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     }
   }
 
-  private static SeaOperationResult alreadyExecuted(ToolApproval approval) {
-    return SeaOperationResult.success(
+  private static ZalavaOperationResult alreadyExecuted(ToolApproval approval) {
+    return ZalavaOperationResult.success(
         Map.of(
             "status", "already_executed",
             "approvalRequestId", approval.requestId(),
@@ -214,13 +217,13 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   }
 
   private void observe(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       boolean success,
       String errorType,
       String errorMessage,
-      SeaOperationResult result,
+      ZalavaOperationResult result,
       long startedAt) {
     ToolInvocationObservation observation =
         new ToolInvocationObservation(
@@ -287,7 +290,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return Map.copyOf(approved);
   }
 
-  private static String classification(SeaToolDescriptor tool) {
+  private static String classification(ZalavaToolDescriptor tool) {
     return "sea_backed";
   }
 

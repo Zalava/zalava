@@ -3,16 +3,16 @@ package org.zalava.operation.application.port.out;
 import java.util.Map;
 import java.util.Optional;
 import org.zalava.InvocationContext;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.tasks.domain.TaskReference;
 
 public interface ToolApprovalPort {
 
   ToolApproval create(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       String argumentsJson,
       TaskReference taskReference);
@@ -28,7 +28,7 @@ public interface ToolApprovalPort {
 
   /** Resolves a durable policy using the complete SEA invocation authority. */
   default Optional<ToolApproval> findAllowedToolPolicy(
-      InvocationContext context, SeaProvider provider, SeaToolDescriptor tool) {
+      InvocationContext context, ZalavaProvider provider, ZalavaToolDescriptor tool) {
     return findAllowedToolPolicy(
         context.actorId(),
         provider.descriptor().providerId(),

@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.web.application.DefaultWebExtensionRoutes;
 import org.zalava.web.application.port.out.WebExtensionModuleCatalog;
 
@@ -37,8 +37,8 @@ class SeaWebExtensionCatalogTest {
 
   @Test
   void rejectsExtensionForDifferentModule() {
-    SeaWebExtension extension =
-        new SeaWebExtension() {
+    ZalavaWebExtension extension =
+        new ZalavaWebExtension() {
           @Override
           public WebExtensionDescriptor descriptor() {
             return new WebExtensionDescriptor(
@@ -47,7 +47,7 @@ class SeaWebExtensionCatalogTest {
 
           @Override
           public void register(WebExtensionRegistry registry) {
-            registry.page("bad").get("/", request -> SeaWebResponse.html("bad"));
+            registry.page("bad").get("/", request -> ZalavaWebResponse.html("bad"));
           }
         };
 
@@ -60,8 +60,8 @@ class SeaWebExtensionCatalogTest {
 
   @Test
   void rejectsUnsafePageIdsAndRoutePaths() {
-    SeaWebExtension unsafePage =
-        new SeaWebExtension() {
+    ZalavaWebExtension unsafePage =
+        new ZalavaWebExtension() {
           @Override
           public WebExtensionDescriptor descriptor() {
             return new WebExtensionDescriptor(
@@ -70,11 +70,11 @@ class SeaWebExtensionCatalogTest {
 
           @Override
           public void register(WebExtensionRegistry registry) {
-            registry.page("../chat").get("/", request -> SeaWebResponse.html("bad"));
+            registry.page("../chat").get("/", request -> ZalavaWebResponse.html("bad"));
           }
         };
-    SeaWebExtension unsafeRoute =
-        new SeaWebExtension() {
+    ZalavaWebExtension unsafeRoute =
+        new ZalavaWebExtension() {
           @Override
           public WebExtensionDescriptor descriptor() {
             return new WebExtensionDescriptor("test-module", "bad-route", "Bad", "Bad extension.");
@@ -82,7 +82,7 @@ class SeaWebExtensionCatalogTest {
 
           @Override
           public void register(WebExtensionRegistry registry) {
-            registry.page("bad").get("../chat", request -> SeaWebResponse.html("bad"));
+            registry.page("bad").get("../chat", request -> ZalavaWebResponse.html("bad"));
           }
         };
 
@@ -94,16 +94,16 @@ class SeaWebExtensionCatalogTest {
         .hasMessage("SEA web extension route path is invalid: ../chat");
   }
 
-  private static DefaultWebExtensionRoutes catalog(SeaModule module) {
+  private static DefaultWebExtensionRoutes catalog(ZalavaModule module) {
     WebExtensionModuleCatalog moduleCatalog = () -> List.of(module);
     return new DefaultWebExtensionRoutes(moduleCatalog);
   }
 
-  private static final class TestModule implements SeaModule {
+  private static final class TestModule implements ZalavaModule {
 
-    private final List<SeaWebExtension> extensions;
+    private final List<ZalavaWebExtension> extensions;
 
-    private TestModule(List<SeaWebExtension> extensions) {
+    private TestModule(List<ZalavaWebExtension> extensions) {
       this.extensions = extensions;
     }
 
@@ -118,12 +118,12 @@ class SeaWebExtensionCatalogTest {
     }
 
     @Override
-    public List<SeaWebExtension> webExtensions() {
+    public List<ZalavaWebExtension> webExtensions() {
       return extensions;
     }
   }
 
-  private static final class TestExtension implements SeaWebExtension {
+  private static final class TestExtension implements ZalavaWebExtension {
 
     @Override
     public WebExtensionDescriptor descriptor() {
@@ -137,8 +137,8 @@ class SeaWebExtensionCatalogTest {
           .page("fixture-page")
           .title("Fixture Page")
           .description("Fixture page.")
-          .get("/", request -> SeaWebResponse.html("ok"))
-          .post("/items/{id}/bought", request -> SeaWebResponse.html("ok"));
+          .get("/", request -> ZalavaWebResponse.html("ok"))
+          .post("/items/{id}/bought", request -> ZalavaWebResponse.html("ok"));
     }
   }
 }

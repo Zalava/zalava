@@ -9,26 +9,26 @@ import java.util.Objects;
 import java.util.Set;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.RequirementMode;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceFactory;
-import org.zalava.SeaServiceFactoryContext;
-import org.zalava.SeaServiceRequirement;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceFactory;
+import org.zalava.ZalavaServiceFactoryContext;
+import org.zalava.ZalavaServiceRequirement;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
 
 /** Fail-closed resolver for SEA-owned typed services, independent of Spring. */
 final class ModuleServiceRuntime implements AutoCloseable {
-  private final Map<String, SeaModule> modules = new HashMap<>();
-  private final Map<String, SeaServiceFactory<?>> factories = new HashMap<>();
+  private final Map<String, ZalavaModule> modules = new HashMap<>();
+  private final Map<String, ZalavaServiceFactory<?>> factories = new HashMap<>();
   private final Map<String, Object> instances = new HashMap<>();
   private final List<AutoCloseable> closeables = new ArrayList<>();
   private final ProviderFactoryContext source;
 
-  ModuleServiceRuntime(List<SeaModule> modules, ProviderFactoryContext source) {
+  ModuleServiceRuntime(List<ZalavaModule> modules, ProviderFactoryContext source) {
     this.source = source == null ? ProviderFactoryContext.empty() : source;
-    for (SeaModule module : modules) {
+    for (ZalavaModule module : modules) {
       this.modules.put(module.descriptor().moduleId(), module);
-      for (SeaServiceFactory<?> factory : module.serviceFactories()) register(module, factory);
+      for (ZalavaServiceFactory<?> factory : module.serviceFactories()) register(module, factory);
     }
     validateRequirements();
     try {
@@ -41,16 +41,16 @@ final class ModuleServiceRuntime implements AutoCloseable {
   }
 
   ProviderFactoryContext providerContext(ProviderFactoryContext source) {
-    Map<String, SeaServiceFactoryContext> scopes = new HashMap<>();
-    for (SeaModule module : modules.values())
+    Map<String, ZalavaServiceFactoryContext> scopes = new HashMap<>();
+    for (ZalavaModule module : modules.values())
       scopes.put(module.descriptor().moduleId(), scope(module));
     return source.withTypedServices(scopes);
   }
 
   <T> java.util.Optional<RuntimeQueries.LoadedSeaService<T>> findService(
-      SeaServiceContract<T> contract) {
+      ZalavaServiceContract<T> contract) {
     Objects.requireNonNull(contract, "contract");
-    SeaServiceFactory<?> factory = factories.get(contract.serviceId());
+    ZalavaServiceFactory<?> factory = factories.get(contract.serviceId());
     Object instance = instances.get(contract.serviceId());
     if (factory == null
         || instance == null
@@ -63,7 +63,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
             factory.descriptor(), contract.serviceType().cast(instance)));
   }
 
-  private void register(SeaModule module, SeaServiceFactory<?> factory) {
+  private void register(ZalavaModule module, ZalavaServiceFactory<?> factory) {
     if (factory == null || factory.descriptor() == null || factory.contract() == null) {
       throw new IllegalStateException(
           "SEA service factories must declare a descriptor and contract");
@@ -82,9 +82,9 @@ final class ModuleServiceRuntime implements AutoCloseable {
   }
 
   private void validateRequirements() {
-    for (SeaModule module : modules.values()) {
-      for (SeaServiceRequirement requirement : requirements(module).values()) {
-        SeaServiceFactory<?> factory = factories.get(requirement.serviceId());
+    for (ZalavaModule module : modules.values()) {
+      for (ZalavaServiceRequirement requirement : requirements(module).values()) {
+        ZalavaServiceFactory<?> factory = factories.get(requirement.serviceId());
         if (requirement.mode() == RequirementMode.REQUIRED
             && (factory == null || !matches(requirement, factory))) {
           throw new IllegalStateException(
@@ -101,18 +101,18 @@ final class ModuleServiceRuntime implements AutoCloseable {
     if (complete.contains(moduleId)) return;
     if (!visiting.add(moduleId))
       throw new IllegalStateException("Cyclic SEA service dependency involving module " + moduleId);
-    SeaModule module = modules.get(moduleId);
-    for (SeaServiceRequirement requirement : requirements(module).values()) {
-      SeaServiceFactory<?> factory = factories.get(requirement.serviceId());
+    ZalavaModule module = modules.get(moduleId);
+    for (ZalavaServiceRequirement requirement : requirements(module).values()) {
+      ZalavaServiceFactory<?> factory = factories.get(requirement.serviceId());
       if (factory != null && matches(requirement, factory))
         resolve(factory.descriptor().moduleId(), visiting, complete);
     }
-    for (SeaServiceFactory<?> factory : module.serviceFactories()) create(module, factory);
+    for (ZalavaServiceFactory<?> factory : module.serviceFactories()) create(module, factory);
     visiting.remove(moduleId);
     complete.add(moduleId);
   }
 
-  private void create(SeaModule module, SeaServiceFactory<?> factory) {
+  private void create(ZalavaModule module, ZalavaServiceFactory<?> factory) {
     String id = factory.descriptor().serviceId();
     if (instances.containsKey(id)) return;
     Object value = factory.create(scope(module));
@@ -125,11 +125,11 @@ final class ModuleServiceRuntime implements AutoCloseable {
     if (value instanceof AutoCloseable closeable) closeables.add(closeable);
   }
 
-  private SeaServiceFactoryContext scope(SeaModule module) {
-    Map<String, SeaServiceRequirement> requirements = requirements(module);
-    Map<SeaServiceContract<?>, Object> available = new HashMap<>();
-    for (SeaServiceRequirement requirement : requirements.values()) {
-      SeaServiceFactory<?> factory = factories.get(requirement.serviceId());
+  private ZalavaServiceFactoryContext scope(ZalavaModule module) {
+    Map<String, ZalavaServiceRequirement> requirements = requirements(module);
+    Map<ZalavaServiceContract<?>, Object> available = new HashMap<>();
+    for (ZalavaServiceRequirement requirement : requirements.values()) {
+      ZalavaServiceFactory<?> factory = factories.get(requirement.serviceId());
       if (factory != null
           && matches(requirement, factory)
           && instances.containsKey(requirement.serviceId())) {
@@ -137,7 +137,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
       }
     }
     ProviderFactoryContext scoped = source.forFactory(module.descriptor().moduleId(), "services");
-    return new SeaServiceFactoryContext(
+    return new ZalavaServiceFactoryContext(
         module.descriptor().moduleId(),
         available,
         requirements,
@@ -145,9 +145,9 @@ final class ModuleServiceRuntime implements AutoCloseable {
         scoped.secrets());
   }
 
-  private static Map<String, SeaServiceRequirement> requirements(SeaModule module) {
-    Map<String, SeaServiceRequirement> result = new HashMap<>();
-    for (SeaServiceRequirement requirement : module.serviceRequirements()) {
+  private static Map<String, ZalavaServiceRequirement> requirements(ZalavaModule module) {
+    Map<String, ZalavaServiceRequirement> result = new HashMap<>();
+    for (ZalavaServiceRequirement requirement : module.serviceRequirements()) {
       if (result.putIfAbsent(requirement.serviceId(), requirement) != null) {
         throw new IllegalStateException(
             "Module "
@@ -159,7 +159,8 @@ final class ModuleServiceRuntime implements AutoCloseable {
     return result;
   }
 
-  private static boolean matches(SeaServiceRequirement requirement, SeaServiceFactory<?> factory) {
+  private static boolean matches(
+      ZalavaServiceRequirement requirement, ZalavaServiceFactory<?> factory) {
     return "*".equals(requirement.versionRange())
         || requirement.versionRange().equals(factory.contract().contractVersion());
   }

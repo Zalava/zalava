@@ -1,7 +1,7 @@
 package org.zalava.managed;
 
 import java.util.List;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaServiceContract;
 
 /**
  * SEA-owned typed service contract for one OCI engine implementation provided by a module.
@@ -19,8 +19,8 @@ import org.zalava.SeaServiceContract;
  */
 public interface ManagedServiceEngine {
 
-  SeaServiceContract<ManagedServiceEngine> CONTRACT =
-      new SeaServiceContract<>("managed-service-engine", "2", ManagedServiceEngine.class);
+  ZalavaServiceContract<ManagedServiceEngine> CONTRACT =
+      new ZalavaServiceContract<>("managed-service-engine", "2", ManagedServiceEngine.class);
 
   /** Observes the current engine state of one SEA-owned managed service without mutating it. */
   Observation inspect(String serviceId);

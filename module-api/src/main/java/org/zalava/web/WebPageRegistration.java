@@ -8,7 +8,7 @@ public interface WebPageRegistration {
 
   WebPageRegistration navSection(String navSection);
 
-  WebPageRegistration get(String path, SeaWebHandler handler);
+  WebPageRegistration get(String path, ZalavaWebHandler handler);
 
-  WebPageRegistration post(String path, SeaWebHandler handler);
+  WebPageRegistration post(String path, ZalavaWebHandler handler);
 }

@@ -201,9 +201,9 @@ class ChatControllerComponentTest {
     }
 
     @Bean
-    org.zalava.SeaModule timeModule() {
-      org.zalava.SeaProvider provider =
-          new org.zalava.SeaProvider() {
+    org.zalava.ZalavaModule timeModule() {
+      org.zalava.ZalavaProvider provider =
+          new org.zalava.ZalavaProvider() {
             @Override
             public org.zalava.ProviderDescriptor descriptor() {
               return new org.zalava.ProviderDescriptor(
@@ -224,9 +224,9 @@ class ChatControllerComponentTest {
             }
 
             @Override
-            public List<org.zalava.SeaToolDescriptor> listTools() {
+            public List<org.zalava.ZalavaToolDescriptor> listTools() {
               return List.of(
-                  new org.zalava.SeaToolDescriptor(
+                  new org.zalava.ZalavaToolDescriptor(
                       "current_time",
                       "Returns the current time.",
                       false,
@@ -235,14 +235,15 @@ class ChatControllerComponentTest {
             }
 
             @Override
-            public org.zalava.SeaOperationResult callTool(
+            public org.zalava.ZalavaOperationResult callTool(
                 String toolName,
                 tools.jackson.databind.JsonNode arguments,
                 org.zalava.InvocationContext context) {
-              return org.zalava.SeaOperationResult.success(java.util.Map.of("time", "12:34:56Z"));
+              return org.zalava.ZalavaOperationResult.success(
+                  java.util.Map.of("time", "12:34:56Z"));
             }
           };
-      return new org.zalava.SeaModule() {
+      return new org.zalava.ZalavaModule() {
         @Override
         public org.zalava.ModuleDescriptor descriptor() {
           return new org.zalava.ModuleDescriptor(
@@ -260,7 +261,7 @@ class ChatControllerComponentTest {
                 }
 
                 @Override
-                public List<org.zalava.SeaProvider> createProviders(
+                public List<org.zalava.ZalavaProvider> createProviders(
                     org.zalava.ProviderFactoryContext context) {
                   return List.of(provider);
                 }

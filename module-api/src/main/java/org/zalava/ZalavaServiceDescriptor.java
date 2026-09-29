@@ -1,9 +1,9 @@
 package org.zalava;
 
 /** Immutable declaration for one service implementation owned by a module. */
-public record SeaServiceDescriptor(String serviceId, String moduleId, String contractVersion) {
+public record ZalavaServiceDescriptor(String serviceId, String moduleId, String contractVersion) {
 
-  public SeaServiceDescriptor {
+  public ZalavaServiceDescriptor {
     requireText(serviceId, "serviceId");
     requireText(moduleId, "moduleId");
     requireText(contractVersion, "contractVersion");

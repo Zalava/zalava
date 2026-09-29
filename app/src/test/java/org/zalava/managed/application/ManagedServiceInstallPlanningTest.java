@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import org.zalava.SeaServiceFactoryContext;
+import org.zalava.ZalavaServiceFactoryContext;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceLifecycle;
 import org.zalava.managed.ManagedServiceLimits;
@@ -250,6 +250,6 @@ class ManagedServiceInstallPlanningTest {
   }
 
   private static org.zalava.ManagedServiceAuthority authority(String moduleId) {
-    return new SeaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
+    return new ZalavaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
   }
 }

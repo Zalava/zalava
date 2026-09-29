@@ -21,13 +21,14 @@ import org.yaml.snakeyaml.error.YAMLException;
 public final class LocalArtifactModuleMetadataLoader {
 
   private static final int SUPPORTED_SCHEMA_VERSION = 1;
-  private static final String RETIRED_SEA_MODULE_SPI = "META-INF/services/org.zalava.sea.SeaModule";
+  private static final String RETIRED_SEA_MODULE_SPI =
+      "META-INF/services/org.zalava.sea.ZalavaModule";
 
   /** Reads module-owned metadata from an uploaded JAR without extracting it. */
   public SourceModuleIndex loadJar(Path artifact) {
     try (JarFile jar = new JarFile(artifact.toFile())) {
       if (jar.getJarEntry(RETIRED_SEA_MODULE_SPI) != null) {
-        throw invalid("uploaded JAR", "must not use the retired SeaModule SPI descriptor");
+        throw invalid("uploaded JAR", "must not use the retired ZalavaModule SPI descriptor");
       }
       var entry = jar.getJarEntry("module-metadata.yaml");
       if (entry == null || entry.isDirectory()) {

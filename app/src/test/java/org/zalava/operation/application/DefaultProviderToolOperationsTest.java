@@ -12,9 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
@@ -305,8 +305,8 @@ class DefaultProviderToolOperationsTest {
 
     @Override
     public ToolApproval create(
-        SeaProvider provider,
-        SeaToolDescriptor tool,
+        ZalavaProvider provider,
+        ZalavaToolDescriptor tool,
         InvocationContext context,
         String argumentsJson,
         TaskReference taskReference) {
@@ -439,7 +439,7 @@ class DefaultProviderToolOperationsTest {
     }
   }
 
-  private static final class MutableProvider implements SeaProvider {
+  private static final class MutableProvider implements ZalavaProvider {
 
     private final AtomicInteger calls = new AtomicInteger();
     private Map<String, String> scope = Map.of("root", "workspace");
@@ -464,21 +464,21 @@ class DefaultProviderToolOperationsTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
+    public List<ZalavaToolDescriptor> listTools() {
       return List.of(
-          new SeaToolDescriptor("read", "Reads.", false, null),
-          new SeaToolDescriptor("write", "Writes.", true, null),
-          new SeaToolDescriptor("fail", "Fails.", false, null));
+          new ZalavaToolDescriptor("read", "Reads.", false, null),
+          new ZalavaToolDescriptor("write", "Writes.", true, null),
+          new ZalavaToolDescriptor("fail", "Fails.", false, null));
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, InvocationContext context) {
       if ("fail".equals(toolName)) {
         throw new IllegalStateException("provider failed");
       }
       calls.incrementAndGet();
-      return SeaOperationResult.success(
+      return ZalavaOperationResult.success(
           Map.of(
               "path", arguments.path("path").stringValue(""),
               "confirmed", context.confirmed()));
