@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public record SeaWebRequest(
+public record ZalavaWebRequest(
     String method,
     String path,
     Map<String, List<String>> queryParameters,
@@ -12,7 +12,7 @@ public record SeaWebRequest(
     Map<String, String> pathVariables,
     Map<String, String> attributes) {
 
-  public SeaWebRequest {
+  public ZalavaWebRequest {
     queryParameters = copyMultiMap(queryParameters);
     formParameters = copyMultiMap(formParameters);
     pathVariables = pathVariables == null ? Map.of() : Map.copyOf(pathVariables);

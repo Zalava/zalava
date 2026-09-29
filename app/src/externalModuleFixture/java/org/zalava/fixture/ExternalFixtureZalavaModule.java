@@ -3,12 +3,12 @@ package org.zalava.fixture;
 import java.util.List;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceFactory;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceFactory;
 import org.zalava.fixture.speech.MockSpeechRecognitionFactory;
 import org.zalava.fixture.speech.MockSpeechSynthesisFactory;
 
-public final class ExternalFixtureSeaModule implements SeaModule {
+public final class ExternalFixtureZalavaModule implements ZalavaModule {
 
   @Override
   public ModuleDescriptor descriptor() {
@@ -25,7 +25,7 @@ public final class ExternalFixtureSeaModule implements SeaModule {
   }
 
   @Override
-  public List<SeaServiceFactory<?>> serviceFactories() {
+  public List<ZalavaServiceFactory<?>> serviceFactories() {
     return List.of(
         new ExternalFixtureContentExtractorFactory(),
         new MockSpeechRecognitionFactory(),

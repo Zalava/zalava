@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
 import org.zalava.operation.application.port.out.ToolApprovalPort;
@@ -81,7 +81,7 @@ class MemberProviderCapabilityPolicyTest {
         "member-actor", false, Map.of("source", "product-chat", "accountRole", "MEMBER"));
   }
 
-  private static final class TestProvider implements SeaProvider {
+  private static final class TestProvider implements ZalavaProvider {
     private final List<String> providerTags;
     private final List<String> toolTags;
     private final Map<String, String> scope;
@@ -115,16 +115,16 @@ class MemberProviderCapabilityPolicyTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
-      return List.of(new SeaToolDescriptor("read", "Read", false, toolTags));
+    public List<ZalavaToolDescriptor> listTools() {
+      return List.of(new ZalavaToolDescriptor("read", "Read", false, toolTags));
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, InvocationContext invocationContext) {
       calls.incrementAndGet();
       context = invocationContext;
-      return SeaOperationResult.success(Map.of("status", "ok"));
+      return ZalavaOperationResult.success(Map.of("status", "ok"));
     }
   }
 }

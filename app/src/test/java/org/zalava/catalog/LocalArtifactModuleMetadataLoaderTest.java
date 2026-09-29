@@ -53,20 +53,20 @@ class LocalArtifactModuleMetadataLoaderTest {
   }
 
   @Test
-  void rejectsUploadedJarWithRetiredSeaModuleSpiDescriptor() throws Exception {
+  void rejectsUploadedJarWithRetiredZalavaModuleSpiDescriptor() throws Exception {
     Path jar = temporaryDirectory.resolve("retired-spi.jar");
     try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(jar))) {
       output.putNextEntry(new JarEntry("module-metadata.yaml"));
       output.write(validMetadata().getBytes(StandardCharsets.UTF_8));
       output.closeEntry();
-      output.putNextEntry(new JarEntry("META-INF/services/org.zalava.sea.SeaModule"));
+      output.putNextEntry(new JarEntry("META-INF/services/org.zalava.sea.ZalavaModule"));
       output.write("example.RetiredModule".getBytes(StandardCharsets.UTF_8));
       output.closeEntry();
     }
 
     assertThatThrownBy(() -> loader.loadJar(jar))
         .isInstanceOf(SourceModuleIndexValidationException.class)
-        .hasMessage("uploaded JAR must not use the retired SeaModule SPI descriptor");
+        .hasMessage("uploaded JAR must not use the retired ZalavaModule SPI descriptor");
   }
 
   @Test

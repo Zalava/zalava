@@ -27,8 +27,8 @@ import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaProvider;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaProvider;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.catalog.install.application.port.in.ModuleQueries;
 import org.zalava.runtime.SeaModuleRegistry;
@@ -102,8 +102,8 @@ class ModuleLifecycleComponentTest {
   static class FixtureConfiguration {
     @Bean
     @Primary
-    SeaModuleRegistry lifecycleFixtureRegistry(Set<SeaModule> builtIns) {
-      List<SeaModule> modules = new ArrayList<>(builtIns);
+    SeaModuleRegistry lifecycleFixtureRegistry(Set<ZalavaModule> builtIns) {
+      List<ZalavaModule> modules = new ArrayList<>(builtIns);
       modules.add(new FixtureModule());
       return new StaticSeaModuleRegistry(modules);
     }
@@ -118,7 +118,7 @@ class ModuleLifecycleComponentTest {
     }
   }
 
-  private static class FixtureModule implements SeaModule {
+  private static class FixtureModule implements ZalavaModule {
     @Override
     public ModuleDescriptor descriptor() {
       return new ModuleDescriptor(
@@ -152,7 +152,7 @@ class ModuleLifecycleComponentTest {
             }
 
             @Override
-            public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+            public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
               if (!"ready".equals(context.configuration().get("endpoint"))) {
                 throw new IllegalStateException("Endpoint is not configured");
               }

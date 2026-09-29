@@ -2,12 +2,12 @@ package org.zalava;
 
 import java.util.List;
 
-public record SeaVerificationDescriptor(
+public record ZalavaVerificationDescriptor(
     String toolset,
     String providerId,
     List<String> requiredTools,
-    List<SeaVerificationStep> steps) {
-  public SeaVerificationDescriptor {
+    List<ZalavaVerificationStep> steps) {
+  public ZalavaVerificationDescriptor {
     requiredTools = List.copyOf(requiredTools);
     steps = List.copyOf(steps);
   }

@@ -41,8 +41,8 @@ class SeaTaskApprovalDecisionsTest {
         reference);
   }
 
-  private org.zalava.SeaProvider provider(String id) {
-    return new org.zalava.SeaProvider() {
+  private org.zalava.ZalavaProvider provider(String id) {
+    return new org.zalava.ZalavaProvider() {
       @Override
       public org.zalava.ProviderDescriptor descriptor() {
         return new org.zalava.ProviderDescriptor(
@@ -63,14 +63,14 @@ class SeaTaskApprovalDecisionsTest {
       }
 
       @Override
-      public List<org.zalava.SeaToolDescriptor> listTools() {
+      public List<org.zalava.ZalavaToolDescriptor> listTools() {
         return List.of();
       }
     };
   }
 
-  private org.zalava.SeaToolDescriptor tool(String name) {
-    return new org.zalava.SeaToolDescriptor(
+  private org.zalava.ZalavaToolDescriptor tool(String name) {
+    return new org.zalava.ZalavaToolDescriptor(
         name, "A write tool", true, List.of("files:write"), Map.of());
   }
 

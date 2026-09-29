@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.zalava.SeaOperationResult;
+import org.zalava.ZalavaOperationResult;
 import org.zalava.accounts.application.ActorExecutionContext;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
@@ -29,11 +29,11 @@ class SeaProviderToolInvokerTest {
     RecordingOperations operations =
         new RecordingOperations(
             ProviderToolOperations.ToolInvocationOutcome.executed(
-                SeaOperationResult.success(Map.of("value", "ok"))));
+                ZalavaOperationResult.success(Map.of("value", "ok"))));
     SeaProviderToolInvoker invoker = new SeaProviderToolInvoker(operations, taskExecutionContext);
     TaskReference reference = TaskReference.parse("2026-06-14", "120000-read.md");
 
-    SeaOperationResult result =
+    ZalavaOperationResult result =
         taskExecutionContext.call(
             reference,
             () -> invoker.invoke("provider", "read", "{\"path\":\"a.txt\"}", "spring-ai-callback"));
@@ -50,7 +50,7 @@ class SeaProviderToolInvokerTest {
     RecordingOperations operations =
         new RecordingOperations(
             ProviderToolOperations.ToolInvocationOutcome.executed(
-                SeaOperationResult.success(Map.of("value", "ok"))));
+                ZalavaOperationResult.success(Map.of("value", "ok"))));
     ActorExecutionContext actorExecution = new ActorExecutionContext();
     SeaProviderToolInvoker invoker =
         new SeaProviderToolInvoker(operations, taskExecutionContext, actorExecution);
@@ -77,7 +77,7 @@ class SeaProviderToolInvokerTest {
     RecordingOperations operations =
         new RecordingOperations(
             ProviderToolOperations.ToolInvocationOutcome.executed(
-                SeaOperationResult.success(Map.of("value", "ok"))));
+                ZalavaOperationResult.success(Map.of("value", "ok"))));
     SeaProviderToolInvoker invoker = new SeaProviderToolInvoker(operations, taskExecutionContext);
 
     ConversationChannelContext.call(

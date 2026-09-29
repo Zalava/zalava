@@ -4,7 +4,7 @@ import java.util.List;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaProvider;
+import org.zalava.ZalavaProvider;
 
 final class TemplateProviderFactory implements ProviderFactory {
 
@@ -12,14 +12,14 @@ final class TemplateProviderFactory implements ProviderFactory {
   public ProviderFactoryDescriptor descriptor() {
     return new ProviderFactoryDescriptor(
         "template",
-        TemplateSeaModule.MODULE_ID,
+        TemplateZalavaModule.MODULE_ID,
         "template",
         "Template Provider",
         "Replace this sample provider factory.");
   }
 
   @Override
-  public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+  public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
     return List.of(new TemplateProvider());
   }
 }

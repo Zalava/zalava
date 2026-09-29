@@ -106,15 +106,15 @@ class SeaConfigurationTest {
 
   @Test
   void combinesOnlyConfiguredBuiltInsAndExternalModules() {
-    SeaModule builtIn = module("test-built-in");
-    SeaModule external = module("zalava-module-filesystem");
+    ZalavaModule builtIn = module("test-built-in");
+    ZalavaModule external = module("zalava-module-filesystem");
 
-    assertThat(SeaConfiguration.mergeSeaModules(Set.of(builtIn), List.of(external)))
+    assertThat(SeaConfiguration.mergeZalavaModules(Set.of(builtIn), List.of(external)))
         .containsExactlyInAnyOrder(builtIn, external);
   }
 
-  private static SeaModule module(String moduleId) {
-    return new SeaModule() {
+  private static ZalavaModule module(String moduleId) {
+    return new ZalavaModule() {
       @Override
       public ModuleDescriptor descriptor() {
         return new ModuleDescriptor(moduleId, "1.0.0", moduleId, "Test module");

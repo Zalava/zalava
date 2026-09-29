@@ -2,7 +2,7 @@ package org.zalava.operation.application.port.out;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.SeaOperationResult;
+import org.zalava.ZalavaOperationResult;
 
 public record ToolInvocationObservation(
     String providerId,
@@ -16,7 +16,7 @@ public record ToolInvocationObservation(
     boolean success,
     String errorType,
     String errorMessage,
-    SeaOperationResult result,
+    ZalavaOperationResult result,
     long durationMillis) {
   public ToolInvocationObservation {
     attributes = attributes == null ? Map.of() : Map.copyOf(attributes);

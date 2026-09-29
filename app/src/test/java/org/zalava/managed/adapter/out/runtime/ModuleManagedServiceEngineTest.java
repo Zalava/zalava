@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
-import org.zalava.SeaServiceDescriptor;
+import org.zalava.ZalavaServiceDescriptor;
 import org.zalava.managed.ManagedServiceDesiredState;
 import org.zalava.managed.ManagedServiceEngine;
 import org.zalava.managed.ManagedServiceLifecycle;
@@ -99,7 +99,7 @@ class ModuleManagedServiceEngineTest {
   private Optional<RuntimeQueries.LoadedSeaService<ManagedServiceEngine>> loaded() {
     return Optional.of(
         new RuntimeQueries.LoadedSeaService<>(
-            new SeaServiceDescriptor(
+            new ZalavaServiceDescriptor(
                 ManagedServiceEngine.CONTRACT.serviceId(),
                 "zalava-module-docker",
                 ManagedServiceEngine.CONTRACT.contractVersion()),

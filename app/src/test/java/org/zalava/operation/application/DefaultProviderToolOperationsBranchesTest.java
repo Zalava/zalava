@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
@@ -135,8 +135,8 @@ class DefaultProviderToolOperationsBranchesTest {
 
     @Override
     public ToolApproval create(
-        SeaProvider provider,
-        SeaToolDescriptor tool,
+        ZalavaProvider provider,
+        ZalavaToolDescriptor tool,
         InvocationContext context,
         String argumentsJson,
         TaskReference taskReference) {
@@ -180,7 +180,7 @@ class DefaultProviderToolOperationsBranchesTest {
     }
   }
 
-  private static final class FailingProvider implements SeaProvider {
+  private static final class FailingProvider implements ZalavaProvider {
 
     @Override
     public ProviderDescriptor descriptor() {
@@ -202,15 +202,15 @@ class DefaultProviderToolOperationsBranchesTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
+    public List<ZalavaToolDescriptor> listTools() {
       return List.of(
-          new SeaToolDescriptor("read", "Reads.", false, null),
-          new SeaToolDescriptor("unsupported", "Unsupported.", false, null),
-          new SeaToolDescriptor("invalid", "Invalid.", false, null));
+          new ZalavaToolDescriptor("read", "Reads.", false, null),
+          new ZalavaToolDescriptor("unsupported", "Unsupported.", false, null),
+          new ZalavaToolDescriptor("invalid", "Invalid.", false, null));
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, InvocationContext context) {
       if ("unsupported".equals(toolName)) {
         throw new UnsupportedOperationException("tool is not supported");

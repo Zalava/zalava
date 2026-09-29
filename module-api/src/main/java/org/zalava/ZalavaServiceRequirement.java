@@ -1,9 +1,10 @@
 package org.zalava;
 
 /** A module's explicit dependency on one SEA-owned service contract. */
-public record SeaServiceRequirement(String serviceId, String versionRange, RequirementMode mode) {
+public record ZalavaServiceRequirement(
+    String serviceId, String versionRange, RequirementMode mode) {
 
-  public SeaServiceRequirement {
+  public ZalavaServiceRequirement {
     if (serviceId == null || serviceId.isBlank())
       throw new IllegalArgumentException("serviceId must not be blank");
     if (versionRange == null || versionRange.isBlank())

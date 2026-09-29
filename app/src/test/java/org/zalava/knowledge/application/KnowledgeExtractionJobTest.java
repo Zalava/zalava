@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.zalava.SeaServiceDescriptor;
+import org.zalava.ZalavaServiceDescriptor;
 import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.content.ContentExtractionLimits;
@@ -65,7 +65,7 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
+                    new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
@@ -135,7 +135,7 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
+                    new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
@@ -287,7 +287,7 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
+                    new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);
@@ -311,7 +311,7 @@ class KnowledgeExtractionJobTest {
         .thenReturn(
             Optional.of(
                 new RuntimeQueries.LoadedSeaService<>(
-                    new SeaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
+                    new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
         .thenReturn(candidate);

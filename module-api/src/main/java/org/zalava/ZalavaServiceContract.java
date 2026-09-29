@@ -3,10 +3,10 @@ package org.zalava;
 import java.util.Objects;
 
 /** Stable, SEA-owned identifier for one typed module service contract. */
-public record SeaServiceContract<T>(
+public record ZalavaServiceContract<T>(
     String serviceId, String contractVersion, Class<T> serviceType) {
 
-  public SeaServiceContract {
+  public ZalavaServiceContract {
     requireText(serviceId, "serviceId");
     requireText(contractVersion, "contractVersion");
     serviceType = Objects.requireNonNull(serviceType, "serviceType must not be null");

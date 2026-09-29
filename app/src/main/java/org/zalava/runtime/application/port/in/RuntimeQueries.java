@@ -2,25 +2,25 @@ package org.zalava.runtime.application.port.in;
 
 import java.util.List;
 import java.util.Optional;
-import org.zalava.SeaModule;
-import org.zalava.SeaProvider;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceDescriptor;
 import org.zalava.runtime.LoadedSeaProvider;
 
 /** Framework-free queries over the providers instantiated for this runtime. */
 public interface RuntimeQueries {
 
-  List<SeaModule> modules();
+  List<ZalavaModule> modules();
 
   /** Modules whose providers and services are currently active. */
-  default List<SeaModule> activeModules() {
+  default List<ZalavaModule> activeModules() {
     return modules();
   }
 
   List<LoadedSeaProvider> loadedProviders();
 
-  default List<SeaProvider> providers() {
+  default List<ZalavaProvider> providers() {
     return loadedProviders().stream().map(LoadedSeaProvider::provider).toList();
   }
 
@@ -30,7 +30,7 @@ public interface RuntimeQueries {
         .findFirst();
   }
 
-  default Optional<SeaProvider> findProvider(String providerId) {
+  default Optional<ZalavaProvider> findProvider(String providerId) {
     return findLoadedProvider(providerId).map(LoadedSeaProvider::provider);
   }
 
@@ -38,9 +38,9 @@ public interface RuntimeQueries {
    * Resolves one active SEA-owned typed service without exposing its factory, classloader, module
    * configuration, or any Spring infrastructure.
    */
-  default <T> Optional<LoadedSeaService<T>> findService(SeaServiceContract<T> contract) {
+  default <T> Optional<LoadedSeaService<T>> findService(ZalavaServiceContract<T> contract) {
     return Optional.empty();
   }
 
-  record LoadedSeaService<T>(SeaServiceDescriptor descriptor, T service) {}
+  record LoadedSeaService<T>(ZalavaServiceDescriptor descriptor, T service) {}
 }

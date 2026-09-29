@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.operation.application.port.in.ProviderToolOperations;
@@ -145,7 +145,7 @@ class ChannelApprovalCommandsTest {
     when(providerToolOperations.allowUnscoped(requestId))
         .thenReturn(
             ProviderToolOperations.ToolInvocationOutcome.executed(
-                SeaOperationResult.success(Map.of())));
+                ZalavaOperationResult.success(Map.of())));
 
     assertThat(commands.handle("/sea approve " + requestId))
         .get()
@@ -171,7 +171,7 @@ class ChannelApprovalCommandsTest {
     when(providerToolOperations.allowUnscopedTool(requestId))
         .thenReturn(
             ProviderToolOperations.ToolInvocationOutcome.executed(
-                SeaOperationResult.success(Map.of())));
+                ZalavaOperationResult.success(Map.of())));
 
     assertThat(commands.handle("/sea always-allow-tool " + requestId))
         .get()
@@ -222,7 +222,7 @@ class ChannelApprovalCommandsTest {
     when(providerToolOperations.allowUnscoped(newestRequestId))
         .thenReturn(
             ProviderToolOperations.ToolInvocationOutcome.executed(
-                SeaOperationResult.success(Map.of())));
+                ZalavaOperationResult.success(Map.of())));
 
     assertThat(commands.handle("/sea approve last"))
         .get()
@@ -262,7 +262,8 @@ class ChannelApprovalCommandsTest {
     return approvals
         .create(
             new TestProvider(),
-            new SeaToolDescriptor("writeFile", "Writes a file.", true, List.of("filesystem.write")),
+            new ZalavaToolDescriptor(
+                "writeFile", "Writes a file.", true, List.of("filesystem.write")),
             new InvocationContext("telegram-42", false, Map.of("source", "telegram")),
             JSON.readTree("{\"path\":\"" + path + "\"}"),
             reference)
@@ -292,7 +293,7 @@ class ChannelApprovalCommandsTest {
         "Write a file.");
   }
 
-  private static final class TestProvider implements SeaProvider {
+  private static final class TestProvider implements ZalavaProvider {
 
     @Override
     public ProviderDescriptor descriptor() {
@@ -314,14 +315,14 @@ class ChannelApprovalCommandsTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
-      return List.of(new SeaToolDescriptor("writeFile", "Writes a file.", true, null));
+    public List<ZalavaToolDescriptor> listTools() {
+      return List.of(new ZalavaToolDescriptor("writeFile", "Writes a file.", true, null));
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, tools.jackson.databind.JsonNode arguments, InvocationContext context) {
-      return SeaOperationResult.success(Map.of());
+      return ZalavaOperationResult.success(Map.of());
     }
   }
 }

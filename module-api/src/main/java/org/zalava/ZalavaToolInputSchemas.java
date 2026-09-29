@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public final class SeaToolInputSchemas {
+public final class ZalavaToolInputSchemas {
 
-  private SeaToolInputSchemas() {}
+  private ZalavaToolInputSchemas() {}
 
   public static Map<String, Object> object(Map<String, Object> properties, String... required) {
     return Map.of(
@@ -55,7 +55,7 @@ public final class SeaToolInputSchemas {
                   entry -> immutableValue(entry.getValue())));
     }
     if (value instanceof List<?> list) {
-      return list.stream().map(SeaToolInputSchemas::immutableValue).toList();
+      return list.stream().map(ZalavaToolInputSchemas::immutableValue).toList();
     }
     return Objects.requireNonNull(value, "inputSchema value");
   }

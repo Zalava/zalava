@@ -3,7 +3,7 @@ plugins {
   id 'maven-publish'
 }
 
-def zalavaVersion = providers.gradleProperty('zalavaVersion').orElse('0.1.0-alpha.1')
+def zalavaVersion = providers.gradleProperty('zalavaVersion').orElse('0.1.0-alpha.2')
 def generatedSources = layout.buildDirectory.dir('generated/sources/zalava/main/java')
 def generatedTestSources = layout.buildDirectory.dir('generated/sources/zalava/test/java')
 

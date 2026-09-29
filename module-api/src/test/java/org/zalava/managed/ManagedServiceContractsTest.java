@@ -7,7 +7,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
-import org.zalava.SeaServiceFactoryContext;
+import org.zalava.ZalavaServiceFactoryContext;
 
 class ManagedServiceContractsTest {
 
@@ -113,7 +113,7 @@ class ManagedServiceContractsTest {
   }
 
   private static org.zalava.ManagedServiceAuthority contextAuthority() {
-    return new SeaServiceFactoryContext("home-module", Map.of(), Map.of())
+    return new ZalavaServiceFactoryContext("home-module", Map.of(), Map.of())
         .managedServiceAuthority();
   }
 

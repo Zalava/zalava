@@ -37,10 +37,10 @@ import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
@@ -311,9 +311,9 @@ class JobDetailControllerComponentTest {
   private SeaToolApprovalRequests.Entry actorApproval(
       Account owner, Actor actor, ActorTaskReference reference, String accountRole) {
     ActorTaskExecutionReference execution = new ActorTaskExecutionReference(actor, reference);
-    SeaProvider provider = scopedProvider();
-    SeaToolDescriptor tool =
-        new SeaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
+    ZalavaProvider provider = scopedProvider();
+    ZalavaToolDescriptor tool =
+        new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
     return approvals.create(
         provider,
         tool,
@@ -329,9 +329,9 @@ class JobDetailControllerComponentTest {
   }
 
   private SeaToolApprovalRequests.Entry legacyApproval(Task task) {
-    SeaProvider provider = scopedProvider();
-    SeaToolDescriptor tool =
-        new SeaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
+    ZalavaProvider provider = scopedProvider();
+    ZalavaToolDescriptor tool =
+        new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
     return approvals.create(
         provider,
         tool,
@@ -363,8 +363,8 @@ class JobDetailControllerComponentTest {
     return "/jobs/" + path.getParent().getFileName() + "/" + path.getFileName();
   }
 
-  private static SeaProvider scopedProvider() {
-    SeaProvider provider = mock(SeaProvider.class);
+  private static ZalavaProvider scopedProvider() {
+    ZalavaProvider provider = mock(ZalavaProvider.class);
     ProviderDescriptor descriptor =
         new ProviderDescriptor(
             "scoped-provider",
@@ -381,13 +381,13 @@ class JobDetailControllerComponentTest {
     when(provider.listTools())
         .thenReturn(
             List.of(
-                new SeaToolDescriptor(
+                new ZalavaToolDescriptor(
                     "write", "Writes scoped data", true, List.of("member-safe"))));
     when(provider.callTool(
             org.mockito.ArgumentMatchers.eq("write"),
             org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.any()))
-        .thenReturn(SeaOperationResult.success(Map.of("written", true)));
+        .thenReturn(ZalavaOperationResult.success(Map.of("written", true)));
     return provider;
   }
 
@@ -419,8 +419,8 @@ class JobDetailControllerComponentTest {
     @Bean
     @Primary
     SeaRuntime loadedSeaRuntime() {
-      SeaModule module =
-          new SeaModule() {
+      ZalavaModule module =
+          new ZalavaModule() {
             @Override
             public ModuleDescriptor descriptor() {
               return new ModuleDescriptor("test-module", "1.0.0", "Test Module", "Test module.");
@@ -435,7 +435,7 @@ class JobDetailControllerComponentTest {
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
       return new SeaRuntime() {
         @Override
-        public List<org.zalava.SeaModule> modules() {
+        public List<org.zalava.ZalavaModule> modules() {
           return List.of(module);
         }
 

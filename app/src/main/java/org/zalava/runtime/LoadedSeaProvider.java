@@ -2,7 +2,7 @@ package org.zalava.runtime;
 
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaProvider;
+import org.zalava.ZalavaProvider;
 
 public record LoadedSeaProvider(
-    ModuleDescriptor module, ProviderFactoryDescriptor factory, SeaProvider provider) {}
+    ModuleDescriptor module, ProviderFactoryDescriptor factory, ZalavaProvider provider) {}

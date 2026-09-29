@@ -6,12 +6,12 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.zalava.ModuleDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.web.SeaWebExtension;
-import org.zalava.web.SeaWebHandler;
+import org.zalava.ZalavaModule;
 import org.zalava.web.WebExtensionDescriptor;
 import org.zalava.web.WebExtensionRegistry;
 import org.zalava.web.WebPageRegistration;
+import org.zalava.web.ZalavaWebExtension;
+import org.zalava.web.ZalavaWebHandler;
 import org.zalava.web.application.port.in.WebExtensionRoutes;
 import org.zalava.web.application.port.out.WebExtensionModuleCatalog;
 import org.zalava.web.domain.RoutePattern;
@@ -57,11 +57,11 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
         .findFirst();
   }
 
-  private static List<RegisteredWebPage> pagesFor(SeaModule module) {
+  private static List<RegisteredWebPage> pagesFor(ZalavaModule module) {
     ModuleDescriptor moduleDescriptor = module.descriptor();
     requireSafeSegment(moduleDescriptor.moduleId(), "module id");
     List<RegisteredWebPage> registered = new ArrayList<>();
-    for (SeaWebExtension extension : module.webExtensions()) {
+    for (ZalavaWebExtension extension : module.webExtensions()) {
       WebExtensionDescriptor descriptor = requireDescriptor(moduleDescriptor, extension);
       ExtensionRegistry registry = new ExtensionRegistry(moduleDescriptor, descriptor);
       extension.register(registry);
@@ -71,7 +71,7 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
   }
 
   private static WebExtensionDescriptor requireDescriptor(
-      ModuleDescriptor module, SeaWebExtension extension) {
+      ModuleDescriptor module, ZalavaWebExtension extension) {
     if (extension == null) {
       throw new IllegalArgumentException("SEA web extension must not be null");
     }
@@ -174,16 +174,16 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
     }
 
     @Override
-    public WebPageRegistration get(String path, SeaWebHandler handler) {
+    public WebPageRegistration get(String path, ZalavaWebHandler handler) {
       return route("GET", path, handler);
     }
 
     @Override
-    public WebPageRegistration post(String path, SeaWebHandler handler) {
+    public WebPageRegistration post(String path, ZalavaWebHandler handler) {
       return route("POST", path, handler);
     }
 
-    private WebPageRegistration route(String method, String path, SeaWebHandler handler) {
+    private WebPageRegistration route(String method, String path, ZalavaWebHandler handler) {
       if (handler == null) {
         throw new IllegalArgumentException("SEA web extension route handler must not be null");
       }

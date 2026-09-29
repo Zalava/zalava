@@ -8,8 +8,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.discovery.adapter.out.springai.SeaToolCallbackCatalog;
 import org.zalava.operation.adapter.in.agent.SeaProviderToolInvoker;
 import org.zalava.operation.application.port.out.ProviderCatalog;
@@ -17,8 +17,8 @@ import org.zalava.tasks.domain.TaskExecutionContext;
 
 class SeaNativeToolDiscoveryTest {
 
-  private static final SeaProvider PROVIDER =
-      new SeaProvider() {
+  private static final ZalavaProvider PROVIDER =
+      new ZalavaProvider() {
         private final ProviderDescriptor descriptor =
             new ProviderDescriptor(
                 "sea-filesystem-provider",
@@ -42,9 +42,9 @@ class SeaNativeToolDiscoveryTest {
         }
 
         @Override
-        public List<SeaToolDescriptor> listTools() {
+        public List<ZalavaToolDescriptor> listTools() {
           return List.of(
-              new SeaToolDescriptor(
+              new ZalavaToolDescriptor(
                   "readFile", "Read a scoped file.", false, List.of("filesystem"), Map.of()));
         }
       };
@@ -54,12 +54,12 @@ class SeaNativeToolDiscoveryTest {
     ProviderCatalog catalog =
         new ProviderCatalog() {
           @Override
-          public List<SeaProvider> providers() {
+          public List<ZalavaProvider> providers() {
             return List.of(PROVIDER);
           }
 
           @Override
-          public Optional<SeaProvider> findProvider(String providerId) {
+          public Optional<ZalavaProvider> findProvider(String providerId) {
             return providerId.equals(PROVIDER.descriptor().providerId())
                 ? Optional.of(PROVIDER)
                 : Optional.empty();

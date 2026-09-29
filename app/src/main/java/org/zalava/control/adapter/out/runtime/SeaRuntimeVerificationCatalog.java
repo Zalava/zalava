@@ -2,8 +2,8 @@ package org.zalava.control.adapter.out.runtime;
 
 import java.util.List;
 import java.util.Optional;
-import org.zalava.SeaProvider;
-import org.zalava.SeaVerificationDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaVerificationDescriptor;
 import org.zalava.control.application.port.out.RuntimeVerificationCatalog;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
 
@@ -15,7 +15,7 @@ public final class SeaRuntimeVerificationCatalog implements RuntimeVerificationC
   }
 
   @Override
-  public List<SeaVerificationDescriptor> verifications() {
+  public List<ZalavaVerificationDescriptor> verifications() {
     return runtime.modules().stream()
         .flatMap(module -> module.verificationContributors().stream())
         .flatMap(contributor -> contributor.verifications().stream())
@@ -23,7 +23,7 @@ public final class SeaRuntimeVerificationCatalog implements RuntimeVerificationC
   }
 
   @Override
-  public Optional<SeaProvider> findProvider(String providerId) {
+  public Optional<ZalavaProvider> findProvider(String providerId) {
     return runtime.findProvider(providerId);
   }
 }

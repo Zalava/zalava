@@ -23,10 +23,10 @@ import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.catalog.install.SourceModuleInstallationException;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.catalog.install.application.port.out.ModuleEnablement;
@@ -43,7 +43,7 @@ class ExternalSeaModuleLoaderTest {
     FileSystemModuleEnablement registry = enableFixture(artifact);
 
     try (ExternalSeaModuleLoader loader = new ExternalSeaModuleLoader(registry)) {
-      List<SeaModule> modules = loader.loadModules();
+      List<ZalavaModule> modules = loader.loadModules();
       DefaultSeaRuntime runtime =
           new DefaultSeaRuntime(
               new StaticSeaModuleRegistry(modules), org.zalava.ProviderFactoryContext.empty());
@@ -84,7 +84,7 @@ class ExternalSeaModuleLoaderTest {
           }
 
           @Override
-          public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+          public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
             received.set(context);
             return List.of(new TestProvider(validProviderDescriptor("test-module")));
           }
@@ -121,12 +121,12 @@ class ExternalSeaModuleLoaderTest {
           }
 
           @Override
-          public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+          public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
             receivedConfigurations.add(context.configuration());
             return List.of(new TestProvider(validProviderDescriptor("test-module")));
           }
         };
-    SeaModule module = new TestModule(validModuleDescriptor("test-module"), List.of(factory));
+    ZalavaModule module = new TestModule(validModuleDescriptor("test-module"), List.of(factory));
     ProviderFactoryContext context =
         new ProviderFactoryContext(
             Map.of(
@@ -188,13 +188,13 @@ class ExternalSeaModuleLoaderTest {
   }
 
   @Test
-  void skipsArtifactWithoutDeclaredSeaModuleService() throws Exception {
+  void skipsArtifactWithoutDeclaredZalavaModuleService() throws Exception {
     Path artifact =
         workspace.resolve(
             "source-module-installation/modules/empty-module/1.0.0/empty-module-1.0.0.jar");
     Files.createDirectories(artifact.getParent());
     try (var output = new java.util.jar.JarOutputStream(Files.newOutputStream(artifact))) {
-      // An empty valid JAR has no SeaModule service declaration.
+      // An empty valid JAR has no ZalavaModule service declaration.
     }
     FileSystemModuleEnablement registry = new FileSystemModuleEnablement(workspace);
     registry.enable(enabledModule("empty-module", artifact));
@@ -225,7 +225,7 @@ class ExternalSeaModuleLoaderTest {
     registry.enable(bundleEnabledModule("sea-external-module-fixture", primary, runtime));
 
     try (ExternalSeaModuleLoader loader = new ExternalSeaModuleLoader(registry)) {
-      List<SeaModule> modules = loader.loadModules();
+      List<ZalavaModule> modules = loader.loadModules();
 
       assertThat(modules).hasSize(1);
       assertThat(((URLClassLoader) modules.getFirst().getClass().getClassLoader()).getURLs())
@@ -389,7 +389,7 @@ class ExternalSeaModuleLoaderTest {
 
   @Test
   void rejectsProviderBelongingToAnotherModule() throws Exception {
-    SeaProvider provider =
+    ZalavaProvider provider =
         new TestProvider(
             new ProviderDescriptor(
                 "provider",
@@ -420,7 +420,7 @@ class ExternalSeaModuleLoaderTest {
 
   @Test
   void rejectsProviderWithoutCapabilities() throws Exception {
-    SeaProvider provider =
+    ZalavaProvider provider =
         new TestProvider(
             new ProviderDescriptor(
                 "provider",
@@ -638,7 +638,7 @@ class ExternalSeaModuleLoaderTest {
   }
 
   private record TestModule(ModuleDescriptor descriptor, List<ProviderFactory> providerFactories)
-      implements SeaModule {
+      implements ZalavaModule {
 
     private TestModule(ModuleDescriptor descriptor) {
       this(descriptor, List.of());
@@ -646,11 +646,11 @@ class ExternalSeaModuleLoaderTest {
   }
 
   private record TestProviderFactory(
-      ProviderFactoryDescriptor descriptor, List<SeaProvider> providers)
+      ProviderFactoryDescriptor descriptor, List<ZalavaProvider> providers)
       implements ProviderFactory {
 
     @Override
-    public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+    public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
       return providers;
     }
   }
@@ -659,12 +659,12 @@ class ExternalSeaModuleLoaderTest {
       implements ProviderFactory {
 
     @Override
-    public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+    public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
       throw new IllegalStateException("unavailable");
     }
   }
 
-  private static class TestProvider implements SeaProvider {
+  private static class TestProvider implements ZalavaProvider {
 
     private final ProviderDescriptor descriptor;
 
@@ -683,14 +683,14 @@ class ExternalSeaModuleLoaderTest {
     }
 
     @Override
-    public List<SeaToolDescriptor> listTools() {
+    public List<ZalavaToolDescriptor> listTools() {
       return List.of();
     }
 
     @Override
-    public SeaOperationResult callTool(
+    public ZalavaOperationResult callTool(
         String toolName, JsonNode arguments, org.zalava.InvocationContext context) {
-      return SeaOperationResult.success(Map.of());
+      return ZalavaOperationResult.success(Map.of());
     }
   }
 }

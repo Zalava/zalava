@@ -31,7 +31,7 @@ class ExternalModuleClassLoaderTest {
   void rejectsTheRetiredPreviewServiceDescriptorBeforeDiscovery() throws Exception {
     Path artifact = workspace.resolve("preview.jar");
     try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(artifact))) {
-      output.putNextEntry(new JarEntry("META-INF/services/org.zalava.sea.SeaModule"));
+      output.putNextEntry(new JarEntry("META-INF/services/org.zalava.sea.ZalavaModule"));
       output.write("example.LegacyModule".getBytes());
       output.closeEntry();
     }
@@ -49,9 +49,9 @@ class ExternalModuleClassLoaderTest {
     assertThat(ExternalModuleClassLoader.previewServiceDescriptorError("example-module"))
         .isEqualTo(
             "External module example-module uses retired preview SPI service descriptor "
-                + "META-INF/services/org.zalava.sea.SeaModule; rebuild it against "
+                + "META-INF/services/org.zalava.sea.ZalavaModule; rebuild it against "
                 + "org.zalava:module-api:1.0.0 and register "
-                + "META-INF/services/org.zalava.SeaModule");
+                + "META-INF/services/org.zalava.ZalavaModule");
   }
 
   @Test

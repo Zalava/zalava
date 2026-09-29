@@ -8,8 +8,8 @@ import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.toolsearch.ToolReference;
 import org.springframework.core.ParameterizedTypeReference;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.adapter.in.agent.SeaProviderToolInvoker;
 import org.zalava.operation.application.port.out.ProviderCatalog;
 import tools.jackson.databind.ObjectMapper;
@@ -49,12 +49,12 @@ public final class SeaToolCallbackCatalog {
                     "SEA tool callback not found: " + providerId + "/" + toolName));
   }
 
-  private static boolean supportsSeaNativeTools(SeaProvider provider) {
+  private static boolean supportsSeaNativeTools(ZalavaProvider provider) {
     return provider.capabilities().supportsTools();
   }
 
   private static Entry entry(
-      ProviderDescriptor provider, SeaToolDescriptor tool, SeaProviderToolInvoker invoker) {
+      ProviderDescriptor provider, ZalavaToolDescriptor tool, SeaProviderToolInvoker invoker) {
     String callbackName = SeaToolCallbackNames.forTool(provider.providerId(), tool.name());
     ToolCallback callback =
         FunctionToolCallback.<Map<String, Object>, Object>builder(

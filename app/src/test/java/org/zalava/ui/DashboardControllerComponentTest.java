@@ -28,8 +28,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
@@ -113,7 +113,7 @@ class DashboardControllerComponentTest {
     ActorTaskExecutionReference execution = new ActorTaskExecutionReference(actor, awaiting);
     approvals.create(
         scopedProvider(),
-        new SeaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe")),
+        new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe")),
         new InvocationContext(
             owner.id().toString(),
             false,
@@ -157,8 +157,8 @@ class DashboardControllerComponentTest {
     return new Task(null, name, createdAt, status, "Dashboard component test task.");
   }
 
-  private static SeaProvider scopedProvider() {
-    SeaProvider provider = mock(SeaProvider.class);
+  private static ZalavaProvider scopedProvider() {
+    ZalavaProvider provider = mock(ZalavaProvider.class);
     ProviderDescriptor descriptor =
         new ProviderDescriptor(
             "scoped-provider",
@@ -175,7 +175,7 @@ class DashboardControllerComponentTest {
     when(provider.listTools())
         .thenReturn(
             List.of(
-                new SeaToolDescriptor(
+                new ZalavaToolDescriptor(
                     "write", "Writes scoped data", true, List.of("member-safe"))));
     return provider;
   }

@@ -16,7 +16,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
 class ExternalModuleTestHarnessTest {
 
@@ -31,9 +31,10 @@ class ExternalModuleTestHarnessTest {
       ExternalModuleTestHarness.LoadedModule loaded = harness.loadModule("fixture-module", "1.0.0");
 
       assertThat(loaded.module().getClass().getClassLoader()).isSameAs(loaded.moduleClassLoader());
-      assertThat(loaded.moduleClassLoader().getParent()).isSameAs(SeaModule.class.getClassLoader());
-      assertThat(loaded.moduleClassLoader().loadClass(SeaModule.class.getName()))
-          .isSameAs(SeaModule.class);
+      assertThat(loaded.moduleClassLoader().getParent())
+          .isSameAs(ZalavaModule.class.getClassLoader());
+      assertThat(loaded.moduleClassLoader().loadClass(ZalavaModule.class.getName()))
+          .isSameAs(ZalavaModule.class);
     }
   }
 
@@ -159,7 +160,7 @@ class ExternalModuleTestHarnessTest {
     Files.writeString(
         source,
         "package fixture.module; import java.util.List; import org.zalava.ProviderFactory;"
-            + " import org.zalava.SeaModule; public final class NullDescriptorModule implements SeaModule {"
+            + " import org.zalava.ZalavaModule; public final class NullDescriptorModule implements ZalavaModule {"
             + " public org.zalava.ModuleDescriptor descriptor() { return null; }"
             + " public List<ProviderFactory> providerFactories() { return List.of(); } }",
         StandardCharsets.UTF_8);
@@ -169,7 +170,7 @@ class ExternalModuleTestHarnessTest {
             classes,
             workspace.resolve("null-descriptor/module.jar"),
             List.of(
-                "META-INF/services/org.zalava.SeaModule=fixture.module.NullDescriptorModule\n"));
+                "META-INF/services/org.zalava.ZalavaModule=fixture.module.NullDescriptorModule\n"));
 
     try (ExternalModuleTestHarness harness = ExternalModuleTestHarness.load(artifact, List.of())) {
       assertThatThrownBy(() -> harness.loadModule("fixture-module", "1.0.0"))
@@ -180,7 +181,7 @@ class ExternalModuleTestHarnessTest {
 
   @Test
   void exposesNoSpringOrSeaApplicationClassesThroughTheHostParent() {
-    ClassLoader hostParent = SeaModule.class.getClassLoader();
+    ClassLoader hostParent = ZalavaModule.class.getClassLoader();
 
     assertThatThrownBy(() -> hostParent.loadClass("org.springframework.context.ApplicationContext"))
         .isInstanceOf(ClassNotFoundException.class);
@@ -212,8 +213,8 @@ class ExternalModuleTestHarnessTest {
             + " import java.util.List;"
             + " import org.zalava.ModuleDescriptor;"
             + " import org.zalava.ProviderFactory;"
-            + " import org.zalava.SeaModule;"
-            + " public final class FixtureModule implements SeaModule {"
+            + " import org.zalava.ZalavaModule;"
+            + " public final class FixtureModule implements ZalavaModule {"
             + " public ModuleDescriptor descriptor() { return new ModuleDescriptor(\"fixture-module\", \"1.0.0\", "
             + displayName
             + ", \"fixture\"); }"
@@ -224,7 +225,7 @@ class ExternalModuleTestHarnessTest {
         jar(
             moduleClasses,
             sourceRoot.resolve("fixture-module.jar"),
-            List.of("META-INF/services/org.zalava.SeaModule=fixture.module.FixtureModule\n"));
+            List.of("META-INF/services/org.zalava.ZalavaModule=fixture.module.FixtureModule\n"));
     return new Fixture(moduleJar, runtimeJar);
   }
 

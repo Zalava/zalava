@@ -3,7 +3,7 @@ package org.zalava.speech;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Set;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaServiceContract;
 
 /**
  * SEA-owned typed service contract for one speech recognition provider supplied by a module.
@@ -14,8 +14,8 @@ import org.zalava.SeaServiceContract;
  */
 public interface SpeechRecognition {
 
-  SeaServiceContract<SpeechRecognition> CONTRACT =
-      new SeaServiceContract<>("speech-recognition", "1", SpeechRecognition.class);
+  ZalavaServiceContract<SpeechRecognition> CONTRACT =
+      new ZalavaServiceContract<>("speech-recognition", "1", SpeechRecognition.class);
 
   /** The formats, streaming support, and bounds this provider declares. */
   SpeechCapabilities capabilities();

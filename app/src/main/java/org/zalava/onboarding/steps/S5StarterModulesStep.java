@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.zalava.ModuleConfigurationStatus;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.onboarding.OnboardingProvider;
 import org.zalava.runtime.SeaRuntime;
@@ -102,7 +102,7 @@ public class S5StarterModulesStep implements OnboardingProvider {
     return "".equals(submission.nextStepId());
   }
 
-  private List<SeaModule> availableModules() {
+  private List<ZalavaModule> availableModules() {
     return seaRuntime.modules().stream()
         .filter(module -> curatedModuleIds.contains(module.descriptor().moduleId()))
         .filter(

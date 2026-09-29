@@ -3,9 +3,9 @@ package org.zalava.control.application;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import org.zalava.SeaProvider;
-import org.zalava.SeaVerificationDescriptor;
-import org.zalava.SeaVerificationStep;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaVerificationDescriptor;
+import org.zalava.ZalavaVerificationStep;
 import org.zalava.control.application.port.in.BootstrapVerificationQueries;
 import org.zalava.control.application.port.out.RuntimeVerificationCatalog;
 
@@ -26,8 +26,8 @@ public final class DefaultBootstrapVerificationQueries implements BootstrapVerif
         .toList();
   }
 
-  private BootstrapToolVerification verification(SeaVerificationDescriptor descriptor) {
-    Optional<SeaProvider> provider = catalog.findProvider(descriptor.providerId());
+  private BootstrapToolVerification verification(ZalavaVerificationDescriptor descriptor) {
+    Optional<ZalavaProvider> provider = catalog.findProvider(descriptor.providerId());
     if (provider.isEmpty())
       return new BootstrapToolVerification(
           descriptor.toolset(),
@@ -52,7 +52,7 @@ public final class DefaultBootstrapVerificationQueries implements BootstrapVerif
         descriptor.steps().stream().map(DefaultBootstrapVerificationQueries::step).toList());
   }
 
-  private static VerificationStep step(SeaVerificationStep step) {
+  private static VerificationStep step(ZalavaVerificationStep step) {
     return new VerificationStep(
         step.label(),
         step.method(),

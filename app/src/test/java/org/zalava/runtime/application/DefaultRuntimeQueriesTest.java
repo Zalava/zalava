@@ -10,9 +10,9 @@ import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.runtime.application.port.out.RuntimeModuleRegistry;
 
 class DefaultRuntimeQueriesTest {
@@ -32,7 +32,7 @@ class DefaultRuntimeQueriesTest {
     assertThat(closed).containsExactly("test-provider");
   }
 
-  private record TestModule(List<String> closed) implements SeaModule {
+  private record TestModule(List<String> closed) implements ZalavaModule {
     @Override
     public ModuleDescriptor descriptor() {
       return new ModuleDescriptor("test-module", "1.0.0", "Test", "Test module");
@@ -49,9 +49,9 @@ class DefaultRuntimeQueriesTest {
             }
 
             @Override
-            public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+            public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
               return List.of(
-                  new SeaProvider() {
+                  new ZalavaProvider() {
                     @Override
                     public ProviderDescriptor descriptor() {
                       return new ProviderDescriptor(
@@ -72,7 +72,7 @@ class DefaultRuntimeQueriesTest {
                     }
 
                     @Override
-                    public List<SeaToolDescriptor> listTools() {
+                    public List<ZalavaToolDescriptor> listTools() {
                       return List.of();
                     }
 

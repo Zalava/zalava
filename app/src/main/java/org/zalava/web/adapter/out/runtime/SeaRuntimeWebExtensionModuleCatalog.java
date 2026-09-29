@@ -1,7 +1,7 @@
 package org.zalava.web.adapter.out.runtime;
 
 import java.util.List;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.runtime.application.port.in.RuntimeQueries;
 import org.zalava.web.application.port.out.WebExtensionModuleCatalog;
 
@@ -14,7 +14,7 @@ public final class SeaRuntimeWebExtensionModuleCatalog implements WebExtensionMo
   }
 
   @Override
-  public List<SeaModule> modules() {
+  public List<ZalavaModule> modules() {
     return runtimeQueries.activeModules();
   }
 }

@@ -22,8 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.ManagedServiceDeclaration;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.catalog.ModuleConfigurationValidator;
@@ -271,7 +271,7 @@ public class ModulesController {
 
   @GetMapping("/modules/{moduleId}")
   public String moduleDetail(@PathVariable String moduleId, Model model, CsrfToken csrf) {
-    Optional<SeaModule> loaded =
+    Optional<ZalavaModule> loaded =
         seaRuntime.modules().stream()
             .filter(module -> module.descriptor().moduleId().equals(moduleId))
             .findFirst();
@@ -308,7 +308,7 @@ public class ModulesController {
       @RequestParam(defaultValue = "false") boolean onboarding,
       Model model,
       CsrfToken csrf) {
-    SeaModule module = module(moduleId);
+    ZalavaModule module = module(moduleId);
     ModuleConfigurationSnapshot snapshot =
         moduleConfigurationStore
             .candidate(moduleId)
@@ -334,7 +334,7 @@ public class ModulesController {
       @RequestParam Map<String, String> submitted,
       @RequestParam(defaultValue = "false") boolean onboarding,
       RedirectAttributes redirectAttributes) {
-    SeaModule module = module(moduleId);
+    ZalavaModule module = module(moduleId);
     try {
       ModuleConfigurationSnapshot previous =
           moduleConfigurationStore
@@ -516,7 +516,7 @@ public class ModulesController {
 
   private ModuleDetailModel detailModel(
       String moduleId,
-      SeaModule loaded,
+      ZalavaModule loaded,
       ModuleQueries.EnabledModule enabled,
       ModuleMarketplace.Module catalogModule,
       String managedServiceError,
@@ -656,7 +656,7 @@ public class ModulesController {
         configuration.cssClass());
   }
 
-  private static boolean isExternal(SeaModule module) {
+  private static boolean isExternal(ZalavaModule module) {
     ClassLoader loader = module.getClass().getClassLoader();
     return loader != null && loader != ModulesController.class.getClassLoader();
   }
@@ -722,7 +722,7 @@ public class ModulesController {
         tools);
   }
 
-  private static ToolEntry toToolEntry(SeaToolDescriptor tool) {
+  private static ToolEntry toToolEntry(ZalavaToolDescriptor tool) {
     return new ToolEntry(tool.name(), tool.description(), tool.sideEffecting());
   }
 
@@ -808,14 +808,14 @@ public class ModulesController {
     return value != null && !value.isBlank();
   }
 
-  private SeaModule module(String moduleId) {
+  private ZalavaModule module(String moduleId) {
     return seaRuntime.modules().stream()
         .filter(candidate -> candidate.descriptor().moduleId().equals(moduleId))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("Unknown module: " + moduleId));
   }
 
-  private ModuleConfigurationSnapshot emptySnapshot(SeaModule module) {
+  private ModuleConfigurationSnapshot emptySnapshot(ZalavaModule module) {
     return new ModuleConfigurationSnapshot(
         module.descriptor().moduleId(),
         module.descriptor().version(),
@@ -824,7 +824,7 @@ public class ModulesController {
         Map.of());
   }
 
-  private ConfigurationHealth configurationStatus(SeaModule module) {
+  private ConfigurationHealth configurationStatus(ZalavaModule module) {
     if (module.configuration().jsonSchema().get("properties") instanceof Map<?, ?> properties
         && !properties.isEmpty()) {
       return status(module.descriptor().moduleId());

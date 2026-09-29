@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.zalava.ModuleDescriptor;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
 public final class StaticSeaModuleRegistry implements SeaModuleRegistry {
 
-  private final List<SeaModule> modules;
+  private final List<ZalavaModule> modules;
 
-  public StaticSeaModuleRegistry(Collection<SeaModule> modules) {
+  public StaticSeaModuleRegistry(Collection<ZalavaModule> modules) {
     modules.stream()
-        .map(SeaModule::descriptor)
+        .map(ZalavaModule::descriptor)
         .collect(
             Collectors.toMap(
                 ModuleDescriptor::moduleId,
@@ -30,7 +30,7 @@ public final class StaticSeaModuleRegistry implements SeaModuleRegistry {
   }
 
   @Override
-  public List<SeaModule> modules() {
+  public List<ZalavaModule> modules() {
     return modules;
   }
 }

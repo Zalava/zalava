@@ -5,12 +5,12 @@ import java.util.Map;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import tools.jackson.databind.JsonNode;
 
-final class ExternalFixtureSeaProvider implements SeaProvider {
+final class ExternalFixtureZalavaProvider implements ZalavaProvider {
 
   @Override
   public ProviderDescriptor descriptor() {
@@ -32,9 +32,9 @@ final class ExternalFixtureSeaProvider implements SeaProvider {
   }
 
   @Override
-  public List<SeaToolDescriptor> listTools() {
+  public List<ZalavaToolDescriptor> listTools() {
     return List.of(
-        new SeaToolDescriptor(
+        new ZalavaToolDescriptor(
             "example_lookup",
             "Returns the fixture value",
             false,
@@ -43,13 +43,13 @@ final class ExternalFixtureSeaProvider implements SeaProvider {
   }
 
   @Override
-  public SeaOperationResult callTool(
+  public ZalavaOperationResult callTool(
       String toolName, JsonNode arguments, InvocationContext context) {
     if ("example_lookup".equals(toolName) && arguments.path("fail").asBoolean()) {
-      return SeaOperationResult.failure(Map.of("code", "FIXTURE_FAILURE"));
+      return ZalavaOperationResult.failure(Map.of("code", "FIXTURE_FAILURE"));
     }
     if ("example_lookup".equals(toolName))
-      return SeaOperationResult.success(Map.of("value", "fixture"));
-    return SeaOperationResult.failure(Map.of("code", "UNKNOWN_TOOL"));
+      return ZalavaOperationResult.success(Map.of("value", "fixture"));
+    return ZalavaOperationResult.failure(Map.of("code", "UNKNOWN_TOOL"));
   }
 }

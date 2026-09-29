@@ -2,8 +2,8 @@ package org.zalava.operation.adapter.out.approval;
 
 import java.util.Optional;
 import org.zalava.InvocationContext;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.approval.SeaToolApprovalRequests;
 import org.zalava.operation.application.model.ToolApproval;
 import org.zalava.operation.application.port.out.ToolApprovalPort;
@@ -23,8 +23,8 @@ public final class SeaToolApprovalAdapter implements ToolApprovalPort {
 
   @Override
   public ToolApproval create(
-      SeaProvider provider,
-      SeaToolDescriptor tool,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
       InvocationContext context,
       String argumentsJson,
       TaskReference taskReference) {
@@ -60,7 +60,7 @@ public final class SeaToolApprovalAdapter implements ToolApprovalPort {
 
   @Override
   public Optional<ToolApproval> findAllowedToolPolicy(
-      InvocationContext context, SeaProvider provider, SeaToolDescriptor tool) {
+      InvocationContext context, ZalavaProvider provider, ZalavaToolDescriptor tool) {
     return requests.findAllowedToolPolicy(context, provider, tool).map(SeaToolApprovalAdapter::map);
   }
 

@@ -7,33 +7,33 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.zalava.ProviderFactoryContext;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceFactory;
-import org.zalava.SeaServiceFactoryContext;
-import org.zalava.SeaServiceRequirement;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceFactory;
+import org.zalava.ZalavaServiceFactoryContext;
+import org.zalava.ZalavaServiceRequirement;
 
 /**
- * Creates a module's typed services through its {@link SeaServiceFactory} declarations with the
+ * Creates a module's typed services through its {@link ZalavaServiceFactory} declarations with the
  * same scoped configuration, secrets, requirements and already-created services SEA supplies.
  * Factory and service close in reverse order. Dependency graph resolution itself is host-owned and
  * is not reimplemented here.
  */
 public final class ServiceFixture implements AutoCloseable {
-  private final Map<SeaServiceContract<?>, Object> services;
-  private final List<SeaServiceFactory<?>> factories;
+  private final Map<ZalavaServiceContract<?>, Object> services;
+  private final List<ZalavaServiceFactory<?>> factories;
   private final List<AutoCloseable> created;
 
   private ServiceFixture(
-      Map<SeaServiceContract<?>, Object> services,
-      List<SeaServiceFactory<?>> factories,
+      Map<ZalavaServiceContract<?>, Object> services,
+      List<ZalavaServiceFactory<?>> factories,
       List<AutoCloseable> created) {
     this.services = services;
     this.factories = factories;
     this.created = created;
   }
 
-  public static ServiceFixture create(SeaModule module, ConfigFixture configuration) {
+  public static ServiceFixture create(ZalavaModule module, ConfigFixture configuration) {
     return create(module, configuration, Map.of());
   }
 
@@ -42,29 +42,29 @@ public final class ServiceFixture implements AutoCloseable {
    * declare them as requirements.
    */
   public static ServiceFixture create(
-      SeaModule module,
+      ZalavaModule module,
       ConfigFixture configuration,
-      Map<SeaServiceContract<?>, Object> availableServices) {
+      Map<ZalavaServiceContract<?>, Object> availableServices) {
     Objects.requireNonNull(module, "module");
     Objects.requireNonNull(configuration, "configuration");
     Objects.requireNonNull(availableServices, "availableServices");
     String moduleId = module.descriptor().moduleId();
     ProviderFactoryContext scoped =
         configuration.providerContext().forFactory(moduleId, "services");
-    Map<SeaServiceContract<?>, Object> services = new LinkedHashMap<>(availableServices);
-    Map<String, SeaServiceRequirement> requirements = new LinkedHashMap<>();
-    for (SeaServiceRequirement requirement : module.serviceRequirements()) {
+    Map<ZalavaServiceContract<?>, Object> services = new LinkedHashMap<>(availableServices);
+    Map<String, ZalavaServiceRequirement> requirements = new LinkedHashMap<>();
+    for (ZalavaServiceRequirement requirement : module.serviceRequirements()) {
       requirements.put(requirement.serviceId(), requirement);
     }
-    List<SeaServiceFactory<?>> factories = new ArrayList<>();
+    List<ZalavaServiceFactory<?>> factories = new ArrayList<>();
     List<AutoCloseable> created = new ArrayList<>();
     try {
-      for (SeaServiceFactory<?> factory : module.serviceFactories()) {
-        SeaServiceFactoryContext context =
-            new SeaServiceFactoryContext(
+      for (ZalavaServiceFactory<?> factory : module.serviceFactories()) {
+        ZalavaServiceFactoryContext context =
+            new ZalavaServiceFactoryContext(
                 moduleId, services, requirements, scoped.configuration(), scoped.secrets());
         Object service = factory.create(context);
-        SeaServiceContract<?> contract = factory.contract();
+        ZalavaServiceContract<?> contract = factory.contract();
         if (contract == null || !contract.serviceType().isInstance(service)) {
           throw new IllegalStateException(
               "Module service factory returned an incompatible service");
@@ -83,17 +83,17 @@ public final class ServiceFixture implements AutoCloseable {
   }
 
   /** Factories that were created, in declaration order. */
-  public List<SeaServiceFactory<?>> factories() {
+  public List<ZalavaServiceFactory<?>> factories() {
     return List.copyOf(factories);
   }
 
-  public <T> Optional<T> find(SeaServiceContract<T> contract) {
+  public <T> Optional<T> find(ZalavaServiceContract<T> contract) {
     Objects.requireNonNull(contract, "contract");
     Object service = services.get(contract);
     return service == null ? Optional.empty() : Optional.of(contract.serviceType().cast(service));
   }
 
-  public <T> T service(SeaServiceContract<T> contract) {
+  public <T> T service(ZalavaServiceContract<T> contract) {
     return find(contract)
         .orElseThrow(
             () ->
@@ -107,7 +107,7 @@ public final class ServiceFixture implements AutoCloseable {
   }
 
   private static void closeQuietly(
-      List<SeaServiceFactory<?>> factories, List<AutoCloseable> created) {
+      List<ZalavaServiceFactory<?>> factories, List<AutoCloseable> created) {
     for (int index = created.size() - 1; index >= 0; index--) {
       try {
         created.get(index).close();

@@ -33,9 +33,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaOperationResult;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaOperationResult;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
@@ -150,7 +150,7 @@ class BrowserUiInteractAcceptanceTest {
   }
 
   private void createApproval(Account owner, Actor actor, ActorTaskReference reference) {
-    SeaProvider provider = mock(SeaProvider.class);
+    ZalavaProvider provider = mock(ZalavaProvider.class);
     ProviderDescriptor descriptor =
         new ProviderDescriptor(
             "browser-interact-provider",
@@ -162,7 +162,8 @@ class BrowserUiInteractAcceptanceTest {
             ProviderCapabilities.toolsOnly(),
             List.of("sea_backed"),
             Map.of("owner", "self"));
-    SeaToolDescriptor tool = new SeaToolDescriptor("write", "Writes scoped data", true, List.of());
+    ZalavaToolDescriptor tool =
+        new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of());
     when(provider.descriptor()).thenReturn(descriptor);
     when(provider.capabilities()).thenReturn(ProviderCapabilities.toolsOnly());
     when(provider.listTools()).thenReturn(List.of(tool));
@@ -170,7 +171,7 @@ class BrowserUiInteractAcceptanceTest {
             org.mockito.ArgumentMatchers.eq("write"),
             org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.any()))
-        .thenReturn(SeaOperationResult.success(Map.of("written", true)));
+        .thenReturn(ZalavaOperationResult.success(Map.of("written", true)));
     approvals.create(
         provider,
         tool,

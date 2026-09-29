@@ -694,7 +694,7 @@ public class SeaConfiguration {
   }
 
   @Bean
-  public ExternalSeaModuleLoader externalSeaModuleLoader(
+  public ExternalSeaModuleLoader externalZalavaModuleLoader(
       EnabledModuleRegistry enabledModuleRegistry, ProviderFactoryContext providerFactoryContext) {
     return new ExternalSeaModuleLoader(enabledModuleRegistry, providerFactoryContext);
   }
@@ -706,13 +706,14 @@ public class SeaConfiguration {
 
   @Bean
   public SeaModuleRegistry seaModuleRegistry(
-      Set<SeaModule> seaModules, ExternalSeaModuleLoader externalSeaModuleLoader) {
+      Set<ZalavaModule> seaModules, ExternalSeaModuleLoader externalZalavaModuleLoader) {
     return new StaticSeaModuleRegistry(
-        mergeSeaModules(seaModules, externalSeaModuleLoader.loadModules()));
+        mergeZalavaModules(seaModules, externalZalavaModuleLoader.loadModules()));
   }
 
-  static List<SeaModule> mergeSeaModules(Set<SeaModule> builtIns, List<SeaModule> externalModules) {
-    List<SeaModule> modules = new ArrayList<>(builtIns);
+  static List<ZalavaModule> mergeZalavaModules(
+      Set<ZalavaModule> builtIns, List<ZalavaModule> externalModules) {
+    List<ZalavaModule> modules = new ArrayList<>(builtIns);
     modules.addAll(externalModules);
     return List.copyOf(modules);
   }
@@ -720,7 +721,7 @@ public class SeaConfiguration {
   @Bean
   public SeaRuntime seaRuntime(
       SeaModuleRegistry seaModuleRegistry,
-      Set<SeaModule> seaModules,
+      Set<ZalavaModule> seaModules,
       EnabledModuleRegistry enabledModuleRegistry,
       FileSystemModuleLifecycleStore lifecycle,
       FileSystemModuleConfigurationStore configurations,

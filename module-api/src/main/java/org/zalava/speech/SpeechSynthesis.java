@@ -2,7 +2,7 @@ package org.zalava.speech;
 
 import java.time.Duration;
 import java.util.Objects;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaServiceContract;
 
 /**
  * SEA-owned typed service contract for one speech synthesis provider supplied by a module.
@@ -12,8 +12,8 @@ import org.zalava.SeaServiceContract;
  */
 public interface SpeechSynthesis {
 
-  SeaServiceContract<SpeechSynthesis> CONTRACT =
-      new SeaServiceContract<>("speech-synthesis", "1", SpeechSynthesis.class);
+  ZalavaServiceContract<SpeechSynthesis> CONTRACT =
+      new ZalavaServiceContract<>("speech-synthesis", "1", SpeechSynthesis.class);
 
   /** The formats, streaming support, and bounds this provider declares. */
   SpeechCapabilities capabilities();

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.zalava.FactorySecretAccess;
 import org.zalava.ProviderFactoryContext;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 import org.zalava.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.runtime.DefaultSeaRuntime;
@@ -46,7 +46,7 @@ final class SpeechFixtureModule implements AutoCloseable {
     registry.enable(enabledModule(artifact));
     ExternalSeaModuleLoader loader = new ExternalSeaModuleLoader(registry);
     try {
-      List<SeaModule> modules = loader.loadModules();
+      List<ZalavaModule> modules = loader.loadModules();
       ProviderFactoryContext context =
           new ProviderFactoryContext(
               Map.of(

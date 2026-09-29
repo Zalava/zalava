@@ -15,11 +15,11 @@ import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.SeaModule;
-import org.zalava.SeaProvider;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceDescriptor;
-import org.zalava.SeaServiceFactory;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceDescriptor;
+import org.zalava.ZalavaServiceFactory;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.catalog.ModuleConfigurationSnapshot;
 import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
@@ -102,7 +102,7 @@ class ManagedSeaRuntimeTest {
         Map.of());
   }
 
-  private static final class FixtureModule implements SeaModule {
+  private static final class FixtureModule implements ZalavaModule {
     @Override
     public ModuleDescriptor descriptor() {
       return new ModuleDescriptor("fixture", "1.0.0", "Fixture", "Fixture module");
@@ -135,7 +135,7 @@ class ManagedSeaRuntimeTest {
             }
 
             @Override
-            public List<SeaProvider> createProviders(ProviderFactoryContext context) {
+            public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
               Object endpoint = context.configuration().get("endpoint");
               if (endpoint == null || endpoint.equals("broken")) {
                 throw new IllegalStateException("Fixture requires a working endpoint");
@@ -146,9 +146,9 @@ class ManagedSeaRuntimeTest {
     }
   }
 
-  private static final class ServiceFixtureModule implements SeaModule {
-    private static final SeaServiceContract<AutoCloseable> CONTRACT =
-        new SeaServiceContract<>("fixture-service", "1", AutoCloseable.class);
+  private static final class ServiceFixtureModule implements ZalavaModule {
+    private static final ZalavaServiceContract<AutoCloseable> CONTRACT =
+        new ZalavaServiceContract<>("fixture-service", "1", AutoCloseable.class);
 
     @Override
     public ModuleDescriptor descriptor() {
@@ -179,21 +179,21 @@ class ManagedSeaRuntimeTest {
     }
 
     @Override
-    public List<SeaServiceFactory<?>> serviceFactories() {
+    public List<ZalavaServiceFactory<?>> serviceFactories() {
       return List.of(
-          new SeaServiceFactory<AutoCloseable>() {
+          new ZalavaServiceFactory<AutoCloseable>() {
             @Override
-            public SeaServiceDescriptor descriptor() {
-              return new SeaServiceDescriptor("fixture-service", "service-fixture", "1");
+            public ZalavaServiceDescriptor descriptor() {
+              return new ZalavaServiceDescriptor("fixture-service", "service-fixture", "1");
             }
 
             @Override
-            public SeaServiceContract<AutoCloseable> contract() {
+            public ZalavaServiceContract<AutoCloseable> contract() {
               return CONTRACT;
             }
 
             @Override
-            public AutoCloseable create(org.zalava.SeaServiceFactoryContext context) {
+            public AutoCloseable create(org.zalava.ZalavaServiceFactoryContext context) {
               SERVICE_FACTORY_CREATIONS.incrementAndGet();
               throw new IllegalStateException("service endpoint is required");
             }

@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Properties;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
+import org.zalava.ZalavaModule;
 
-public final class TemplateSeaModule implements SeaModule {
+public final class TemplateZalavaModule implements ZalavaModule {
 
   public static final String MODULE_ID = "zalava-module-template";
 
@@ -25,7 +25,7 @@ public final class TemplateSeaModule implements SeaModule {
 
   static String version() {
     Properties properties = new Properties();
-    try (InputStream input = TemplateSeaModule.class.getResourceAsStream("/module.properties")) {
+    try (InputStream input = TemplateZalavaModule.class.getResourceAsStream("/module.properties")) {
       if (input == null) {
         throw new IllegalStateException("Missing module version metadata");
       }

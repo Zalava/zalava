@@ -2,8 +2,8 @@ package org.zalava.runtime;
 
 import java.util.List;
 import org.zalava.ProviderFactoryContext;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
 import org.zalava.runtime.application.DefaultRuntimeQueries;
 
 public final class DefaultSeaRuntime implements SeaRuntime {
@@ -16,7 +16,7 @@ public final class DefaultSeaRuntime implements SeaRuntime {
   }
 
   @Override
-  public List<SeaModule> modules() {
+  public List<ZalavaModule> modules() {
     return delegate.modules();
   }
 
@@ -26,7 +26,8 @@ public final class DefaultSeaRuntime implements SeaRuntime {
   }
 
   @Override
-  public <T> java.util.Optional<LoadedSeaService<T>> findService(SeaServiceContract<T> contract) {
+  public <T> java.util.Optional<LoadedSeaService<T>> findService(
+      ZalavaServiceContract<T> contract) {
     return delegate.findService(contract);
   }
 

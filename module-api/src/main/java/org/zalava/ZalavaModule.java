@@ -1,9 +1,9 @@
 package org.zalava;
 
 import java.util.List;
-import org.zalava.web.SeaWebExtension;
+import org.zalava.web.ZalavaWebExtension;
 
-public interface SeaModule {
+public interface ZalavaModule {
 
   ModuleDescriptor descriptor();
 
@@ -13,15 +13,15 @@ public interface SeaModule {
     return ModuleConfigurationDescriptor.none();
   }
 
-  default List<SeaVerificationContributor> verificationContributors() {
+  default List<ZalavaVerificationContributor> verificationContributors() {
     return List.of();
   }
 
-  default List<SeaServiceFactory<?>> serviceFactories() {
+  default List<ZalavaServiceFactory<?>> serviceFactories() {
     return List.of();
   }
 
-  default List<SeaServiceRequirement> serviceRequirements() {
+  default List<ZalavaServiceRequirement> serviceRequirements() {
     return List.of();
   }
 
@@ -34,7 +34,7 @@ public interface SeaModule {
     return List.of();
   }
 
-  default List<SeaWebExtension> webExtensions() {
+  default List<ZalavaWebExtension> webExtensions() {
     return List.of();
   }
 }

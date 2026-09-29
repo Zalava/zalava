@@ -25,8 +25,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.InvocationContext;
 import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.domain.Account;
 import org.zalava.accounts.domain.AccountRole;
@@ -101,9 +101,9 @@ class ProductIsolationComponentTest {
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Approval job", Task.Status.awaiting_human_input));
     ActorTaskExecutionReference execution = new ActorTaskExecutionReference(actor, reference);
-    SeaProvider provider = provider();
-    SeaToolDescriptor tool =
-        new SeaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
+    ZalavaProvider provider = provider();
+    ZalavaToolDescriptor tool =
+        new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
     var approval =
         approvals.create(
             provider,
@@ -161,8 +161,8 @@ class ProductIsolationComponentTest {
     return new Task(null, name, Instant.now(), status, "Private component test task.");
   }
 
-  private static SeaProvider provider() {
-    SeaProvider provider = mock(SeaProvider.class);
+  private static ZalavaProvider provider() {
+    ZalavaProvider provider = mock(ZalavaProvider.class);
     ProviderDescriptor descriptor =
         new ProviderDescriptor(
             "scoped-provider",

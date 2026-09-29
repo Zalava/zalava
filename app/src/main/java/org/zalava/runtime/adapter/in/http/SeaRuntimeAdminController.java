@@ -14,8 +14,8 @@ import org.zalava.ProviderCapabilities;
 import org.zalava.ProviderDescriptor;
 import org.zalava.ProviderFactoryDescriptor;
 import org.zalava.ResourceDescriptor;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.runtime.LoadedSeaProvider;
 import org.zalava.runtime.SeaRuntime;
 
@@ -72,7 +72,7 @@ public class SeaRuntimeAdminController {
                     "SEA provider not found: " + providerId));
   }
 
-  private SeaProvider findProvider(String providerId) {
+  private ZalavaProvider findProvider(String providerId) {
     return findLoadedProvider(providerId).provider();
   }
 
@@ -166,7 +166,7 @@ public class SeaRuntimeAdminController {
       String classification,
       String routing,
       List<String> policyTags) {
-    static ToolResponse from(SeaToolDescriptor descriptor) {
+    static ToolResponse from(ZalavaToolDescriptor descriptor) {
       return new ToolResponse(
           descriptor.name(),
           descriptor.description(),

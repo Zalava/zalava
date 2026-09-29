@@ -11,11 +11,11 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.zalava.ModuleDescriptor;
 import org.zalava.ProviderFactory;
-import org.zalava.SeaModule;
-import org.zalava.SeaServiceContract;
-import org.zalava.SeaServiceDescriptor;
-import org.zalava.SeaServiceFactory;
-import org.zalava.SeaServiceFactoryContext;
+import org.zalava.ZalavaModule;
+import org.zalava.ZalavaServiceContract;
+import org.zalava.ZalavaServiceDescriptor;
+import org.zalava.ZalavaServiceFactory;
+import org.zalava.ZalavaServiceFactoryContext;
 import org.zalava.content.ContentExtractionLimits;
 import org.zalava.content.ContentExtractionOutcome;
 import org.zalava.content.ContentExtractionRequest;
@@ -49,7 +49,7 @@ class ServiceContractSpiTest {
     }
   }
 
-  private static final class ExtractorModule implements SeaModule {
+  private static final class ExtractorModule implements ZalavaModule {
     @Override
     public ModuleDescriptor descriptor() {
       return new ModuleDescriptor(MODULE_ID, "1.0.0", "Extractor fixture", "Extractor fixture");
@@ -61,24 +61,24 @@ class ServiceContractSpiTest {
     }
 
     @Override
-    public List<SeaServiceFactory<?>> serviceFactories() {
+    public List<ZalavaServiceFactory<?>> serviceFactories() {
       return List.of(new ExtractorFactory());
     }
   }
 
-  private static final class ExtractorFactory implements SeaServiceFactory<ContentExtractor> {
+  private static final class ExtractorFactory implements ZalavaServiceFactory<ContentExtractor> {
     @Override
-    public SeaServiceDescriptor descriptor() {
-      return new SeaServiceDescriptor("content-extractor", MODULE_ID, "1");
+    public ZalavaServiceDescriptor descriptor() {
+      return new ZalavaServiceDescriptor("content-extractor", MODULE_ID, "1");
     }
 
     @Override
-    public SeaServiceContract<ContentExtractor> contract() {
+    public ZalavaServiceContract<ContentExtractor> contract() {
       return ContentExtractor.CONTRACT;
     }
 
     @Override
-    public ContentExtractor create(SeaServiceFactoryContext context) {
+    public ContentExtractor create(ZalavaServiceFactoryContext context) {
       return request -> {
         try {
           String text =

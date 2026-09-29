@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.ai.tool.toolsearch.ToolReference;
 import org.zalava.ProviderDescriptor;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.discovery.application.port.in.ToolDiscovery;
 
 public final class SeaToolReferences {
@@ -18,7 +18,7 @@ public final class SeaToolReferences {
         .build();
   }
 
-  public static ToolReference from(ProviderDescriptor provider, SeaToolDescriptor tool) {
+  public static ToolReference from(ProviderDescriptor provider, ZalavaToolDescriptor tool) {
     return ToolReference.builder()
         .toolName(SeaToolCallbackNames.forTool(provider.providerId(), tool.name()))
         .summary(

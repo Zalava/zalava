@@ -4,8 +4,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.zalava.InvocationContext;
-import org.zalava.SeaProvider;
-import org.zalava.SeaToolDescriptor;
+import org.zalava.ZalavaProvider;
+import org.zalava.ZalavaToolDescriptor;
 import org.zalava.operation.application.port.in.ProviderToolOperationException;
 
 /** Default-deny provider capability baseline for authenticated member execution. */
@@ -22,7 +22,7 @@ public final class MemberProviderCapabilityPolicy {
           "instance-global");
 
   public void requireAllowed(
-      SeaProvider provider, SeaToolDescriptor tool, InvocationContext context) {
+      ZalavaProvider provider, ZalavaToolDescriptor tool, InvocationContext context) {
     if (!"MEMBER".equals(context.attributes().get("accountRole"))) return;
     Set<String> tags =
         Stream.concat(provider.descriptor().policyTags().stream(), tool.policyTags().stream())
