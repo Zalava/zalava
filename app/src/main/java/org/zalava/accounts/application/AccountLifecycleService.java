@@ -35,6 +35,11 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
+  public Optional<Account> findById(AccountId id) {
+    return accounts.findById(id);
+  }
+
+  @Override
   @Transactional(isolation = Isolation.SERIALIZABLE)
   public void bootstrap(String loginName, String password) {
     if (accounts.enabledAdministratorCount() != 0) return;
