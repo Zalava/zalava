@@ -121,6 +121,40 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
+  void adaptiveNavigationRetainsAuthorizedDestinationsAcrossRepresentativeWidths()
+      throws IOException {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      for (int[] viewport :
+          List.of(new int[] {390, 844}, new int[] {768, 1024}, new int[] {1366, 768})) {
+        page.setViewportSize(viewport[0], viewport[1]);
+        assertThat(page.navigate(baseUrl() + "/dashboard").status()).isEqualTo(200);
+        page.locator(".sea-navbar").waitFor();
+        if (viewport[0] <= 640) {
+          page.locator(".navbar-burger").click();
+          var modules =
+              page.getByRole(
+                  com.microsoft.playwright.options.AriaRole.LINK,
+                  new Page.GetByRoleOptions().setName("Modules"));
+          modules.waitFor();
+          assertThat(modules.isVisible()).isTrue();
+          page.keyboard().press("Escape");
+        } else {
+          assertThat(menuLabels(page)).containsExactlyElementsOf(ADMIN_MENU);
+        }
+        assertThat(
+                (Boolean)
+                    page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isTrue();
+      }
+    }
+  }
+
+  @Test
   void memberOnlySeesAuthorizedNavigation() throws IOException {
     try (Playwright playwright = Playwright.create();
         Browser browser =
