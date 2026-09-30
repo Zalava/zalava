@@ -11,6 +11,8 @@ import com.microsoft.playwright.Tracing;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,8 @@ import org.zalava.support.SeaComponentTestConfiguration;
   BrowserNavigationAcceptanceTest.AccountConfiguration.class
 })
 class BrowserNavigationAcceptanceTest {
+  private static final String EXPANDED_DASHBOARD_VISUAL_HASH =
+      "81946ef1951e7cb0c42087039c5013bf82c83f87b06211441a5c8df074d01b67";
 
   private static final Path WORKSPACE = workspace();
   private static final Path DIAGNOSTICS = diagnostics();
@@ -151,6 +155,23 @@ class BrowserNavigationAcceptanceTest {
                     page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
             .isTrue();
       }
+    }
+  }
+
+  @Test
+  void expandedDashboardMatchesReviewedVisualBaseline() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.setViewportSize(1366, 768);
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      assertThat(page.navigate(baseUrl() + "/dashboard").status()).isEqualTo(200);
+      page.locator(".sea-navbar").waitFor();
+      String actual =
+          HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(page.screenshot()));
+      assertThat(actual).isEqualTo(EXPANDED_DASHBOARD_VISUAL_HASH);
     }
   }
 
