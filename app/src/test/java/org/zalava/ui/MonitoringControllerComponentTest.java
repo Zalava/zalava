@@ -66,7 +66,7 @@ class MonitoringControllerComponentTest {
     mockMvc
         .perform(get("/monitoring"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Monitoring</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Monitoring</title>")))
         .andExpect(content().string(containsString("aria-current=\"page\" href=\"/monitoring\"")))
         .andExpect(content().string(containsString("data-monitoring-snapshot")))
         .andExpect(content().string(containsString("data-refreshed-at")))

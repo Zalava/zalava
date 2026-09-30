@@ -11,7 +11,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SEA Memory</title>
+ <title>Zalava Memory</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
   <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -22,7 +22,7 @@
       <header class="mb-5">
         <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Recall</p>
         <h1 class="title is-3">Memory</h1>
-        <p class="has-text-grey">What SEA remembers for you, with its scope and provenance.</p>
+        <p class="has-text-grey">What Zalava remembers for you, with its scope and provenance.</p>
       </header>
       @if(memoryMessage != null)
         <article class="message is-success" role="status"><div class="message-body">${memoryMessage}</div></article>

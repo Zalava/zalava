@@ -13,7 +13,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Configure ${model.displayName()} · SEA</title>
+ <title>Configure ${model.displayName()} · Zalava</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -76,7 +76,7 @@
                                 <div class="control mt-2">
                                     <label class="label is-size-7" for="${field.replacementSecretName()}">Replace stored secret</label>
                                     <input id="${field.replacementSecretName()}" class="input" name="${field.replacementSecretName()}" type="password" autocomplete="new-password" data-secret-replacement="${field.path()}">
-                                    <p class="help">Leave blank to keep the stored value. SEA never renders it.</p>
+                                    <p class="help">Leave blank to keep the stored value. Zalava never renders it.</p>
                                 </div>
                             @endif
                         </div>

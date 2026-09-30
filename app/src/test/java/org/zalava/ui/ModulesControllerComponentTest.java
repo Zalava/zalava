@@ -128,7 +128,7 @@ class ModulesControllerComponentTest {
     mockMvc
         .perform(get("/modules"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Modules</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Modules</title>")))
         .andExpect(
             content()
                 .string(

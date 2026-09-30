@@ -12,7 +12,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SEA Monitoring</title>
+ <title>Zalava Monitoring</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -25,10 +25,10 @@
             <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Operations</p>
             <h1 class="title is-2 mb-3">Monitoring</h1>
             <p class="subtitle is-5 has-text-grey">
-                Live work and the run, provider and tool evidence SEA already records.
+                Live work and the run, provider and tool evidence Zalava already records.
             </p>
         </header>
-        <p class="mb-5"><a class="button is-link is-light" href="/monitoring/logs">View SEA logs</a></p>
+        <p class="mb-5"><a class="button is-link is-light" href="/monitoring/logs">View Zalava logs</a></p>
 
         <section class="box mb-5" data-monitoring-snapshot data-refreshed-at="${model.refreshedAt()}">
             <div class="level mb-4">

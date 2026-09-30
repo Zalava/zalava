@@ -96,7 +96,7 @@ class DashboardControllerComponentTest {
     mockMvc
         .perform(get("/dashboard"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Dashboard</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Dashboard</title>")))
         .andExpect(content().string(containsString("data-metric=\"running-jobs\">0<")))
         .andExpect(content().string(not(containsString("Running legacy job"))));
   }

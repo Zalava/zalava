@@ -50,7 +50,7 @@ class SeaWebExtensionControllerComponentTest {
     mockMvc
         .perform(get("/apps"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("SEA Apps")))
+        .andExpect(content().string(containsString("Zalava Apps")))
         .andExpect(content().string(containsString("Fixture Shopping List")))
         .andExpect(content().string(containsString("/apps/test-web-module/shopping-list")))
         .andExpect(content().string(containsString("Apps</a>")));
@@ -89,7 +89,7 @@ class SeaWebExtensionControllerComponentTest {
     mockMvc
         .perform(get("/chat"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Chat</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Chat</title>")))
         .andExpect(content().string(not(containsString("Fixture Shopping List"))));
   }
 

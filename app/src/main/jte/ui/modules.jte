@@ -14,7 +14,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SEA Modules</title>
+ <title>Zalava Modules</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -25,7 +25,7 @@
         <header class="modules-heading mb-5">
             <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-1">Default workspace</p>
             <h1 class="title is-3 mb-2">Modules</h1>
-            <p class="has-text-grey">Installed capabilities and the catalog SEA can install from.</p>
+            <p class="has-text-grey">Installed capabilities and the catalog Zalava can install from.</p>
         </header>
 
         @if(marketplaceMessage != null)
@@ -48,13 +48,13 @@
           @endif
         </form>
       @else
-        <p class="has-text-grey is-size-7">Use your local service manager to restart SEA, then return here to configure and start the module.</p>
+        <p class="has-text-grey is-size-7">Use your local service manager to restart Zalava, then return here to configure and start the module.</p>
       @endif
     </section>
 
     <section class="box module-list mb-5" aria-labelledby="uploaded-module-installation-heading">
     <h2 id="uploaded-module-installation-heading" class="title is-5 mb-1">Upload a module JAR</h2>
-    <p class="has-text-grey is-size-7 mb-4">SEA reads the module metadata and checksum from the JAR, then asks for installation approval. Uploading never starts the module.</p>
+    <p class="has-text-grey is-size-7 mb-4">Zalava reads the module metadata and checksum from the JAR, then asks for installation approval. Uploading never starts the module.</p>
     <form method="post" action="/modules/upload-installations" enctype="multipart/form-data" class="columns is-multiline">
       <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
       <div class="column is-9"><label class="label is-small" for="module-jar">Module JAR</label><input class="input" id="module-jar" name="moduleJar" type="file" accept=".jar,application/java-archive" required></div>
@@ -64,7 +64,7 @@
 
   <section class="box module-list mb-5" aria-labelledby="local-module-installation-heading">
     <h2 id="local-module-installation-heading" class="title is-5 mb-1">Install a local build</h2>
-    <p class="has-text-grey is-size-7 mb-4">Prepare an approval request from an accepted local development candidate. The project must be under SEA's mounted module workspace and already built.</p>
+    <p class="has-text-grey is-size-7 mb-4">Prepare an approval request from an accepted local development candidate. The project must be under Zalava's mounted module workspace and already built.</p>
     <form method="post" action="/modules/local-project-installations" class="columns is-multiline">
       <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
       <div class="column is-5"><label class="label is-small" for="local-project-directory">Mounted project directory</label><input class="input" id="local-project-directory" name="projectDirectory" required maxlength="2000" placeholder="/var/lib/zalava/modules/example"></div>

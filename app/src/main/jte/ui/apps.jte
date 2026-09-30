@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SEA Apps</title>
+ <title>Zalava Apps</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -19,7 +19,7 @@
         <header class="dashboard-heading mb-6">
             <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Module apps</p>
             <h1 class="title is-2 mb-3">Apps</h1>
-            <p class="subtitle is-5 has-text-grey">Screens contributed by installed SEA modules.</p>
+            <p class="subtitle is-5 has-text-grey">Screens contributed by installed Zalava modules.</p>
         </header>
         @if(pages.isEmpty())
             <section class="box dashboard-activity">

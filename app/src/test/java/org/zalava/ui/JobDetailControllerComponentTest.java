@@ -114,7 +114,7 @@ class JobDetailControllerComponentTest {
     mockMvc
         .perform(get("/jobs/" + reference.value()).with(user(owner.loginName())))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("SEA Job")))
+        .andExpect(content().string(containsString("Zalava Job")))
         .andExpect(content().string(containsString("Private actor job")))
         .andExpect(content().string(containsString("Completed")));
   }

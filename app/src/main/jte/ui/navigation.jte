@@ -2,12 +2,12 @@
 @param java.util.List<NavItem> items
 @param String activePage
 
-<nav class="navbar sea-navbar" role="navigation" aria-label="SEA navigation">
+<nav class="navbar sea-navbar" role="navigation" aria-label="Zalava navigation">
     <div class="container">
         <div class="navbar-brand">
-            <a class="navbar-item sea-brand" href="/dashboard" aria-label="SEA Dashboard">
-                <span class="sea-brand-mark">S</span>
-                <span>SEA</span>
+            <a class="navbar-item sea-brand" href="/dashboard" aria-label="Zalava Dashboard">
+                <span class="sea-brand-mark">Z</span>
+                <span>Zalava</span>
             </a>
             <button class="navbar-burger" type="button" aria-label="Open navigation" aria-expanded="false"
                     data-target="sea-product-navigation">

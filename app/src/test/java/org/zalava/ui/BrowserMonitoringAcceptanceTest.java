@@ -120,7 +120,7 @@ class BrowserMonitoringAcceptanceTest {
             StandardOpenOption.APPEND);
         page.getByRole(
                 com.microsoft.playwright.options.AriaRole.LINK,
-                new Page.GetByRoleOptions().setName("View SEA logs"))
+                new Page.GetByRoleOptions().setName("View Zalava logs"))
             .click();
         assertThat(page.url()).endsWith("/monitoring/logs");
         assertThat(page.locator("body").innerText()).contains("browser log before restart");

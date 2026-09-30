@@ -61,7 +61,7 @@ class KnowledgeControllerComponentTest {
     mockMvc
         .perform(get("/knowledge").param("query", "renewal").with(asMember()))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Knowledge</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Knowledge</title>")))
         .andExpect(content().string(containsString("No sources.")))
         .andExpect(content().string(not(containsString("sha256"))));
   }
@@ -74,7 +74,7 @@ class KnowledgeControllerComponentTest {
     mockMvc
         .perform(get("/knowledge/" + source.id().value()).with(asMember()))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Knowledge Source</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Knowledge Source</title>")))
         .andExpect(content().string(containsString("household-notes.txt")))
         .andExpect(content().string(containsString("text/plain")))
         .andExpect(content().string(containsString("19 bytes")))
