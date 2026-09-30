@@ -110,7 +110,9 @@ class NavigationComponentTest {
             "class=\"sea-navigation-close\"",
             "data-nav-initial=\"D\"",
             "closeNavigation()",
-            "event.key === 'Escape'");
+            "event.key === 'Escape'",
+            "form:not([data-repeatable])",
+            "Zalava is working on your request.");
   }
 
   private String bodyOf(String path) throws Exception {

@@ -64,5 +64,22 @@ document.addEventListener('DOMContentLoaded', function () {
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape' && menu.classList.contains('is-active')) closeNavigation();
         });
+        document.querySelectorAll('form:not([data-repeatable])').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                if (!form.checkValidity()) return;
+                form.querySelectorAll('button[type="submit"]').forEach(function (button) {
+                    button.disabled = true;
+                    button.setAttribute('aria-disabled', 'true');
+                    button.dataset.pending = 'true';
+                    button.dataset.pendingLabel = button.textContent.trim();
+                    button.textContent = 'Working…';
+                });
+                var status = document.createElement('p');
+                status.className = 'sea-action-status';
+                status.setAttribute('role', 'status');
+                status.textContent = 'Zalava is working on your request.';
+                form.appendChild(status);
+            }, { once: true });
+        });
 });
 </script>

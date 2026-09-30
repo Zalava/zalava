@@ -748,6 +748,27 @@ body {
     opacity: .55;
 }
 
+.button[data-pending="true"]::before {
+    content: "";
+    width: .85em;
+    height: .85em;
+    margin-right: .45em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: sea-action-spin .75s linear infinite;
+}
+
+.sea-action-status {
+    margin-top: .75rem;
+    color: var(--sea-text-muted);
+    font-size: .875rem;
+}
+
+@keyframes sea-action-spin {
+    to { transform: rotate(360deg); }
+}
+
 .button.is-primary {
     background-color: var(--sea-primary);
 }
