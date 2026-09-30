@@ -16,6 +16,7 @@ import org.zalava.accounts.domain.AccountId;
 import org.zalava.accounts.domain.AccountRole;
 import org.zalava.accounts.domain.Actor;
 import org.zalava.channelidentity.application.port.out.ChannelIdentityLinkStore;
+import org.zalava.channelidentity.application.port.out.ChannelLinkChallengeStore;
 import org.zalava.channelidentity.domain.ChannelIdentityLink;
 import org.zalava.channelidentity.domain.ChannelOperationScope;
 import org.zalava.channelidentity.domain.ExternalChannelIdentity;
@@ -64,6 +65,33 @@ class DefaultChannelIdentityLinksTest {
     identities.revoke(new Actor(owner.id()), link.id());
 
     assertThat(identities.resolve(identity, "chat:send")).isEmpty();
+  }
+
+  @Test
+  void consumesAnUnexpiredChallengeOnceAndRechecksTheOwner() {
+    var accounts = new Accounts();
+    var owner = accounts.enabled("owner");
+    var links = new Links();
+    var identities = new DefaultChannelIdentityLinks(accounts, links, CLOCK);
+    var challenges =
+        new DefaultChannelLinkChallenges(
+            accounts, identities, new Challenges(), CLOCK, () -> "a".repeat(32));
+
+    var issued =
+        challenges.issue(new Actor(owner.id()), "telegram", ChannelOperationScope.of("chat:send"));
+    var resolved =
+        challenges.confirm(new ExternalChannelIdentity("telegram", "123456789"), issued.code());
+
+    assertThat(resolved.owner()).isEqualTo(new Actor(owner.id()));
+    assertThat(
+            identities.resolve(new ExternalChannelIdentity("telegram", "123456789"), "chat:send"))
+        .contains(new Actor(owner.id()));
+    assertThatThrownBy(
+            () ->
+                challenges.confirm(
+                    new ExternalChannelIdentity("telegram", "987654321"), issued.code()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("invalid or expired");
   }
 
   private static final class Accounts implements AccountLifecycle {
@@ -159,6 +187,38 @@ class DefaultChannelIdentityLinksTest {
     public ChannelIdentityLink save(ChannelIdentityLink link) {
       links.put(link.id(), link);
       return link;
+    }
+  }
+
+  private static final class Challenges implements ChannelLinkChallengeStore {
+    private final Map<java.util.UUID, org.zalava.channelidentity.domain.ChannelLinkChallenge>
+        challenges = new HashMap<>();
+
+    @Override
+    public Optional<org.zalava.channelidentity.domain.ChannelLinkChallenge> findActiveByCodeHash(
+        String hash, Instant now) {
+      return challenges.values().stream()
+          .filter(
+              value ->
+                  value.codeHash().equals(hash)
+                      && value.consumedAt() == null
+                      && value.expiresAt().isAfter(now))
+          .findFirst();
+    }
+
+    @Override
+    public org.zalava.channelidentity.domain.ChannelLinkChallenge save(
+        org.zalava.channelidentity.domain.ChannelLinkChallenge challenge) {
+      challenges.put(challenge.id(), challenge);
+      return challenge;
+    }
+
+    @Override
+    public boolean consume(java.util.UUID id, Instant consumedAt) {
+      var challenge = challenges.get(id);
+      if (challenge == null || challenge.consumedAt() != null) return false;
+      challenges.put(id, challenge.consume(consumedAt));
+      return true;
     }
   }
 }
