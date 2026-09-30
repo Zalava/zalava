@@ -13,7 +13,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${model.displayName()} · SEA Modules</title>
+ <title>${model.displayName()} · Zalava Modules</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -109,7 +109,7 @@
                             <div class="control mt-2">
                                 <label class="label is-size-7" for="${field.replacementSecretName()}">Replace stored secret</label>
                                 <input id="${field.replacementSecretName()}" class="input" name="${field.replacementSecretName()}" type="password" autocomplete="new-password" data-secret-replacement="${field.path()}">
-                                <p class="help">Leave blank to keep stored value. SEA never renders it.</p>
+                                <p class="help">Leave blank to keep stored value. Zalava never renders it.</p>
                             </div>
                         @endif
                     </div>
@@ -128,7 +128,7 @@
                 <form method="post" action="/modules/${model.moduleId()}/disable" class="mt-4">
                     <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
                     <button class="button is-small is-danger is-light" type="submit" data-action="disable">Disable module</button>
-                    <span class="has-text-grey is-size-7 ml-3">Restart SEA to unload it from this running process.</span>
+                    <span class="has-text-grey is-size-7 ml-3">Restart Zalava to unload it from this running process.</span>
                 </form>
             @endif
         </section>
@@ -137,7 +137,7 @@
             <section class="box" aria-labelledby="module-managed-services-heading" data-managed-services>
                 <h2 id="module-managed-services-heading" class="title is-5">Managed service setup</h2>
                 <p class="has-text-grey is-size-7 mb-4">
-                    SEA installs and supervises these provider services. Complete each provider's own setup in its
+                    Zalava installs and supervises these provider services. Complete each provider's own setup in its
                     interface, then save the module credential under Configuration.
                 </p>
                 @if(model.hasDeclaredManagedServices())

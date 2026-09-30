@@ -58,7 +58,7 @@ class JobsControllerComponentTest {
     mockMvc
         .perform(get("/jobs"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Jobs</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Jobs</title>")))
         .andExpect(content().string(containsString("aria-current=\"page\" href=\"/jobs\"")))
         .andExpect(content().string(containsString("data-group=\"running\" data-count=\"2\"")))
         .andExpect(content().string(containsString("data-group=\"waiting\" data-count=\"1\"")))

@@ -12,7 +12,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SEA Settings</title>
+ <title>Zalava Settings</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -25,7 +25,7 @@
             <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
             <h1 class="title is-2 mb-3">Settings</h1>
             <p class="subtitle is-5 has-text-grey">
-                Workspace instructions and the safe defaults currently applied by SEA.
+                Workspace instructions and the safe defaults currently applied by Zalava.
             </p>
         </header>
 
@@ -114,7 +114,7 @@
                             <p class="help">Only this username may use the bot. Enter it with or without &#64;.</p>
                         </div>
                         <button class="button is-primary" type="submit">Save Telegram settings</button>
-                        <p class="help mt-2">Changes take effect after SEA restarts.</p>
+                        <p class="help mt-2">Changes take effect after Zalava restarts.</p>
                     </form>
                 </section>
 

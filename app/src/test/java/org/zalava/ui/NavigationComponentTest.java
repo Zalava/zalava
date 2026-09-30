@@ -100,6 +100,21 @@ class NavigationComponentTest {
             "id=\"root\"", "/sea-chat/assets/sea-chat.js", href("/jobs"), activeMarkup("/chat"));
   }
 
+  @Test
+  void sharedNavigationExposesOneAccessibleAdaptiveMenuContract() throws Exception {
+    String dashboard = bodyOf("/dashboard");
+
+    assertThat(dashboard)
+        .contains(
+            "aria-controls=\"sea-product-navigation\"",
+            "class=\"sea-navigation-close\"",
+            "data-nav-initial=\"D\"",
+            "closeNavigation()",
+            "event.key === 'Escape'",
+            "form:not([data-repeatable])",
+            "Zalava is working on your request.");
+  }
+
   private String bodyOf(String path) throws Exception {
     return mockMvc
         .perform(get(path))

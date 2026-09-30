@@ -13,7 +13,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${model.name()} - SEA Job</title>
+    <title>${model.name()} - Zalava Job</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -101,7 +101,7 @@
                     @endif
                     @if(model.agentFeedback() == null || model.agentFeedback().isBlank())
                         <div class="notification is-light">
-                            SEA has not recorded an execution result for this job yet.
+                            Zalava has not recorded an execution result for this job yet.
                         </div>
                     @else
                         <div class="job-detail-result">${model.agentFeedback()}</div>

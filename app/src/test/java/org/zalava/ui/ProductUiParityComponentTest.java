@@ -29,11 +29,11 @@ class ProductUiParityComponentTest {
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/dashboard"));
 
-    assertProductPage("/dashboard", "SEA Dashboard");
+    assertProductPage("/dashboard", "Zalava Dashboard");
     assertInteractiveChatPage();
-    assertProductPage("/jobs", "SEA Jobs");
-    assertProductPage("/modules", "SEA Modules");
-    assertProductPage("/settings", "SEA Settings");
+    assertProductPage("/jobs", "Zalava Jobs");
+    assertProductPage("/modules", "Zalava Modules");
+    assertProductPage("/settings", "Zalava Settings");
   }
 
   private void assertProductPage(String path, String title) throws Exception {
@@ -53,7 +53,7 @@ class ProductUiParityComponentTest {
     mockMvc
         .perform(get("/chat"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Chat</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Chat</title>")))
         .andExpect(content().string(containsString("id=\"root\"")))
         .andExpect(content().string(containsString("/sea-chat/assets/sea-chat.js")))
         .andExpect(content().string(containsString("href=\"/jobs\"")));

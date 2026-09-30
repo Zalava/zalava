@@ -661,3 +661,301 @@ body {
   max-height: 70vh;
   overflow-y: auto;
 }
+
+/* Zalava-owned design tokens and shared high-traffic primitives. */
+:root {
+    color-scheme: light;
+    --sea-surface-raised: #ffffff;
+    --sea-surface-muted: #f0f4fa;
+    --sea-text-muted: #59647a;
+    --sea-primary: #1959a6;
+    --sea-primary-strong: #124786;
+    --sea-primary-soft: #e8f0ff;
+    --sea-success: #18794e;
+    --sea-success-soft: #dcf6e8;
+    --sea-warning: #9a6100;
+    --sea-warning-soft: #fff1d6;
+    --sea-danger: #b42318;
+    --sea-danger-soft: #ffebe9;
+    --sea-space-1: .25rem;
+    --sea-space-2: .5rem;
+    --sea-space-3: .75rem;
+    --sea-space-4: 1rem;
+    --sea-radius-sm: .5rem;
+    --sea-radius-md: .75rem;
+    --sea-radius-lg: 1rem;
+    --sea-shadow-sm: 0 1px 3px rgb(23 32 51 / 8%);
+    --sea-shadow-md: 0 12px 30px rgb(23 32 51 / 10%);
+    --sea-focus-ring: 0 0 0 3px rgb(25 89 166 / 35%);
+    --sea-motion-fast: 120ms ease;
+    --sea-layer-raised: 1;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --sea-surface: #111827;
+    --sea-surface-raised: #182235;
+    --sea-surface-muted: #202c42;
+    --sea-border: #35435d;
+    --sea-ink: #edf2ff;
+    --sea-text-muted: #b5c0d6;
+    --sea-primary: #8ab8ff;
+    --sea-primary-strong: #b8d3ff;
+    --sea-primary-soft: #1c3968;
+    --sea-success: #6ee7a8;
+    --sea-success-soft: #153e30;
+    --sea-warning: #ffd37a;
+    --sea-warning-soft: #4b3510;
+    --sea-danger: #ffaaa3;
+    --sea-danger-soft: #54251f;
+    --sea-shadow-sm: 0 1px 3px rgb(0 0 0 / 30%);
+    --sea-shadow-md: 0 12px 30px rgb(0 0 0 / 35%);
+    --sea-focus-ring: 0 0 0 3px rgb(138 184 255 / 45%);
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+    outline: none;
+    box-shadow: var(--sea-focus-ring);
+}
+
+.sea-navbar,
+.box,
+.card,
+.message {
+    background-color: var(--sea-surface-raised);
+    color: var(--sea-ink);
+}
+
+.box,
+.card {
+    border-color: var(--sea-border);
+    border-radius: var(--sea-radius-lg);
+    box-shadow: var(--sea-shadow-sm);
+}
+
+.button {
+    border-radius: var(--sea-radius-md);
+    font-weight: 700;
+    transition: background-color var(--sea-motion-fast), box-shadow var(--sea-motion-fast), transform var(--sea-motion-fast);
+}
+
+.button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.button[data-pending="true"]::before {
+    content: "";
+    width: .85em;
+    height: .85em;
+    margin-right: .45em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: sea-action-spin .75s linear infinite;
+}
+
+.sea-action-status {
+    margin-top: .75rem;
+    color: var(--sea-text-muted);
+    font-size: .875rem;
+}
+
+@keyframes sea-action-spin {
+    to { transform: rotate(360deg); }
+}
+
+.button.is-primary {
+    background-color: var(--sea-primary);
+}
+
+.button.is-primary:hover:not(:disabled) {
+    background-color: var(--sea-primary-strong);
+}
+
+.input,
+.textarea,
+.select select {
+    border-color: var(--sea-border);
+    border-radius: var(--sea-radius-md);
+    color: var(--sea-ink);
+    background: var(--sea-surface-raised);
+}
+
+.tag.is-success,
+.message.is-success .message-body { color: var(--sea-success); background-color: var(--sea-success-soft); }
+.tag.is-warning,
+.message.is-warning .message-body { color: var(--sea-warning); background-color: var(--sea-warning-soft); }
+.tag.is-danger,
+.message.is-danger .message-body { color: var(--sea-danger); background-color: var(--sea-danger-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0ms !important;
+        animation-duration: 0ms !important;
+    }
+}
+
+/* Shared responsive containment: server-rendered product surfaces remain usable
+ * while UI-NAV-01 supplies the adaptive navigation interaction. */
+.section,
+.container,
+.columns,
+.column,
+.box,
+.card,
+.level,
+.activity-entry,
+.module-entry {
+    min-width: 0;
+}
+
+body {
+    overflow-x: clip;
+}
+
+@media screen and (max-width: 1024px) {
+    .section {
+        padding-inline: 1rem;
+    }
+
+    .job-detail-summary {
+        position: static;
+    }
+
+    .level:not(.is-mobile),
+    .activity-entry,
+    .module-entry {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .level-right,
+    .module-meta {
+        align-self: flex-start;
+        text-align: left;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .section {
+        padding: .75rem;
+    }
+
+    .columns {
+        margin-inline: 0;
+    }
+
+    .columns > .column {
+        padding-inline: 0;
+    }
+
+    .button.is-fullwidth,
+    .field.is-grouped > .control,
+    .field.has-addons > .control {
+        min-width: 0;
+    }
+}
+
+/* One authorized navigation model, presented as drawer, rail, or sidebar. */
+.sea-navigation-close {
+    display: none;
+}
+
+@media screen and (max-width: 640px) {
+    .sea-navbar .navbar-menu {
+        display: block;
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: var(--sea-layer-raised);
+        width: min(20rem, 88vw);
+        padding: 1rem;
+        overflow-y: auto;
+        visibility: hidden;
+        transform: translateX(-100%);
+        transition: transform var(--sea-motion-fast), visibility var(--sea-motion-fast);
+        background: var(--sea-surface-raised);
+        box-shadow: var(--sea-shadow-md);
+    }
+
+    .sea-navbar .navbar-menu.is-active {
+        visibility: visible;
+        transform: translateX(0);
+    }
+
+    .sea-navigation-close {
+        display: inline-flex;
+        margin: 0 0 1rem auto;
+    }
+}
+
+@media screen and (min-width: 641px) and (max-width: 1024px) {
+    .sea-navbar .navbar-burger {
+        display: none;
+    }
+
+    .sea-navbar .navbar-menu {
+        display: block;
+    }
+
+    .sea-navbar .navbar-start {
+        display: flex;
+        justify-content: center;
+        gap: .25rem;
+    }
+
+    .sea-navbar .navbar-item {
+        width: 2.75rem;
+        justify-content: center;
+        padding: .5rem;
+    }
+
+    .sea-nav-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .sea-navbar .navbar-item::after {
+        content: attr(data-nav-initial);
+        font-weight: 800;
+    }
+}
+
+@media screen and (min-width: 1025px) {
+    body {
+        padding-left: 15rem;
+    }
+
+    .sea-navbar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: var(--sea-layer-raised);
+        width: 15rem;
+        border-right: 1px solid var(--sea-border);
+        border-bottom: 0;
+    }
+
+    .sea-navbar .container,
+    .sea-navbar .navbar-menu,
+    .sea-navbar .navbar-start {
+        display: block;
+    }
+
+    .sea-navbar .navbar-brand {
+        margin: .75rem;
+    }
+
+    .sea-navbar .navbar-item {
+        margin: .25rem .75rem;
+        border-radius: var(--sea-radius-md);
+    }
+}

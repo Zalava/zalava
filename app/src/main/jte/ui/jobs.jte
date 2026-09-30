@@ -9,7 +9,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SEA Jobs</title>
+ <title>Zalava Jobs</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -22,14 +22,14 @@
             <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
             <h1 class="title is-2 mb-3">Jobs</h1>
             <p class="subtitle is-5 has-text-grey">
-                Persisted work grouped by its current SEA task status.
+                Persisted work grouped by its current Zalava task status.
             </p>
         </header>
 
         @if(model.totalJobs() == 0)
             <section class="box jobs-empty has-text-centered py-6">
                 <h2 class="title is-4 mb-2">No jobs have been created yet.</h2>
-                <p class="has-text-grey">Start in Chat to create work for SEA.</p>
+                <p class="has-text-grey">Start in Chat to create work for Zalava.</p>
                 <a class="button is-primary is-light mt-4" href="/chat">Open Chat</a>
             </section>
         @else

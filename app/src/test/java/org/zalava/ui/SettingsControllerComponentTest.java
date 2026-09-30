@@ -38,7 +38,7 @@ class SettingsControllerComponentTest {
     mockMvc
         .perform(get("/settings"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Settings</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Settings</title>")))
         .andExpect(
             content()
                 .string(

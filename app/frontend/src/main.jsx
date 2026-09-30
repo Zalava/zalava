@@ -54,7 +54,7 @@ function attachmentErrorText(payload) {
   if (event?.reason === "not-accepted") {
     return `Unsupported attachment type: ${event.contentType || "unknown"}`;
   }
-  return event?.message ?? "SEA could not add that attachment";
+  return event?.message ?? "Zalava could not add that attachment";
 }
 
 function AttachmentErrorReporter({ onError }) {
@@ -178,7 +178,7 @@ function SeaRuntime({ children }) {
             })
           ) {
             pendingAttachments.current.delete(file.name);
-            reject(new Error("SEA is not connected"));
+        reject(new Error("Zalava is not connected"));
           }
         });
       },
@@ -228,7 +228,7 @@ function SeaRuntime({ children }) {
             content: toBase64(buffer),
           })
         ) {
-          setUploadError("SEA is not connected");
+      setUploadError("Zalava is not connected");
         }
       });
     });
@@ -340,25 +340,25 @@ function Chat() {
   const failure = messages.findLast((message) => message.failure);
 
   return (
-    <main className="sea-chat" aria-label="SEA conversation">
+    <main className="sea-chat" aria-label="Zalava conversation">
       <header>
         <div>
           <p className="eyebrow">Default workspace</p>
           <h1>Chat</h1>
-          <p>Ask SEA a question or start work that will be tracked as a job.</p>
+          <p>Ask Zalava a question or start work that will be tracked as a job.</p>
         </div>
-        <output aria-live="polite">{status}</output>
+        <output className="sea-status" aria-live="polite">{status}</output>
       </header>
       <nav className="conversations" aria-label="Conversations">
-        <select value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation">
+        <select className="sea-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation">
           {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
         </select>
-        <button type="button" onClick={createConversation} disabled={status !== "Connected"}>New conversation</button>
+        <button className="sea-button" type="button" onClick={createConversation} disabled={status !== "Connected"}>New conversation</button>
       </nav>
       <section className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
         {messages.map((message, index) => (
           <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
-            <strong>{message.role === "user" ? "You" : "SEA"}</strong>
+            <strong>{message.role === "user" ? "You" : "Zalava"}</strong>
             <Markdown
               allowedElements={["p", "strong", "em", "code", "pre", "ul", "ol", "li", "blockquote", "a"]}
               components={{ a: ({ href, children }) => <a href={href} rel="noopener noreferrer">{children}</a> }}
@@ -384,37 +384,38 @@ function Chat() {
       {approvals.map(([requestId, approval]) => (
         <section className="approval" key={requestId} aria-label="Pending permission">
           <strong>Permission needed</strong>
-          <p>SEA requests approval for {approval.summary}.</p>
-          <button type="button" onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
-          <button type="button" onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
+          <p>Zalava requests approval for {approval.summary}.</p>
+          <button className="sea-button" type="button" onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
+          <button className="sea-button sea-button--danger" type="button" onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
         </section>
       ))}
-      {pending && <p role="status">SEA is responding…</p>}
+      {pending && <p role="status">Zalava is responding…</p>}
       {failure && <p role="alert">{failure.content}</p>}
       <ComposerPrimitive.Root data-testid="composer" className="composer">
-        <label htmlFor="message">Message SEA</label>
+        <label htmlFor="message">Message Zalava</label>
         <ComposerPrimitive.AttachmentDropzone data-testid="attachment-dropzone" className="composer-dropzone">
           <ComposerPrimitive.Attachments>
             {({ attachment }) => (
               <AttachmentPrimitive.Root className="attachment-chip">
                 <AttachmentPrimitive.Name />
-                <AttachmentPrimitive.Remove aria-label="Remove">Remove</AttachmentPrimitive.Remove>
+                <AttachmentPrimitive.Remove className="sea-button sea-button--secondary" aria-label="Remove">Remove</AttachmentPrimitive.Remove>
               </AttachmentPrimitive.Root>
             )}
           </ComposerPrimitive.Attachments>
           <div className="attachments" aria-label="Attachments">
             <ComposerPrimitive.Input
               id="message"
-              placeholder="Message SEA"
+              className="sea-field"
+              placeholder="Message Zalava"
               onKeyDown={recallPrompt}
               onChange={() => {
                 historyIndex.current = -1;
               }}
             />
-            <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="composer-attach">
+            <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="sea-button sea-button--secondary composer-attach">
               Attach files
             </ComposerPrimitive.AddAttachment>
-            <ComposerPrimitive.Send className="composer-send">Send</ComposerPrimitive.Send>
+            <ComposerPrimitive.Send className="sea-button composer-send">Send</ComposerPrimitive.Send>
           </div>
         </ComposerPrimitive.AttachmentDropzone>
         <div className="attachments" aria-label="Knowledge import">

@@ -11,7 +11,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SEA Dashboard</title>
+ <title>Zalava Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="/sea-ui.css">
 </head>
@@ -24,7 +24,7 @@
             <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
             <h1 class="title is-2 mb-3">What needs your attention?</h1>
             <p class="subtitle is-5 has-text-grey">
-                Current work, approvals, and recent activity from SEA.
+                Current work, approvals, and recent activity from Zalava.
             </p>
         </header>
 
@@ -124,7 +124,7 @@
             @if(model.recentActivity().isEmpty())
                 <div class="notification is-light has-text-centered py-6">
                     <p class="has-text-weight-semibold mb-1">No task activity today.</p>
-                    <p class="has-text-grey">Start in Chat when you are ready to give SEA something to do.</p>
+                    <p class="has-text-grey">Start in Chat when you are ready to give Zalava something to do.</p>
                     <a class="button is-primary is-light mt-4" href="/chat">Open Chat</a>
                 </div>
             @else
