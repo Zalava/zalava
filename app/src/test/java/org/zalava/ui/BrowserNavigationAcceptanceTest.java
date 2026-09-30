@@ -139,7 +139,19 @@ class BrowserNavigationAcceptanceTest {
         assertThat(page.navigate(baseUrl() + "/dashboard").status()).isEqualTo(200);
         page.locator(".sea-navbar").waitFor();
         if (viewport[0] <= 640) {
-          page.locator(".navbar-burger").click();
+          page.locator(".navbar-burger").focus();
+          page.keyboard().press("Enter");
+          page.locator(".sea-navigation-close")
+              .waitFor(
+                  new com.microsoft.playwright.Locator.WaitForOptions()
+                      .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+          page.keyboard().press("Tab");
+          page.waitForFunction("document.activeElement.classList.contains('sea-navigation-close')");
+          assertThat(
+                  (Boolean)
+                      page.evaluate(
+                          "document.activeElement.classList.contains('sea-navigation-close')"))
+              .isTrue();
           var modules =
               page.getByRole(
                   com.microsoft.playwright.options.AriaRole.LINK,
@@ -147,6 +159,10 @@ class BrowserNavigationAcceptanceTest {
           modules.waitFor();
           assertThat(modules.isVisible()).isTrue();
           page.keyboard().press("Escape");
+          assertThat(
+                  (Boolean)
+                      page.evaluate("document.activeElement.classList.contains('navbar-burger')"))
+              .isTrue();
         } else {
           assertThat(menuLabels(page)).containsExactlyElementsOf(ADMIN_MENU);
         }
