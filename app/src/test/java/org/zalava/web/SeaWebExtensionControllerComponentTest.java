@@ -53,7 +53,7 @@ class SeaWebExtensionControllerComponentTest {
         .andExpect(content().string(containsString("Zalava Apps")))
         .andExpect(content().string(containsString("Fixture Shopping List")))
         .andExpect(content().string(containsString("/apps/test-web-module/shopping-list")))
-        .andExpect(content().string(containsString("Apps</a>")));
+        .andExpect(content().string(containsString("<span class=\"sea-nav-label\">Apps</span>")));
   }
 
   @Test

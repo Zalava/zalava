@@ -840,3 +840,101 @@ body {
         min-width: 0;
     }
 }
+
+/* One authorized navigation model, presented as drawer, rail, or sidebar. */
+.sea-navigation-close {
+    display: none;
+}
+
+@media screen and (max-width: 640px) {
+    .sea-navbar .navbar-menu {
+        display: block;
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: var(--sea-layer-raised);
+        width: min(20rem, 88vw);
+        padding: 1rem;
+        overflow-y: auto;
+        visibility: hidden;
+        transform: translateX(-100%);
+        transition: transform var(--sea-motion-fast), visibility var(--sea-motion-fast);
+        background: var(--sea-surface-raised);
+        box-shadow: var(--sea-shadow-md);
+    }
+
+    .sea-navbar .navbar-menu.is-active {
+        visibility: visible;
+        transform: translateX(0);
+    }
+
+    .sea-navigation-close {
+        display: inline-flex;
+        margin: 0 0 1rem auto;
+    }
+}
+
+@media screen and (min-width: 641px) and (max-width: 1024px) {
+    .sea-navbar .navbar-burger {
+        display: none;
+    }
+
+    .sea-navbar .navbar-menu {
+        display: block;
+    }
+
+    .sea-navbar .navbar-start {
+        display: flex;
+        justify-content: center;
+        gap: .25rem;
+    }
+
+    .sea-navbar .navbar-item {
+        width: 2.75rem;
+        justify-content: center;
+        padding: .5rem;
+    }
+
+    .sea-nav-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .sea-navbar .navbar-item::after {
+        content: attr(data-nav-initial);
+        font-weight: 800;
+    }
+}
+
+@media screen and (min-width: 1025px) {
+    body {
+        padding-left: 15rem;
+    }
+
+    .sea-navbar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: var(--sea-layer-raised);
+        width: 15rem;
+        border-right: 1px solid var(--sea-border);
+        border-bottom: 0;
+    }
+
+    .sea-navbar .container,
+    .sea-navbar .navbar-menu,
+    .sea-navbar .navbar-start {
+        display: block;
+    }
+
+    .sea-navbar .navbar-brand {
+        margin: .75rem;
+    }
+
+    .sea-navbar .navbar-item {
+        margin: .25rem .75rem;
+        border-radius: var(--sea-radius-md);
+    }
+}
