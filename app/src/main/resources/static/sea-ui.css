@@ -779,3 +779,64 @@ body {
         animation-duration: 0ms !important;
     }
 }
+
+/* Shared responsive containment: server-rendered product surfaces remain usable
+ * while UI-NAV-01 supplies the adaptive navigation interaction. */
+.section,
+.container,
+.columns,
+.column,
+.box,
+.card,
+.level,
+.activity-entry,
+.module-entry {
+    min-width: 0;
+}
+
+body {
+    overflow-x: clip;
+}
+
+@media screen and (max-width: 1024px) {
+    .section {
+        padding-inline: 1rem;
+    }
+
+    .job-detail-summary {
+        position: static;
+    }
+
+    .level:not(.is-mobile),
+    .activity-entry,
+    .module-entry {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .level-right,
+    .module-meta {
+        align-self: flex-start;
+        text-align: left;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .section {
+        padding: .75rem;
+    }
+
+    .columns {
+        margin-inline: 0;
+    }
+
+    .columns > .column {
+        padding-inline: 0;
+    }
+
+    .button.is-fullwidth,
+    .field.is-grouped > .control,
+    .field.has-addons > .control {
+        min-width: 0;
+    }
+}

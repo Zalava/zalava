@@ -76,6 +76,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   min-height: 100vh;
   margin: auto;
   padding: clamp(1rem, 3vw, 2rem);
+  overflow-x: clip;
 }
 
 .sea-chat header, .conversations, .attachments {
@@ -158,4 +159,16 @@ h1, p { margin: var(--sea-space-1) 0; }
 .attachment-chip button { min-height: auto; padding: .15rem .45rem; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0ms !important; animation-duration: 0ms !important; } }
-@media (max-width: 42rem) { .sea-chat header { gap: var(--sea-space-3); flex-direction: column; } .message { max-width: 92%; } .conversations select { flex-basis: 100%; } }
+@media (max-width: 64rem) {
+  .sea-chat { width: min(100%, 48rem); }
+  .messages, .message, .execution, .approval, .composer { min-width: 0; }
+}
+
+@media (max-width: 42rem) {
+  .sea-chat { padding: var(--sea-space-3); }
+  .sea-chat header { gap: var(--sea-space-3); flex-direction: column; }
+  .message { max-width: 92%; }
+  .conversations select { flex-basis: 100%; }
+  .attachments > :first-child { flex-basis: 100%; }
+  .attachments .sea-button, .approval .sea-button { flex: 1 1 auto; }
+}
