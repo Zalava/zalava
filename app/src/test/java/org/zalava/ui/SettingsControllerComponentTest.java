@@ -52,6 +52,20 @@ class SettingsControllerComponentTest {
   }
 
   @Test
+  void createsAChannelLinkCodeWithoutUsingTelegramUsernameAuthority() throws Exception {
+    mockMvc
+        .perform(get("/settings"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Channel links")))
+        .andExpect(content().string(containsString("action=\"/settings/channel-links\"")));
+
+    mockMvc
+        .perform(post("/settings/channel-links").param("channel", "telegram"))
+        .andExpect(redirectedUrl("/settings"))
+        .andExpect(flash().attributeExists("channelLinkCode", "channelLinkExpiresAt"));
+  }
+
+  @Test
   void rendersUnavailableTelegramConfigurationWithoutASecret() throws Exception {
     mockMvc
         .perform(get("/settings"))
