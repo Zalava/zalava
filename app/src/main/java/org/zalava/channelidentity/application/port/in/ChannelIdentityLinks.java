@@ -1,5 +1,6 @@
 package org.zalava.channelidentity.application.port.in;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.zalava.accounts.domain.Actor;
@@ -13,6 +14,8 @@ public interface ChannelIdentityLinks {
       Actor owner, ExternalChannelIdentity identity, ChannelOperationScope scope);
 
   Optional<Actor> resolve(ExternalChannelIdentity identity, String operation);
+
+  List<ChannelIdentityLink> links(Actor owner);
 
   void revoke(Actor owner, UUID linkId);
 }

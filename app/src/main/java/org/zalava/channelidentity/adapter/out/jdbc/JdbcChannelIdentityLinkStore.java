@@ -3,6 +3,7 @@ package org.zalava.channelidentity.adapter.out.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,15 @@ public final class JdbcChannelIdentityLinkStore implements ChannelIdentityLinkSt
         .param("id", id)
         .query(this::map)
         .optional();
+  }
+
+  @Override
+  public List<ChannelIdentityLink> findByOwner(Actor owner) {
+    return jdbc.sql(
+            "select * from sea_channel_identity_link where account_id = :account order by linked_at desc")
+        .param("account", owner.accountId().value())
+        .query(this::map)
+        .list();
   }
 
   @Override

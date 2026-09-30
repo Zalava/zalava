@@ -184,6 +184,11 @@ class DefaultChannelIdentityLinksTest {
     }
 
     @Override
+    public java.util.List<ChannelIdentityLink> findByOwner(Actor owner) {
+      return links.values().stream().filter(link -> link.owner().equals(owner)).toList();
+    }
+
+    @Override
     public ChannelIdentityLink save(ChannelIdentityLink link) {
       links.put(link.id(), link);
       return link;

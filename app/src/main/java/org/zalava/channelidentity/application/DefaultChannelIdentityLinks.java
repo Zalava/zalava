@@ -1,6 +1,7 @@
 package org.zalava.channelidentity.application;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +46,12 @@ public final class DefaultChannelIdentityLinks implements ChannelIdentityLinks {
         .filter(link -> link.scope().allows(operation))
         .filter(link -> isEnabled(link.owner()))
         .map(ChannelIdentityLink::owner);
+  }
+
+  @Override
+  public List<ChannelIdentityLink> links(Actor owner) {
+    requireEnabled(owner);
+    return links.findByOwner(owner);
   }
 
   @Override

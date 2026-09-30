@@ -136,6 +136,8 @@ public class AccountConfiguration {
                         "/api/memory-proposals/**",
                         "/api/skills",
                         "/api/skills/**",
+                        "/api/channel-links",
+                        "/api/channel-links/**",
                         "/ws/chat",
                         "/ws/ui/chat",
                         "/sea-chat/**",
