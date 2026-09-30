@@ -4,6 +4,8 @@
 @param SettingsModel model
 @param String settingsMessage
 @param String settingsError
+@param String channelLinkCode
+@param java.time.Instant channelLinkExpiresAt
 @param CsrfToken csrf
 @param org.zalava.ui.navigation.NavigationModel navigation
 
@@ -84,7 +86,20 @@
             </div>
 
             <div class="column">
-                <section class="box settings-card mb-5" aria-labelledby="telegram-heading">
+    <section class="box settings-card mb-5" aria-labelledby="channel-links-heading">
+      <p class="heading mb-1">Channels</p>
+      <h2 id="channel-links-heading" class="title is-5 mb-2">Channel links</h2>
+      <p class="has-text-grey is-size-7 mb-4">Create a one-time code in your authenticated account, then send it through the channel you want to link. A username is never used as authority.</p>
+      @if(channelLinkCode != null)
+        <article class="message is-success" role="status"><div class="message-body">Link code: <code>${channelLinkCode}</code><br>Expires: ${channelLinkExpiresAt.toString()}</div></article>
+      @endif
+      <form method="post" action="/settings/channel-links">
+        <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
+        <div class="field"><label class="label" for="channel-link-channel">Channel</label><div class="control"><input id="channel-link-channel" class="input" name="channel" value="telegram" required></div></div>
+        <button class="button is-primary" type="submit">Create link code</button>
+      </form>
+    </section>
+    <section class="box settings-card mb-5" aria-labelledby="telegram-heading">
                     <p class="heading mb-1">Channels</p>
                     <h2 id="telegram-heading" class="title is-5 mb-2">Telegram</h2>
                     @if(model.telegram().enabled())
