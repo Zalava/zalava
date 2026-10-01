@@ -19,8 +19,8 @@ versions add compatible APIs, and major versions may break modules.
 
 ```bash
 GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:test
-git tag -a v<major>.<minor>.<patch> -m "Publish module-api <major>.<minor>.<patch>"
-git push origin v<major>.<minor>.<patch>
+git tag -a v<major>.<minor>.<patch>[-<prerelease>] -m "Publish module-api <version>"
+git push origin v<major>.<minor>.<patch>[-<prerelease>]
 ```
 
 Pushing the tag triggers `.github/workflows/publish-module-api.yml` and
