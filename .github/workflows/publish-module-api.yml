@@ -26,4 +26,5 @@ jobs:
           CI_COMMIT_TAG: ${{ github.ref_name }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZALAVA_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :module-api:publishModuleApiPublicationToGitHubPackagesRepository
