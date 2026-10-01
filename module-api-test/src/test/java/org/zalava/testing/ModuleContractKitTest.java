@@ -44,6 +44,9 @@ class ModuleContractKitTest {
       assertThat(kit.moduleId()).isEqualTo("fixture-artifact-module");
       assertThat(kit.version()).isEqualTo("2.0.0");
       assertThat(kit.providers().providers()).isEmpty();
+      assertThat(kit.channels(ignored -> {}).channels())
+          .extracting(channel -> channel.descriptor().channelId())
+          .containsExactly("fixture-channel");
     }
   }
 
@@ -65,6 +68,11 @@ class ModuleContractKitTest {
         "package fixture.artifact;"
             + " import java.util.List;"
             + " import org.zalava.ModuleDescriptor;"
+            + " import org.zalava.channels.ChannelCapabilities;"
+            + " import org.zalava.channels.ChannelDescriptor;"
+            + " import org.zalava.channels.ChannelEvent;"
+            + " import org.zalava.channels.ChannelInteractionReceiver;"
+            + " import org.zalava.channels.ZalavaChannel;"
             + " import org.zalava.ProviderFactory;"
             + " import org.zalava.ZalavaModule;"
             + " public final class ArtifactModule implements ZalavaModule {"
@@ -73,7 +81,12 @@ class ModuleContractKitTest {
             + "\", \""
             + version
             + "\", \"Artifact fixture\", \"fixture\"); }"
-            + " public List<ProviderFactory> providerFactories() { return List.of(); } }",
+            + " public List<ProviderFactory> providerFactories() { return List.of(); }"
+            + " public List<ZalavaChannel> channels() { return List.of(new ZalavaChannel() {"
+            + " public ChannelDescriptor descriptor() { return new ChannelDescriptor(\"fixture-channel\", \"Fixture channel\", ChannelCapabilities.textOnly()); }"
+            + " public void bind(ChannelInteractionReceiver receiver) {}"
+            + " public void deliver(ChannelEvent event) {}"
+            + " }); } }",
         StandardCharsets.UTF_8);
     compile(classes, List.of(source));
     return jar(

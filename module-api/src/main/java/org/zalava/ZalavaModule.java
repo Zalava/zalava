@@ -1,6 +1,7 @@
 package org.zalava;
 
 import java.util.List;
+import org.zalava.channels.ZalavaChannel;
 import org.zalava.web.ZalavaWebExtension;
 
 public interface ZalavaModule {
@@ -22,6 +23,11 @@ public interface ZalavaModule {
   }
 
   default List<ZalavaServiceRequirement> serviceRequirements() {
+    return List.of();
+  }
+
+  /** Module-owned channel transports; Core owns their registration, identity, and routing. */
+  default List<ZalavaChannel> channels() {
     return List.of();
   }
 
