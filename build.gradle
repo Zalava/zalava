@@ -74,7 +74,7 @@ allprojects {
     if (releaseTag != null && !releaseTag.matches('v\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z]+(\\.[0-9A-Za-z]+)*)?')) {
         throw new GradleException('CI_COMMIT_TAG must use v<major>.<minor>.<patch> or a SemVer prerelease tag')
     }
-    version = releaseTag?.substring(1) ?: '1.0.0-SNAPSHOT'
+    version = releaseTag?.substring(1) ?: '0.1.0-SNAPSHOT'
 
     repositories {
         mavenCentral()
