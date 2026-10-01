@@ -15,7 +15,7 @@ class BootJarPackagingTest {
   void bootJarContainsExecutableApplicationMetadata() throws IOException {
     Path jar = Path.of(System.getProperty("sea.test.boot-jar"));
 
-    assertThat(jar).exists().hasFileName("sea-1.0.0-SNAPSHOT.jar");
+    assertThat(jar).exists().hasFileName("sea-0.1.0-SNAPSHOT.jar");
     assertThat(Files.size(jar)).isPositive();
 
     try (JarFile bootJar = new JarFile(jar.toFile())) {
@@ -25,7 +25,7 @@ class BootJarPackagingTest {
           .isEqualTo("org.springframework.boot.loader.launch.JarLauncher");
       assertThat(attributes.getValue("Start-Class")).isEqualTo("org.zalava.SeaApplication");
       assertThat(bootJar.getEntry("BOOT-INF/classes/org/zalava/SeaApplication.class")).isNotNull();
-      assertThat(bootJar.getEntry("BOOT-INF/lib/module-api-1.0.0-SNAPSHOT.jar")).isNotNull();
+      assertThat(bootJar.getEntry("BOOT-INF/lib/module-api-0.1.0-SNAPSHOT.jar")).isNotNull();
     }
   }
 }

@@ -19,8 +19,8 @@ versions add compatible APIs, and major versions may break modules.
 
 ```bash
 GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:test
-git tag -a v<major>.<minor>.<patch> -m "Publish module-api <major>.<minor>.<patch>"
-git push origin v<major>.<minor>.<patch>
+git tag -a v<major>.<minor>.<patch>[-<prerelease>] -m "Publish module-api <version>"
+git push origin v<major>.<minor>.<patch>[-<prerelease>]
 ```
 
 Pushing the tag triggers `.github/workflows/publish-module-api.yml` and
@@ -80,7 +80,7 @@ dependencyResolutionManagement {
 Then declare the SPI as `compileOnly` and use it in tests:
 
 ```groovy
-def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('1.0.0')
+def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.2')
 
 dependencies {
     compileOnly "org.zalava:module-api:${moduleApiVersion.get()}"
