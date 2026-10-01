@@ -192,7 +192,8 @@ tasks.named('test') {
     systemProperty 'sea.test.external-module-jar',
             tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
     systemProperty 'sea.test.boot-jar',
-            tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
+        tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
+    systemProperty 'sea.test.version', project.version
 }
 
 tasks.register('architectureTest', Test) {

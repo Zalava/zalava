@@ -15,3 +15,7 @@ passed. Both tag workflows then failed before publication because the workflows 
 This change maps the existing actions token to that required variable. It does not move, delete,
 or reuse `v0.1.0-alpha.2`; after this fix merges, publish a new immutable prerelease tag and
 verify both artifacts are resolvable before any external module pins it.
+
+`v0.1.0-alpha.3` is the selected successor. Consumer defaults in the development request,
+templates, release guide and generated API projects advance to that coordinate in the release
+PR before the tag is created.
