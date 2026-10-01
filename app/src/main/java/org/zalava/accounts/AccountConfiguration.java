@@ -17,6 +17,14 @@ import org.zalava.accounts.application.AccountLifecycleService;
 import org.zalava.accounts.application.port.in.AccountLifecycle;
 import org.zalava.accounts.application.port.out.AccountStore;
 import org.zalava.accounts.security.*;
+import org.zalava.channelidentity.adapter.out.jdbc.JdbcChannelIdentityLinkStore;
+import org.zalava.channelidentity.adapter.out.jdbc.JdbcChannelLinkChallengeStore;
+import org.zalava.channelidentity.application.DefaultChannelIdentityLinks;
+import org.zalava.channelidentity.application.DefaultChannelLinkChallenges;
+import org.zalava.channelidentity.application.port.in.ChannelIdentityLinks;
+import org.zalava.channelidentity.application.port.in.ChannelLinkChallenges;
+import org.zalava.channelidentity.application.port.out.ChannelIdentityLinkStore;
+import org.zalava.channelidentity.application.port.out.ChannelLinkChallengeStore;
 
 @Configuration
 public class AccountConfiguration {
@@ -48,8 +56,33 @@ public class AccountConfiguration {
   }
 
   @Bean
+  ChannelIdentityLinkStore channelIdentityLinkStore(JdbcClient jdbc) {
+    return new JdbcChannelIdentityLinkStore(jdbc);
+  }
+
+  @Bean
+  ChannelLinkChallengeStore channelLinkChallengeStore(JdbcClient jdbc) {
+    return new JdbcChannelLinkChallengeStore(jdbc);
+  }
+
+  @Bean
   AccountLifecycle accountLifecycle(AccountStore store, PasswordEncoder passwords, Clock clock) {
     return new AccountLifecycleService(store, passwords, clock);
+  }
+
+  @Bean
+  ChannelIdentityLinks channelIdentityLinks(
+      AccountLifecycle accounts, ChannelIdentityLinkStore links, Clock clock) {
+    return new DefaultChannelIdentityLinks(accounts, links, clock);
+  }
+
+  @Bean
+  ChannelLinkChallenges channelLinkChallenges(
+      AccountLifecycle accounts,
+      ChannelIdentityLinks links,
+      ChannelLinkChallengeStore challenges,
+      Clock clock) {
+    return new DefaultChannelLinkChallenges(accounts, links, challenges, clock);
   }
 
   @Bean
@@ -103,6 +136,8 @@ public class AccountConfiguration {
                         "/api/memory-proposals/**",
                         "/api/skills",
                         "/api/skills/**",
+                        "/api/channel-links",
+                        "/api/channel-links/**",
                         "/ws/chat",
                         "/ws/ui/chat",
                         "/sea-chat/**",

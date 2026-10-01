@@ -125,6 +125,25 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
+  void administratorCreatesChannelLinkCodeThroughSettings() throws IOException {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      assertThat(page.navigate(baseUrl() + "/settings").status()).isEqualTo(200);
+      page.locator("form[action='/settings/channel-links']").waitFor();
+      page.locator("#channel-link-channel").fill("telegram");
+      page.locator("form[action='/settings/channel-links'] button").click();
+      var code = page.locator("form[action='/settings/channel-links'] + article code");
+      code.waitFor();
+      assertThat(code.innerText()).matches("[0-9a-f]{48}");
+      assertThat(page.content()).contains("Expires:");
+    }
+  }
+
+  @Test
   void adaptiveNavigationRetainsAuthorizedDestinationsAcrossRepresentativeWidths()
       throws IOException {
     try (Playwright playwright = Playwright.create();

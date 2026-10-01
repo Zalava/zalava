@@ -12,6 +12,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,7 +21,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.SupportedProvider;
+import org.zalava.accounts.security.AuthenticatedActorResolver;
 import org.zalava.catalog.FileSystemModuleConfigurationStore;
+import org.zalava.channelidentity.application.port.in.ChannelIdentityLinks;
+import org.zalava.channelidentity.application.port.in.ChannelLinkChallenges;
+import org.zalava.channelidentity.domain.ChannelOperationScope;
 import org.zalava.channels.application.port.in.TelegramConfiguration;
 import org.zalava.channels.application.port.in.TelegramConfigurationStatus;
 import org.zalava.channels.application.port.in.TelegramConfigurationUpdate;
@@ -34,18 +39,27 @@ public class SettingsController {
   private final SeaRuntime seaRuntime;
   private final FileSystemModuleConfigurationStore moduleConfigurationStore;
   private final TelegramConfiguration telegramConfiguration;
+  private final ChannelIdentityLinks channelIdentityLinks;
+  private final ChannelLinkChallenges channelLinkChallenges;
+  private final AuthenticatedActorResolver actors;
 
   public SettingsController(
       @Value("${agent.workspace}") Resource workspace,
       Environment environment,
       SeaRuntime seaRuntime,
       FileSystemModuleConfigurationStore moduleConfigurationStore,
-      TelegramConfiguration telegramConfiguration) {
+      TelegramConfiguration telegramConfiguration,
+      ChannelIdentityLinks channelIdentityLinks,
+      ChannelLinkChallenges channelLinkChallenges,
+      AuthenticatedActorResolver actors) {
     this.workspace = workspace;
     this.environment = environment;
     this.seaRuntime = seaRuntime;
     this.moduleConfigurationStore = moduleConfigurationStore;
     this.telegramConfiguration = telegramConfiguration;
+    this.channelIdentityLinks = channelIdentityLinks;
+    this.channelLinkChallenges = channelLinkChallenges;
+    this.actors = actors;
   }
 
   @PostMapping("/settings/channels/telegram")
@@ -69,10 +83,31 @@ public class SettingsController {
   }
 
   @GetMapping("/settings")
-  public String settings(Model model, CsrfToken csrf) {
-    model.addAttribute("model", buildModel());
+  public String settings(Model model, CsrfToken csrf, Authentication authentication) {
+    model.addAttribute("model", buildModel(actors.actor(authentication)));
     model.addAttribute("csrf", csrf);
+    if (!model.containsAttribute("channelLinkCode")) {
+      model.addAttribute("channelLinkCode", null);
+      model.addAttribute("channelLinkExpiresAt", null);
+    }
     return "ui/settings";
+  }
+
+  @PostMapping("/settings/channel-links")
+  public String issueChannelLink(
+      @RequestParam String channel,
+      Authentication authentication,
+      RedirectAttributes redirectAttributes) {
+    try {
+      var issued =
+          channelLinkChallenges.issue(
+              actors.actor(authentication), channel, ChannelOperationScope.of("chat:send"));
+      redirectAttributes.addFlashAttribute("channelLinkCode", issued.code());
+      redirectAttributes.addFlashAttribute("channelLinkExpiresAt", issued.expiresAt());
+    } catch (IllegalArgumentException exception) {
+      redirectAttributes.addFlashAttribute("settingsError", exception.getMessage());
+    }
+    return "redirect:/settings";
   }
 
   @PostMapping("/settings/instructions")
@@ -101,7 +136,7 @@ public class SettingsController {
     return "redirect:/settings";
   }
 
-  private SettingsModel buildModel() {
+  private SettingsModel buildModel(org.zalava.accounts.domain.Actor actor) {
     String providerId = environment.getProperty("spring.ai.model.chat", "unknown");
     String providerLabel =
         SupportedProvider.from(providerId).map(SupportedProvider::label).orElse(providerId);

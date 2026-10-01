@@ -11,6 +11,8 @@ public interface AccountLifecycle {
 
   Optional<Account> findByLoginName(String loginName);
 
+  Optional<Account> findById(AccountId id);
+
   void bootstrap(String loginName, String password);
 
   Account create(String loginName, String temporaryPassword, AccountRole role);
