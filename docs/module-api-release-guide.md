@@ -80,7 +80,7 @@ dependencyResolutionManagement {
 Then declare the SPI as `compileOnly` and use it in tests:
 
 ```groovy
-def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.2')
+def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.3')
 
 dependencies {
     compileOnly "org.zalava:module-api:${moduleApiVersion.get()}"

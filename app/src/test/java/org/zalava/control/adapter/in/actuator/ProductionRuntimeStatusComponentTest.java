@@ -38,7 +38,7 @@ class ProductionRuntimeStatusComponentTest {
     mockMvc
         .perform(get("/actuator/info"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.sea.coreVersion").value("0.1.0-SNAPSHOT"))
+        .andExpect(jsonPath("$.sea.coreVersion").value(System.getProperty("sea.test.version")))
         .andExpect(jsonPath("$.sea.releaseImage").value("sea-local:component"))
         .andExpect(jsonPath("$.sea.releaseRevision").value("component"))
         .andExpect(jsonPath("$.sea.modules").isArray())
