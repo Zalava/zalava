@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import org.zalava.ZalavaModule;
+import org.zalava.channels.ChannelInteractionReceiver;
 
 /**
  * Entry point for exercising an external module at the stable {@code module-api} boundary without a
@@ -79,6 +80,10 @@ public final class ModuleContractKit implements AutoCloseable {
 
   public WebExtensionFixture webExtensions() {
     return WebExtensionFixture.register(module);
+  }
+
+  public ChannelFixture channels(ChannelInteractionReceiver receiver) {
+    return ChannelFixture.bind(module, receiver);
   }
 
   @Override
