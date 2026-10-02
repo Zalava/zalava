@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import org.zalava.FactorySecretAccess;
 import org.junit.jupiter.api.Test;
+import org.zalava.FactorySecretAccess;
 import org.zalava.ZalavaModule;
 
 class ChannelContractsTest {
@@ -31,11 +31,16 @@ class ChannelContractsTest {
   void scopesTransportConfigurationAndPreservesExistingChannelImplementations() {
     Map<String, Object> values = new HashMap<>(Map.of("tokenRef", "telegram-token"));
     ChannelTransportContext context =
-        new ChannelTransportContext(values, reference -> java.util.Optional.of(reference.toCharArray()));
+        new ChannelTransportContext(
+            values, reference -> java.util.Optional.of(reference.toCharArray()));
     values.clear();
     assertThat(context.configuration()).containsEntry("tokenRef", "telegram-token");
-    assertThat(context.secrets().resolve("telegram-token")).hasValueSatisfying(
-        value -> assertThat(value).containsExactly('t', 'e', 'l', 'e', 'g', 'r', 'a', 'm', '-', 't', 'o', 'k', 'e', 'n'));
+    assertThat(context.secrets().resolve("telegram-token"))
+        .hasValueSatisfying(
+            value ->
+                assertThat(value)
+                    .containsExactly(
+                        't', 'e', 'l', 'e', 'g', 'r', 'a', 'm', '-', 't', 'o', 'k', 'e', 'n'));
     assertThat(ChannelTransportContext.empty().configuration()).isEmpty();
     new RecordingChannel().start(new ChannelTransportContext(Map.of(), FactorySecretAccess.none()));
   }
