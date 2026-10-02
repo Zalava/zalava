@@ -11,14 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.modules.runtime.SeaRuntime;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @RestController
@@ -102,7 +101,7 @@ public class ProviderOperationAdminController {
             findProvider(providerId)
                 .resolvePrompt(
                     promptName,
-                    resolutionRequest.argumentsAsJson(),
+                    resolutionRequest.argumentsAsMap(),
                     resolutionRequest.toInvocationContext()));
   }
 
@@ -189,8 +188,8 @@ public class ProviderOperationAdminController {
       return invocationContext(actorId, confirmed, attributes);
     }
 
-    JsonNode argumentsAsJson() {
-      return JSON.valueToTree(arguments == null ? Map.of() : arguments);
+    Map<String, Object> argumentsAsMap() {
+      return org.zalava.api.JsonArguments.immutable(arguments == null ? Map.of() : arguments);
     }
   }
 

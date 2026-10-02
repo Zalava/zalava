@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.RequirementMode;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaServiceContract;
-import org.zalava.ZalavaServiceFactory;
-import org.zalava.ZalavaServiceFactoryContext;
-import org.zalava.ZalavaServiceRequirement;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.RequirementMode;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceFactory;
+import org.zalava.api.ZalavaServiceFactoryContext;
+import org.zalava.api.ZalavaServiceRequirement;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 /** Fail-closed resolver for SEA-owned typed services, independent of Spring. */

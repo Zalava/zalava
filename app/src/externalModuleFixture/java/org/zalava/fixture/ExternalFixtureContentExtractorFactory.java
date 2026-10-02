@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.ZalavaServiceFactory;
-import org.zalava.ZalavaServiceFactoryContext;
-import org.zalava.content.ContentExtractionFailure;
-import org.zalava.content.ContentExtractionFailureCategory;
-import org.zalava.content.ContentExtractionResult;
-import org.zalava.content.ContentExtractor;
-import org.zalava.content.ContentProcessor;
+import org.zalava.api.ZalavaServiceDescriptor;
+import org.zalava.api.ZalavaServiceFactory;
+import org.zalava.api.ZalavaServiceFactoryContext;
+import org.zalava.api.extensions.content.ContentExtractionFailure;
+import org.zalava.api.extensions.content.ContentExtractionFailureCategory;
+import org.zalava.api.extensions.content.ContentExtractionResult;
+import org.zalava.api.extensions.content.ContentExtractor;
+import org.zalava.api.extensions.content.ContentProcessor;
 
 /** Minimal independently compiled extractor used to verify the stable service boundary. */
 final class ExternalFixtureContentExtractorFactory
@@ -27,7 +27,7 @@ final class ExternalFixtureContentExtractorFactory
   }
 
   @Override
-  public org.zalava.ZalavaServiceContract<ContentExtractor> contract() {
+  public org.zalava.api.ZalavaServiceContract<ContentExtractor> contract() {
     return ContentExtractor.CONTRACT;
   }
 

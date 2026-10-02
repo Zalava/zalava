@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.zalava.content.ContentExtractionLimits;
+import org.zalava.api.extensions.content.ContentExtractionLimits;
 import org.zalava.knowledge.adapter.out.filesystem.FileSystemKnowledgeBlobStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeAuditStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeDerivationStore;

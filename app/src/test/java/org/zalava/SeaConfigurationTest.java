@@ -9,6 +9,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.env.MockEnvironment;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ZalavaModule;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.runtime.SeaModuleProperties;
@@ -121,7 +124,7 @@ class SeaConfigurationTest {
       }
 
       @Override
-      public List<org.zalava.ProviderFactory> providerFactories() {
+      public List<org.zalava.api.ProviderFactory> providerFactories() {
         return List.of();
       }
     };

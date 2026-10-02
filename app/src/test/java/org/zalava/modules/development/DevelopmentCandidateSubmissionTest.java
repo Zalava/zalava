@@ -117,17 +117,17 @@ class DevelopmentCandidateSubmissionTest {
               .getFirst()
               .providerFactories()
               .getFirst()
-              .createProviders(org.zalava.ProviderFactoryContext.empty())
+              .createProviders(org.zalava.api.ProviderFactoryContext.empty())
               .getFirst();
       assertThat(provider.listTools())
-          .extracting(org.zalava.ZalavaToolDescriptor::name)
+          .extracting(org.zalava.api.ZalavaToolDescriptor::name)
           .contains("example_lookup");
       assertThat(
               provider
                   .callTool(
                       "example_lookup",
-                      new tools.jackson.databind.ObjectMapper().createObjectNode(),
-                      org.zalava.InvocationContext.system())
+                      java.util.Map.of(),
+                      org.zalava.api.InvocationContext.system())
                   .success())
           .isTrue();
     }

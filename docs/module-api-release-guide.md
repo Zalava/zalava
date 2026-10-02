@@ -80,7 +80,7 @@ dependencyResolutionManagement {
 Then declare the SPI as `compileOnly` and use it in tests:
 
 ```groovy
-def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.3')
+def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.6')
 
 dependencies {
     compileOnly "org.zalava:module-api:${moduleApiVersion.get()}"
@@ -124,7 +124,7 @@ try (ModuleContractKit kit =
 
   try (ProviderFixture providers = kit.providers(config)) {
     SeaOperationResult result =
-        providers.invoke("my-provider", "my_tool", JsonNodeFactory.instance.objectNode());
+        providers.invoke("my-provider", "my_tool", Map.of());
     assertThat(result.success()).isTrue();
   }
 }
@@ -174,3 +174,22 @@ workflow must verify the module, publish its immutable JAR to that module
 repository's GitHub Packages registry, and generate a SHA-256 digest. Zalava
 installation remains separately approval-, provenance-, compatibility-, and
 digest-gated; publishing a module does not enable it automatically.
+
+## Alpha namespace migration
+
+The alpha.6 candidate moves core contracts to `org.zalava.api`, extensions to
+`org.zalava.api.extensions.{channels,web,tasks,content,speech,managed}`, and the
+contract kit to `org.zalava.api.testing`. Register modules under
+`META-INF/services/org.zalava.api.ZalavaModule`. There are no old-package aliases.
+Provider tool and prompt arguments are immutable JSON-object maps of JDK values,
+including explicit nulls and exact numeric values. JSON parsing belongs in the
+host/module adapters; the production API has no third-party runtime dependencies.
+
+Alpha.6 is a coordinated candidate until its verified stack commits reach `main`
+and both API and kit publication workflows succeed. Local Maven candidate tests
+are migration evidence, not released-kit acceptance.
+
+Module `check` must enforce formatting and 90% line / 74% branch coverage, retain
+reports, and exercise the built JAR through the released contract kit. Adapter
+unit tests supplement that lane. Real-host installation, restart, security,
+persistence and browser acceptance remain owned by the host.

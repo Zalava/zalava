@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
-import org.zalava.InvocationContext;
+import org.zalava.api.InvocationContext;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;

@@ -2,7 +2,7 @@ package org.zalava.capabilities.operation.application.port.out;
 
 import java.util.List;
 import java.util.Optional;
-import org.zalava.ZalavaProvider;
+import org.zalava.api.ZalavaProvider;
 
 public interface ProviderCatalog {
 

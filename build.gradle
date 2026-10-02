@@ -7,7 +7,7 @@ plugins {
 
 spotless {
     java {
-        target 'app/src/**/*.java', 'module-api/src/**/*.java', 'module-api-test/src/**/*.java', 'templates/zalava-module/src/**/*.java'
+        target 'app/src/**/*.java', 'module-api/src/**/*.java', 'module-api-test/src/**/*.java', 'templates/zalava-module/src/**/*.java', 'templates/zalava-module-sample/src/**/*.java'
         googleJavaFormat('1.36.1')
     }
 }
@@ -24,8 +24,6 @@ def coverageBaselines = [
         app         : [line: '0.90', branch: '0.74'],
         'module-api': [line: '0.90', branch: '0.70'],
   'module-api-test': [line: '0.90', branch: '0.70'],
-  'zalava-module-api': [line: '0.90', branch: '0.70'],
-  'zalava-module-api-test': [line: '0.90', branch: '0.70']
 ]
 
 def nonSpringManagedDependencies = [

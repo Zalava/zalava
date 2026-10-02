@@ -5,16 +5,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ZalavaModule;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.extensions.web.WebExtensionDescriptor;
+import org.zalava.api.extensions.web.WebExtensionRegistry;
+import org.zalava.api.extensions.web.WebPageRegistration;
+import org.zalava.api.extensions.web.ZalavaWebExtension;
+import org.zalava.api.extensions.web.ZalavaWebHandler;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
 import org.zalava.modules.web.application.port.out.WebExtensionModuleCatalog;
 import org.zalava.modules.web.domain.RoutePattern;
-import org.zalava.web.WebExtensionDescriptor;
-import org.zalava.web.WebExtensionRegistry;
-import org.zalava.web.WebPageRegistration;
-import org.zalava.web.ZalavaWebExtension;
-import org.zalava.web.ZalavaWebHandler;
 
 public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
 

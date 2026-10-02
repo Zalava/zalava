@@ -8,12 +8,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import org.zalava.InvocationContext;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
@@ -121,7 +121,10 @@ class MemberProviderCapabilityPolicyTest {
 
     @Override
     public ZalavaOperationResult callTool(
-        String toolName, JsonNode arguments, InvocationContext invocationContext) {
+        String toolName,
+        java.util.Map<String, Object> argumentValues,
+        InvocationContext invocationContext) {
+      JsonNode arguments = new tools.jackson.databind.json.JsonMapper().valueToTree(argumentValues);
       calls.incrementAndGet();
       context = invocationContext;
       return ZalavaOperationResult.success(Map.of("status", "ok"));

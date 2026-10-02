@@ -1,13 +1,13 @@
 package org.zalava.fixture.speech;
 
 import java.util.Set;
-import org.zalava.ZalavaServiceContract;
-import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.ZalavaServiceFactory;
-import org.zalava.ZalavaServiceFactoryContext;
-import org.zalava.speech.SpeechAudioFormat;
-import org.zalava.speech.SpeechCapabilities;
-import org.zalava.speech.SpeechRecognition;
+import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
+import org.zalava.api.ZalavaServiceFactory;
+import org.zalava.api.ZalavaServiceFactoryContext;
+import org.zalava.api.extensions.speech.SpeechAudioFormat;
+import org.zalava.api.extensions.speech.SpeechCapabilities;
+import org.zalava.api.extensions.speech.SpeechRecognition;
 
 /** External fixture factory that creates the deterministic recognition provider. */
 public final class MockSpeechRecognitionFactory implements ZalavaServiceFactory<SpeechRecognition> {

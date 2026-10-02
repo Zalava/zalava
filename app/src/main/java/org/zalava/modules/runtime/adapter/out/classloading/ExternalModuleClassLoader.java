@@ -14,13 +14,13 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.jar.JarFile;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaProvider;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaProvider;
 import org.zalava.modules.catalog.install.application.port.out.EnabledModuleRegistry;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.modules.runtime.ExternalSeaModuleLoadingException;
@@ -497,7 +497,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
         + " uses retired preview SPI service descriptor "
         + RETIRED_PREVIEW_SERVICE_DESCRIPTOR
         + "; rebuild it against org.zalava:module-api:1.0.0 "
-        + "and register META-INF/services/org.zalava.ZalavaModule";
+        + "and register META-INF/services/org.zalava.api.ZalavaModule";
   }
 
   private ExternalSeaModuleLoadingException loadingFailure(String message) {

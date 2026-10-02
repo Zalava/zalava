@@ -4,15 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.modules.runtime.application.port.out.RuntimeModuleRegistry;
 
 class DefaultRuntimeQueriesTest {

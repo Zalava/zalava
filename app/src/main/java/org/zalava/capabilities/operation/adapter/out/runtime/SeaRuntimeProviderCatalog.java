@@ -2,7 +2,7 @@ package org.zalava.capabilities.operation.adapter.out.runtime;
 
 import java.util.List;
 import java.util.Optional;
-import org.zalava.ZalavaProvider;
+import org.zalava.api.ZalavaProvider;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 

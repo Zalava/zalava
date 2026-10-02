@@ -1,8 +1,8 @@
 package org.zalava.capabilities.operation.application.port.in;
 
 import java.util.Objects;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaOperationResult;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaOperationResult;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.tasks.domain.TaskReference;
 

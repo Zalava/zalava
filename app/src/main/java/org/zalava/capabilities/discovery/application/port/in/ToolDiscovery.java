@@ -2,7 +2,7 @@ package org.zalava.capabilities.discovery.application.port.in;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.ZalavaToolInputSchemas;
+import org.zalava.api.ZalavaToolInputSchemas;
 
 public interface ToolDiscovery {
 

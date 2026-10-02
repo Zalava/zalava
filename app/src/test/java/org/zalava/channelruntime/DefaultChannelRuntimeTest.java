@@ -7,19 +7,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.zalava.api.extensions.channels.ChannelCapabilities;
+import org.zalava.api.extensions.channels.ChannelContentPrivacy;
+import org.zalava.api.extensions.channels.ChannelDescriptor;
+import org.zalava.api.extensions.channels.ChannelDestination;
+import org.zalava.api.extensions.channels.ChannelEvent;
+import org.zalava.api.extensions.channels.ChannelInput;
+import org.zalava.api.extensions.channels.ChannelInteractionKind;
+import org.zalava.api.extensions.channels.ChannelPrivacy;
+import org.zalava.api.extensions.channels.ExternalIdentityReference;
+import org.zalava.api.extensions.channels.IncomingInteraction;
+import org.zalava.api.extensions.channels.ZalavaChannel;
 import org.zalava.channelruntime.application.DefaultChannelRuntime;
 import org.zalava.channelruntime.domain.ChannelIngressResult;
-import org.zalava.channels.ChannelCapabilities;
-import org.zalava.channels.ChannelContentPrivacy;
-import org.zalava.channels.ChannelDescriptor;
-import org.zalava.channels.ChannelDestination;
-import org.zalava.channels.ChannelEvent;
-import org.zalava.channels.ChannelInput;
-import org.zalava.channels.ChannelInteractionKind;
-import org.zalava.channels.ChannelPrivacy;
-import org.zalava.channels.ExternalIdentityReference;
-import org.zalava.channels.IncomingInteraction;
-import org.zalava.channels.ZalavaChannel;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
@@ -163,7 +163,7 @@ class DefaultChannelRuntimeTest {
 
   private static final class FixtureChannel implements ZalavaChannel {
     private final ChannelDescriptor descriptor;
-    private org.zalava.channels.ChannelInteractionReceiver receiver;
+    private org.zalava.api.extensions.channels.ChannelInteractionReceiver receiver;
     private final List<ChannelEvent> events = new ArrayList<>();
 
     private FixtureChannel(String id, ChannelCapabilities capabilities) {
@@ -176,7 +176,7 @@ class DefaultChannelRuntimeTest {
     }
 
     @Override
-    public void bind(org.zalava.channels.ChannelInteractionReceiver receiver) {
+    public void bind(org.zalava.api.extensions.channels.ChannelInteractionReceiver receiver) {
       this.receiver = receiver;
     }
 

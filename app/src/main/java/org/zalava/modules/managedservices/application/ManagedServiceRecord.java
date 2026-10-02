@@ -2,8 +2,8 @@ package org.zalava.modules.managedservices.application;
 
 import java.time.Instant;
 import java.util.Objects;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceResourceGrant;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
 
 /**
  * Durable SEA-owned reconciliation state; intent and engine observation do not overwrite each

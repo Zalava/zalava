@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.api.extensions.speech.SpeechRecognition;
+import org.zalava.api.extensions.speech.SpeechSynthesis;
 
 class SpeechFixtureModuleLoadingTest {
   private static final Duration TIMEOUT = Duration.ofSeconds(5);

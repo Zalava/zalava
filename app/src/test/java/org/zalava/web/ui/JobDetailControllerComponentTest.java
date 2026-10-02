@@ -32,15 +32,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.InvocationContext;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
@@ -427,7 +427,7 @@ class JobDetailControllerComponentTest {
             }
 
             @Override
-            public List<org.zalava.ProviderFactory> providerFactories() {
+            public List<org.zalava.api.ProviderFactory> providerFactories() {
               return List.of();
             }
           };
@@ -435,7 +435,7 @@ class JobDetailControllerComponentTest {
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
       return new SeaRuntime() {
         @Override
-        public List<org.zalava.ZalavaModule> modules() {
+        public List<org.zalava.api.ZalavaModule> modules() {
           return List.of(module);
         }
 

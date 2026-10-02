@@ -136,7 +136,7 @@ public class ManagedServiceUpgradeAdminController {
   public record CandidateRequestBody(
       String moduleId,
       String serviceId,
-      org.zalava.managed.ManagedServiceDesiredState candidateState) {}
+      org.zalava.api.extensions.managed.ManagedServiceDesiredState candidateState) {}
 
   public record ManagedServiceUpgradePlanRequest(List<CandidateRequestBody> candidates) {}
 

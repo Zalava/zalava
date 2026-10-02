@@ -8,10 +8,10 @@ import java.time.Duration;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceLifecycle;
-import org.zalava.managed.ManagedServiceLimits;
-import org.zalava.managed.ManagedServiceResourceGrant;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceLifecycle;
+import org.zalava.api.extensions.managed.ManagedServiceLimits;
+import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
 import org.zalava.modules.managedservices.application.ManagedServiceObservedState;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 

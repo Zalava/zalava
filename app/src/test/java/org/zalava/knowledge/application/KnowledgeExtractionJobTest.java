@@ -12,12 +12,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.content.ContentExtractionLimits;
-import org.zalava.content.ContentExtractionRequest;
-import org.zalava.content.ContentExtractionResult;
-import org.zalava.content.ContentExtractor;
-import org.zalava.content.ContentProcessor;
+import org.zalava.api.ZalavaServiceDescriptor;
+import org.zalava.api.extensions.content.ContentExtractionLimits;
+import org.zalava.api.extensions.content.ContentExtractionRequest;
+import org.zalava.api.extensions.content.ContentExtractionResult;
+import org.zalava.api.extensions.content.ContentExtractor;
+import org.zalava.api.extensions.content.ContentProcessor;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeBlobStore;
@@ -124,10 +124,10 @@ class KnowledgeExtractionJobTest {
     RuntimeQueries runtime = mock(RuntimeQueries.class);
     ContentExtractor extractor =
         request ->
-            new org.zalava.content.ContentExtractionFailure(
+            new org.zalava.api.extensions.content.ContentExtractionFailure(
                 request.source(),
                 new ContentProcessor("tika", "4.0.0"),
-                org.zalava.content.ContentExtractionFailureCategory.MALFORMED_INPUT,
+                org.zalava.api.extensions.content.ContentExtractionFailureCategory.MALFORMED_INPUT,
                 "bad input");
     when(sources.findById(sourceId)).thenReturn(Optional.of(source));
     when(blobs.read(sourceId)).thenReturn(Optional.of("hello".getBytes()));
@@ -214,7 +214,8 @@ class KnowledgeExtractionJobTest {
             org.mockito.ArgumentMatchers.argThat(
                 record ->
                     record.failureCategory()
-                            == org.zalava.content.ContentExtractionFailureCategory.UNAVAILABLE
+                            == org.zalava.api.extensions.content.ContentExtractionFailureCategory
+                                .UNAVAILABLE
                         && record.text() == null));
     verify(lifecycle, org.mockito.Mockito.never()).completeReprocessing(owner, candidate, true);
     verify(lifecycle).completeReprocessing(owner, candidate, false);
@@ -229,10 +230,10 @@ class KnowledgeExtractionJobTest {
     RuntimeQueries runtime = mock(RuntimeQueries.class);
     ContentExtractor extractor =
         request ->
-            new org.zalava.content.ContentExtractionFailure(
+            new org.zalava.api.extensions.content.ContentExtractionFailure(
                 request.source(),
                 new ContentProcessor("sea-ocr-worker", "1"),
-                org.zalava.content.ContentExtractionFailureCategory.UNAVAILABLE,
+                org.zalava.api.extensions.content.ContentExtractionFailureCategory.UNAVAILABLE,
                 "OCR worker is unavailable");
     configureExtractableSource(lifecycle, sources, blobs, runtime, extractor);
 
@@ -243,7 +244,8 @@ class KnowledgeExtractionJobTest {
             org.mockito.ArgumentMatchers.argThat(
                 record ->
                     record.failureCategory()
-                        == org.zalava.content.ContentExtractionFailureCategory.UNAVAILABLE));
+                        == org.zalava.api.extensions.content.ContentExtractionFailureCategory
+                            .UNAVAILABLE));
     verify(lifecycle).completeReprocessing(owner, candidate, false);
   }
 
@@ -257,7 +259,7 @@ class KnowledgeExtractionJobTest {
     ContentExtractor extractor =
         request ->
             new ContentExtractionResult(
-                new org.zalava.content.ContentSourceMetadata(
+                new org.zalava.api.extensions.content.ContentSourceMetadata(
                     "other.txt", "text/plain", 1, "a".repeat(64)),
                 new ContentProcessor("tika", "4.0.0"),
                 "wrong source",

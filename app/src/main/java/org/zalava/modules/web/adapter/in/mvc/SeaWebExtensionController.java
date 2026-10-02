@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.zalava.api.extensions.web.ZalavaWebRequest;
+import org.zalava.api.extensions.web.ZalavaWebResponse;
 import org.zalava.modules.web.application.RouteInvocation;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
-import org.zalava.web.ZalavaWebRequest;
-import org.zalava.web.ZalavaWebResponse;
 
 @Controller
 public final class SeaWebExtensionController {

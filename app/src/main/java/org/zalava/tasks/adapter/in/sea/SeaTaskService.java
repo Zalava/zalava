@@ -2,12 +2,12 @@ package org.zalava.tasks.adapter.in.sea;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.zalava.InvocationContext;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.extensions.tasks.RecurringTaskSummary;
+import org.zalava.api.extensions.tasks.TaskService;
+import org.zalava.api.extensions.tasks.TaskServiceResult;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.tasks.RecurringTaskSummary;
-import org.zalava.tasks.TaskService;
-import org.zalava.tasks.TaskServiceResult;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.in.TaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
@@ -45,7 +45,8 @@ public final class SeaTaskService implements TaskService {
     if (actor != null) {
       var reference = actorCommands.create(actor, name, description);
       actorTaskCreation.taskCreated(reference);
-      return TaskServiceResult.created(new org.zalava.tasks.TaskReference(reference.value()));
+      return TaskServiceResult.created(
+          new org.zalava.api.extensions.tasks.TaskReference(reference.value()));
     }
     return TaskServiceResult.created(reference(commands.create(name, description)));
   }
@@ -59,7 +60,8 @@ public final class SeaTaskService implements TaskService {
       var reference =
           actorCommands.schedule(actor, LocalDateTime.parse(executionTime), name, description);
       actorTaskCreation.taskCreated(reference);
-      return TaskServiceResult.scheduled(new org.zalava.tasks.TaskReference(reference.value()));
+      return TaskServiceResult.scheduled(
+          new org.zalava.api.extensions.tasks.TaskReference(reference.value()));
     }
     return TaskServiceResult.scheduled(
         reference(commands.schedule(LocalDateTime.parse(executionTime), name, description)));
@@ -103,9 +105,9 @@ public final class SeaTaskService implements TaskService {
                     "Recurring task with name " + name + " was not found"));
   }
 
-  private static org.zalava.tasks.TaskReference reference(
+  private static org.zalava.api.extensions.tasks.TaskReference reference(
       org.zalava.tasks.domain.TaskReference reference) {
-    return new org.zalava.tasks.TaskReference(reference.path());
+    return new org.zalava.api.extensions.tasks.TaskReference(reference.path());
   }
 
   private static void requireActor(InvocationContext context) {

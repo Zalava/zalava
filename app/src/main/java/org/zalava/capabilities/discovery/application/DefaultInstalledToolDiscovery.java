@@ -6,9 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 

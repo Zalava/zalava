@@ -6,14 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.RequirementMode;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaServiceContract;
-import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.ZalavaServiceFactory;
-import org.zalava.ZalavaServiceRequirement;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.RequirementMode;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
+import org.zalava.api.ZalavaServiceFactory;
+import org.zalava.api.ZalavaServiceRequirement;
 
 class ModuleServiceRuntimeFailurePathsTest {
 
@@ -64,7 +64,7 @@ class ModuleServiceRuntimeFailurePathsTest {
                   }
 
                   @Override
-                  public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+                  public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
                     return new Service("service-a", new ArrayList<>());
                   }
                 }),
@@ -85,7 +85,7 @@ class ModuleServiceRuntimeFailurePathsTest {
                   }
 
                   @Override
-                  public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+                  public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
                     // Returns null, which is not an instance of Service.
                     return null;
                   }
@@ -115,7 +115,7 @@ class ModuleServiceRuntimeFailurePathsTest {
                   }
 
                   @Override
-                  public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+                  public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
                     return new Service("service-a", new ArrayList<>());
                   }
                 }),
@@ -152,7 +152,7 @@ class ModuleServiceRuntimeFailurePathsTest {
           }
 
           @Override
-          public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+          public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
             return new Service("service-a", events);
           }
         };
@@ -194,7 +194,7 @@ class ModuleServiceRuntimeFailurePathsTest {
           }
 
           @Override
-          public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+          public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
             return new Service("service-a", events) {
               @Override
               public void close() {
@@ -230,7 +230,7 @@ class ModuleServiceRuntimeFailurePathsTest {
       }
 
       @Override
-      public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+      public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
         events.add("create-" + contract.serviceId());
         return new Service(contract.serviceId(), events);
       }
@@ -256,7 +256,7 @@ class ModuleServiceRuntimeFailurePathsTest {
       }
 
       @Override
-      public List<org.zalava.ProviderFactory> providerFactories() {
+      public List<org.zalava.api.ProviderFactory> providerFactories() {
         return List.of();
       }
 

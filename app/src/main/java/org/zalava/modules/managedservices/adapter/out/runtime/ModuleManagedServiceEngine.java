@@ -2,7 +2,7 @@ package org.zalava.modules.managedservices.adapter.out.runtime;
 
 import java.util.List;
 import java.util.Objects;
-import org.zalava.managed.ManagedServiceEngine;
+import org.zalava.api.extensions.managed.ManagedServiceEngine;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 import org.zalava.modules.managedservices.application.port.out.OciServiceEngine;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;

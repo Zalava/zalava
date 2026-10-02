@@ -2,10 +2,10 @@ package org.zalava.modules.managedservices.application;
 
 import java.time.Clock;
 import java.time.Instant;
-import org.zalava.ManagedServiceAuthority;
-import org.zalava.managed.ManagedServiceLifecycle;
-import org.zalava.managed.ManagedServiceLifecycleResult;
-import org.zalava.managed.ManagedServiceValidator;
+import org.zalava.api.ManagedServiceAuthority;
+import org.zalava.api.extensions.managed.ManagedServiceLifecycle;
+import org.zalava.api.extensions.managed.ManagedServiceLifecycleResult;
+import org.zalava.api.extensions.managed.ManagedServiceValidator;
 import org.zalava.modules.managedservices.application.port.out.ManagedServiceStateStore;
 import org.zalava.modules.managedservices.application.port.out.OciServiceEngine;
 

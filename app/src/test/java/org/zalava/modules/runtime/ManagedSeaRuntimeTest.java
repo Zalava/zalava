@@ -10,16 +10,16 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.ModuleConfigurationDescriptor;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaServiceContract;
-import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.ZalavaServiceFactory;
+import org.zalava.api.ModuleConfigurationDescriptor;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
+import org.zalava.api.ZalavaServiceFactory;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
@@ -193,7 +193,7 @@ class ManagedSeaRuntimeTest {
             }
 
             @Override
-            public AutoCloseable create(org.zalava.ZalavaServiceFactoryContext context) {
+            public AutoCloseable create(org.zalava.api.ZalavaServiceFactoryContext context) {
               SERVICE_FACTORY_CREATIONS.incrementAndGet();
               throw new IllegalStateException("service endpoint is required");
             }

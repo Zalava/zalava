@@ -199,7 +199,7 @@ public class SettingsController {
         .toList();
   }
 
-  private static String configurationLabel(org.zalava.ModuleConfigurationStatus status) {
+  private static String configurationLabel(org.zalava.api.ModuleConfigurationStatus status) {
     return switch (status) {
       case ACTIVE -> "Active";
       case RESTART_REQUIRED -> "Changes pending";

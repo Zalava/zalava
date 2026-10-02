@@ -3,9 +3,9 @@ package org.zalava.capabilities.operation.application;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 
 /** Default-deny provider capability baseline for authenticated member execution. */

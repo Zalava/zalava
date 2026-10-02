@@ -2,9 +2,9 @@ package org.zalava.capabilities.operation.application.port.out;
 
 import java.util.Map;
 import java.util.Optional;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.tasks.domain.TaskReference;
 

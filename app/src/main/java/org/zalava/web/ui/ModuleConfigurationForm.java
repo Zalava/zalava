@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.zalava.ModuleConfigurationDescriptor;
+import org.zalava.api.ModuleConfigurationDescriptor;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 

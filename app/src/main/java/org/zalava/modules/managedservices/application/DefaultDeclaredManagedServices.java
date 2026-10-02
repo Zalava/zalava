@@ -2,7 +2,7 @@ package org.zalava.modules.managedservices.application;
 
 import java.util.List;
 import java.util.Objects;
-import org.zalava.ManagedServiceDeclaration;
+import org.zalava.api.extensions.managed.ManagedServiceDeclaration;
 import org.zalava.modules.managedservices.application.port.in.DeclaredManagedServices;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 

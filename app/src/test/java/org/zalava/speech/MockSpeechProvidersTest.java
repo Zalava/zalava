@@ -10,6 +10,9 @@ import java.time.Duration;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.zalava.api.extensions.speech.SpeechException;
+import org.zalava.api.extensions.speech.SpeechRecognition;
+import org.zalava.api.extensions.speech.SpeechSynthesis;
 
 class MockSpeechProvidersTest {
   private static final Duration TIMEOUT = Duration.ofSeconds(5);

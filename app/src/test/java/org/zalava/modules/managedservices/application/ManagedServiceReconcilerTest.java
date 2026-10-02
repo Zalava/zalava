@@ -12,12 +12,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
-import org.zalava.ManagedServiceAuthority;
-import org.zalava.ZalavaServiceFactoryContext;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceLifecycle;
-import org.zalava.managed.ManagedServiceLimits;
-import org.zalava.managed.ManagedServiceResourceGrant;
+import org.zalava.api.ManagedServiceAuthority;
+import org.zalava.api.ZalavaServiceFactoryContext;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceLifecycle;
+import org.zalava.api.extensions.managed.ManagedServiceLimits;
+import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
 import org.zalava.modules.managedservices.application.port.out.ManagedServiceStateStore;
 import org.zalava.modules.managedservices.application.port.out.OciServiceEngine;
 

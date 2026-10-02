@@ -2,7 +2,7 @@ package org.zalava.capabilities.operation.application.port.out;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.ZalavaOperationResult;
+import org.zalava.api.ZalavaOperationResult;
 
 public record ToolInvocationObservation(
     String providerId,

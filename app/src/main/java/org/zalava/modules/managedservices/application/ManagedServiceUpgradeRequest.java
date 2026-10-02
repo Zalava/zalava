@@ -3,7 +3,7 @@ package org.zalava.modules.managedservices.application;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import org.zalava.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
 
 /**
  * Durable aggregate administrator decision over one planned upgrade set. The captured previous

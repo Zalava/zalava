@@ -2,8 +2,8 @@ package org.zalava.modules.runtime;
 
 import java.io.IOException;
 import java.util.List;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ZalavaModule;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ZalavaModule;
 import org.zalava.modules.catalog.install.application.port.out.EnabledModuleRegistry;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.modules.runtime.adapter.out.classloading.ExternalModuleClassLoader;

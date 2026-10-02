@@ -1,7 +1,7 @@
 package org.zalava.modules.managedservices.application.port.in;
 
 import java.util.List;
-import org.zalava.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
 import org.zalava.modules.managedservices.application.ManagedServiceUpgradeException;
 import org.zalava.modules.managedservices.application.ManagedServiceUpgradeRequest;
 
