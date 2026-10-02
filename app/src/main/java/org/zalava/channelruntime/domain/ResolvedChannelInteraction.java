@@ -1,9 +1,9 @@
 package org.zalava.channelruntime.domain;
 
 import java.util.Objects;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.channels.IncomingInteraction;
-import org.zalava.conversation.domain.ConversationReference;
+import org.zalava.identity.accounts.domain.Actor;
 
 /** An interaction Core has authenticated and associated with an actor-owned conversation. */
 public record ResolvedChannelInteraction(

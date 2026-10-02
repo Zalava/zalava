@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeAuditStore;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 

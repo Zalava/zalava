@@ -29,108 +29,104 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.application.port.out.AccountStore;
-import org.zalava.agent.Agent;
-import org.zalava.agent.AgentRequestTools;
-import org.zalava.agent.DefaultAgent;
-import org.zalava.agent.application.DefaultAgentContextAssembler;
-import org.zalava.agent.application.DefaultAgentExecution;
-import org.zalava.agent.application.DefaultAgentRunQueries;
-import org.zalava.agent.application.KnowledgeContextEnrichment;
-import org.zalava.agent.application.ModelBoundary;
-import org.zalava.agent.application.SkillContextEnrichment;
-import org.zalava.agent.application.port.in.AgentExecution;
-import org.zalava.agent.application.port.in.AgentRunQueries;
-import org.zalava.agent.application.port.out.AgentClock;
-import org.zalava.agent.application.port.out.AgentContextAssembler;
-import org.zalava.agent.application.port.out.AgentModel;
-import org.zalava.agent.application.port.out.AgentRunIdGenerator;
-import org.zalava.agent.application.port.out.AgentRunStore;
-import org.zalava.agent.application.port.out.AgentToolSelector;
-import org.zalava.approval.SeaToolApprovalRequests;
-import org.zalava.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.catalog.install.application.DefaultModuleQueries;
-import org.zalava.catalog.install.application.port.in.ModuleQueries;
-import org.zalava.catalog.install.application.port.out.EnabledModuleRegistry;
-import org.zalava.chat.adapter.out.agent.TaskCapturingChatAgent;
-import org.zalava.chat.adapter.out.channels.ChannelMessageEventAdapter;
-import org.zalava.chat.adapter.out.conversation.ConversationChatStore;
-import org.zalava.chat.adapter.out.system.UuidChatConversationIdGenerator;
-import org.zalava.chat.application.ActorChatUseCases;
-import org.zalava.chat.application.DefaultChatUseCases;
-import org.zalava.chat.application.UiExecutionStateQueries;
-import org.zalava.chat.application.port.in.ChatCommands;
-import org.zalava.chat.application.port.out.ChatAgent;
-import org.zalava.chat.application.port.out.ChatApprovalCommands;
-import org.zalava.chat.application.port.out.ChatConversationIdGenerator;
-import org.zalava.chat.application.port.out.ChatConversationStore;
-import org.zalava.chat.application.port.out.ChatMessageEvents;
-import org.zalava.clarification.ClarificationTools;
-import org.zalava.clarification.SeaClarifications;
-import org.zalava.clarification.application.DefaultClarificationResponses;
-import org.zalava.clarification.application.port.in.ClarificationResponses;
-import org.zalava.configuration.adapter.out.filesystem.FileSystemConfigurationStore;
-import org.zalava.configuration.adapter.out.spring.SpringConfigurationChangePublisher;
-import org.zalava.configuration.application.DefaultConfigurationManagement;
-import org.zalava.configuration.application.port.in.ConfigurationManagement;
-import org.zalava.configuration.application.port.out.ConfigurationChangePublisher;
-import org.zalava.configuration.application.port.out.ConfigurationStore;
-import org.zalava.control.adapter.out.runtime.SeaRuntimeVerificationCatalog;
-import org.zalava.control.application.DefaultBootstrapVerificationQueries;
-import org.zalava.control.application.InvocationLog;
-import org.zalava.control.application.port.in.BootstrapVerificationQueries;
-import org.zalava.conversation.adapter.out.filesystem.FileSystemConversationStore;
-import org.zalava.conversation.adapter.out.springai.MessageChatMemoryAdvisor;
-import org.zalava.conversation.adapter.out.springai.MessageWindowChatMemory;
-import org.zalava.conversation.adapter.out.springai.SpringAiChatMemoryRepository;
-import org.zalava.conversation.application.port.in.ActorConversations;
-import org.zalava.conversation.application.port.in.ConversationRepository;
-import org.zalava.conversation.application.port.out.ConversationStore;
-import org.zalava.development.adapter.in.agent.CapabilityGapTools;
-import org.zalava.development.adapter.in.agent.DevelopmentRequestTools;
-import org.zalava.development.application.port.in.DevelopmentCandidateSubmission;
-import org.zalava.development.application.port.in.DevelopmentRequestManagement;
-import org.zalava.development.application.port.in.DevelopmentWorkspaceExport;
-import org.zalava.discovery.adapter.out.springai.SeaToolCallbackCatalog;
-import org.zalava.discovery.adapter.out.springai.SeaToolIndex;
-import org.zalava.discovery.application.DefaultInstalledToolDiscovery;
-import org.zalava.discovery.application.port.in.ToolDiscovery;
+import org.zalava.assistant.agent.Agent;
+import org.zalava.assistant.agent.AgentRequestTools;
+import org.zalava.assistant.agent.DefaultAgent;
+import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
+import org.zalava.assistant.agent.application.DefaultAgentContextAssembler;
+import org.zalava.assistant.agent.application.DefaultAgentExecution;
+import org.zalava.assistant.agent.application.DefaultAgentRunQueries;
+import org.zalava.assistant.agent.application.KnowledgeContextEnrichment;
+import org.zalava.assistant.agent.application.ModelBoundary;
+import org.zalava.assistant.agent.application.SkillContextEnrichment;
+import org.zalava.assistant.agent.application.port.in.AgentExecution;
+import org.zalava.assistant.agent.application.port.in.AgentRunQueries;
+import org.zalava.assistant.agent.application.port.out.AgentClock;
+import org.zalava.assistant.agent.application.port.out.AgentContextAssembler;
+import org.zalava.assistant.agent.application.port.out.AgentModel;
+import org.zalava.assistant.agent.application.port.out.AgentRunIdGenerator;
+import org.zalava.assistant.agent.application.port.out.AgentRunStore;
+import org.zalava.assistant.agent.application.port.out.AgentToolSelector;
+import org.zalava.assistant.chat.adapter.out.agent.TaskCapturingChatAgent;
+import org.zalava.assistant.chat.adapter.out.channels.ChannelMessageEventAdapter;
+import org.zalava.assistant.chat.adapter.out.conversation.ConversationChatStore;
+import org.zalava.assistant.chat.adapter.out.system.UuidChatConversationIdGenerator;
+import org.zalava.assistant.chat.application.ActorChatUseCases;
+import org.zalava.assistant.chat.application.DefaultChatUseCases;
+import org.zalava.assistant.chat.application.UiExecutionStateQueries;
+import org.zalava.assistant.chat.application.port.in.ChatCommands;
+import org.zalava.assistant.chat.application.port.out.ChatAgent;
+import org.zalava.assistant.chat.application.port.out.ChatApprovalCommands;
+import org.zalava.assistant.chat.application.port.out.ChatConversationIdGenerator;
+import org.zalava.assistant.chat.application.port.out.ChatConversationStore;
+import org.zalava.assistant.chat.application.port.out.ChatMessageEvents;
+import org.zalava.assistant.conversation.adapter.out.filesystem.FileSystemConversationStore;
+import org.zalava.assistant.conversation.adapter.out.springai.MessageChatMemoryAdvisor;
+import org.zalava.assistant.conversation.adapter.out.springai.MessageWindowChatMemory;
+import org.zalava.assistant.conversation.adapter.out.springai.SpringAiChatMemoryRepository;
+import org.zalava.assistant.conversation.application.port.in.ActorConversations;
+import org.zalava.assistant.conversation.application.port.in.ConversationRepository;
+import org.zalava.assistant.conversation.application.port.out.ConversationStore;
+import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackCatalog;
+import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolIndex;
+import org.zalava.capabilities.discovery.application.DefaultInstalledToolDiscovery;
+import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
+import org.zalava.capabilities.operation.adapter.in.agent.SeaProviderTool;
+import org.zalava.capabilities.operation.adapter.in.agent.SeaProviderToolInvoker;
+import org.zalava.capabilities.operation.adapter.out.approval.SeaToolApprovalAdapter;
+import org.zalava.capabilities.operation.adapter.out.runtime.SeaRuntimeProviderCatalog;
+import org.zalava.capabilities.operation.application.DefaultProviderToolOperations;
+import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
+import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
-import org.zalava.memory.adapter.in.agent.MemoryPromotionTools;
-import org.zalava.memory.adapter.out.filesystem.FileSystemMemoryProposalStore;
-import org.zalava.memory.adapter.out.filesystem.FileSystemMemoryStore;
-import org.zalava.memory.application.ActorBoundMemoryQueries;
-import org.zalava.memory.application.DeterministicMemorySelector;
-import org.zalava.memory.application.SeaMemoryPromotions;
-import org.zalava.memory.application.port.in.MemoryPromotions;
-import org.zalava.memory.application.port.in.MemoryQueries;
-import org.zalava.memory.application.port.out.ActorMemoryStore;
-import org.zalava.memory.application.port.out.MemoryProposalStore;
-import org.zalava.operation.adapter.in.agent.SeaProviderTool;
-import org.zalava.operation.adapter.in.agent.SeaProviderToolInvoker;
-import org.zalava.operation.adapter.out.approval.SeaToolApprovalAdapter;
-import org.zalava.operation.adapter.out.runtime.SeaRuntimeProviderCatalog;
-import org.zalava.operation.application.DefaultProviderToolOperations;
-import org.zalava.operation.application.port.in.ProviderToolOperations;
-import org.zalava.operation.application.port.out.ToolInvocationObserver;
-import org.zalava.runtime.ExternalSeaModuleLoader;
-import org.zalava.runtime.ManagedSeaRuntime;
-import org.zalava.runtime.SeaModuleProperties;
-import org.zalava.runtime.SeaModuleRegistry;
-import org.zalava.runtime.SeaRuntime;
-import org.zalava.runtime.StaticSeaModuleRegistry;
-import org.zalava.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
-import org.zalava.skills.adapter.out.filesystem.FileSystemSkillActivationStore;
-import org.zalava.skills.adapter.out.filesystem.FileSystemSkillCatalog;
-import org.zalava.skills.adapter.out.filesystem.FileSystemSkillContentSource;
-import org.zalava.skills.application.DefaultSkillDiscovery;
-import org.zalava.skills.application.SeaSkillActivations;
-import org.zalava.skills.application.port.in.SkillActivations;
-import org.zalava.skills.application.port.in.SkillQueries;
-import org.zalava.skills.application.port.out.SkillActivationStore;
-import org.zalava.skills.application.port.out.SkillContentSource;
-import org.zalava.skills.domain.SkillContentPolicy;
+import org.zalava.knowledge.memory.adapter.in.agent.MemoryPromotionTools;
+import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryProposalStore;
+import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryStore;
+import org.zalava.knowledge.memory.application.ActorBoundMemoryQueries;
+import org.zalava.knowledge.memory.application.DeterministicMemorySelector;
+import org.zalava.knowledge.memory.application.SeaMemoryPromotions;
+import org.zalava.knowledge.memory.application.port.in.MemoryPromotions;
+import org.zalava.knowledge.memory.application.port.in.MemoryQueries;
+import org.zalava.knowledge.memory.application.port.out.ActorMemoryStore;
+import org.zalava.knowledge.memory.application.port.out.MemoryProposalStore;
+import org.zalava.knowledge.skills.adapter.out.filesystem.FileSystemSkillActivationStore;
+import org.zalava.knowledge.skills.adapter.out.filesystem.FileSystemSkillCatalog;
+import org.zalava.knowledge.skills.adapter.out.filesystem.FileSystemSkillContentSource;
+import org.zalava.knowledge.skills.application.DefaultSkillDiscovery;
+import org.zalava.knowledge.skills.application.SeaSkillActivations;
+import org.zalava.knowledge.skills.application.port.in.SkillActivations;
+import org.zalava.knowledge.skills.application.port.in.SkillQueries;
+import org.zalava.knowledge.skills.application.port.out.SkillActivationStore;
+import org.zalava.knowledge.skills.application.port.out.SkillContentSource;
+import org.zalava.knowledge.skills.domain.SkillContentPolicy;
+import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
+import org.zalava.modules.catalog.install.application.DefaultModuleQueries;
+import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
+import org.zalava.modules.catalog.install.application.port.out.EnabledModuleRegistry;
+import org.zalava.modules.development.adapter.in.agent.CapabilityGapTools;
+import org.zalava.modules.development.adapter.in.agent.DevelopmentRequestTools;
+import org.zalava.modules.development.application.port.in.DevelopmentCandidateSubmission;
+import org.zalava.modules.development.application.port.in.DevelopmentRequestManagement;
+import org.zalava.modules.development.application.port.in.DevelopmentWorkspaceExport;
+import org.zalava.modules.runtime.ExternalSeaModuleLoader;
+import org.zalava.modules.runtime.ManagedSeaRuntime;
+import org.zalava.modules.runtime.SeaModuleProperties;
+import org.zalava.modules.runtime.SeaModuleRegistry;
+import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.StaticSeaModuleRegistry;
+import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
+import org.zalava.modules.web.adapter.out.runtime.SeaRuntimeWebExtensionModuleCatalog;
+import org.zalava.modules.web.application.DefaultWebExtensionRoutes;
+import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
+import org.zalava.platform.configuration.adapter.out.filesystem.FileSystemConfigurationStore;
+import org.zalava.platform.configuration.adapter.out.spring.SpringConfigurationChangePublisher;
+import org.zalava.platform.configuration.application.DefaultConfigurationManagement;
+import org.zalava.platform.configuration.application.port.in.ConfigurationManagement;
+import org.zalava.platform.configuration.application.port.out.ConfigurationChangePublisher;
+import org.zalava.platform.configuration.application.port.out.ConfigurationStore;
 import org.zalava.tasks.adapter.out.agent.ActorAgentTaskAgent;
 import org.zalava.tasks.adapter.out.approval.SeaActorTaskApprovalDecisions;
 import org.zalava.tasks.adapter.out.clarification.SeaActorTaskClarifications;
@@ -153,13 +149,17 @@ import org.zalava.tasks.application.port.out.TaskApprovalDecisions;
 import org.zalava.tasks.application.port.out.TaskNotifier;
 import org.zalava.tasks.application.port.out.TaskScheduler;
 import org.zalava.tasks.application.port.out.TaskStore;
+import org.zalava.tasks.capture.ActorTaskCreationContext;
+import org.zalava.tasks.capture.TaskCreationContext;
+import org.zalava.tasks.clarification.ClarificationTools;
+import org.zalava.tasks.clarification.SeaClarifications;
+import org.zalava.tasks.clarification.application.DefaultClarificationResponses;
+import org.zalava.tasks.clarification.application.port.in.ClarificationResponses;
 import org.zalava.tasks.domain.TaskExecutionContext;
-import org.zalava.tools.ActorTaskCreationContext;
-import org.zalava.tools.AgentEnvironment;
-import org.zalava.tools.TaskCreationContext;
-import org.zalava.web.adapter.out.runtime.SeaRuntimeWebExtensionModuleCatalog;
-import org.zalava.web.application.DefaultWebExtensionRoutes;
-import org.zalava.web.application.port.in.WebExtensionRoutes;
+import org.zalava.web.control.adapter.out.runtime.SeaRuntimeVerificationCatalog;
+import org.zalava.web.control.application.DefaultBootstrapVerificationQueries;
+import org.zalava.web.control.application.InvocationLog;
+import org.zalava.web.control.application.port.in.BootstrapVerificationQueries;
 
 @Configuration
 @EnableConfigurationProperties(SeaModuleProperties.class)
@@ -217,10 +217,11 @@ public class SeaConfiguration {
   }
 
   @Bean
-  public org.zalava.channels.application.port.in.TelegramConfiguration telegramConfiguration(
-      org.zalava.configuration.application.port.in.ConfigurationManagement
-          configurationManagement) {
-    return new org.zalava.channels.application.TelegramConfigurationService(
+  public org.zalava.assistant.channels.application.port.in.TelegramConfiguration
+      telegramConfiguration(
+          org.zalava.platform.configuration.application.port.in.ConfigurationManagement
+              configurationManagement) {
+    return new org.zalava.assistant.channels.application.TelegramConfigurationService(
         configurationManagement, configurationManagement);
   }
 
@@ -263,9 +264,9 @@ public class SeaConfiguration {
   }
 
   @Bean
-  public org.zalava.memory.application.port.in.MemoryManagement memoryManagement(
+  public org.zalava.knowledge.memory.application.port.in.MemoryManagement memoryManagement(
       ActorMemoryStore actorMemoryStore) {
-    return new org.zalava.memory.application.DefaultMemoryManagement(actorMemoryStore);
+    return new org.zalava.knowledge.memory.application.DefaultMemoryManagement(actorMemoryStore);
   }
 
   @Bean
@@ -373,7 +374,7 @@ public class SeaConfiguration {
             knowledgeEnrichmentEnabled),
         new SkillContextEnrichment(
             skillActivations, actorExecutionContext, modelBoundary, skillEnrichmentEnabled),
-        new org.zalava.agent.application.ContextSourceBudgets(
+        new org.zalava.assistant.agent.application.ContextSourceBudgets(
             toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget));
   }
 
@@ -386,7 +387,7 @@ public class SeaConfiguration {
       AgentClock clock,
       AgentRunIdGenerator idGenerator,
       ModelBoundary modelBoundary,
-      org.zalava.observability.application.port.out.OperationalMetrics metrics) {
+      org.zalava.platform.observability.application.port.out.OperationalMetrics metrics) {
     return new DefaultAgentExecution(
         model,
         toolSelector,
@@ -435,8 +436,9 @@ public class SeaConfiguration {
       AgentExecution agentExecution,
       ConversationRepository conversationRepository,
       TaskCreationContext taskCreationContext,
-      org.zalava.channels.application.port.in.ChannelApprovalCommands channelApprovalCommands,
-      org.zalava.channels.ChannelRegistry channelRegistry) {
+      org.zalava.assistant.channels.application.port.in.ChannelApprovalCommands
+          channelApprovalCommands,
+      org.zalava.assistant.channels.ChannelRegistry channelRegistry) {
     ChatAgent agent = new TaskCapturingChatAgent(agentExecution, taskCreationContext);
     ChatConversationStore conversations = new ConversationChatStore(conversationRepository);
     ChatApprovalCommands approvals = channelApprovalCommands::handle;
@@ -461,22 +463,27 @@ public class SeaConfiguration {
   }
 
   @Bean
-  public org.zalava.channels.application.port.in.ChannelApprovalCommands channelApprovalCommandPort(
-      SeaToolApprovalRequests approvals,
-      ProviderToolOperations operations,
-      TaskCommands taskCommands,
-      TaskQueries taskQueries) {
-    return new org.zalava.channels.application.DefaultChannelApprovalCommands(
-        new org.zalava.channels.adapter.out.approval.SeaChannelApprovalStore(approvals),
-        new org.zalava.channels.adapter.out.approval.ProviderOperationChannelAdapter(operations),
-        new org.zalava.channels.adapter.out.tasks.TaskChannelAdapter(taskCommands, taskQueries));
+  public org.zalava.assistant.channels.application.port.in.ChannelApprovalCommands
+      channelApprovalCommandPort(
+          SeaToolApprovalRequests approvals,
+          ProviderToolOperations operations,
+          TaskCommands taskCommands,
+          TaskQueries taskQueries) {
+    return new org.zalava.assistant.channels.application.DefaultChannelApprovalCommands(
+        new org.zalava.assistant.channels.adapter.out.approval.SeaChannelApprovalStore(approvals),
+        new org.zalava.assistant.channels.adapter.out.approval.ProviderOperationChannelAdapter(
+            operations),
+        new org.zalava.assistant.channels.adapter.out.tasks.TaskChannelAdapter(
+            taskCommands, taskQueries));
   }
 
   @Bean
-  public org.zalava.onboarding.application.OnboardingWorkflow onboardingWorkflow(
-      List<org.zalava.onboarding.OnboardingProvider> steps,
-      org.zalava.configuration.application.port.in.ConfigurationCommands configurationCommands) {
-    return new org.zalava.onboarding.application.OnboardingWorkflow(steps, configurationCommands);
+  public org.zalava.web.onboarding.application.OnboardingWorkflow onboardingWorkflow(
+      List<org.zalava.web.onboarding.OnboardingProvider> steps,
+      org.zalava.platform.configuration.application.port.in.ConfigurationCommands
+          configurationCommands) {
+    return new org.zalava.web.onboarding.application.OnboardingWorkflow(
+        steps, configurationCommands);
   }
 
   public static final String AGENT_MD = "AGENT.private.md";
@@ -549,7 +556,7 @@ public class SeaConfiguration {
       TaskAgent taskAgent,
       TaskApprovalDecisions approvalDecisions,
       TaskNotifier taskNotifier,
-      org.zalava.observability.application.port.out.OperationalMetrics metrics) {
+      org.zalava.platform.observability.application.port.out.OperationalMetrics metrics) {
     return new DefaultTaskExecution(taskStore, taskAgent, approvalDecisions, taskNotifier, metrics);
   }
 
@@ -793,7 +800,8 @@ public class SeaConfiguration {
       ProviderToolOperations providerToolOperations,
       ToolDiscovery toolDiscovery,
       SeaToolCallbackCatalog callbackCatalog,
-      org.zalava.discovery.application.port.in.RemoteCapabilityDiscovery remoteDiscovery,
+      org.zalava.capabilities.discovery.application.port.in.RemoteCapabilityDiscovery
+          remoteDiscovery,
       TaskExecutionContext taskExecutionContext,
       ActorExecutionContext actorExecutionContext,
       org.zalava.knowledge.application.KnowledgeEvidenceQueries knowledgeEvidence,
@@ -830,7 +838,8 @@ public class SeaConfiguration {
         callbackCatalog,
         List.of(capabilityGapTools),
         remoteDiscovery,
-        new org.zalava.agent.PolicyFilteredToolSearch(springAiToolIndex, toolSearchEnabled));
+        new org.zalava.assistant.agent.PolicyFilteredToolSearch(
+            springAiToolIndex, toolSearchEnabled));
   }
 
   @Bean

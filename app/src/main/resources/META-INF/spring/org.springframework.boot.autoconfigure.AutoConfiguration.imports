@@ -1,1 +1,1 @@
-org.zalava.channels.telegram.TelegramChannelAutoConfiguration
+org.zalava.assistant.channels.telegram.TelegramChannelAutoConfiguration

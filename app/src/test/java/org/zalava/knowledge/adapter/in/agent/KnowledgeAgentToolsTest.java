@@ -8,14 +8,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.agent.application.ModelBoundary;
+import org.zalava.assistant.agent.application.ModelBoundary;
+import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.KnowledgeEvidenceQueries;
 import org.zalava.knowledge.application.port.out.KnowledgeEvidenceStore;
-import org.zalava.operation.application.port.out.ToolInvocationObservation;
 
 class KnowledgeAgentToolsTest {
   private final KnowledgeEvidenceStore store = mock(KnowledgeEvidenceStore.class);

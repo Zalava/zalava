@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
-import org.zalava.agent.Agent;
+import org.zalava.assistant.agent.Agent;
 import org.zalava.tasks.application.BoundedTaskAgentLoop;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.Task;

@@ -2,7 +2,7 @@ package org.zalava.tasks.application.port.out;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.domain.ActorTaskReference;
 
 /** Approval state visible only through an actor/task ownership pair. */

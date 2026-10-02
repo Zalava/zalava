@@ -2,8 +2,8 @@ package org.zalava.knowledge.application;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.operation.application.port.out.ToolInvocationObservation;
-import org.zalava.operation.application.port.out.ToolInvocationObserver;
+import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
+import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 
 public final class KnowledgeToolObservation {
   private final List<ToolInvocationObserver> observers;

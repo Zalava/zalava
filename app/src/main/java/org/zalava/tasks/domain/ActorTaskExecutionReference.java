@@ -1,8 +1,8 @@
 package org.zalava.tasks.domain;
 
 import java.util.Objects;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
 
 /** Scheduler-safe task identity that carries only opaque owner and task UUIDs. */
 public record ActorTaskExecutionReference(Actor actor, ActorTaskReference taskReference) {

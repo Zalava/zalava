@@ -10,7 +10,7 @@ import org.zalava.knowledge.application.port.out.KnowledgeDerivationStore;
 import org.zalava.knowledge.domain.DerivationState;
 import org.zalava.knowledge.domain.KnowledgeDerivation;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
-import org.zalava.persistence.OptimisticLockConflictException;
+import org.zalava.platform.persistence.OptimisticLockConflictException;
 
 public final class JdbcKnowledgeDerivationStore implements KnowledgeDerivationStore {
   private static final String DERIVATION_COLUMNS =

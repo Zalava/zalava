@@ -1,5 +1,5 @@
 @import java.util.List
-@import org.zalava.onboarding.steps.S5StarterModulesStep.StarterModule
+@import org.zalava.web.onboarding.steps.S5StarterModulesStep.StarterModule
 @import org.springframework.security.web.csrf.CsrfToken
 
 @param Integer currentStepNumber

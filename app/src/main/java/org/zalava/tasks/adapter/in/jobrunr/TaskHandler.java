@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.zalava.private_state.BootstrapPrivateStateBridge;
+import org.zalava.platform.storage.private_state.BootstrapPrivateStateBridge;
 import org.zalava.tasks.application.ActorTaskExecution;
 import org.zalava.tasks.application.port.in.TaskExecution;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;

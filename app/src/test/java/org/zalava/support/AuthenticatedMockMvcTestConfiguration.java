@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class AuthenticatedMockMvcTestConfiguration {
@@ -24,7 +24,7 @@ public class AuthenticatedMockMvcTestConfiguration {
                 .with(
                     componentTestAccounts.authenticatedAs(
                         componentTestAccounts.newActivated(
-                            org.zalava.accounts.domain.AccountRole.ADMIN)))
+                            org.zalava.identity.accounts.domain.AccountRole.ADMIN)))
                 .with(csrf()))
         .apply(springSecurity())
         .build();

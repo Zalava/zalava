@@ -1,7 +1,7 @@
-@import org.zalava.ui.MemoryController.MemoryDetailModel
-@import org.zalava.memory.domain.MemoryScope
+@import org.zalava.web.ui.MemoryController.MemoryDetailModel
+@import org.zalava.knowledge.memory.domain.MemoryScope
 @param MemoryDetailModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 @param String memoryMessage
 @param String memoryError
 <!doctype html>

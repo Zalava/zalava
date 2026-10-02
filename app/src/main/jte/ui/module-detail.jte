@@ -1,11 +1,11 @@
-@import org.zalava.ui.ModulesController.ModuleDetailModel
-@import org.zalava.ui.ModulesController.ProviderEntry
-@import org.zalava.ui.ModulesController.ManagedServiceEntry
-@import org.zalava.ui.ModulesController.ScopeEntry
-@import org.zalava.ui.ModulesController.ToolEntry
-@import org.zalava.ui.ModulesController.CatalogReleaseEntry
+@import org.zalava.web.ui.ModulesController.ModuleDetailModel
+@import org.zalava.web.ui.ModulesController.ProviderEntry
+@import org.zalava.web.ui.ModulesController.ManagedServiceEntry
+@import org.zalava.web.ui.ModulesController.ScopeEntry
+@import org.zalava.web.ui.ModulesController.ToolEntry
+@import org.zalava.web.ui.ModulesController.CatalogReleaseEntry
 @param ModuleDetailModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 @param org.springframework.security.web.csrf.CsrfToken csrf
 
 <!doctype html>

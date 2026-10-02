@@ -1,5 +1,24 @@
 # Zalava architecture
 
+## Source ownership
+
+The host has eight source ownership groups beneath `org.zalava`: `identity`,
+`assistant`, `capabilities`, `tasks`, `knowledge`, `modules`, `platform`, and
+`web`. These groups organize related feature contexts; they do not create new
+Gradle projects or merge independent use cases. Each substantial child context
+keeps its domain, application ports and adapters.
+
+`modules` owns catalog/installation, module runtime, managed services, development
+and module web extensions. `platform.observability` owns shared operational
+metrics across agent, task, knowledge and provider execution. Module runtime
+does not own all host observability. Host UI/control/onboarding live in `web`.
+External modules may still use their own `org.zalava.modules.<module>` namespace;
+the loader protects specific host module-management subpackages instead of
+reserving that entire prefix.
+
+Spring composition may wire concrete adapters. Feature/use-case collaboration
+must use explicit contracts instead of another context's internal implementations.
+
 ## Context boundaries
 
 Organize product code around bounded contexts rather than technical layers.

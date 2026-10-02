@@ -4,9 +4,9 @@ import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.chat.ws.ActorWebSocketSessions;
+import org.zalava.assistant.chat.ws.ActorWebSocketSessions;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.domain.Task;
 
 class ActorWebSocketTaskNotifierTest {

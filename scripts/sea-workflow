@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Repository-explicit verification and gh-stack publication for Zalava repositories."""
+
+import argparse
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+
+def run(repo, *command, capture=False):
+    result = subprocess.run(command, cwd=repo, check=True, text=True,
+                            stdout=subprocess.PIPE if capture else None)
+    return result.stdout.strip() if capture else None
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repository", required=True, type=Path)
+    commands = parser.add_subparsers(dest="command", required=True)
+    start = commands.add_parser("stack-start")
+    start.add_argument("branch")
+    verify = commands.add_parser("verify")
+    verify.add_argument("tasks", nargs="*")
+    publish = commands.add_parser("publish")
+    publish.add_argument("--plan", required=True, type=Path)
+    publish.add_argument("--body-file", required=True, type=Path)
+    publish.add_argument("--title", required=True)
+    publish.add_argument("--file", action="append", required=True)
+    publish.add_argument("--verify-command")
+    args = parser.parse_args()
+    repo = args.repository.resolve(strict=True)
+    if Path(run(repo, "git", "rev-parse", "--show-toplevel", capture=True)).resolve() != repo:
+        parser.error("--repository must identify a repository/worktree root")
+    if args.command == "stack-start":
+        if not args.branch.startswith("step-"):
+            parser.error("branches must start with step-")
+        if run(repo, "git", "status", "--porcelain", capture=True):
+            parser.error("stack-start requires a clean worktree")
+        if subprocess.run(["gh", "stack", "view", "--json"], cwd=repo,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            run(repo, "gh", "stack", "add", args.branch)
+        else:
+            run(repo, "gh", "stack", "init", "--base", "main", args.branch)
+        return
+    if args.command == "publish":
+        args.plan.resolve(strict=True)
+        args.body_file.resolve(strict=True)
+        branch = run(repo, "git", "branch", "--show-current", capture=True)
+        if not branch.startswith("step-"):
+            parser.error("publish requires a step-* branch")
+        allowed = []
+        for name in args.file:
+            path = Path(name)
+            if path.is_absolute() or ".." in path.parts or name == ".":
+                parser.error("--file must be an explicit repository-relative path")
+            allowed.append(name.rstrip("/"))
+        raw = subprocess.check_output(["git", "status", "--porcelain=v1", "-z"], cwd=repo)
+        entries = raw.decode().split("\0")
+        index = 0
+        while index < len(entries) and entries[index]:
+            status, name = entries[index][:2], entries[index][3:]
+            names = [name]
+            if "R" in status or "C" in status:
+                index += 1
+                names.append(entries[index])
+            for changed in names:
+                if changed.startswith(".playwright-mcp/") or not any(
+                    changed == item or changed.startswith(item + "/") for item in allowed
+                ):
+                    parser.error("changed path outside explicit allowlist: " + changed)
+            index += 1
+        if not raw:
+            parser.error("no changes to publish")
+        run(repo, "git", "diff", "--check")
+    environment = dict(os.environ, GRADLE_USER_HOME="/tmp/gradle-home")
+    if args.command == "publish" and args.verify_command:
+        subprocess.run(["bash", "-lc", args.verify_command], cwd=repo, env=environment, check=True)
+    else:
+        tasks = args.tasks if args.command == "verify" else []
+        if not tasks:
+            tasks = [":module-api:test", ":app:check"] if (repo / "app").is_dir() else ["check"]
+        subprocess.run(["./gradlew", *tasks], cwd=repo, env=environment, check=True)
+    if args.command == "verify":
+        return
+    run(repo, "git", "add", "-A", "--", *args.file)
+    run(repo, "git", "diff", "--cached", "--check")
+    run(repo, "git", "diff", "--cached", "--stat")
+    run(repo, "git", "diff", "--cached")
+    run(repo, "git", "commit", "-m", args.title)
+    run(repo, "gh", "stack", "submit", "--auto", "--open")
+    run(repo, "gh", "pr", "edit", "--title", args.title, "--body-file", str(args.body_file.resolve()))
+    print(run(repo, "gh", "pr", "view", "--json", "url", "--jq", ".url", capture=True))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (subprocess.CalledProcessError, OSError) as failure:
+        print(str(failure), file=sys.stderr)
+        sys.exit(1)

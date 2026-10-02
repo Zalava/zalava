@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import org.zalava.configuration.ConfigurationChangedEvent;
+import org.zalava.platform.configuration.ConfigurationChangedEvent;
 
 @SpringBootApplication
 public class SeaApplication {

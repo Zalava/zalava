@@ -1,10 +1,10 @@
 package org.zalava.tasks.adapter.out.clarification;
 
 import java.util.List;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.clarification.ClarificationText;
-import org.zalava.clarification.SeaClarifications;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.port.out.ActorTaskClarifications;
+import org.zalava.tasks.clarification.ClarificationText;
+import org.zalava.tasks.clarification.SeaClarifications;
 import org.zalava.tasks.domain.ActorTaskReference;
 
 /** Owner-scoped clarification view for actor task execution. */

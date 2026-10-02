@@ -116,17 +116,19 @@ class PortsAndAdaptersArchitectureTest {
       configuration_application_must_not_depend_on_configuration_adapters_or_frameworks =
           noClasses()
               .that()
-              .resideInAnyPackage("org.zalava.configuration.application..")
+              .resideInAnyPackage("org.zalava.platform.configuration.application..")
               .should()
               .dependOnClassesThat()
               .resideInAnyPackage(
-                  "org.zalava.configuration.adapter..", "org.springframework..", "java.nio.file..");
+                  "org.zalava.platform.configuration.adapter..",
+                  "org.springframework..",
+                  "java.nio.file..");
 
   @ArchTest
   static final ArchRule configuration_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.configuration.application.port..")
+          .resideInAnyPackage("org.zalava.platform.configuration.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -135,7 +137,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule memory_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.memory.domain..")
+          .resideInAnyPackage("org.zalava.knowledge.memory.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -144,18 +146,19 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule memory_application_must_not_depend_on_memory_adapters_or_filesystem =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.memory.application..")
+          .resideInAnyPackage("org.zalava.knowledge.memory.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.memory.adapter..", "java.nio.file..", "org.springframework..");
+              "org.zalava.knowledge.memory.adapter..", "java.nio.file..", "org.springframework..");
 
   @ArchTest
   static final ArchRule conversation_domain_and_ports_must_be_framework_independent =
       noClasses()
           .that()
           .resideInAnyPackage(
-              "org.zalava.conversation.domain..", "org.zalava.conversation.application..")
+              "org.zalava.assistant.conversation.domain..",
+              "org.zalava.assistant.conversation.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -164,16 +167,17 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule catalog_application_must_not_depend_on_catalog_adapters_or_transport =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.catalog.application..")
+          .resideInAnyPackage("org.zalava.modules.catalog.application..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("org.zalava.catalog.adapter..", "java.net.http..", "java.nio.file..");
+          .resideInAnyPackage(
+              "org.zalava.modules.catalog.adapter..", "java.net.http..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule catalog_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.catalog.application.port..")
+          .resideInAnyPackage("org.zalava.modules.catalog.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -182,16 +186,17 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule runtime_application_must_not_depend_on_runtime_adapters_or_filesystem =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.runtime.application..")
+          .resideInAnyPackage("org.zalava.modules.runtime.application..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("org.zalava.runtime.adapter..", "java.net..", "java.nio.file..");
+          .resideInAnyPackage(
+              "org.zalava.modules.runtime.adapter..", "java.net..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule runtime_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.runtime.domain..")
+          .resideInAnyPackage("org.zalava.modules.runtime.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -200,7 +205,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule runtime_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.runtime.application.port..")
+          .resideInAnyPackage("org.zalava.modules.runtime.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -209,7 +214,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule web_extension_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.web.domain..")
+          .resideInAnyPackage("org.zalava.modules.web.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -218,17 +223,17 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule web_extension_application_must_not_depend_on_adapters_or_frameworks =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.web.application..")
+          .resideInAnyPackage("org.zalava.modules.web.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.web.adapter..", "org.springframework..", "java.nio.file..");
+              "org.zalava.modules.web.adapter..", "org.springframework..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule web_extension_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.web.application.port..")
+          .resideInAnyPackage("org.zalava.modules.web.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -238,17 +243,17 @@ class PortsAndAdaptersArchitectureTest {
       local_control_application_must_not_depend_on_local_control_adapters_or_frameworks =
           noClasses()
               .that()
-              .resideInAnyPackage("org.zalava.control.application..")
+              .resideInAnyPackage("org.zalava.web.control.application..")
               .should()
               .dependOnClassesThat()
               .resideInAnyPackage(
-                  "org.zalava.control.adapter..", "org.springframework..", "java.nio.file..");
+                  "org.zalava.web.control.adapter..", "org.springframework..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule local_control_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.control.application.port..")
+          .resideInAnyPackage("org.zalava.web.control.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -257,7 +262,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule approval_storage_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.approval.application.port..")
+          .resideInAnyPackage("org.zalava.capabilities.approval.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -266,7 +271,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule agent_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.agent.domain..")
+          .resideInAnyPackage("org.zalava.assistant.agent.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -275,17 +280,17 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule agent_application_must_not_depend_on_agent_adapters_or_frameworks =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.agent.application..")
+          .resideInAnyPackage("org.zalava.assistant.agent.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.agent.adapter..", "org.springframework..", "java.nio.file..");
+              "org.zalava.assistant.agent.adapter..", "org.springframework..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule agent_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.agent.application.port..")
+          .resideInAnyPackage("org.zalava.assistant.agent.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -294,7 +299,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule chat_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.chat.domain..")
+          .resideInAnyPackage("org.zalava.assistant.chat.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -303,17 +308,17 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule chat_application_must_not_depend_on_chat_adapters_or_frameworks =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.chat.application..")
+          .resideInAnyPackage("org.zalava.assistant.chat.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.chat.adapter..", "org.springframework..", "java.nio.file..");
+              "org.zalava.assistant.chat.adapter..", "org.springframework..", "java.nio.file..");
 
   @ArchTest
   static final ArchRule chat_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.chat.application.port..")
+          .resideInAnyPackage("org.zalava.assistant.chat.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -322,7 +327,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule channel_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.channels.domain..")
+          .resideInAnyPackage("org.zalava.assistant.channels.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -331,11 +336,11 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule channel_application_must_not_depend_on_channel_adapters_or_frameworks =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.channels.application..")
+          .resideInAnyPackage("org.zalava.assistant.channels.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.channels.adapter..",
+              "org.zalava.assistant.channels.adapter..",
               "org.springframework..",
               "org.telegram..",
               "java.nio.file..");
@@ -344,7 +349,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule channel_ports_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.channels.application.port..")
+          .resideInAnyPackage("org.zalava.assistant.channels.application.port..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -353,7 +358,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule onboarding_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.onboarding.domain..")
+          .resideInAnyPackage("org.zalava.web.onboarding.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
@@ -362,12 +367,12 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule onboarding_application_must_not_depend_on_adapters_or_frameworks =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.onboarding.application..")
+          .resideInAnyPackage("org.zalava.web.onboarding.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.onboarding.api..",
-              "org.zalava.onboarding.adapter..",
+              "org.zalava.web.onboarding.api..",
+              "org.zalava.web.onboarding.adapter..",
               "org.springframework..",
               "java.nio.file..");
 

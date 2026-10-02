@@ -23,7 +23,7 @@
 @param String chatModelPropertyKey
 @param String providerApiPropertyKey
 @param String agentContent
-@param List<org.zalava.onboarding.steps.S5StarterModulesStep.StarterModule> starterModules
+@param List<org.zalava.web.onboarding.steps.S5StarterModulesStep.StarterModule> starterModules
 @param String selectedStarterModuleId
 @param Boolean selectedStarterConfigured
 

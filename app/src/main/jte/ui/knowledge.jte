@@ -1,7 +1,7 @@
-@import org.zalava.ui.KnowledgeController.KnowledgeModel
+@import org.zalava.web.ui.KnowledgeController.KnowledgeModel
 @import org.zalava.knowledge.application.KnowledgeLibrary.SourceSummary
 @param KnowledgeModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>

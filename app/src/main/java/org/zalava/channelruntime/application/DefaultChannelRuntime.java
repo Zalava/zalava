@@ -4,9 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.channelidentity.application.port.in.ChannelIdentityLinks;
-import org.zalava.channelidentity.domain.ExternalChannelIdentity;
+import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.channelruntime.application.port.in.ChannelInteractionDispatcher;
 import org.zalava.channelruntime.application.port.in.ChannelRuntime;
 import org.zalava.channelruntime.domain.ChannelIngressResult;
@@ -17,7 +15,9 @@ import org.zalava.channels.ChannelInteractionKind;
 import org.zalava.channels.ChannelPrivacy;
 import org.zalava.channels.IncomingInteraction;
 import org.zalava.channels.ZalavaChannel;
-import org.zalava.conversation.domain.ConversationReference;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
+import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 
 /** In-process Core registry. Identity and policy are rechecked on every ingress. */
 public final class DefaultChannelRuntime implements ChannelRuntime {

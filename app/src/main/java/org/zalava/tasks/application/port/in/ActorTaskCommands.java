@@ -2,7 +2,7 @@ package org.zalava.tasks.application.port.in;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 

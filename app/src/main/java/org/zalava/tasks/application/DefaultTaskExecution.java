@@ -2,7 +2,7 @@ package org.zalava.tasks.application;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import org.zalava.observability.application.port.out.OperationalMetrics;
+import org.zalava.platform.observability.application.port.out.OperationalMetrics;
 import org.zalava.tasks.application.port.in.TaskExecution;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.application.port.out.TaskApprovalDecisions;

@@ -2,7 +2,7 @@ package org.zalava.knowledge.domain;
 
 import java.time.Instant;
 import java.util.Objects;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 
 /**
  * SEA-owned source metadata. The original blob and all derivations are addressed only by this id.

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Objects;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeAuditStore;
 import org.zalava.knowledge.application.port.out.KnowledgeBlobStore;
 import org.zalava.knowledge.application.port.out.KnowledgeDerivationStore;
@@ -16,7 +16,7 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.observability.application.port.out.OperationalMetrics;
+import org.zalava.platform.observability.application.port.out.OperationalMetrics;
 
 /** Coordinates SEA-owned lifecycle changes; no processor module gets direct storage authority. */
 public class KnowledgeSourceLifecycle {

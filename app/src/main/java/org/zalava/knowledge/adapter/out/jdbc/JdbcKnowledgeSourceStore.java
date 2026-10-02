@@ -6,14 +6,14 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
 import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.persistence.OptimisticLockConflictException;
+import org.zalava.platform.persistence.OptimisticLockConflictException;
 
 public final class JdbcKnowledgeSourceStore implements KnowledgeSourceStore {
   private static final String SOURCE_COLUMNS =

@@ -2,10 +2,10 @@ package org.zalava.tasks.adapter.out.channel;
 
 import java.io.IOException;
 import org.springframework.stereotype.Component;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.chat.ChatHtml;
-import org.zalava.chat.Htmx;
-import org.zalava.chat.ws.ActorWebSocketSessions;
+import org.zalava.assistant.chat.ChatHtml;
+import org.zalava.assistant.chat.Htmx;
+import org.zalava.assistant.chat.ws.ActorWebSocketSessions;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.port.out.ActorTaskNotifier;
 import org.zalava.tasks.domain.Task;
 

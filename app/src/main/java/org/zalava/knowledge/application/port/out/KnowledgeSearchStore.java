@@ -1,7 +1,7 @@
 package org.zalava.knowledge.application.port.out;
 
 import java.util.List;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.SourceProcessingState;
 

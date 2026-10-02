@@ -1,6 +1,6 @@
-@import org.zalava.web.application.RegisteredWebPage
+@import org.zalava.modules.web.application.RegisteredWebPage
 @param java.util.List<RegisteredWebPage> pages
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">

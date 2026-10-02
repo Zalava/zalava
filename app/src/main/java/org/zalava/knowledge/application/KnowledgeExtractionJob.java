@@ -18,7 +18,7 @@ import org.zalava.knowledge.domain.KnowledgeDerivation;
 import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.runtime.application.port.in.RuntimeQueries;
+import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 /** Runs exactly one persisted source through the currently active bounded extractor. */
 public final class KnowledgeExtractionJob {
