@@ -17,6 +17,7 @@ import org.zalava.modules.development.DevelopmentRequestId;
 import org.zalava.modules.development.DevelopmentRequestStatus;
 import org.zalava.modules.development.ModuleDevelopmentContract;
 import org.zalava.modules.development.ModuleDevelopmentRequest;
+import org.zalava.modules.development.adapter.out.contract.DevelopmentCandidateEvaluator;
 import org.zalava.modules.development.application.port.out.DevelopmentRequestStore;
 
 /**

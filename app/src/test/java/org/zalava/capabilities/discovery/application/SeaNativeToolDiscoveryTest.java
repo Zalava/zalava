@@ -76,5 +76,10 @@ class SeaNativeToolDiscoveryTest {
         .containsExactly("sea-filesystem-provider/readFile");
     assertThat(callbacks.callback("sea-filesystem-provider", "readFile").getToolDefinition().name())
         .startsWith("sea_readFile_");
+    assertThat(callbacks.callbacks()).hasSize(1);
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> callbacks.callback("sea-filesystem-provider", "missing"))
+        .isInstanceOf(java.util.NoSuchElementException.class)
+        .hasMessageContaining("sea-filesystem-provider/missing");
   }
 }

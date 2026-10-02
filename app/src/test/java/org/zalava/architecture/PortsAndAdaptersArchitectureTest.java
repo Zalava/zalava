@@ -15,6 +15,31 @@ import org.zalava.architecture.fixture.domain.SpringCoupledDomainFixture;
 
 @AnalyzeClasses(packages = "org.zalava", importOptions = ImportOption.DoNotIncludeTests.class)
 class PortsAndAdaptersArchitectureTest {
+  @Test
+  void hostPackagesUseTheReviewedOwnershipGroups() {
+    var classes =
+        new ClassFileImporter()
+            .withImportOption(new ImportOption.DoNotIncludeTests())
+            .importPackages("org.zalava");
+    assertThat(classes.stream().map(type -> type.getPackageName()))
+        .allMatch(
+            name ->
+                name.equals("org.zalava")
+                    || java.util.stream.Stream.of(
+                            "identity",
+                            "assistant",
+                            "capabilities",
+                            "tasks",
+                            "knowledge",
+                            "modules",
+                            "platform",
+                            "web",
+                            "api")
+                        .anyMatch(
+                            group ->
+                                name.equals("org.zalava." + group)
+                                    || name.startsWith("org.zalava." + group + ".")));
+  }
 
   @ArchTest
   static final ArchRule production_code_must_not_depend_on_retired_sea_namespace =
@@ -41,6 +66,33 @@ class PortsAndAdaptersArchitectureTest {
     "..ui..",
     "..ws.."
   };
+
+  @ArchTest
+  static final ArchRule migrated_use_cases_must_be_framework_independent =
+      noClasses()
+          .that()
+          .resideInAnyPackage(
+              "org.zalava.identity.accounts.application..",
+              "org.zalava.knowledge.application..",
+              "org.zalava.modules.development.application..",
+              "org.zalava.capabilities.operation.application..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(FRAMEWORK_PACKAGES);
+
+  @ArchTest
+  static final ArchRule runtime_and_agent_collaboration_must_use_ports =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("org.zalava.modules.runtime.ManagedSeaRuntime")
+          .or()
+          .haveFullyQualifiedName("org.zalava.assistant.agent.AgentRequestTools")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..adapter..")
+          .orShould()
+          .dependOnClassesThat()
+          .haveSimpleName("FileSystemModuleConfigurationStore");
 
   @ArchTest
   static final ArchRule domain_must_be_framework_independent =
@@ -439,5 +491,21 @@ class PortsAndAdaptersArchitectureTest {
     assertThat(
             application_must_not_depend_on_framework_side_effects.evaluate(classes).hasViolation())
         .isTrue();
+  }
+
+  @Test
+  void migratedApplicationRuleDetectsFrameworkCoupling() {
+    var classes =
+        new ClassFileImporter()
+            .importClasses(
+                org.zalava.knowledge.application.fixture.SpringTransactionCoupledFixture.class,
+                org.zalava.modules.development.application.fixture.JacksonCoupledFixture.class);
+    assertThat(
+            migrated_use_cases_must_be_framework_independent
+                .evaluate(classes)
+                .getFailureReport()
+                .getDetails())
+        .anyMatch(detail -> detail.contains("Transactional"))
+        .anyMatch(detail -> detail.contains("ObjectMapper"));
   }
 }

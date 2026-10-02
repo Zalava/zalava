@@ -13,7 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.zalava.identity.accounts.adapter.out.jdbc.JdbcAccountStore;
-import org.zalava.identity.accounts.application.AccountLifecycleService;
+import org.zalava.identity.accounts.adapter.out.security.SpringAccountPasswords;
+import org.zalava.identity.accounts.adapter.out.transaction.TransactionalAccountLifecycle;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.security.*;
@@ -67,7 +68,7 @@ public class AccountConfiguration {
 
   @Bean
   AccountLifecycle accountLifecycle(AccountStore store, PasswordEncoder passwords, Clock clock) {
-    return new AccountLifecycleService(store, passwords, clock);
+    return new TransactionalAccountLifecycle(store, new SpringAccountPasswords(passwords), clock);
   }
 
   @Bean

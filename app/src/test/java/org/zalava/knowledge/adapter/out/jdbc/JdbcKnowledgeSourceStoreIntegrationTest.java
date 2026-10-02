@@ -34,6 +34,23 @@ import org.zalava.support.RestartableSeaApplicationContext;
 
 @SpringBootTest
 class JdbcKnowledgeSourceStoreIntegrationTest {
+  @Test
+  void cancellationPersistsThroughTheTransactionBoundaryAndRejectsOtherActors() {
+    var account = accounts.create("cancel-owner", "OwnerPassword-123", AccountRole.MEMBER);
+    var other = accounts.create("cancel-other", "OtherPassword-123", AccountRole.MEMBER);
+    var owner = new Actor(account.id());
+    var source = lifecycle.register(owner, "cancel.txt", "text/plain", new byte[] {1});
+    lifecycle.beginReprocessing(owner, source.id(), "processor", "1");
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> lifecycle.cancelReprocessing(new Actor(other.id()), source.id()))
+        .isInstanceOf(org.zalava.knowledge.domain.KnowledgeOwnershipDenied.class);
+    assertThat(sources.findById(source.id()).orElseThrow().processingState())
+        .isEqualTo(SourceProcessingState.PROCESSING);
+    lifecycle.cancelReprocessing(owner, source.id());
+    assertThat(sources.findById(source.id()).orElseThrow().processingState())
+        .isEqualTo(SourceProcessingState.CANCELLED);
+  }
+
   private static final Path DATABASE_PATH = createDatabasePath();
 
   @Autowired KnowledgeSourceStore sources;

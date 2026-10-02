@@ -1,4 +1,4 @@
-package org.zalava.channelruntime.domain;
+package org.zalava.assistant.channels.runtime.domain;
 
 /** Observable ingress decision without exposing identity or content in diagnostics. */
 public sealed interface ChannelIngressResult

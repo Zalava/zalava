@@ -11,11 +11,8 @@ import java.util.Optional;
 import java.util.Properties;
 
 /** Host-owned desired module state, stored beside the enabled-module registry. */
-public final class FileSystemModuleLifecycleStore {
-  public enum DesiredState {
-    RUNNING,
-    STOPPED
-  }
+public final class FileSystemModuleLifecycleStore
+    implements org.zalava.modules.runtime.application.port.out.ModuleLifecycleStore {
 
   private final Path file;
 

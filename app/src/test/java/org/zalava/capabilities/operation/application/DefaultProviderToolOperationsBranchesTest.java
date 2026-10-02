@@ -35,7 +35,8 @@ class DefaultProviderToolOperationsBranchesTest {
           providerId ->
               "test-provider".equals(providerId) ? Optional.of(provider) : Optional.empty(),
           new ThrowingApprovals(),
-          List.of());
+          List.of(),
+          new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
 
   @Test
   void reportsMissingToolThroughTypedApplicationError() {

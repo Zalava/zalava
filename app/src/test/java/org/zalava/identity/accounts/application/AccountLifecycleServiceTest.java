@@ -21,7 +21,8 @@ class AccountLifecycleServiceTest {
   private final AccountLifecycleService accounts =
       new AccountLifecycleService(
           store,
-          new BCryptPasswordEncoder(4),
+          new org.zalava.identity.accounts.adapter.out.security.SpringAccountPasswords(
+              new BCryptPasswordEncoder(4)),
           Clock.fixed(Instant.parse("2026-08-25T00:00:00Z"), ZoneOffset.UTC));
 
   @Test

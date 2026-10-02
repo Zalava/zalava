@@ -12,7 +12,8 @@ import org.zalava.api.ModuleConfigurationStatus;
 import tools.jackson.databind.ObjectMapper;
 
 /** Private host filesystem storage for candidate/active configuration and secret values. */
-public final class FileSystemModuleConfigurationStore {
+public final class FileSystemModuleConfigurationStore
+    implements org.zalava.modules.catalog.application.port.out.ModuleConfigurations {
   private static final ObjectMapper JSON = new ObjectMapper();
   private final Path root;
 

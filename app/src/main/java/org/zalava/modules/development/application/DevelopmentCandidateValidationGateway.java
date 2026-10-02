@@ -12,11 +12,13 @@ import org.zalava.modules.development.application.port.out.DevelopmentRequestSto
 /** The sole boundary that records binary acceptance evidence before installation approval. */
 public class DevelopmentCandidateValidationGateway {
   private final DevelopmentRequestStore requests;
-  private final DevelopmentCandidateEvaluator evaluator;
+  private final org.zalava.modules.development.application.port.out.CandidateEvaluator evaluator;
   private final Clock clock;
 
   public DevelopmentCandidateValidationGateway(
-      DevelopmentRequestStore requests, DevelopmentCandidateEvaluator evaluator, Clock clock) {
+      DevelopmentRequestStore requests,
+      org.zalava.modules.development.application.port.out.CandidateEvaluator evaluator,
+      Clock clock) {
     this.requests = Objects.requireNonNull(requests);
     this.evaluator = Objects.requireNonNull(evaluator);
     this.clock = Objects.requireNonNull(clock);

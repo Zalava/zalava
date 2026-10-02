@@ -1,4 +1,4 @@
-package org.zalava.modules.development.application;
+package org.zalava.modules.development.adapter.out.contract;
 
 import java.math.BigDecimal;
 import java.util.HashSet;

@@ -23,7 +23,7 @@ import org.zalava.api.ZalavaServiceFactory;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
-import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore.DesiredState;
+import org.zalava.modules.runtime.application.port.out.ModuleLifecycleStore.DesiredState;
 
 class ManagedSeaRuntimeTest {
   private static final AtomicInteger SERVICE_FACTORY_CREATIONS = new AtomicInteger();

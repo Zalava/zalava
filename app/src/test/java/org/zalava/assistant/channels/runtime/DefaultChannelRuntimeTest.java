@@ -1,4 +1,4 @@
-package org.zalava.channelruntime;
+package org.zalava.assistant.channels.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,8 +18,8 @@ import org.zalava.api.extensions.channels.ChannelPrivacy;
 import org.zalava.api.extensions.channels.ExternalIdentityReference;
 import org.zalava.api.extensions.channels.IncomingInteraction;
 import org.zalava.api.extensions.channels.ZalavaChannel;
-import org.zalava.channelruntime.application.DefaultChannelRuntime;
-import org.zalava.channelruntime.domain.ChannelIngressResult;
+import org.zalava.assistant.channels.runtime.application.DefaultChannelRuntime;
+import org.zalava.assistant.channels.runtime.domain.ChannelIngressResult;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
@@ -28,11 +28,36 @@ import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 
 class DefaultChannelRuntimeTest {
+  @Test
+  void failedDispatchCanRetryAndCloseRemovesEveryTransport() {
+    var calls = new java.util.concurrent.atomic.AtomicInteger();
+    DefaultChannelRuntime runtime =
+        new DefaultChannelRuntime(
+            links(ACTOR),
+            ignored -> {
+              if (calls.getAndIncrement() == 0) throw new IllegalStateException("Chat unavailable");
+            });
+    var channel = org.mockito.Mockito.spy(new FixtureChannel("fixture", fullCapabilities()));
+    runtime.register(channel);
+    var input = interaction("retry", ChannelInteractionKind.CONVERSATION, "fixture", "private");
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> runtime.receive(input))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Chat unavailable");
+    assertThat(runtime.receive(input)).isInstanceOf(ChannelIngressResult.Accepted.class);
+    assertThat(calls.get()).isEqualTo(2);
+    runtime.close();
+    org.mockito.Mockito.verify(channel).close();
+    assertThat(runtime.receive(input))
+        .isEqualTo(new ChannelIngressResult.Denied(ChannelIngressResult.Reason.UNKNOWN_CHANNEL));
+    assertThat(runtime.deliver(new ChannelEvent.Text(input.destination(), "unavailable", "closed")))
+        .isFalse();
+  }
+
   private static final Actor ACTOR = new Actor(new AccountId(UUID.randomUUID()));
 
   @Test
   void resolvesBeforeDispatchDeduplicatesAndAssociatesAnActorOwnedConversation() {
-    List<org.zalava.channelruntime.domain.ResolvedChannelInteraction> dispatched =
+    List<org.zalava.assistant.channels.runtime.domain.ResolvedChannelInteraction> dispatched =
         new ArrayList<>();
     DefaultChannelRuntime runtime = new DefaultChannelRuntime(links(ACTOR), dispatched::add);
     FixtureChannel channel = new FixtureChannel("fixture", fullCapabilities());

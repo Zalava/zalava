@@ -767,7 +767,8 @@ public class SeaConfiguration {
     return new DefaultProviderToolOperations(
         new SeaRuntimeProviderCatalog(seaRuntime),
         new SeaToolApprovalAdapter(approvalRequests),
-        observers);
+        observers,
+        new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
   }
 
   @Bean

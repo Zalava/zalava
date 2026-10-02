@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore.DesiredState;
+import org.zalava.modules.runtime.application.port.out.ModuleLifecycleStore.DesiredState;
 
 class FileSystemModuleLifecycleStoreTest {
   @TempDir Path workspace;
