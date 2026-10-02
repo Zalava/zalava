@@ -40,3 +40,10 @@ isolation.
 The public repository is a Gradle multi-project build: `module-api` is the stable external-module contract, `module-api-test` is the module contract-test kit, and `app` is the Spring Boot host and adapters.
 
 The host owns policy enforcement, validation, persistence, lifecycle, authorization, and audit boundaries. Business capabilities use explicit ports; adapters connect frameworks and external systems. Modules supply provider factories and instances, allowing configuration, permission, lifecycle, and audit decisions to attach to the provider that performs work. Modules do not depend on each other directly or receive arbitrary host application objects.
+
+Browser CI must use deterministic fixtures without local provider credentials.
+Onboarding acceptance targets each step's own form so HTMX fragment replacement
+finishes before another submission. Navigation acceptance verifies the reviewed
+sidebar, card layout and surface color and retains its screenshot; a PNG byte
+hash is not a portable pixel comparison across operating-system font renderers.
+Generated template build output must not enter the host distributable.

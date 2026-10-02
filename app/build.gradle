@@ -479,6 +479,7 @@ tasks.named('processResources') {
         into 'development-workspace/docs'
     }
     from(rootProject.file('templates/zalava-module')) {
+        exclude 'build/**', '.gradle/**'
         into 'development-workspace/examples/minimal-module'
     }
     from('src/externalModuleFixture') {

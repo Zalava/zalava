@@ -89,26 +89,16 @@ class BrowserOnboardingAcceptanceTest {
 
       page.navigate(baseUrl() + "/onboarding/provider");
       page.locator("input[value=anthropic]").check();
-      page.getByRole(
-              com.microsoft.playwright.options.AriaRole.BUTTON,
-              new Page.GetByRoleOptions().setName("Continue"))
-          .click();
+      page.locator("form[action='/onboarding/provider'] button[type=submit]").click();
       page.locator("input[name=apiKey]").fill("browser-onboarding-key");
       page.locator("input[name=model]").fill("claude-sonnet-4-6");
-      page.getByRole(
-              com.microsoft.playwright.options.AriaRole.BUTTON,
-              new Page.GetByRoleOptions().setName("Continue"))
-          .click();
+      page.locator("form[action='/onboarding/credentials'] button[type=submit]").click();
       page.locator("textarea[name=agentContent]").fill("# Browser onboarding instructions");
-      page.getByRole(
-              com.microsoft.playwright.options.AriaRole.BUTTON,
-              new Page.GetByRoleOptions().setName("Continue"))
-          .click();
-      page.getByRole(
-              com.microsoft.playwright.options.AriaRole.BUTTON,
-              new Page.GetByRoleOptions().setName("Continue"))
-          .click();
-      page.getByText("configured.").waitFor();
+      page.locator("form[action='/onboarding/agent'] button[type=submit]").click();
+      // Each selector waits for the next HTMX fragment, even on a slower CI worker.
+      page.locator("form[action='/onboarding/starters'] button[type=submit]").click();
+      page.locator("a[href='/chat']").waitFor();
+      assertThat(page.locator("#onboarding-step").innerText()).contains("configured.");
     }
 
     assertThat(WORKSPACE.resolve("AGENT.private.md"))

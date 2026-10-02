@@ -15,6 +15,7 @@ final class MutableWorkspaceComponentTestInitializer
         Path.of(URI.create(context.getEnvironment().getRequiredProperty("agent.workspace")));
     TestPropertyValues.of(
             "spring.ai.model.chat=openai",
+            "spring.ai.openai.api-key=component-test-not-a-real-key",
             "spring.allConfig.location=" + workspace.resolve("private/application.private.yaml"))
         .applyTo(context.getEnvironment());
   }

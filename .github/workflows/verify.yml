@@ -25,4 +25,5 @@ jobs:
           name: verification-reports
           path: |
             **/build/reports/
+            **/build/test-results/
             app/build/browser-acceptance/
