@@ -46,8 +46,12 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
+  repositories {
+    maven {
+      name = 'ZalavaStatic'
+      url = rootProject.layout.buildDirectory.dir('repositories/zalava')
+    }
+    maven {
             name = 'GitHubPackages'
             url = uri('https://maven.pkg.github.com/Zalava/zalava')
             credentials(PasswordCredentials) {
