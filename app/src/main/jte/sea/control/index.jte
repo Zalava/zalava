@@ -1,4 +1,4 @@
-@import org.zalava.ui.SeaControlUiController.SeaControlUiModel
+@import org.zalava.web.ui.SeaControlUiController.SeaControlUiModel
 
 @param SeaControlUiModel model
 @param boolean metricsEnabled

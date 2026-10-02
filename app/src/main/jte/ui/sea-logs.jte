@@ -1,5 +1,5 @@
-@param org.zalava.ui.SeaApplicationLogs.Snapshot logs
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.SeaApplicationLogs.Snapshot logs
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>

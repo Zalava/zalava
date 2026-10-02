@@ -12,19 +12,19 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.RecurringTaskSummary;
 import org.zalava.tasks.TaskServiceResult;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.in.TaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
+import org.zalava.tasks.capture.ActorTaskCreationContext;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.RecurringTask;
 import org.zalava.tasks.domain.TaskReference;
-import org.zalava.tools.ActorTaskCreationContext;
 
 class SeaTaskServiceActorBoundariesTest {
 

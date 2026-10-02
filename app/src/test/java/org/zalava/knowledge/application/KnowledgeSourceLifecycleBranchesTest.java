@@ -8,8 +8,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.domain.DerivationState;
 import org.zalava.knowledge.domain.KnowledgeDerivation;
 import org.zalava.knowledge.domain.KnowledgeSource;
@@ -164,7 +164,7 @@ class KnowledgeSourceLifecycleBranchesTest {
   }
 
   private static final class FlakyMetrics
-      implements org.zalava.observability.application.port.out.OperationalMetrics {
+      implements org.zalava.platform.observability.application.port.out.OperationalMetrics {
     final java.util.List<String> events = new java.util.ArrayList<>();
     boolean explode;
 

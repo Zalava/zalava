@@ -12,11 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.agent.AgentRequestTools;
+import org.zalava.assistant.agent.AgentRequestTools;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
 import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
@@ -34,11 +34,11 @@ class KnowledgeEvidenceComponentTest {
   @Autowired KnowledgeExtractionRecordStore records;
   @Autowired ActorExecutionContext actors;
   @Autowired AgentRequestTools selection;
-  @Autowired org.zalava.agent.application.port.in.AgentExecution agent;
-  @Autowired org.zalava.control.application.port.in.InvocationLogQueries audit;
+  @Autowired org.zalava.assistant.agent.application.port.in.AgentExecution agent;
+  @Autowired org.zalava.web.control.application.port.in.InvocationLogQueries audit;
 
   @org.springframework.test.context.bean.override.mockito.MockitoBean
-  org.zalava.agent.application.port.out.AgentModel model;
+  org.zalava.assistant.agent.application.port.out.AgentModel model;
 
   @Test
   void uploadedHouseholdEvidenceIsCitedAndSharingRevocationIsImmediate() throws Exception {

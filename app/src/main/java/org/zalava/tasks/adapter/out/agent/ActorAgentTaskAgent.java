@@ -1,9 +1,9 @@
 package org.zalava.tasks.adapter.out.agent;
 
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.application.port.out.AccountStore;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.agent.Agent;
+import org.zalava.assistant.agent.Agent;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.application.port.out.AccountStore;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.BoundedTaskAgentLoop;
 import org.zalava.tasks.application.port.out.ActorTaskAgent;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;

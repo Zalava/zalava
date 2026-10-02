@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeSearchStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
 import org.zalava.knowledge.domain.KnowledgeSource;

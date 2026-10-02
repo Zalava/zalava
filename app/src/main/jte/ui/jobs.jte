@@ -1,8 +1,8 @@
-@import org.zalava.ui.JobsController.JobGroup
-@import org.zalava.ui.JobsController.JobsModel
+@import org.zalava.web.ui.JobsController.JobGroup
+@import org.zalava.web.ui.JobsController.JobsModel
 
 @param JobsModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">

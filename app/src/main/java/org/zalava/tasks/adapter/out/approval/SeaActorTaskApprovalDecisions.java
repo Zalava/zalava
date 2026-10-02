@@ -1,8 +1,8 @@
 package org.zalava.tasks.adapter.out.approval;
 
 import java.util.List;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.port.out.ActorTaskApprovalDecisions;
 import org.zalava.tasks.domain.ActorTaskReference;
 

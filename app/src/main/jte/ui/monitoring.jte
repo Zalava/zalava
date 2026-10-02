@@ -1,11 +1,11 @@
-@import org.zalava.ui.MonitoringController.CallEntry
-@import org.zalava.ui.MonitoringController.JobEntry
-@import org.zalava.ui.MonitoringController.MonitoringModel
-@import org.zalava.ui.MonitoringController.ProviderEntry
-@import org.zalava.ui.MonitoringController.RunEntry
+@import org.zalava.web.ui.MonitoringController.CallEntry
+@import org.zalava.web.ui.MonitoringController.JobEntry
+@import org.zalava.web.ui.MonitoringController.MonitoringModel
+@import org.zalava.web.ui.MonitoringController.ProviderEntry
+@import org.zalava.web.ui.MonitoringController.RunEntry
 
 @param MonitoringModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">

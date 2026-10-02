@@ -185,7 +185,8 @@ class ExternalModuleTestHarnessTest {
 
     assertThatThrownBy(() -> hostParent.loadClass("org.springframework.context.ApplicationContext"))
         .isInstanceOf(ClassNotFoundException.class);
-    assertThatThrownBy(() -> hostParent.loadClass("org.zalava.runtime.ExternalSeaModuleLoader"))
+    assertThatThrownBy(
+            () -> hostParent.loadClass("org.zalava.modules.runtime.ExternalSeaModuleLoader"))
         .isInstanceOf(ClassNotFoundException.class);
   }
 

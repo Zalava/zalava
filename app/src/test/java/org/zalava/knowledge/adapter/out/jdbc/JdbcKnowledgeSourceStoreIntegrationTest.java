@@ -12,10 +12,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.zalava.accounts.application.port.in.AccountLifecycle;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
 import org.zalava.content.ContentExtractionFailureCategory;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.KnowledgeLibrary;
 import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
 import org.zalava.knowledge.application.port.out.KnowledgeDerivationStore;
@@ -29,7 +29,7 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.persistence.OptimisticLockConflictException;
+import org.zalava.platform.persistence.OptimisticLockConflictException;
 import org.zalava.support.RestartableSeaApplicationContext;
 
 @SpringBootTest

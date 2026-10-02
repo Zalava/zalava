@@ -31,3 +31,31 @@ Keep policy and validation at system boundaries. External modules compile agains
 the released Module API, must not bundle it, and preserve declared identifiers
 unless a reviewed compatibility change says otherwise. Do not commit credentials,
 user data, local configuration, generated browser output, or build products.
+
+## Verification and delivery
+
+The host's source ownership groups are documented in `docs/development/architecture.md`.
+Do not reintroduce peer packages for small technical helpers or build projects
+solely to represent contexts. Keep public SDK contracts distinct from host adapters.
+
+Before review, run `GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:test
+:module-api-test:check :app:check`. `check` includes formatting, architecture,
+browser acceptance and JaCoCo coverage verification: host minimum 90% line / 74%
+branch, API/kit minimum 90% line / 70% branch. Do not lower thresholds or exclude
+production code to make a change pass. HTTP regressions use full-context MockMvc;
+browser and persisted-outcome acceptance must cover observable changes.
+
+Apply these delivery criteria to external modules as far as their entry points
+allow: 90% line / 74% branch coverage and the same Spotless/google-java-format
+checks enforced by `check`; deterministic tests plus the built artifact through
+the released contract kit; configuration, permissions, validation/failure,
+cleanup and observable outcomes. Kit acceptance is not real-host acceptance.
+Core owns install/restart/security/persistence/browser journeys against released
+module artifacts. Missing prerequisites are reported, never counted as passing.
+
+Use an explicit step branch, scoped evidence, tests, staged-diff review and a
+ready-for-review PR. Use `gh stack` for dependent PRs. The repository-explicit
+`scripts/sea-workflow` supports verification and publication across public
+repositories, with a separately persisted plan and explicit changed-file allowlist.
+Never merge autonomously; publish only immutable versions from verified merged
+default-branch commits and successful publication workflows.

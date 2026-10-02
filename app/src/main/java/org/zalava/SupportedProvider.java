@@ -1,12 +1,12 @@
 package org.zalava;
 
-import static org.zalava.providers.anthropic.AnthropticClaudeCodeConfiguration.CLAUDE_CODE_OATH_TOKEN_PLACEHOLDER;
+import static org.zalava.assistant.models.anthropic.AnthropticClaudeCodeConfiguration.CLAUDE_CODE_OATH_TOKEN_PLACEHOLDER;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.zalava.providers.anthropic.AnthropicClaudeCodeOAuthTokenExtractor;
+import org.zalava.assistant.models.anthropic.AnthropicClaudeCodeOAuthTokenExtractor;
 
 public enum SupportedProvider {
   OLLAMA("ollama", "Ollama", "Local-first setup. No API key required.", false, "qwen3.5:27b"),

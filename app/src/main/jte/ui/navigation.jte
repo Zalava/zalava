@@ -1,4 +1,4 @@
-@import org.zalava.ui.navigation.NavItem
+@import org.zalava.web.ui.navigation.NavItem
 @param java.util.List<NavItem> items
 @param String activePage
 

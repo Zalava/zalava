@@ -1,0 +1,105 @@
+package org.zalava.web.onboarding.steps;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.zalava.SupportedProvider;
+import org.zalava.web.onboarding.OnboardingProvider;
+
+@Component
+@Order(30)
+public class S3_CredentialsStep implements OnboardingProvider {
+
+  private final Environment env;
+  private final Function<SupportedProvider, Optional<SupportedProvider.SystemWideToken>>
+      systemToken;
+
+  @Autowired
+  public S3_CredentialsStep(Environment env) {
+    this(env, SupportedProvider::systemWideToken);
+  }
+
+  S3_CredentialsStep(
+      Environment env,
+      Function<SupportedProvider, Optional<SupportedProvider.SystemWideToken>> systemToken) {
+    this.env = env;
+    this.systemToken = systemToken;
+  }
+
+  @Override
+  public String getStepId() {
+    return "credentials";
+  }
+
+  @Override
+  public String getStepTitle() {
+    return "Credentials";
+  }
+
+  @Override
+  public String getTemplatePath() {
+    return "onboarding/steps/S3-credentials";
+  }
+
+  @Override
+  public void prepareModel(Map<String, Object> session, Map<String, Object> model) {
+    String providerId =
+        (String)
+            session.getOrDefault(
+                S2_ProviderStep.SESSION_PROVIDER, env.getProperty("spring.ai.model.chat", ""));
+    SupportedProvider provider = SupportedProvider.from(providerId).orElse(null);
+    if (provider == null) return;
+
+    String currentModel = (String) session.get(S2_ProviderStep.SESSION_MODEL);
+    String existingModel = env.getProperty(provider.createPropertyKey("chat.options.model"), "");
+    String existingApiKey = env.getProperty(provider.createPropertyKey("api-key"), "");
+    model.put("selectedProvider", provider.id());
+    model.put("providerLabel", provider.label());
+    model.put("providerApiPropertyKey", provider.createPropertyKey("api-key"));
+    model.put("chatModelPropertyKey", provider.createPropertyKey("chat.options.model"));
+    model.put("requiresApiKey", provider.requiresApiKey());
+    model.put("apiKey", session.getOrDefault(S2_ProviderStep.SESSION_API_KEY, existingApiKey));
+    model.put(
+        "model",
+        currentModel != null && !currentModel.isBlank()
+            ? currentModel
+            : (!existingModel.isBlank() ? existingModel : provider.defaultModel()));
+    systemToken.apply(provider).ifPresent(t -> model.put("systemWideTokenName", t.name()));
+  }
+
+  @Override
+  public String processStep(Map<String, String> formParams, Map<String, Object> session) {
+    String providerId = (String) session.getOrDefault(S2_ProviderStep.SESSION_PROVIDER, "");
+    SupportedProvider provider = SupportedProvider.from(providerId).orElse(null);
+    if (provider == null) {
+      return "Provider selection is missing. Please go back and select a provider.";
+    }
+
+    String model = formParams.getOrDefault("model", "").trim();
+    String apiKey = formParams.getOrDefault("apiKey", "").trim();
+
+    if (model.isBlank()) {
+      return "Enter a model to continue.";
+    }
+
+    if ("true".equals(formParams.get("useSystemToken"))) {
+      SupportedProvider.SystemWideToken sysToken = systemToken.apply(provider).orElse(null);
+      if (sysToken == null) {
+        return "System token is no longer available. Please enter your API key manually.";
+      }
+      apiKey = sysToken.token();
+    }
+
+    if (provider.requiresApiKey() && apiKey.isBlank()) {
+      return "Enter an API key to continue.";
+    }
+
+    session.put(S2_ProviderStep.SESSION_MODEL, model);
+    session.put(S2_ProviderStep.SESSION_API_KEY, apiKey);
+    return null;
+  }
+}

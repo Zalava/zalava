@@ -3,15 +3,15 @@ package org.zalava.tasks.adapter.in.sea;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.zalava.InvocationContext;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.RecurringTaskSummary;
 import org.zalava.tasks.TaskService;
 import org.zalava.tasks.TaskServiceResult;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.in.TaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
-import org.zalava.tools.ActorTaskCreationContext;
+import org.zalava.tasks.capture.ActorTaskCreationContext;
 
 /** Host adapter that keeps task persistence and scheduling inside SEA. */
 public final class SeaTaskService implements TaskService {

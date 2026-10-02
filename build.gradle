@@ -14,6 +14,12 @@ spotless {
 
 description = 'Zalava'
 
+tasks.register('workflowBoundaryCheck', Exec) {
+    group = 'verification'
+    description = 'Checks repository-explicit workflow staging and path boundaries.'
+    commandLine 'python3', 'scripts/test_workflow.py'
+}
+
 def coverageBaselines = [
         app         : [line: '0.90', branch: '0.74'],
         'module-api': [line: '0.90', branch: '0.70'],
@@ -161,6 +167,7 @@ project(':app') {
     plugins.withType(JavaPlugin) {
         tasks.named('check') {
             dependsOn rootProject.tasks.named('coverage')
+            dependsOn rootProject.tasks.named('workflowBoundaryCheck')
         }
     }
 }

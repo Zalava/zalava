@@ -13,13 +13,13 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
 import org.zalava.content.ContentExtractionLimits;
 import org.zalava.content.ContentExtractionRequest;
 import org.zalava.content.ContentExtractionResult;
 import org.zalava.content.ContentExtractor;
 import org.zalava.content.ContentProcessor;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeBlobStore;
 import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
@@ -29,7 +29,7 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.runtime.application.port.in.RuntimeQueries;
+import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 class KnowledgeExtractionJobTest {
   private final Actor owner = new Actor(new AccountId(UUID.randomUUID()));

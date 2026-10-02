@@ -1,4 +1,4 @@
-@import org.zalava.ui.SettingsController.SettingsModel
+@import org.zalava.web.ui.SettingsController.SettingsModel
 @import org.springframework.security.web.csrf.CsrfToken
 
 @param SettingsModel model
@@ -7,7 +7,7 @@
 @param String channelLinkCode
 @param java.time.Instant channelLinkExpiresAt
 @param CsrfToken csrf
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">

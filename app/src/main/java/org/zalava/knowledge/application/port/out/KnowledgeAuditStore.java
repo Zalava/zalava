@@ -1,6 +1,6 @@
 package org.zalava.knowledge.application.port.out;
 
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 
 /** Retains redacted lifecycle evidence after the authoritative source is deleted. */

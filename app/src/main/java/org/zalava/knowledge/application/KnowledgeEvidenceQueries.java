@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeEvidenceStore;
 import org.zalava.knowledge.domain.KnowledgeEvidence;
 

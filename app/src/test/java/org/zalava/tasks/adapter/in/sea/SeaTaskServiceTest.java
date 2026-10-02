@@ -9,16 +9,16 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.zalava.InvocationContext;
-import org.zalava.accounts.application.ActorExecutionContext;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.AccountRole;
-import org.zalava.accounts.domain.Actor;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.in.TaskCommands;
 import org.zalava.tasks.application.port.in.TaskQueries;
+import org.zalava.tasks.capture.ActorTaskCreationContext;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.TaskReference;
-import org.zalava.tools.ActorTaskCreationContext;
 
 class SeaTaskServiceTest {
   @Test

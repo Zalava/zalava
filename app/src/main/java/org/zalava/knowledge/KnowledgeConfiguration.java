@@ -23,7 +23,7 @@ import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
 import org.zalava.knowledge.application.port.out.KnowledgeIngestionScheduler;
 import org.zalava.knowledge.application.port.out.KnowledgeSearchStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
-import org.zalava.runtime.application.port.in.RuntimeQueries;
+import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 @Configuration
 class KnowledgeConfiguration {
@@ -97,7 +97,7 @@ class KnowledgeConfiguration {
       KnowledgeDerivationStore derivations,
       KnowledgeBlobStore blobs,
       KnowledgeAuditStore audit,
-      org.zalava.observability.application.port.out.OperationalMetrics metrics) {
+      org.zalava.platform.observability.application.port.out.OperationalMetrics metrics) {
     return new KnowledgeSourceLifecycle(
         sources, derivations, blobs, audit, java.time.Clock.systemUTC(), metrics);
   }

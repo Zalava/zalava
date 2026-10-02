@@ -7,12 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.channelidentity.application.port.in.ChannelIdentityLinks;
-import org.zalava.channelidentity.domain.ChannelIdentityLink;
-import org.zalava.channelidentity.domain.ChannelOperationScope;
-import org.zalava.channelidentity.domain.ExternalChannelIdentity;
 import org.zalava.channelruntime.application.DefaultChannelRuntime;
 import org.zalava.channelruntime.domain.ChannelIngressResult;
 import org.zalava.channels.ChannelCapabilities;
@@ -26,6 +20,12 @@ import org.zalava.channels.ChannelPrivacy;
 import org.zalava.channels.ExternalIdentityReference;
 import org.zalava.channels.IncomingInteraction;
 import org.zalava.channels.ZalavaChannel;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
+import org.zalava.identity.channels.domain.ChannelIdentityLink;
+import org.zalava.identity.channels.domain.ChannelOperationScope;
+import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 
 class DefaultChannelRuntimeTest {
   private static final Actor ACTOR = new Actor(new AccountId(UUID.randomUUID()));

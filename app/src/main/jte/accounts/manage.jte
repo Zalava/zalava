@@ -1,4 +1,4 @@
-@param java.util.List<org.zalava.accounts.api.ManagedAccountView> accounts
+@param java.util.List<org.zalava.identity.accounts.api.ManagedAccountView> accounts
 @param String error
 @param org.springframework.security.web.csrf.CsrfToken csrf
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>SEA accounts</title></head><body><main><h1>SEA accounts</h1>@if(error != null)<p role="alert">${error}</p>@endif

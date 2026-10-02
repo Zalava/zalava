@@ -9,9 +9,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.env.MockEnvironment;
-import org.zalava.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.catalog.ModuleConfigurationSnapshot;
-import org.zalava.runtime.SeaModuleProperties;
+import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
+import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
+import org.zalava.modules.runtime.SeaModuleProperties;
 
 class SeaConfigurationTest {
 

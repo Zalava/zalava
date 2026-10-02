@@ -9,11 +9,11 @@ import java.util.Map;
 import org.zalava.FactorySecretAccess;
 import org.zalava.ProviderFactoryContext;
 import org.zalava.ZalavaModule;
-import org.zalava.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
-import org.zalava.catalog.install.application.port.out.ModuleEnablement;
-import org.zalava.runtime.DefaultSeaRuntime;
-import org.zalava.runtime.ExternalSeaModuleLoader;
-import org.zalava.runtime.StaticSeaModuleRegistry;
+import org.zalava.modules.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
+import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
+import org.zalava.modules.runtime.DefaultSeaRuntime;
+import org.zalava.modules.runtime.ExternalSeaModuleLoader;
+import org.zalava.modules.runtime.StaticSeaModuleRegistry;
 
 /**
  * Loads the external speech fixture through the real {@link ExternalSeaModuleLoader} so tests

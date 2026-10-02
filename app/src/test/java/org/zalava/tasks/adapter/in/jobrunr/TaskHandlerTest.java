@@ -6,9 +6,9 @@ import static org.mockito.Mockito.when;
 
 import org.jobrunr.jobs.context.JobContext;
 import org.junit.jupiter.api.Test;
-import org.zalava.accounts.domain.AccountId;
-import org.zalava.accounts.domain.Actor;
-import org.zalava.private_state.BootstrapPrivateStateBridge;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.platform.storage.private_state.BootstrapPrivateStateBridge;
 import org.zalava.tasks.application.ActorTaskExecution;
 import org.zalava.tasks.application.port.in.TaskExecution;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;

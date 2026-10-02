@@ -1,17 +1,17 @@
-@import org.zalava.ui.SeaControlUiController.ModuleEntry
-@import org.zalava.ui.SeaControlUiController.ProviderEntry
-@import org.zalava.ui.SeaControlUiController.ScopeEntry
-@import org.zalava.ui.SeaControlUiController.SeaControlUiModel
-@import org.zalava.ui.SeaControlUiController.ToolEntry
-@import org.zalava.ui.SeaControlUiController.VerificationEntry
-@import org.zalava.ui.SeaControlUiController.VerificationStepEntry
-@import org.zalava.ui.SeaControlUiController.DevelopmentRequestEntry
-@import org.zalava.ui.SeaControlUiController.CandidateEntry
-@import org.zalava.development.CandidateEvaluation.Invocation
-@import org.zalava.control.application.port.in.InvocationLogQueries.Entry
-@import org.zalava.approval.SeaToolApprovalRequests.Decision
-@import org.zalava.catalog.LocalArtifactInstallRequest
-@import org.zalava.catalog.ModuleReleaseInstallRequest
+@import org.zalava.web.ui.SeaControlUiController.ModuleEntry
+@import org.zalava.web.ui.SeaControlUiController.ProviderEntry
+@import org.zalava.web.ui.SeaControlUiController.ScopeEntry
+@import org.zalava.web.ui.SeaControlUiController.SeaControlUiModel
+@import org.zalava.web.ui.SeaControlUiController.ToolEntry
+@import org.zalava.web.ui.SeaControlUiController.VerificationEntry
+@import org.zalava.web.ui.SeaControlUiController.VerificationStepEntry
+@import org.zalava.web.ui.SeaControlUiController.DevelopmentRequestEntry
+@import org.zalava.web.ui.SeaControlUiController.CandidateEntry
+@import org.zalava.modules.development.CandidateEvaluation.Invocation
+@import org.zalava.web.control.application.port.in.InvocationLogQueries.Entry
+@import org.zalava.capabilities.approval.SeaToolApprovalRequests.Decision
+@import org.zalava.modules.catalog.LocalArtifactInstallRequest
+@import org.zalava.modules.catalog.ModuleReleaseInstallRequest
 
 @param SeaControlUiModel model
 

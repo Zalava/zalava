@@ -1,12 +1,12 @@
-@import org.zalava.ui.ModulesController.ModulesModel
-@import org.zalava.ui.ModulesController.ModuleEntry
-@import org.zalava.ui.ModulesController.EnabledModuleEntry
-@import org.zalava.ui.ModulesController.CatalogModuleEntry
-@import org.zalava.ui.ModulesController.InstallationRequestEntry
+@import org.zalava.web.ui.ModulesController.ModulesModel
+@import org.zalava.web.ui.ModulesController.ModuleEntry
+@import org.zalava.web.ui.ModulesController.EnabledModuleEntry
+@import org.zalava.web.ui.ModulesController.CatalogModuleEntry
+@import org.zalava.web.ui.ModulesController.InstallationRequestEntry
 @param ModulesModel model
 @param String marketplaceMessage
 @param String marketplaceError
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 @param org.springframework.security.web.csrf.CsrfToken csrf
 
 <!doctype html>

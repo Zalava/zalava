@@ -1,5 +1,24 @@
 # Zalava architecture
 
+## Source ownership
+
+The host has eight source ownership groups beneath `org.zalava`: `identity`,
+`assistant`, `capabilities`, `tasks`, `knowledge`, `modules`, `platform`, and
+`web`. These groups organize related feature contexts; they do not create new
+Gradle projects or merge independent use cases. Each substantial child context
+keeps its domain, application ports and adapters.
+
+`modules` owns catalog/installation, module runtime, managed services, development
+and module web extensions. `platform.observability` owns shared operational
+metrics across agent, task, knowledge and provider execution. Module runtime
+does not own all host observability. Host UI/control/onboarding live in `web`.
+External modules may still use their own `org.zalava.modules.<module>` namespace;
+the loader protects specific host module-management subpackages instead of
+reserving that entire prefix.
+
+Spring composition may wire concrete adapters. Feature/use-case collaboration
+must use explicit contracts instead of another context's internal implementations.
+
 ## Context boundaries
 
 Organize product code around bounded contexts rather than technical layers.
@@ -21,3 +40,10 @@ isolation.
 The public repository is a Gradle multi-project build: `module-api` is the stable external-module contract, `module-api-test` is the module contract-test kit, and `app` is the Spring Boot host and adapters.
 
 The host owns policy enforcement, validation, persistence, lifecycle, authorization, and audit boundaries. Business capabilities use explicit ports; adapters connect frameworks and external systems. Modules supply provider factories and instances, allowing configuration, permission, lifecycle, and audit decisions to attach to the provider that performs work. Modules do not depend on each other directly or receive arbitrary host application objects.
+
+Browser CI must use deterministic fixtures without local provider credentials.
+Onboarding acceptance targets each step's own form so HTMX fragment replacement
+finishes before another submission. Navigation acceptance verifies the reviewed
+sidebar, card layout and surface color and retains its screenshot; a PNG byte
+hash is not a portable pixel comparison across operating-system font renderers.
+Generated template build output must not enter the host distributable.

@@ -1,12 +1,12 @@
-@import org.zalava.ui.ModulesController.ModuleConfigurationModel
-@import org.zalava.ui.ModuleConfigurationForm.Field
+@import org.zalava.web.ui.ModulesController.ModuleConfigurationModel
+@import org.zalava.web.ui.ModuleConfigurationForm.Field
 @import org.springframework.security.web.csrf.CsrfToken
 
 @param ModuleConfigurationModel model
 @param String configurationMessage
 @param String configurationError
 @param CsrfToken csrf
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">

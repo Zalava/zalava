@@ -1,10 +1,10 @@
-@import org.zalava.ui.DashboardController.ActivityEntry
-@import org.zalava.ui.DashboardController.ApprovalEntry
-@import org.zalava.ui.DashboardController.CurrentWorkEntry
-@import org.zalava.ui.DashboardController.DashboardModel
+@import org.zalava.web.ui.DashboardController.ActivityEntry
+@import org.zalava.web.ui.DashboardController.ApprovalEntry
+@import org.zalava.web.ui.DashboardController.CurrentWorkEntry
+@import org.zalava.web.ui.DashboardController.DashboardModel
 
 @param DashboardModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">

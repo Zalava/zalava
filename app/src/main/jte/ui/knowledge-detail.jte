@@ -1,6 +1,6 @@
 @import org.zalava.knowledge.application.KnowledgeLibrary.SourceDetail
 @param SourceDetail model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>

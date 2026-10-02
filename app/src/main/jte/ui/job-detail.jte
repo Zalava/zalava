@@ -1,11 +1,11 @@
-@import org.zalava.ui.JobDetailController.JobDetailModel
-@import org.zalava.ui.JobDetailController.ApprovalEntry
-@import org.zalava.ui.JobDetailController.LifecycleEntry
-@import org.zalava.ui.JobDetailController.SectionEntry
+@import org.zalava.web.ui.JobDetailController.JobDetailModel
+@import org.zalava.web.ui.JobDetailController.ApprovalEntry
+@import org.zalava.web.ui.JobDetailController.LifecycleEntry
+@import org.zalava.web.ui.JobDetailController.SectionEntry
 @import org.springframework.security.web.csrf.CsrfToken
 
 @param JobDetailModel model
-@param org.zalava.ui.navigation.NavigationModel navigation
+@param org.zalava.web.ui.navigation.NavigationModel navigation
 @param CsrfToken csrf
 
 <!doctype html>
