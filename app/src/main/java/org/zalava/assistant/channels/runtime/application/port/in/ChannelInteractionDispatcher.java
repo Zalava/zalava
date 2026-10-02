@@ -1,6 +1,6 @@
-package org.zalava.channelruntime.application.port.in;
+package org.zalava.assistant.channels.runtime.application.port.in;
 
-import org.zalava.channelruntime.domain.ResolvedChannelInteraction;
+import org.zalava.assistant.channels.runtime.domain.ResolvedChannelInteraction;
 
 /** SEA-owned continuation port; transport modules never invoke an agent directly. */
 @FunctionalInterface

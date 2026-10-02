@@ -256,7 +256,7 @@ class ContextMeasurementTest {
 
   private static SeaToolCallbackCatalog callbackCatalog() {
     SeaToolCallbackCatalog catalog = mock(SeaToolCallbackCatalog.class);
-    when(catalog.entries()).thenReturn(List.of());
+    when(catalog.callbacks()).thenReturn(List.of());
     when(catalog.callback(anyString(), anyString()))
         .thenAnswer(invocation -> mock(ToolCallback.class));
     return catalog;

@@ -1,4 +1,4 @@
-package org.zalava.channelruntime.domain;
+package org.zalava.assistant.channels.runtime.domain;
 
 import java.util.Objects;
 import org.zalava.api.extensions.channels.IncomingInteraction;

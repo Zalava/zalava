@@ -1,4 +1,4 @@
-package org.zalava.channelruntime;
+package org.zalava.assistant.channels.runtime;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.context.annotation.Bean;
@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.zalava.api.extensions.channels.ChannelEvent;
 import org.zalava.api.extensions.channels.ChannelInput;
 import org.zalava.api.extensions.channels.ChannelTransportContext;
+import org.zalava.assistant.channels.runtime.application.DefaultChannelRuntime;
+import org.zalava.assistant.channels.runtime.application.port.in.ChannelRuntime;
 import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
-import org.zalava.channelruntime.application.DefaultChannelRuntime;
-import org.zalava.channelruntime.application.port.in.ChannelRuntime;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.runtime.SeaRuntime;

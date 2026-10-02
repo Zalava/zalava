@@ -98,7 +98,7 @@ class KnowledgeConfiguration {
       KnowledgeBlobStore blobs,
       KnowledgeAuditStore audit,
       org.zalava.platform.observability.application.port.out.OperationalMetrics metrics) {
-    return new KnowledgeSourceLifecycle(
+    return new org.zalava.knowledge.adapter.out.transaction.TransactionalKnowledgeSourceLifecycle(
         sources, derivations, blobs, audit, java.time.Clock.systemUTC(), metrics);
   }
 

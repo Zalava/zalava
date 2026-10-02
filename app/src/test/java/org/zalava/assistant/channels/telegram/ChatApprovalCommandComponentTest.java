@@ -94,7 +94,8 @@ class ChatApprovalCommandComponentTest {
             providerId ->
                 "test-shopping".equals(providerId) ? Optional.of(provider) : Optional.empty(),
             new SeaToolApprovalAdapter(approvals),
-            List.of());
+            List.of(),
+            new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
     private final ChannelApprovalCommands approvalCommands =
         new ChannelApprovalCommands(
             approvals,

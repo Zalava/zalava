@@ -37,7 +37,8 @@ class DefaultProviderToolOperationsTest {
           providerId ->
               "test-provider".equals(providerId) ? Optional.of(provider) : Optional.empty(),
           approvals,
-          List.of(observer));
+          List.of(observer),
+          new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
 
   @Test
   void executesSafeToolAndRecordsSuccess() {

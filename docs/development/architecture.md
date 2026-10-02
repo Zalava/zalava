@@ -47,3 +47,13 @@ finishes before another submission. Navigation acceptance verifies the reviewed
 sidebar, card layout and surface color and retains its screenshot; a PNG byte
 hash is not a portable pixel comparison across operating-system font renderers.
 Generated template build output must not enter the host distributable.
+
+## Framework boundaries
+
+Account and knowledge lifecycle use cases remain framework independent. Spring transaction decorators live in outbound infrastructure adapters and are wired only in composition. Administrator count-and-mutation operations retain SERIALIZABLE isolation; every existing knowledge lifecycle transaction, including read-only ownership lookup, is preserved. Password hashing uses the AccountPasswords port. Knowledge ownership denial is a domain exception; the existing UI retains its failure handling.
+
+The newer module-channel host runtime also lives in assistant.channels.runtime; it does not introduce a ninth ownership group. Failed ingress dispatch can be retried, and closing the runtime removes every registered transport.
+
+Agent tool selection uses the generic RegisteredToolCallbacks contract. Runtime generation management uses ModuleLifecycleStore and ModuleConfigurations rather than filesystem implementations. The UI reads bootstrap verification through BootstrapVerificationQueries. Provider argument decoding uses ToolArgumentDecoder; Jackson remains in its adapter with the same precision, null and validation behavior. Development artifact execution and schema/assertion evaluation are contract adapters behind CandidateEvaluator.
+
+Architecture checks enforce framework independence in these migrated application contexts and use negative transaction/Jackson fixtures. Existing component and browser journeys cover account authority, knowledge isolation, module generations, control queries and permissioned tool execution. Transaction metadata checks guard isolation and rollback policy.

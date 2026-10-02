@@ -14,13 +14,13 @@ import org.zalava.api.FactorySecretAccess;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaServiceContract;
-import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.catalog.ModuleConfigurationValidator;
+import org.zalava.modules.catalog.application.port.out.ModuleConfigurations;
 import org.zalava.modules.catalog.install.application.port.out.EnabledModuleRegistry;
-import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
-import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore.DesiredState;
 import org.zalava.modules.runtime.application.DefaultRuntimeQueries;
+import org.zalava.modules.runtime.application.port.out.ModuleLifecycleStore;
+import org.zalava.modules.runtime.application.port.out.ModuleLifecycleStore.DesiredState;
 
 /** SEA-owned runtime generations separate installed descriptors from active providers. */
 public final class ManagedSeaRuntime implements SeaRuntime {
@@ -35,8 +35,8 @@ public final class ManagedSeaRuntime implements SeaRuntime {
 
   private final List<ZalavaModule> loaded;
   private final Set<String> builtIns;
-  private final FileSystemModuleLifecycleStore lifecycle;
-  private final FileSystemModuleConfigurationStore configurations;
+  private final ModuleLifecycleStore lifecycle;
+  private final ModuleConfigurations configurations;
   private final ProviderFactoryContext baseContext;
   private final ModuleConfigurationValidator validator = new ModuleConfigurationValidator();
   private final Map<String, String> failures = new HashMap<>();
@@ -51,8 +51,8 @@ public final class ManagedSeaRuntime implements SeaRuntime {
       SeaModuleRegistry registry,
       Set<ZalavaModule> builtInModules,
       EnabledModuleRegistry enabled,
-      FileSystemModuleLifecycleStore lifecycle,
-      FileSystemModuleConfigurationStore configurations,
+      ModuleLifecycleStore lifecycle,
+      ModuleConfigurations configurations,
       ProviderFactoryContext baseContext) {
     this.loaded = List.copyOf(registry.modules());
     this.builtIns =

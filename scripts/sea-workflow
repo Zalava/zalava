@@ -42,6 +42,9 @@ def main():
             run(repo, "gh", "stack", "add", args.branch)
         else:
             run(repo, "gh", "stack", "init", "--base", "main", args.branch)
+        run(repo, "git", "switch", args.branch)
+        if run(repo, "git", "branch", "--show-current", capture=True) != args.branch:
+            parser.error("stack-start did not check out the requested branch")
         return
     if args.command == "publish":
         args.plan.resolve(strict=True)

@@ -72,7 +72,7 @@ class KnowledgeSourceLifecycleBranchesTest {
 
     assertThatThrownBy(
             () -> lifecycle.changeVisibility(intruder, id, KnowledgeVisibility.GROUP_SHARED))
-        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        .isInstanceOf(org.zalava.knowledge.domain.KnowledgeOwnershipDenied.class);
     assertThatThrownBy(
             () ->
                 lifecycle.changeVisibility(
@@ -124,7 +124,7 @@ class KnowledgeSourceLifecycleBranchesTest {
     KnowledgeDerivation candidate = lifecycle.beginReprocessing(owner, id, "extractor", "1");
 
     assertThatThrownBy(() -> lifecycle.completeReprocessing(intruder, candidate, true))
-        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        .isInstanceOf(org.zalava.knowledge.domain.KnowledgeOwnershipDenied.class);
 
     lifecycle.completeReprocessing(owner, candidate, true);
     KnowledgeDerivation active =
@@ -144,7 +144,7 @@ class KnowledgeSourceLifecycleBranchesTest {
         lifecycle.register(owner, "notes.txt", "text/plain", new byte[] {1}).id();
 
     assertThatThrownBy(() -> lifecycle.hardDelete(intruder, id))
-        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class)
+        .isInstanceOf(org.zalava.knowledge.domain.KnowledgeOwnershipDenied.class)
         .hasMessage("Knowledge source is not owned by actor");
     assertThat(sources.get(id)).isNotNull();
     assertThat(audit.deleted).isNull();

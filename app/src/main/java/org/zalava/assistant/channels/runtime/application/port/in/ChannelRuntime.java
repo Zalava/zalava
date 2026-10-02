@@ -1,10 +1,10 @@
-package org.zalava.channelruntime.application.port.in;
+package org.zalava.assistant.channels.runtime.application.port.in;
 
 import java.util.List;
 import org.zalava.api.extensions.channels.ChannelEvent;
 import org.zalava.api.extensions.channels.IncomingInteraction;
 import org.zalava.api.extensions.channels.ZalavaChannel;
-import org.zalava.channelruntime.domain.ChannelIngressResult;
+import org.zalava.assistant.channels.runtime.domain.ChannelIngressResult;
 
 /** SEA-owned registry and routing boundary for module-provided channels. */
 public interface ChannelRuntime extends AutoCloseable {

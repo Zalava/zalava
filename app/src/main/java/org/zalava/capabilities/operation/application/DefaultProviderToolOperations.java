@@ -15,20 +15,10 @@ import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
 
 public final class DefaultProviderToolOperations implements ProviderToolOperations {
 
-  private static final ObjectMapper JSON =
-      JsonMapper.builder()
-          .enable(
-              DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS,
-              DeserializationFeature.USE_BIG_INTEGER_FOR_INTS)
-          .build();
-
+  private final org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder;
   private final ProviderCatalog providerCatalog;
   private final ToolApprovalPort approvalPort;
   private final List<ToolInvocationObserver> observers;
@@ -37,15 +27,18 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   public DefaultProviderToolOperations(
       ProviderCatalog providerCatalog,
       ToolApprovalPort approvalPort,
-      List<ToolInvocationObserver> observers) {
-    this(providerCatalog, approvalPort, observers, new MemberProviderCapabilityPolicy());
+      List<ToolInvocationObserver> observers,
+      org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder) {
+    this(providerCatalog, approvalPort, observers, new MemberProviderCapabilityPolicy(), decoder);
   }
 
   public DefaultProviderToolOperations(
       ProviderCatalog providerCatalog,
       ToolApprovalPort approvalPort,
       List<ToolInvocationObserver> observers,
-      MemberProviderCapabilityPolicy memberCapabilities) {
+      MemberProviderCapabilityPolicy memberCapabilities,
+      org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder) {
+    this.decoder = java.util.Objects.requireNonNull(decoder);
     this.providerCatalog = providerCatalog;
     this.approvalPort = approvalPort;
     this.observers = List.copyOf(observers);
@@ -57,7 +50,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     ZalavaProvider provider = findProvider(command.providerId());
     ZalavaToolDescriptor tool = findTool(provider, command.toolName());
     memberCapabilities.requireAllowed(provider, tool, command.context());
-    Map<String, Object> arguments = parseArguments(command.argumentsJson());
+    Map<String, Object> arguments = decoder.decode(command.argumentsJson());
 
     if (!tool.sideEffecting()) {
       return ToolInvocationOutcome.executed(execute(provider, tool, arguments, command.context()));
@@ -133,7 +126,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   private ToolInvocationOutcome executeUnscopedApproval(ToolApproval approval) {
     ZalavaProvider provider = findProvider(approval.providerId());
     ZalavaToolDescriptor tool = findTool(provider, approval.toolName());
-    Map<String, Object> arguments = parseArguments(approval.argumentsJson());
+    Map<String, Object> arguments = decoder.decode(approval.argumentsJson());
     InvocationContext context =
         new InvocationContext(
             approval.actorId(),
@@ -248,26 +241,6 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             result,
             (System.nanoTime() - startedAt) / 1_000_000);
     observers.forEach(observer -> observer.observe(observation));
-  }
-
-  private static Map<String, Object> parseArguments(String argumentsJson) {
-    try {
-      Object decoded = JSON.readValue(argumentsJson, Object.class);
-      if (!(decoded instanceof Map<?, ?>)) {
-        throw new ProviderToolOperationException(
-            ProviderToolOperationException.Code.VALIDATION,
-            "SEA provider tool arguments must be a JSON object");
-      }
-      return org.zalava.api.JsonArguments.immutable(
-          JSON.convertValue(decoded, new TypeReference<Map<String, Object>>() {}));
-    } catch (ProviderToolOperationException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      throw new ProviderToolOperationException(
-          ProviderToolOperationException.Code.VALIDATION,
-          "SEA provider tool arguments must be valid JSON",
-          ex);
-    }
   }
 
   private static InvocationContext confirmedContext(InvocationContext context, String requestId) {

@@ -3,8 +3,6 @@ package org.zalava.knowledge.application;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.transaction.annotation.Transactional;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.port.out.KnowledgeAuditStore;
 import org.zalava.knowledge.application.port.out.KnowledgeBlobStore;
@@ -12,6 +10,7 @@ import org.zalava.knowledge.application.port.out.KnowledgeDerivationStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
 import org.zalava.knowledge.domain.DerivationState;
 import org.zalava.knowledge.domain.KnowledgeDerivation;
+import org.zalava.knowledge.domain.KnowledgeOwnershipDenied;
 import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
@@ -51,7 +50,6 @@ public class KnowledgeSourceLifecycle {
     this.metrics = metrics;
   }
 
-  @Transactional
   public KnowledgeSource changeVisibility(
       Actor actor, KnowledgeSourceId id, KnowledgeVisibility visibility) {
     KnowledgeSource source = owned(actor, id);
@@ -68,7 +66,6 @@ public class KnowledgeSourceLifecycle {
    * Registers one independently retained original; equal content is never deduplicated across
    * actors.
    */
-  @Transactional
   public KnowledgeSource register(
       Actor actor, String displayName, String contentType, byte[] original) {
     Objects.requireNonNull(actor, "actor");
@@ -99,12 +96,10 @@ public class KnowledgeSourceLifecycle {
   }
 
   /** Authorizes an owner-only operation without exposing source data to a module. */
-  @Transactional(readOnly = true)
   public KnowledgeSource requireOwned(Actor actor, KnowledgeSourceId id) {
     return owned(actor, id);
   }
 
-  @Transactional
   public void cancelReprocessing(Actor actor, KnowledgeSourceId id) {
     KnowledgeSource source = owned(actor, id);
     if (source.processingState() != SourceProcessingState.DELETION_REQUESTED
@@ -114,7 +109,6 @@ public class KnowledgeSourceLifecycle {
     }
   }
 
-  @Transactional
   public KnowledgeDerivation beginReprocessing(
       Actor actor, KnowledgeSourceId id, String processorId, String processorVersion) {
     KnowledgeSource source = owned(actor, id);
@@ -136,7 +130,6 @@ public class KnowledgeSourceLifecycle {
             0));
   }
 
-  @Transactional
   public void completeReprocessing(Actor actor, KnowledgeDerivation candidate, boolean successful) {
     KnowledgeSource source = owned(actor, candidate.sourceId());
     if (candidate.state() != DerivationState.CANDIDATE)
@@ -160,13 +153,12 @@ public class KnowledgeSourceLifecycle {
   }
 
   /** Idempotently resumes a confirmed deletion after any earlier partial failure. */
-  @Transactional
   public void hardDelete(Actor actor, KnowledgeSourceId id) {
     Objects.requireNonNull(actor, "actor");
     KnowledgeSource source = sources.findById(id).orElse(null);
     if (source == null) return;
     if (!source.owner().equals(actor))
-      throw new AccessDeniedException("Knowledge source is not owned by actor");
+      throw new KnowledgeOwnershipDenied("Knowledge source is not owned by actor");
     KnowledgeSource deletionRequested = sources.save(source.requestDeletion(Instant.now(clock)));
     blobs.delete(id);
     derivations.deleteBySourceId(id);
@@ -190,7 +182,7 @@ public class KnowledgeSourceLifecycle {
             .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Knowledge source not found"));
     if (!source.owner().equals(actor))
-      throw new AccessDeniedException("Knowledge source is not owned by actor");
+      throw new KnowledgeOwnershipDenied("Knowledge source is not owned by actor");
     return source;
   }
 

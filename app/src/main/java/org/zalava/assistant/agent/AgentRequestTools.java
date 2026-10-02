@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackCatalog;
+import org.zalava.capabilities.discovery.application.port.in.RegisteredToolCallbacks;
 import org.zalava.capabilities.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -19,7 +19,7 @@ public final class AgentRequestTools {
 
   private final List<Object> bootstrapTools;
   private final ToolDiscovery toolDiscovery;
-  private final SeaToolCallbackCatalog callbackCatalog;
+  private final RegisteredToolCallbacks<?> callbackCatalog;
   private final DynamicToolActivationPolicy activationPolicy;
   private final SessionToolActivations sessionActivations;
   private final List<Object> noMatchTools;
@@ -29,7 +29,7 @@ public final class AgentRequestTools {
   public AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog) {
+      RegisteredToolCallbacks<?> callbackCatalog) {
     this(
         bootstrapTools,
         toolDiscovery,
@@ -42,7 +42,7 @@ public final class AgentRequestTools {
   public AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       List<Object> noMatchTools) {
     this(
         bootstrapTools,
@@ -56,7 +56,7 @@ public final class AgentRequestTools {
   public AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       List<Object> noMatchTools,
       RemoteCapabilityDiscovery remoteDiscovery) {
     this(
@@ -73,7 +73,7 @@ public final class AgentRequestTools {
   public AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       List<Object> noMatchTools,
       RemoteCapabilityDiscovery remoteDiscovery,
       PolicyFilteredToolSearch toolSearch) {
@@ -91,7 +91,7 @@ public final class AgentRequestTools {
   AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       DynamicToolActivationPolicy activationPolicy) {
     this(
         bootstrapTools,
@@ -105,7 +105,7 @@ public final class AgentRequestTools {
   AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       DynamicToolActivationPolicy activationPolicy,
       SessionToolActivations sessionActivations) {
     this(
@@ -120,7 +120,7 @@ public final class AgentRequestTools {
   AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       DynamicToolActivationPolicy activationPolicy,
       SessionToolActivations sessionActivations,
       List<Object> noMatchTools) {
@@ -137,7 +137,7 @@ public final class AgentRequestTools {
   AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       DynamicToolActivationPolicy activationPolicy,
       SessionToolActivations sessionActivations,
       List<Object> noMatchTools,
@@ -156,7 +156,7 @@ public final class AgentRequestTools {
   AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
-      SeaToolCallbackCatalog callbackCatalog,
+      RegisteredToolCallbacks<?> callbackCatalog,
       DynamicToolActivationPolicy activationPolicy,
       SessionToolActivations sessionActivations,
       List<Object> noMatchTools,
@@ -198,8 +198,7 @@ public final class AgentRequestTools {
       return new RequestToolSelection(bootstrapTools, List.of(), List.of());
     }
     List<Object> requestTools = new ArrayList<>(bootstrapTools);
-    callbackCatalog.entries().stream()
-        .map(SeaToolCallbackCatalog.Entry::callback)
+    callbackCatalog.callbacks().stream()
         .filter(callback -> !requestTools.contains(callback))
         .forEach(requestTools::add);
     List<ToolDiscovery.ToolMatch> newlyActivated = new ArrayList<>();

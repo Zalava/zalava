@@ -14,7 +14,13 @@ import org.zalava.capabilities.operation.adapter.in.agent.SeaProviderToolInvoker
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import tools.jackson.databind.ObjectMapper;
 
-public final class SeaToolCallbackCatalog {
+public final class SeaToolCallbackCatalog
+    implements org.zalava.capabilities.discovery.application.port.in.RegisteredToolCallbacks<
+        ToolCallback> {
+  @Override
+  public List<ToolCallback> callbacks() {
+    return entries().stream().map(Entry::callback).toList();
+  }
 
   private static final ObjectMapper JSON = new ObjectMapper();
   private static final ParameterizedTypeReference<Map<String, Object>> ARGUMENTS_TYPE =

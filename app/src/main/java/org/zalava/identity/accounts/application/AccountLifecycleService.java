@@ -4,10 +4,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.application.port.out.AccountPasswords;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountId;
@@ -15,10 +13,10 @@ import org.zalava.identity.accounts.domain.AccountRole;
 
 public class AccountLifecycleService implements AccountLifecycle {
   private final AccountStore accounts;
-  private final PasswordEncoder passwords;
+  private final AccountPasswords passwords;
   private final Clock clock;
 
-  public AccountLifecycleService(AccountStore accounts, PasswordEncoder passwords, Clock clock) {
+  public AccountLifecycleService(AccountStore accounts, AccountPasswords passwords, Clock clock) {
     this.accounts = accounts;
     this.passwords = passwords;
     this.clock = clock;
@@ -40,7 +38,6 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
-  @Transactional(isolation = Isolation.SERIALIZABLE)
   public void bootstrap(String loginName, String password) {
     if (accounts.enabledAdministratorCount() != 0) return;
     Instant now = clock.instant();
@@ -59,7 +56,6 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
-  @Transactional
   public Account create(String loginName, String temporaryPassword, AccountRole role) {
     if (accounts.findByLoginName(Account.normalizeLogin(loginName)).isPresent())
       throw new IllegalArgumentException("Login name is already in use");
@@ -80,7 +76,6 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
-  @Transactional
   public void changePassword(AccountId id, String currentPassword, String replacementPassword) {
     Account account = required(id);
     if (!passwords.matches(requiredPassword(currentPassword), account.passwordHash()))
@@ -90,7 +85,6 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
-  @Transactional
   public void resetPassword(AccountId id, String temporaryPassword) {
     Account account = required(id);
     accounts.save(
@@ -98,7 +92,6 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
-  @Transactional(isolation = Isolation.SERIALIZABLE)
   public void setEnabled(AccountId id, boolean enabled) {
     Account account = required(id);
     requireAdministratorRemains(account, enabled, account.role());
@@ -112,7 +105,6 @@ public class AccountLifecycleService implements AccountLifecycle {
   }
 
   @Override
-  @Transactional(isolation = Isolation.SERIALIZABLE)
   public void setRole(AccountId id, AccountRole role) {
     Account account = required(id);
     requireAdministratorRemains(account, account.enabled(), role);

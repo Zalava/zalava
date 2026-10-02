@@ -1,4 +1,4 @@
-package org.zalava.modules.development.application;
+package org.zalava.modules.development.adapter.out.contract;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -20,7 +20,8 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /** In-process pilot host: contract evidence only, never a safety certification or installer. */
-public final class DevelopmentCandidateEvaluator {
+public final class DevelopmentCandidateEvaluator
+    implements org.zalava.modules.development.application.port.out.CandidateEvaluator {
   private static final ObjectMapper JSON = new ObjectMapper();
   private static final int MAX_TRANSCRIPT_JSON_LENGTH = 16_000;
   private final Clock clock;

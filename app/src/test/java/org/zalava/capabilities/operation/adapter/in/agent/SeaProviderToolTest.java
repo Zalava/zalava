@@ -40,7 +40,10 @@ class SeaProviderToolTest {
   private final SeaProviderTool tool =
       new SeaProviderTool(
           new DefaultProviderToolOperations(
-              providerCatalog, new SeaToolApprovalAdapter(approvals), List.of()),
+              providerCatalog,
+              new SeaToolApprovalAdapter(approvals),
+              List.of(),
+              new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder()),
           new DefaultInstalledToolDiscovery(providerCatalog),
           taskExecutionContext);
 

@@ -22,11 +22,11 @@ import org.zalava.modules.catalog.install.adapter.out.filesystem.FileSystemModul
 import org.zalava.modules.catalog.install.application.DefaultBinaryModuleInstallation;
 import org.zalava.modules.catalog.install.application.DefaultLocalArtifactModuleInstallation;
 import org.zalava.modules.development.adapter.in.agent.DevelopmentRequestTools;
+import org.zalava.modules.development.adapter.out.contract.DevelopmentCandidateEvaluator;
 import org.zalava.modules.development.adapter.out.filesystem.FileSystemDevelopmentWorkspaceExporter;
 import org.zalava.modules.development.application.DefaultDevelopmentCandidateSubmission;
 import org.zalava.modules.development.application.DefaultDevelopmentRequestManagement;
 import org.zalava.modules.development.application.DefaultDevelopmentWorkspaceExport;
-import org.zalava.modules.development.application.DevelopmentCandidateEvaluator;
 import org.zalava.modules.development.application.DevelopmentCandidateValidationGateway;
 import org.zalava.modules.development.application.port.out.DevelopmentRequestStore;
 import org.zalava.modules.runtime.ExternalSeaModuleLoader;

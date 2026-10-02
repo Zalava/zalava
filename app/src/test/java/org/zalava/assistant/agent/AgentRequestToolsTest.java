@@ -43,9 +43,7 @@ class AgentRequestToolsTest {
   @Test
   void resolvesLoadedSeaCallbacksForEachChatRequest() {
     ToolCallback timeCallback = mock(ToolCallback.class);
-    when(callbackCatalog.entries())
-        .thenReturn(
-            List.of(new SeaToolCallbackCatalog.Entry("time", "current_time", timeCallback, null)));
+    when(callbackCatalog.callbacks()).thenReturn(List.of(timeCallback));
     when(discovery.search("hello", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
@@ -53,7 +51,7 @@ class AgentRequestToolsTest {
             new AgentRequestTools(List.of(taskTool, mcpTools), discovery, callbackCatalog)
                 .forInput("hello"))
         .containsExactly(taskTool, mcpTools, timeCallback);
-    verify(callbackCatalog).entries();
+    verify(callbackCatalog).callbacks();
   }
 
   @Test

@@ -1,4 +1,4 @@
-package org.zalava.modules.development.application;
+package org.zalava.modules.development.adapter.out.contract;
 
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;

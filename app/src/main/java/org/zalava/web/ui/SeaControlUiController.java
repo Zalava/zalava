@@ -30,8 +30,8 @@ import org.zalava.modules.development.DevelopmentRequestStatus;
 import org.zalava.modules.development.ModuleDevelopmentRequest;
 import org.zalava.modules.runtime.LoadedSeaProvider;
 import org.zalava.modules.runtime.SeaRuntime;
-import org.zalava.web.control.adapter.in.http.SeaBootstrapVerificationService;
 import org.zalava.web.control.application.AdministratorControlAuthorization;
+import org.zalava.web.control.application.port.in.BootstrapVerificationQueries;
 import org.zalava.web.control.application.port.in.InvocationLogQueries;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -72,7 +72,7 @@ public class SeaControlUiController {
       new LocalArtifactModuleMetadataLoader();
 
   private final SeaRuntime seaRuntime;
-  private final SeaBootstrapVerificationService verificationService;
+  private final BootstrapVerificationQueries verificationService;
   private final AdministratorControlAuthorization authorization;
   private final InvocationLogQueries invocationLog;
   private final SeaToolApprovalRequests permissionRequests;
@@ -85,7 +85,7 @@ public class SeaControlUiController {
 
   SeaControlUiController(
       SeaRuntime seaRuntime,
-      SeaBootstrapVerificationService verificationService,
+      BootstrapVerificationQueries verificationService,
       AdministratorControlAuthorization authorization,
       InvocationLogQueries invocationLog,
       SeaToolApprovalRequests permissionRequests,
@@ -451,7 +451,7 @@ public class SeaControlUiController {
   }
 
   private static VerificationEntry toVerificationEntry(
-      SeaBootstrapVerificationService.BootstrapToolVerification verification) {
+      BootstrapVerificationQueries.BootstrapToolVerification verification) {
     List<VerificationStepEntry> steps =
         verification.steps().stream().map(SeaControlUiController::toVerificationStepEntry).toList();
     return new VerificationEntry(
@@ -464,7 +464,7 @@ public class SeaControlUiController {
   }
 
   private static VerificationStepEntry toVerificationStepEntry(
-      SeaBootstrapVerificationService.VerificationStep step) {
+      BootstrapVerificationQueries.VerificationStep step) {
     return new VerificationStepEntry(
         step.label(),
         step.method(),

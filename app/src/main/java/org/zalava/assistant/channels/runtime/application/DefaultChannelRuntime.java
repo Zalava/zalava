@@ -1,4 +1,4 @@
-package org.zalava.channelruntime.application;
+package org.zalava.assistant.channels.runtime.application;
 
 import java.util.Map;
 import java.util.Objects;
@@ -10,11 +10,11 @@ import org.zalava.api.extensions.channels.ChannelInteractionKind;
 import org.zalava.api.extensions.channels.ChannelPrivacy;
 import org.zalava.api.extensions.channels.IncomingInteraction;
 import org.zalava.api.extensions.channels.ZalavaChannel;
+import org.zalava.assistant.channels.runtime.application.port.in.ChannelInteractionDispatcher;
+import org.zalava.assistant.channels.runtime.application.port.in.ChannelRuntime;
+import org.zalava.assistant.channels.runtime.domain.ChannelIngressResult;
+import org.zalava.assistant.channels.runtime.domain.ResolvedChannelInteraction;
 import org.zalava.assistant.conversation.domain.ConversationReference;
-import org.zalava.channelruntime.application.port.in.ChannelInteractionDispatcher;
-import org.zalava.channelruntime.application.port.in.ChannelRuntime;
-import org.zalava.channelruntime.domain.ChannelIngressResult;
-import org.zalava.channelruntime.domain.ResolvedChannelInteraction;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.identity.channels.domain.ExternalChannelIdentity;

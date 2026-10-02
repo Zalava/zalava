@@ -102,7 +102,8 @@ class LocalArtifactModuleInstallationTest {
             throw new AssertionError();
           }
         },
-        new org.zalava.modules.development.application.DevelopmentCandidateEvaluator(clock),
+        new org.zalava.modules.development.adapter.out.contract.DevelopmentCandidateEvaluator(
+            clock),
         clock) {
       @Override
       public Evidence requireAccepted(

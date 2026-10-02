@@ -73,7 +73,8 @@ class MemberProviderCapabilityPolicyTest {
     return new DefaultProviderToolOperations(
         providerId -> "test".equals(providerId) ? Optional.of(provider) : Optional.empty(),
         org.mockito.Mockito.mock(ToolApprovalPort.class),
-        List.of());
+        List.of(),
+        new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
   }
 
   private static InvocationContext memberContext() {
