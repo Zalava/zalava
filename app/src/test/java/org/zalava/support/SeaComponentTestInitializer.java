@@ -33,6 +33,7 @@ public final class SeaComponentTestInitializer
             "agent.channels.telegram.token=false",
             "agent.channels.telegram.username=false",
             "spring.ai.model.chat=unknown",
+            "spring.ai.openai.api-key=component-test-not-a-real-key",
             "spring.datasource.url=" + PostgreSqlTestDatabase.newJdbcUrl(),
             "jobrunr.background-job-server.enabled=false",
             "jobrunr.dashboard.enabled=false",
