@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.zalava.ModuleConfigurationDescriptor;
+import org.zalava.api.ModuleConfigurationDescriptor;
 
 class ModuleConfigurationFormTest {
 

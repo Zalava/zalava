@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import org.zalava.ZalavaServiceFactoryContext;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceLifecycle;
-import org.zalava.managed.ManagedServiceLimits;
-import org.zalava.managed.ManagedServiceResourceGrant;
+import org.zalava.api.ZalavaServiceFactoryContext;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceLifecycle;
+import org.zalava.api.extensions.managed.ManagedServiceLimits;
+import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
 
 class ManagedServiceInstallPlanningTest {
 
@@ -249,7 +249,7 @@ class ManagedServiceInstallPlanningTest {
         3);
   }
 
-  private static org.zalava.ManagedServiceAuthority authority(String moduleId) {
+  private static org.zalava.api.ManagedServiceAuthority authority(String moduleId) {
     return new ZalavaServiceFactoryContext(moduleId, Map.of(), Map.of()).managedServiceAuthority();
   }
 }

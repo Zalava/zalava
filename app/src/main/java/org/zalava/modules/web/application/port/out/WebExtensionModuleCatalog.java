@@ -1,7 +1,7 @@
 package org.zalava.modules.web.application.port.out;
 
 import java.util.List;
-import org.zalava.ZalavaModule;
+import org.zalava.api.ZalavaModule;
 
 public interface WebExtensionModuleCatalog {
 

@@ -30,7 +30,16 @@ class PortsAndAdaptersArchitectureTest {
   };
 
   private static final String[] ADAPTER_PACKAGES = {
-    "..adapter..", "..infrastructure..", "..api..", "..ui..", "..ws.."
+    "..adapter..",
+    "..infrastructure..",
+    "org.zalava.identity..api..",
+    "org.zalava.assistant..api..",
+    "org.zalava.web..api..",
+    "org.zalava.modules..api..",
+    "org.zalava.knowledge..api..",
+    "org.zalava.tasks..api..",
+    "..ui..",
+    "..ws.."
   };
 
   @ArchTest
@@ -380,7 +389,16 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule inbound_adapters_must_not_depend_on_outbound_ports =
       noClasses()
           .that()
-          .resideInAnyPackage("..adapter.in..", "..api..", "..ui..", "..ws..")
+          .resideInAnyPackage(
+              "..adapter.in..",
+              "org.zalava.identity..api..",
+              "org.zalava.assistant..api..",
+              "org.zalava.web..api..",
+              "org.zalava.modules..api..",
+              "org.zalava.knowledge..api..",
+              "org.zalava.tasks..api..",
+              "..ui..",
+              "..ws..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage("..application.port.out..")

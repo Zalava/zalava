@@ -3,9 +3,9 @@ package org.zalava.web.control.application;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaVerificationDescriptor;
-import org.zalava.ZalavaVerificationStep;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaVerificationDescriptor;
+import org.zalava.api.ZalavaVerificationStep;
 import org.zalava.web.control.application.port.in.BootstrapVerificationQueries;
 import org.zalava.web.control.application.port.out.RuntimeVerificationCatalog;
 

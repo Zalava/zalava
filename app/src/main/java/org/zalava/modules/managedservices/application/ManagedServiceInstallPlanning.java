@@ -11,12 +11,12 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
-import org.zalava.ManagedServiceAuthority;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceLifecycleResult;
-import org.zalava.managed.ManagedServiceLimits;
-import org.zalava.managed.ManagedServiceResourceGrant;
-import org.zalava.managed.ManagedServiceValidator;
+import org.zalava.api.ManagedServiceAuthority;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceLifecycleResult;
+import org.zalava.api.extensions.managed.ManagedServiceLimits;
+import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
+import org.zalava.api.extensions.managed.ManagedServiceValidator;
 
 /**
  * Validates a submitted set of managed services and derives the exact aggregate resources an

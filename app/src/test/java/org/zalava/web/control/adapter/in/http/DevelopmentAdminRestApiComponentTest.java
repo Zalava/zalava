@@ -31,19 +31,19 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.ModuleDescriptor;
-import org.zalava.PromptDescriptor;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ResourceDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
-import org.zalava.ZalavaVerificationContributor;
-import org.zalava.ZalavaVerificationDescriptor;
-import org.zalava.ZalavaVerificationStep;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.PromptDescriptor;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ResourceDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
+import org.zalava.api.ZalavaVerificationContributor;
+import org.zalava.api.ZalavaVerificationDescriptor;
+import org.zalava.api.ZalavaVerificationStep;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.modules.catalog.LocalArtifactInstallRequest;
 import org.zalava.modules.catalog.ModuleReleaseIndex;
@@ -635,7 +635,7 @@ class DevelopmentAdminRestApiComponentTest {
             }
 
             @Override
-            public List<org.zalava.ProviderFactory> providerFactories() {
+            public List<org.zalava.api.ProviderFactory> providerFactories() {
               return List.of();
             }
 

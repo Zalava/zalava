@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.zalava.ZalavaOperationResult;
+import org.zalava.api.ZalavaOperationResult;
 import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.model.ToolApproval;

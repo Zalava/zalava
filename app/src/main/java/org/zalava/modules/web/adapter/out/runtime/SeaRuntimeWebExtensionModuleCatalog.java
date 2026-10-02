@@ -1,7 +1,7 @@
 package org.zalava.modules.web.adapter.out.runtime;
 
 import java.util.List;
-import org.zalava.ZalavaModule;
+import org.zalava.api.ZalavaModule;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 import org.zalava.modules.web.application.port.out.WebExtensionModuleCatalog;
 

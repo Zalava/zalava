@@ -1,10 +1,10 @@
 package org.zalava.fixture;
 
 import java.util.List;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaServiceFactory;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaServiceFactory;
 import org.zalava.fixture.speech.MockSpeechRecognitionFactory;
 import org.zalava.fixture.speech.MockSpeechSynthesisFactory;
 

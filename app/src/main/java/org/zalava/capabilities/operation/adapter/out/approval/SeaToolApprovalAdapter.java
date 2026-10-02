@@ -1,9 +1,9 @@
 package org.zalava.capabilities.operation.adapter.out.approval;
 
 import java.util.Optional;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;

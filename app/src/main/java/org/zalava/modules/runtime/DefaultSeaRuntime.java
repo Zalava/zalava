@@ -1,9 +1,9 @@
 package org.zalava.modules.runtime;
 
 import java.util.List;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaServiceContract;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaServiceContract;
 import org.zalava.modules.runtime.application.DefaultRuntimeQueries;
 
 public final class DefaultSeaRuntime implements SeaRuntime {

@@ -10,12 +10,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.zalava.InvocationContext;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
@@ -321,7 +321,9 @@ class ChannelApprovalCommandsTest {
 
     @Override
     public ZalavaOperationResult callTool(
-        String toolName, tools.jackson.databind.JsonNode arguments, InvocationContext context) {
+        String toolName, java.util.Map<String, Object> argumentValues, InvocationContext context) {
+      tools.jackson.databind.JsonNode arguments =
+          new tools.jackson.databind.json.JsonMapper().valueToTree(argumentValues);
       return ZalavaOperationResult.success(Map.of());
     }
   }

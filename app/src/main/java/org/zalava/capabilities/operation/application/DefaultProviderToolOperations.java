@@ -4,10 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
@@ -15,12 +15,19 @@ import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
-import tools.jackson.databind.JsonNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public final class DefaultProviderToolOperations implements ProviderToolOperations {
 
-  private static final ObjectMapper JSON = new ObjectMapper();
+  private static final ObjectMapper JSON =
+      JsonMapper.builder()
+          .enable(
+              DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS,
+              DeserializationFeature.USE_BIG_INTEGER_FOR_INTS)
+          .build();
 
   private final ProviderCatalog providerCatalog;
   private final ToolApprovalPort approvalPort;
@@ -50,7 +57,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     ZalavaProvider provider = findProvider(command.providerId());
     ZalavaToolDescriptor tool = findTool(provider, command.toolName());
     memberCapabilities.requireAllowed(provider, tool, command.context());
-    JsonNode arguments = parseArguments(command.argumentsJson());
+    Map<String, Object> arguments = parseArguments(command.argumentsJson());
 
     if (!tool.sideEffecting()) {
       return ToolInvocationOutcome.executed(execute(provider, tool, arguments, command.context()));
@@ -126,7 +133,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   private ToolInvocationOutcome executeUnscopedApproval(ToolApproval approval) {
     ZalavaProvider provider = findProvider(approval.providerId());
     ZalavaToolDescriptor tool = findTool(provider, approval.toolName());
-    JsonNode arguments = parseArguments(approval.argumentsJson());
+    Map<String, Object> arguments = parseArguments(approval.argumentsJson());
     InvocationContext context =
         new InvocationContext(
             approval.actorId(),
@@ -184,7 +191,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   private ZalavaOperationResult execute(
       ZalavaProvider provider,
       ZalavaToolDescriptor tool,
-      JsonNode arguments,
+      Map<String, Object> arguments,
       InvocationContext context) {
     memberCapabilities.requireAllowed(provider, tool, context);
     long startedAt = System.nanoTime();
@@ -243,15 +250,16 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     observers.forEach(observer -> observer.observe(observation));
   }
 
-  private static JsonNode parseArguments(String argumentsJson) {
+  private static Map<String, Object> parseArguments(String argumentsJson) {
     try {
-      JsonNode arguments = JSON.readTree(argumentsJson);
-      if (!arguments.isObject()) {
+      Object decoded = JSON.readValue(argumentsJson, Object.class);
+      if (!(decoded instanceof Map<?, ?>)) {
         throw new ProviderToolOperationException(
             ProviderToolOperationException.Code.VALIDATION,
             "SEA provider tool arguments must be a JSON object");
       }
-      return arguments;
+      return org.zalava.api.JsonArguments.immutable(
+          JSON.convertValue(decoded, new TypeReference<Map<String, Object>>() {}));
     } catch (ProviderToolOperationException ex) {
       throw ex;
     } catch (Exception ex) {

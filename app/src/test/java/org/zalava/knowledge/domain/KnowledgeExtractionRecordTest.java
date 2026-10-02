@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
-import org.zalava.content.ContentExtractionFailureCategory;
+import org.zalava.api.extensions.content.ContentExtractionFailureCategory;
 
 class KnowledgeExtractionRecordTest {
   private final KnowledgeDerivation derivation =

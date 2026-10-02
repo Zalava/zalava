@@ -36,41 +36,41 @@ class SeaTaskApprovalDecisionsTest {
     return requests.create(
         provider("files"),
         tool("write"),
-        new org.zalava.InvocationContext("member-1", false, Map.of()),
+        new org.zalava.api.InvocationContext("member-1", false, Map.of()),
         new ObjectMapper().createObjectNode().put("path", "report.md"),
         reference);
   }
 
-  private org.zalava.ZalavaProvider provider(String id) {
-    return new org.zalava.ZalavaProvider() {
+  private org.zalava.api.ZalavaProvider provider(String id) {
+    return new org.zalava.api.ZalavaProvider() {
       @Override
-      public org.zalava.ProviderDescriptor descriptor() {
-        return new org.zalava.ProviderDescriptor(
+      public org.zalava.api.ProviderDescriptor descriptor() {
+        return new org.zalava.api.ProviderDescriptor(
             id,
             "module",
             "tool",
             id,
             id,
             "1.0.0",
-            org.zalava.ProviderCapabilities.toolsOnly(),
+            org.zalava.api.ProviderCapabilities.toolsOnly(),
             List.of(),
             Map.of());
       }
 
       @Override
-      public org.zalava.ProviderCapabilities capabilities() {
-        return org.zalava.ProviderCapabilities.toolsOnly();
+      public org.zalava.api.ProviderCapabilities capabilities() {
+        return org.zalava.api.ProviderCapabilities.toolsOnly();
       }
 
       @Override
-      public List<org.zalava.ZalavaToolDescriptor> listTools() {
+      public List<org.zalava.api.ZalavaToolDescriptor> listTools() {
         return List.of();
       }
     };
   }
 
-  private org.zalava.ZalavaToolDescriptor tool(String name) {
-    return new org.zalava.ZalavaToolDescriptor(
+  private org.zalava.api.ZalavaToolDescriptor tool(String name) {
+    return new org.zalava.api.ZalavaToolDescriptor(
         name, "A write tool", true, List.of("files:write"), Map.of());
   }
 
@@ -113,7 +113,7 @@ class SeaTaskApprovalDecisionsTest {
         requests.create(
             provider("browser"),
             tool("open"),
-            new org.zalava.InvocationContext(
+            new org.zalava.api.InvocationContext(
                 owner.accountId().toString(),
                 false,
                 Map.of(SeaToolApprovalRequests.ACTOR_TASK_REFERENCE, encoded)),

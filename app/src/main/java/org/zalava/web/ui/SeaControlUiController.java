@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.modules.catalog.LocalArtifactInstallRequest;
 import org.zalava.modules.catalog.LocalArtifactModuleMetadataLoader;
@@ -411,7 +411,7 @@ public class SeaControlUiController {
         : normalized.substring(0, MAX_ERROR_LENGTH) + "...";
   }
 
-  private static ModuleEntry toModuleEntry(org.zalava.ZalavaModule module) {
+  private static ModuleEntry toModuleEntry(org.zalava.api.ZalavaModule module) {
     ModuleDescriptor descriptor = module.descriptor();
     return new ModuleEntry(
         descriptor.moduleId(),

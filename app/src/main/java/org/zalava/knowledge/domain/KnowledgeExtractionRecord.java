@@ -1,7 +1,7 @@
 package org.zalava.knowledge.domain;
 
 import java.util.Objects;
-import org.zalava.content.ContentExtractionFailureCategory;
+import org.zalava.api.extensions.content.ContentExtractionFailureCategory;
 
 /** Bounded, SEA-owned persisted outcome for one candidate derivation. */
 public record KnowledgeExtractionRecord(

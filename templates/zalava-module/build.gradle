@@ -8,6 +8,8 @@ buildscript {
 }
 
 plugins {
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '7.2.1'
     id 'java-library'
     id 'maven-publish'
 }
@@ -34,7 +36,7 @@ if (releaseTag != null && metadataVersion != releaseTag.substring(1)) {
 }
 version = releaseTag != null ? releaseTag.substring(1) : metadataVersion
 
-def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.3')
+def moduleApiVersion = providers.gradleProperty('moduleApiVersion').orElse('0.1.0-alpha.6')
 def moduleApiRepositoryUrl = providers.gradleProperty('moduleApiRepositoryUrl')
         .orElse('https://maven.pkg.github.com/Zalava/zalava')
 def githubPackagesActor = providers.environmentVariable('GITHUB_ACTOR')
@@ -56,8 +58,9 @@ repositories {
 dependencies {
     compileOnlyApi "org.zalava:module-api:${moduleApiVersion.get()}"
     testImplementation "org.zalava:module-api:${moduleApiVersion.get()}"
+    testImplementation "org.zalava:module-api-test:${moduleApiVersion.get()}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
 }
 
 java {
@@ -169,4 +172,66 @@ tasks.withType(PublishToMavenRepository).configureEach {
             throw new GradleException('GitHub Packages publication requires GITHUB_ACTOR and ZALAVA_PUBLISH_TOKEN')
         }
     }
+}
+
+tasks.named('test') {
+    dependsOn tasks.named('jar')
+    def moduleArtifact = tasks.named('jar').flatMap { it.archiveFile }
+    systemProperty 'module.artifact', moduleArtifact.get().asFile.absolutePath
+    systemProperty 'module.version', project.version.toString()
+    // Contract tests load the actual built artifact, never main source output.
+    classpath = files(sourceSets.test.output, configurations.testRuntimeClasspath)
+}
+
+
+// Keep module quality gates aligned with the Zalava host.
+spotless {
+    java {
+        target 'src/**/*.java'
+        googleJavaFormat('1.36.1')
+    }
+}
+
+jacoco {
+    toolVersion = '0.8.14'
+}
+
+tasks.named('test') {
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = true
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('test')
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.74
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('spotlessCheck')
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+
+tasks.named('jar') {
+    manifest { attributes('Implementation-Version': project.version.toString()) }
 }

@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.ModuleConfigurationStatus;
+import org.zalava.api.ModuleConfigurationStatus;
 
 class FileSystemModuleConfigurationStoreTest {
 

@@ -28,8 +28,8 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.zalava.InvocationContext;
-import org.zalava.ZalavaModule;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ZalavaModule;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.modules.runtime.LoadedSeaProvider;
@@ -151,7 +151,7 @@ class IndexedInstallAcceptanceTest {
               .orElseThrow(() -> new AssertionError("not loaded"));
       assertThat(loaded.module().moduleId()).isEqualTo(MODULE_ID);
       assertThat(loaded.provider().listTools())
-          .extracting(org.zalava.ZalavaToolDescriptor::name)
+          .extracting(org.zalava.api.ZalavaToolDescriptor::name)
           .contains("current_time", "convert_time");
 
       ProviderToolOperations operations = restarted.getBean(ProviderToolOperations.class);

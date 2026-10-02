@@ -51,7 +51,7 @@ class ExternalModuleClassLoaderTest {
             "External module example-module uses retired preview SPI service descriptor "
                 + "META-INF/services/org.zalava.sea.ZalavaModule; rebuild it against "
                 + "org.zalava:module-api:1.0.0 and register "
-                + "META-INF/services/org.zalava.ZalavaModule");
+                + "META-INF/services/org.zalava.api.ZalavaModule");
   }
 
   @Test

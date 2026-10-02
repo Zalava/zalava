@@ -2,8 +2,8 @@ package org.zalava.fixture.speech;
 
 import java.util.Map;
 import java.util.Optional;
-import org.zalava.ZalavaServiceFactoryContext;
-import org.zalava.speech.SpeechException;
+import org.zalava.api.ZalavaServiceFactoryContext;
+import org.zalava.api.extensions.speech.SpeechException;
 
 /** Shared scoped configuration and secret lookup for the fixture speech providers. */
 final class MockSpeechConfiguration {

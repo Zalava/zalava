@@ -2,13 +2,12 @@ package org.zalava.fixture;
 
 import java.util.List;
 import java.util.Map;
-import org.zalava.InvocationContext;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
-import tools.jackson.databind.JsonNode;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 
 final class ExternalFixtureZalavaProvider implements ZalavaProvider {
 
@@ -44,8 +43,8 @@ final class ExternalFixtureZalavaProvider implements ZalavaProvider {
 
   @Override
   public ZalavaOperationResult callTool(
-      String toolName, JsonNode arguments, InvocationContext context) {
-    if ("example_lookup".equals(toolName) && arguments.path("fail").asBoolean()) {
+      String toolName, java.util.Map<String, Object> argumentValues, InvocationContext context) {
+    if ("example_lookup".equals(toolName) && Boolean.TRUE.equals(argumentValues.get("fail"))) {
       return ZalavaOperationResult.failure(Map.of("code", "FIXTURE_FAILURE"));
     }
     if ("example_lookup".equals(toolName))

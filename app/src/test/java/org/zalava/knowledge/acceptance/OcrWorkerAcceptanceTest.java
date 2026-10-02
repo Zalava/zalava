@@ -37,8 +37,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
-import org.zalava.content.ContentExtractionFailureCategory;
-import org.zalava.content.ContentExtractor;
+import org.zalava.api.extensions.content.ContentExtractionFailureCategory;
+import org.zalava.api.extensions.content.ContentExtractor;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
@@ -163,7 +163,7 @@ class OcrWorkerAcceptanceTest {
 
     configurations.saveCandidate(snapshot(workerConfiguration(workerUrl, "eng")), Map.of());
     assertThat(configurations.status(MODULE_ID))
-        .isEqualTo(org.zalava.ModuleConfigurationStatus.RESTART_REQUIRED);
+        .isEqualTo(org.zalava.api.ModuleConfigurationStatus.RESTART_REQUIRED);
   }
 
   @Test

@@ -7,7 +7,6 @@ def githubPackagesActor = providers.environmentVariable('GITHUB_ACTOR')
 def githubPackagesToken = providers.environmentVariable('ZALAVA_PUBLISH_TOKEN')
 
 dependencies {
-    api 'tools.jackson.core:jackson-databind'
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.mockito:mockito-core'
@@ -78,3 +77,15 @@ gradle.taskGraph.whenReady { graph ->
         throw new GradleException('GitHub Packages publication requires GITHUB_ACTOR and ZALAVA_PUBLISH_TOKEN')
     }
 }
+
+// Production SPI must stay usable with only the JDK.
+tasks.register('jdkOnlyCheck') {
+    def productionDependencies = configurations.runtimeClasspath
+    inputs.files(productionDependencies)
+    doLast {
+        if (!productionDependencies.files.isEmpty()) {
+            throw new GradleException('Module API production dependencies must contain only the JDK')
+        }
+    }
+}
+tasks.named('check') { dependsOn tasks.named('jdkOnlyCheck') }

@@ -2,8 +2,8 @@ package org.zalava.modules.managedservices.application.port.in;
 
 import java.util.List;
 import java.util.Set;
-import org.zalava.managed.ManagedServiceDesiredState;
-import org.zalava.managed.ManagedServiceResourceGrant;
+import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
+import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
 import org.zalava.modules.managedservices.application.ManagedServiceInstallRequest;
 
 /** Administrator-facing managed-service install workflow: plan, inspect, approve, deny. */

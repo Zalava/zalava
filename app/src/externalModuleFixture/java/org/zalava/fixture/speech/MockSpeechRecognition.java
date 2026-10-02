@@ -1,9 +1,9 @@
 package org.zalava.fixture.speech;
 
 import java.io.ByteArrayOutputStream;
-import org.zalava.speech.SpeechCapabilities;
-import org.zalava.speech.SpeechException;
-import org.zalava.speech.SpeechRecognition;
+import org.zalava.api.extensions.speech.SpeechCapabilities;
+import org.zalava.api.extensions.speech.SpeechException;
+import org.zalava.api.extensions.speech.SpeechRecognition;
 
 /** Deterministic recognition provider that echoes scoped configuration as a transcript. */
 public final class MockSpeechRecognition implements SpeechRecognition, AutoCloseable {

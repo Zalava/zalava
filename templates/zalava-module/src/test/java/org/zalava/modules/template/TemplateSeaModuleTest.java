@@ -1,20 +1,30 @@
 package org.zalava.modules.template;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ServiceLoader;
+import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.zalava.ZalavaModule;
+import org.zalava.api.testing.ModuleContractKit;
 
-class TemplateZalavaModuleTest {
-
+class TemplateSeaModuleTest {
   @Test
-  void registersALoadableModuleWithOneProviderFactory() {
-    ZalavaModule module = ServiceLoader.load(ZalavaModule.class).findFirst().orElseThrow();
-
-    assertEquals(TemplateZalavaModule.MODULE_ID, module.descriptor().moduleId());
-    assertEquals("1.0.0-SNAPSHOT", module.descriptor().version());
-    assertFalse(module.providerFactories().isEmpty());
+  void loadsActualModuleJarThroughPublicKit() throws Exception {
+    try (var kit =
+        ModuleContractKit.load(
+            Path.of(System.getProperty("module.artifact")),
+            List.of(),
+            "zalava-module-template",
+            System.getProperty("module.version"))) {
+      assertEquals("zalava-module-template", kit.moduleId());
+      assertNotNull(kit.module().providerFactories());
+      try (var providers = kit.providers()) {
+        assertEquals(1, providers.providers().size());
+        var provider = providers.providers().getFirst();
+        assertEquals("template", provider.descriptor().providerId());
+        assertNotNull(provider.capabilities());
+        assertTrue(provider.listTools().isEmpty());
+      }
+    }
   }
 }

@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ZalavaModule;
 import org.zalava.assistant.agent.Agent;
 import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.DefaultAgent;
@@ -642,7 +644,7 @@ public class SeaConfiguration {
   }
 
   @Bean
-  public org.zalava.tasks.TaskService seaTaskService(
+  public org.zalava.api.extensions.tasks.TaskService seaTaskService(
       TaskCommands taskCommands,
       TaskQueries taskQueries,
       ActorTaskCommands actorTaskCommands,
@@ -660,9 +662,9 @@ public class SeaConfiguration {
   public ProviderFactoryContext seaProviderFactoryContext(
       SeaModuleProperties moduleProperties,
       FileSystemModuleConfigurationStore configurations,
-      org.zalava.tasks.TaskService taskService) {
+      org.zalava.api.extensions.tasks.TaskService taskService) {
     java.util.Map<String, Object> modules = new java.util.HashMap<>(moduleProperties.modules());
-    java.util.Map<String, org.zalava.FactorySecretAccess> secrets = new java.util.HashMap<>();
+    java.util.Map<String, org.zalava.api.FactorySecretAccess> secrets = new java.util.HashMap<>();
     configurations
         .activeConfigurations()
         .forEach(
@@ -672,17 +674,17 @@ public class SeaConfiguration {
             });
     return new ProviderFactoryContext(
         java.util.Map.of("modules", java.util.Map.copyOf(modules)),
-        org.zalava.FactorySecretAccess.none(),
+        org.zalava.api.FactorySecretAccess.none(),
         secrets,
         java.util.Map.of(
             "zalava-module-tasks",
-            java.util.Map.of(org.zalava.tasks.TaskService.class, taskService)));
+            java.util.Map.of(org.zalava.api.extensions.tasks.TaskService.class, taskService)));
   }
 
   ProviderFactoryContext seaProviderFactoryContext(
       SeaModuleProperties moduleProperties, FileSystemModuleConfigurationStore configurations) {
     java.util.Map<String, Object> modules = new java.util.HashMap<>(moduleProperties.modules());
-    java.util.Map<String, org.zalava.FactorySecretAccess> secrets = new java.util.HashMap<>();
+    java.util.Map<String, org.zalava.api.FactorySecretAccess> secrets = new java.util.HashMap<>();
     configurations
         .activeConfigurations()
         .forEach(
@@ -692,7 +694,7 @@ public class SeaConfiguration {
             });
     return new ProviderFactoryContext(
         java.util.Map.of("modules", java.util.Map.copyOf(modules)),
-        org.zalava.FactorySecretAccess.none(),
+        org.zalava.api.FactorySecretAccess.none(),
         secrets);
   }
 

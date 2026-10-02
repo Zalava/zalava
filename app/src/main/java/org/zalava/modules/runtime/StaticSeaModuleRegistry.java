@@ -5,8 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ZalavaModule;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ZalavaModule;
 
 public final class StaticSeaModuleRegistry implements SeaModuleRegistry {
 

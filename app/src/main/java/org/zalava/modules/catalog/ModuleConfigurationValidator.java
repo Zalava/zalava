@@ -5,10 +5,10 @@ import com.networknt.schema.SpecificationVersion;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
-import org.zalava.FactorySecretAccess;
-import org.zalava.ModuleConfigurationDescriptor;
-import org.zalava.ModuleConfigurationStatus;
-import org.zalava.ProviderFactoryContext;
+import org.zalava.api.FactorySecretAccess;
+import org.zalava.api.ModuleConfigurationDescriptor;
+import org.zalava.api.ModuleConfigurationStatus;
+import org.zalava.api.ProviderFactoryContext;
 import tools.jackson.databind.ObjectMapper;
 
 /** Application boundary for module-owned configuration documents. */

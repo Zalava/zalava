@@ -17,21 +17,20 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
-import org.zalava.content.ContentExtractor;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
+import org.zalava.api.extensions.content.ContentExtractor;
 import org.zalava.modules.catalog.install.SourceModuleInstallationException;
 import org.zalava.modules.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
-import tools.jackson.databind.JsonNode;
 
 class ExternalSeaModuleLoaderTest {
 
@@ -46,7 +45,7 @@ class ExternalSeaModuleLoaderTest {
       List<ZalavaModule> modules = loader.loadModules();
       DefaultSeaRuntime runtime =
           new DefaultSeaRuntime(
-              new StaticSeaModuleRegistry(modules), org.zalava.ProviderFactoryContext.empty());
+              new StaticSeaModuleRegistry(modules), org.zalava.api.ProviderFactoryContext.empty());
 
       assertThat(modules)
           .extracting(module -> module.descriptor().moduleId())
@@ -58,8 +57,8 @@ class ExternalSeaModuleLoaderTest {
           .extracting(factory -> factory.contract().serviceId())
           .containsExactlyInAnyOrder(
               ContentExtractor.CONTRACT.serviceId(),
-              org.zalava.speech.SpeechRecognition.CONTRACT.serviceId(),
-              org.zalava.speech.SpeechSynthesis.CONTRACT.serviceId());
+              org.zalava.api.extensions.speech.SpeechRecognition.CONTRACT.serviceId(),
+              org.zalava.api.extensions.speech.SpeechSynthesis.CONTRACT.serviceId());
     }
   }
 
@@ -689,7 +688,11 @@ class ExternalSeaModuleLoaderTest {
 
     @Override
     public ZalavaOperationResult callTool(
-        String toolName, JsonNode arguments, org.zalava.InvocationContext context) {
+        String toolName,
+        java.util.Map<String, Object> argumentValues,
+        org.zalava.api.InvocationContext context) {
+      tools.jackson.databind.JsonNode arguments =
+          new tools.jackson.databind.json.JsonMapper().valueToTree(argumentValues);
       return ZalavaOperationResult.success(Map.of());
     }
   }

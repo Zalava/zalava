@@ -2,10 +2,10 @@ package org.zalava.modules.runtime.application;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaServiceContract;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaServiceContract;
 import org.zalava.modules.runtime.LoadedSeaProvider;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 import org.zalava.modules.runtime.application.port.out.RuntimeModuleRegistry;

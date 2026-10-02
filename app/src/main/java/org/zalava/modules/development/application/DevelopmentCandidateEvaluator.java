@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
-import org.zalava.*;
+import org.zalava.api.*;
 import org.zalava.modules.catalog.install.application.port.out.LocalArtifactInspection;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.modules.development.CandidateEvaluation;
@@ -171,7 +171,15 @@ public final class DevelopmentCandidateEvaluator {
     long startedAt = System.nanoTime();
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       Future<ZalavaOperationResult> invocation =
-          executor.submit(() -> provider.callTool(tool, input, InvocationContext.system()));
+          executor.submit(
+              () ->
+                  provider.callTool(
+                      tool,
+                      JSON.convertValue(
+                          input,
+                          new tools.jackson.core.type.TypeReference<
+                              java.util.Map<String, Object>>() {}),
+                      InvocationContext.system()));
       ZalavaOperationResult result = invocation.get(timeout, TimeUnit.MILLISECONDS);
       String responseJson = boundedSanitizedJson(JSON.valueToTree(result.content()));
       Long maximumResponseBytes = contract.operationalRequirements().maximumResponseBytes();
@@ -261,8 +269,7 @@ public final class DevelopmentCandidateEvaluator {
       List<CandidateEvaluation.Requirement> requirements) {
     if (contract.expectedErrors().isEmpty()) return;
     ZalavaOperationResult response =
-        provider.callTool(
-            "__sea_expected_error__", JSON.createObjectNode(), InvocationContext.system());
+        provider.callTool("__sea_expected_error__", java.util.Map.of(), InvocationContext.system());
     String expected = contract.expectedErrors().getFirst().code();
     requireExpectedError(response, expected, "expected error");
     requirements.add(

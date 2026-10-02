@@ -7,8 +7,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.zalava.ModuleConfigurationDescriptor;
-import org.zalava.ModuleConfigurationStatus;
+import org.zalava.api.ModuleConfigurationDescriptor;
+import org.zalava.api.ModuleConfigurationStatus;
 
 class ModuleConfigurationValidatorTest {
   private final ModuleConfigurationValidator validator = new ModuleConfigurationValidator();

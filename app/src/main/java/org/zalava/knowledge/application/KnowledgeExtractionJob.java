@@ -3,14 +3,14 @@ package org.zalava.knowledge.application;
 import java.io.ByteArrayInputStream;
 import java.util.Objects;
 import java.util.UUID;
-import org.zalava.content.ContentExtractionFailure;
-import org.zalava.content.ContentExtractionLimits;
-import org.zalava.content.ContentExtractionOutcome;
-import org.zalava.content.ContentExtractionRequest;
-import org.zalava.content.ContentExtractionResult;
-import org.zalava.content.ContentExtractor;
-import org.zalava.content.ContentSourceInput;
-import org.zalava.content.ContentSourceMetadata;
+import org.zalava.api.extensions.content.ContentExtractionFailure;
+import org.zalava.api.extensions.content.ContentExtractionLimits;
+import org.zalava.api.extensions.content.ContentExtractionOutcome;
+import org.zalava.api.extensions.content.ContentExtractionRequest;
+import org.zalava.api.extensions.content.ContentExtractionResult;
+import org.zalava.api.extensions.content.ContentExtractor;
+import org.zalava.api.extensions.content.ContentSourceInput;
+import org.zalava.api.extensions.content.ContentSourceMetadata;
 import org.zalava.knowledge.application.port.out.KnowledgeBlobStore;
 import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
@@ -90,7 +90,7 @@ public final class KnowledgeExtractionJob {
       records.record(
           org.zalava.knowledge.domain.KnowledgeExtractionRecord.failed(
               candidate,
-              org.zalava.content.ContentExtractionFailureCategory.INTERNAL,
+              org.zalava.api.extensions.content.ContentExtractionFailureCategory.INTERNAL,
               "Extractor execution failed"));
       lifecycle.completeReprocessing(source.owner(), candidate, false);
       throw exception;
@@ -100,7 +100,7 @@ public final class KnowledgeExtractionJob {
         records.record(
             org.zalava.knowledge.domain.KnowledgeExtractionRecord.failed(
                 candidate,
-                org.zalava.content.ContentExtractionFailureCategory.UNAVAILABLE,
+                org.zalava.api.extensions.content.ContentExtractionFailureCategory.UNAVAILABLE,
                 "Extractor returned no text"));
         lifecycle.completeReprocessing(source.owner(), candidate, false);
         return;
@@ -121,7 +121,7 @@ public final class KnowledgeExtractionJob {
     records.record(
         org.zalava.knowledge.domain.KnowledgeExtractionRecord.failed(
             candidate,
-            org.zalava.content.ContentExtractionFailureCategory.INTERNAL,
+            org.zalava.api.extensions.content.ContentExtractionFailureCategory.INTERNAL,
             "Extractor returned an invalid outcome"));
     lifecycle.completeReprocessing(source.owner(), candidate, false);
     throw new IllegalStateException(

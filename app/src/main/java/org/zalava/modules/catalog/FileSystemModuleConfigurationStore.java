@@ -7,8 +7,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.zalava.FactorySecretAccess;
-import org.zalava.ModuleConfigurationStatus;
+import org.zalava.api.FactorySecretAccess;
+import org.zalava.api.ModuleConfigurationStatus;
 import tools.jackson.databind.ObjectMapper;
 
 /** Private host filesystem storage for candidate/active configuration and secret values. */

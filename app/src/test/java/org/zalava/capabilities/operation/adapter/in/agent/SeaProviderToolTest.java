@@ -8,15 +8,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import org.zalava.ProviderCapabilities;
-import org.zalava.ProviderDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ProviderFactoryContext;
-import org.zalava.ProviderFactoryDescriptor;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaOperationResult;
-import org.zalava.ZalavaProvider;
-import org.zalava.ZalavaToolDescriptor;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.SeaToolApprovalRequests;
 import org.zalava.capabilities.discovery.application.DefaultInstalledToolDiscovery;
 import org.zalava.capabilities.operation.adapter.out.approval.SeaToolApprovalAdapter;
@@ -26,7 +26,6 @@ import org.zalava.modules.runtime.DefaultSeaRuntime;
 import org.zalava.modules.runtime.StaticSeaModuleRegistry;
 import org.zalava.tasks.domain.TaskExecutionContext;
 import org.zalava.tasks.domain.TaskReference;
-import tools.jackson.databind.JsonNode;
 
 class SeaProviderToolTest {
 
@@ -206,7 +205,11 @@ class SeaProviderToolTest {
 
     @Override
     public ZalavaOperationResult callTool(
-        String toolName, JsonNode arguments, org.zalava.InvocationContext context) {
+        String toolName,
+        java.util.Map<String, Object> argumentValues,
+        org.zalava.api.InvocationContext context) {
+      tools.jackson.databind.JsonNode arguments =
+          new tools.jackson.databind.json.JsonMapper().valueToTree(argumentValues);
       calls.incrementAndGet();
       return ZalavaOperationResult.success(
           Map.of(
@@ -218,8 +221,8 @@ class SeaProviderToolTest {
   private record SingleProviderModule(ZalavaProvider provider) implements ZalavaModule {
 
     @Override
-    public org.zalava.ModuleDescriptor descriptor() {
-      return new org.zalava.ModuleDescriptor(
+    public org.zalava.api.ModuleDescriptor descriptor() {
+      return new org.zalava.api.ModuleDescriptor(
           "test-module", "1.0.0", "Test Module", "Module for approval bridge tests.");
     }
 

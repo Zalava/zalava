@@ -6,13 +6,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.zalava.ModuleDescriptor;
-import org.zalava.RequirementMode;
-import org.zalava.ZalavaModule;
-import org.zalava.ZalavaServiceContract;
-import org.zalava.ZalavaServiceDescriptor;
-import org.zalava.ZalavaServiceFactory;
-import org.zalava.ZalavaServiceRequirement;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.RequirementMode;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
+import org.zalava.api.ZalavaServiceFactory;
+import org.zalava.api.ZalavaServiceRequirement;
 
 class ModuleServiceRuntimeTest {
   private static final ZalavaServiceContract<Service> A =
@@ -102,14 +102,14 @@ class ModuleServiceRuntimeTest {
 
     assertThat(
             runtime
-                .providerContext(org.zalava.ProviderFactoryContext.empty())
+                .providerContext(org.zalava.api.ProviderFactoryContext.empty())
                 .forFactory("optional", "factory")
                 .service(new ZalavaServiceContract<>("missing", "1", Service.class)))
         .isEmpty();
     assertThatThrownBy(
             () ->
                 runtime
-                    .providerContext(org.zalava.ProviderFactoryContext.empty())
+                    .providerContext(org.zalava.api.ProviderFactoryContext.empty())
                     .forFactory("optional", "factory")
                     .service(A))
         .hasMessageContaining("did not declare service service-a");
@@ -122,7 +122,8 @@ class ModuleServiceRuntimeTest {
   }
 
   private static ModuleServiceRuntime runtime(ZalavaModule... modules) {
-    return new ModuleServiceRuntime(List.of(modules), org.zalava.ProviderFactoryContext.empty());
+    return new ModuleServiceRuntime(
+        List.of(modules), org.zalava.api.ProviderFactoryContext.empty());
   }
 
   private static ZalavaModule module(
@@ -136,7 +137,7 @@ class ModuleServiceRuntimeTest {
       }
 
       @Override
-      public List<org.zalava.ProviderFactory> providerFactories() {
+      public List<org.zalava.api.ProviderFactory> providerFactories() {
         return List.of();
       }
 
@@ -166,7 +167,7 @@ class ModuleServiceRuntimeTest {
       }
 
       @Override
-      public Service create(org.zalava.ZalavaServiceFactoryContext context) {
+      public Service create(org.zalava.api.ZalavaServiceFactoryContext context) {
         events.add("create-" + contract.serviceId());
         return new Service(contract.serviceId(), events);
       }

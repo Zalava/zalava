@@ -2,9 +2,9 @@ package org.zalava.fixture.speech;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import org.zalava.speech.SpeechCapabilities;
-import org.zalava.speech.SpeechException;
-import org.zalava.speech.SpeechSynthesis;
+import org.zalava.api.extensions.speech.SpeechCapabilities;
+import org.zalava.api.extensions.speech.SpeechException;
+import org.zalava.api.extensions.speech.SpeechSynthesis;
 
 /** Deterministic synthesis provider that streams scoped text as bounded audio chunks. */
 public final class MockSpeechSynthesis implements SpeechSynthesis, AutoCloseable {

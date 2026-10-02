@@ -2,8 +2,8 @@ package org.zalava.modules.web.application;
 
 import java.util.Map;
 import java.util.Optional;
+import org.zalava.api.extensions.web.ZalavaWebHandler;
 import org.zalava.modules.web.domain.RoutePattern;
-import org.zalava.web.ZalavaWebHandler;
 
 public record RegisteredWebRoute(String method, RoutePattern pattern, ZalavaWebHandler handler) {
 

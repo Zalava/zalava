@@ -5,12 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.zalava.ModuleDescriptor;
-import org.zalava.ProviderFactory;
-import org.zalava.ZalavaModule;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.extensions.web.*;
 import org.zalava.modules.web.application.DefaultWebExtensionRoutes;
 import org.zalava.modules.web.application.port.out.WebExtensionModuleCatalog;
-import org.zalava.web.*;
 
 class SeaWebExtensionCatalogTest {
 
