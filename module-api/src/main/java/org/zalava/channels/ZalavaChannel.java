@@ -9,6 +9,13 @@ public interface ZalavaChannel extends AutoCloseable {
 
   void bind(ChannelInteractionReceiver receiver);
 
+  /**
+   * Starts or configures this transport with a host-owned, module-scoped context.
+   *
+   * <p>The default preserves compatibility with channels that require no configuration.
+   */
+  default void start(ChannelTransportContext context) {}
+
   void deliver(ChannelEvent event);
 
   @Override
