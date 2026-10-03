@@ -9,11 +9,11 @@ import java.util.regex.Pattern;
 import org.zalava.knowledge.skills.application.port.out.SkillContentSource;
 
 /**
- * Loads the Markdown body of a maintained {@code SKILL.md} for SEA-owned activation.
+ * Loads the Markdown body of a maintained {@code SKILL.md} for Zalava-owned activation.
  *
  * <p>Only a single kebab-case skill directory below the configured skills root is read, front
  * matter is stripped, and oversized or unreadable files yield no content instead of failing. The
- * body is returned verbatim; SEA policy validates it before anything is activated.
+ * body is returned verbatim; Zalava policy validates it before anything is activated.
  */
 public final class FileSystemSkillContentSource implements SkillContentSource {
 

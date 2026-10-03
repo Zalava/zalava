@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.zalava.assistant.agent.adapter.out.filesystem.FileSystemAgentRunRecorder;
 import org.zalava.assistant.agent.application.port.out.AgentRunStore;
-import org.zalava.support.SeaComponentTest;
+import org.zalava.support.ZalavaComponentTest;
 
-@SeaComponentTest
+@ZalavaComponentTest
 class AgentRunRecorderComponentTest {
 
   @Autowired private AgentRunStore runStore;

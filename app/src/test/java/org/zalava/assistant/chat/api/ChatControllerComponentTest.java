@@ -35,8 +35,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.assistant.chat.ChatChannel;
 import org.zalava.assistant.chat.ChatTurnResult;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackNames;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import reactor.core.publisher.Flux;
 
 @SpringBootTest
@@ -54,7 +54,7 @@ class ChatControllerComponentTest {
 
   @Autowired private CapturingChatModel chatModel;
 
-  @Autowired private SeaRuntime seaRuntime;
+  @Autowired private ZalavaRuntime zalavaRuntime;
 
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {
@@ -68,15 +68,15 @@ class ChatControllerComponentTest {
   }
 
   @Test
-  void rendersChatPageInSeaProductShell() throws Exception {
+  void rendersChatPageInZalavaProductShell() throws Exception {
     mockMvc
         .perform(get("/chat"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("<title>Zalava Chat</title>")))
         .andExpect(content().string(containsString("id=\"root\"")))
-        .andExpect(content().string(containsString("/sea-chat/assets/sea-chat.js")))
+        .andExpect(content().string(containsString("/zalava-chat/assets/zalava-chat.js")))
         .andExpect(content().string(containsString("href=\"/jobs\"")));
-    mockMvc.perform(get("/sea-chat/assets/sea-chat.js")).andExpect(status().isOk());
+    mockMvc.perform(get("/zalava-chat/assets/zalava-chat.js")).andExpect(status().isOk());
   }
 
   @Test
@@ -94,7 +94,7 @@ class ChatControllerComponentTest {
             .reduce("", (left, right) -> left + " " + right)
             .replaceAll("\\s+", " ");
     assertThat(normalizedInstructions)
-        .contains("SEA provider tool grounding")
+        .contains("Zalava provider tool grounding")
         .contains("Do not answer provider-state questions from chat memory alone")
         .contains("translate the provider/tool search query to likely English metadata terms")
         .contains("recommendModuleDevelopment")
@@ -113,7 +113,9 @@ class ChatControllerComponentTest {
                       .toList();
               assertThat(toolNames)
                   .contains(
-                      "searchSeaProviderTools", "loadSeaProviderTool", "invokeSeaProviderTool")
+                      "searchZalavaProviderTools",
+                      "loadZalavaProviderTool",
+                      "invokeZalavaProviderTool")
                   .doesNotContain("createTask", "scheduleTask", "CheckListTool")
                   .doesNotHaveDuplicates();
             });
@@ -126,7 +128,7 @@ class ChatControllerComponentTest {
   void createsStructuredModuleDevelopmentRequestThroughChat() {
     ChatTurnResult result = chatChannel.chat("component-weather-module", "create weather module");
 
-    assertThat(result.text()).contains("sea-weather-module", "PREPARED");
+    assertThat(result.text()).contains("zalava-weather-module", "PREPARED");
     Prompt prompt = chatModel.lastPrompt();
     assertThat(prompt.getOptions())
         .isInstanceOfSatisfying(
@@ -158,14 +160,15 @@ class ChatControllerComponentTest {
             options ->
                 assertThat(options.getToolCallbacks())
                     .extracting(callback -> callback.getToolDefinition().name())
-                    .contains(SeaToolCallbackNames.forTool("time-provider", "current_time")));
+                    .contains(ZalavaToolCallbackNames.forTool("time-provider", "current_time")));
   }
 
   @Test
   void hasNoCompatibilityModulesOrCallbacks() {
-    assertThat(seaRuntime.modules())
+    assertThat(zalavaRuntime.modules())
         .extracting(module -> module.descriptor().moduleId())
-        .doesNotContain("sea-legacy-tools", "sea-filesystem", "sea-web-search", "sea-web-browser");
+        .doesNotContain(
+            "zalava-legacy-tools", "zalava-filesystem", "zalava-web-search", "zalava-web-browser");
   }
 
   private static Path createWorkspace() {
@@ -287,7 +290,7 @@ class ChatControllerComponentTest {
       }
       return switch (originalUserInput(prompt)) {
         case "what time is it now" ->
-            toolCall(SeaToolCallbackNames.forTool("time-provider", "current_time"), "{}");
+            toolCall(ZalavaToolCallbackNames.forTool("time-provider", "current_time"), "{}");
         case "render markdown" ->
             response("**Bold result**\n\n```java\nSystem.out.println(\"safe\");\n```");
         case "fail chat" -> throw new IllegalStateException("Scripted chat failure");
@@ -295,7 +298,7 @@ class ChatControllerComponentTest {
             toolCall(
                 "createModuleDevelopmentRequest",
                 """
-                                {"contract":{"module":{"moduleId":"sea-weather-module","versionPolicy":"1.0.0"},"purpose":"Provide current weather information for a requested location","targetSeaApiVersion":"1.0.0","tools":[{"name":"current_weather","description":"Returns current weather for a requested location","inputSchema":"{\\"type\\":\\"object\\",\\"required\\":[\\"location\\"],\\"properties\\":{\\"location\\":{\\"type\\":\\"string\\"}}}","outputSchema":"{\\"type\\":\\"object\\",\\"required\\":[\\"location\\",\\"condition\\",\\"temperatureC\\"],\\"properties\\":{\\"location\\":{\\"type\\":\\"string\\"},\\"condition\\":{\\"type\\":\\"string\\"},\\"temperatureC\\":{\\"type\\":\\"number\\"}}}","knownErrorCodes":["INVALID_INPUT","PROVIDER_UNAVAILABLE"],"examples":[{"inputJson":"{\\"location\\":\\"Madrid\\"}","expectedOutputJson":"{}"}]}],"expectedErrors":[{"code":"INVALID_INPUT","description":"Location input is missing or invalid"}],"acceptanceScenarios":[{"id":"current-weather","requestJson":"{\\"location\\":\\"Madrid\\"}","assertions":[{"path":"$.location","type":"exists","expectedValueJson":"true"}]}],"operationalRequirements":{"timeoutMs":10000,"maximumResponseBytes":100000},"deliveryRequirements":{"packageFormat":"jar","fileNamePattern":"sea-weather-module-*.jar","requiredManifestVersion":"1","multipleArtifactsAllowed":false,"requiredMetadata":{}}},"reason":"Provide current weather information"}
+                                {"contract":{"module":{"moduleId":"zalava-weather-module","versionPolicy":"1.0.0"},"purpose":"Provide current weather information for a requested location","targetZalavaApiVersion":"1.0.0","tools":[{"name":"current_weather","description":"Returns current weather for a requested location","inputSchema":"{\\"type\\":\\"object\\",\\"required\\":[\\"location\\"],\\"properties\\":{\\"location\\":{\\"type\\":\\"string\\"}}}","outputSchema":"{\\"type\\":\\"object\\",\\"required\\":[\\"location\\",\\"condition\\",\\"temperatureC\\"],\\"properties\\":{\\"location\\":{\\"type\\":\\"string\\"},\\"condition\\":{\\"type\\":\\"string\\"},\\"temperatureC\\":{\\"type\\":\\"number\\"}}}","knownErrorCodes":["INVALID_INPUT","PROVIDER_UNAVAILABLE"],"examples":[{"inputJson":"{\\"location\\":\\"Madrid\\"}","expectedOutputJson":"{}"}]}],"expectedErrors":[{"code":"INVALID_INPUT","description":"Location input is missing or invalid"}],"acceptanceScenarios":[{"id":"current-weather","requestJson":"{\\"location\\":\\"Madrid\\"}","assertions":[{"path":"$.location","type":"exists","expectedValueJson":"true"}]}],"operationalRequirements":{"timeoutMs":10000,"maximumResponseBytes":100000},"deliveryRequirements":{"packageFormat":"jar","fileNamePattern":"zalava-weather-module-*.jar","requiredManifestVersion":"1","multipleArtifactsAllowed":false,"requiredMetadata":{}}},"reason":"Provide current weather information"}
                                 """);
         default -> response("Hello from the component test model.");
       };

@@ -32,12 +32,12 @@ public class PrivateStateConfiguration {
    */
   @Bean
   @DependsOn("bootstrapAccount")
-  @ConditionalOnProperty(name = "sea.private-state.migration.enabled", havingValue = "true")
+  @ConditionalOnProperty(name = "zalava.private-state.migration.enabled", havingValue = "true")
   ApplicationRunner migrateLegacyPrivateState(
       LegacyPrivateStateMigration migration,
       AccountLifecycle accounts,
-      @Value("${sea.accounts.bootstrap-login:}") String bootstrapLogin,
-      @Value("${sea.private-state.migration.dry-run:true}") boolean dryRun) {
+      @Value("${zalava.accounts.bootstrap-login:}") String bootstrapLogin,
+      @Value("${zalava.private-state.migration.dry-run:true}") boolean dryRun) {
     return ignored -> {
       String login = bootstrapLogin.isBlank() ? "bootstrap" : bootstrapLogin;
       Actor bootstrapActor =

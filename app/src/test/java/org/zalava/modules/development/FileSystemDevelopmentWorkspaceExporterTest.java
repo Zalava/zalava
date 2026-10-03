@@ -21,7 +21,7 @@ class FileSystemDevelopmentWorkspaceExporterTest {
   void exportsACompleteSelfContainedPackageAndSafelyReexportsIt() throws Exception {
     FileSystemDevelopmentRequestStore requests =
         new FileSystemDevelopmentRequestStore(
-            new FileSystemResource(temporaryDirectory.resolve("sea-state")));
+            new FileSystemResource(temporaryDirectory.resolve("zalava-state")));
     DevelopmentRequestId requestId = new DevelopmentRequestId("request-export-1");
     requests.save(
         new ModuleDevelopmentRequest(
@@ -41,7 +41,7 @@ class FileSystemDevelopmentWorkspaceExporterTest {
 
     DevelopmentWorkspace exported = exporter.export(requestId, firstWorkspace.toString());
 
-    Path request = firstWorkspace.resolve(".sea-request");
+    Path request = firstWorkspace.resolve(".zalava-request");
     assertThat(exported.sha256().get("development-contract.yaml")).matches("[0-9a-f]{64}");
     assertThat(exported.sha256().get("acceptance-scenarios.yaml")).matches("[0-9a-f]{64}");
     assertThat(request.resolve("request.json")).exists();
@@ -65,7 +65,7 @@ class FileSystemDevelopmentWorkspaceExporterTest {
         .contains("Read this entire", "Do not edit the exported contract");
     assertThat(request.resolve("traceability.json"))
         .content()
-        .contains("SEA persisted development request");
+        .contains("Zalava persisted development request");
     assertThat(firstWorkspace.resolve("delivery")).isDirectory();
     assertThat(requests.get(requestId).status()).isEqualTo(DevelopmentRequestStatus.EXPORTED);
 
@@ -82,6 +82,6 @@ class FileSystemDevelopmentWorkspaceExporterTest {
     Path secondWorkspace = temporaryDirectory.resolve("another-user-workspace").toAbsolutePath();
     assertThat(exporter.export(requestId, secondWorkspace.toString()).root())
         .isEqualTo(secondWorkspace.toString());
-    assertThat(secondWorkspace.resolve(".sea-request/CODEX_TASK.md")).exists();
+    assertThat(secondWorkspace.resolve(".zalava-request/CODEX_TASK.md")).exists();
   }
 }

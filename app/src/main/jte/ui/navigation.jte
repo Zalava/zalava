@@ -2,15 +2,15 @@
 @param java.util.List<NavItem> items
 @param String activePage
 
-<nav class="navbar sea-navbar" role="navigation" aria-label="Zalava navigation">
+<nav class="navbar zalava-navbar" role="navigation" aria-label="Zalava navigation">
     <div class="container">
         <div class="navbar-brand">
-            <a class="navbar-item sea-brand" href="/dashboard" aria-label="Zalava Dashboard">
-                <span class="sea-brand-mark">Z</span>
+            <a class="navbar-item zalava-brand" href="/dashboard" aria-label="Zalava Dashboard">
+                <span class="zalava-brand-mark">Z</span>
                 <span>Zalava</span>
             </a>
             <button class="navbar-burger" type="button" aria-label="Open navigation" aria-expanded="false"
-                    aria-controls="sea-product-navigation" data-target="sea-product-navigation">
+                    aria-controls="zalava-product-navigation" data-target="zalava-product-navigation">
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
@@ -18,14 +18,14 @@
             </button>
         </div>
 
-        <div id="sea-product-navigation" class="navbar-menu" aria-label="Product destinations">
-            <button class="sea-navigation-close" type="button" aria-label="Close navigation">Close</button>
+        <div id="zalava-product-navigation" class="navbar-menu" aria-label="Product destinations">
+            <button class="zalava-navigation-close" type="button" aria-label="Close navigation">Close</button>
             <div class="navbar-start">
                 @for(NavItem item : items)
                     @if(item.id().equals(activePage))
-                    <a class="navbar-item is-active" aria-current="page" href="${item.href()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="sea-nav-label">${item.label()}</span></a>
+                    <a class="navbar-item is-active" aria-current="page" href="${item.href()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
                     @else
-                    <a class="navbar-item" href="${item.href()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="sea-nav-label">${item.label()}</span></a>
+                    <a class="navbar-item" href="${item.href()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
                     @endif
                 @endfor
             </div>
@@ -36,8 +36,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var burger = document.querySelector('.navbar-burger');
-        var menu = document.getElementById('sea-product-navigation');
-        var closeButton = menu && menu.querySelector('.sea-navigation-close');
+        var menu = document.getElementById('zalava-product-navigation');
+        var closeButton = menu && menu.querySelector('.zalava-navigation-close');
         var previousFocus;
         if (!burger || !menu || !closeButton) {
             return;
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     button.textContent = 'Working…';
                 });
                 var status = document.createElement('p');
-                status.className = 'sea-action-status';
+                status.className = 'zalava-action-status';
                 status.setAttribute('role', 'status');
                 status.textContent = 'Zalava is working on your request.';
                 form.appendChild(status);

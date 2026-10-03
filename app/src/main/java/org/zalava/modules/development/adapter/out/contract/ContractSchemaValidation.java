@@ -79,7 +79,7 @@ final class ContractSchemaValidation {
             });
     if (!schema.path("additionalProperties").asBoolean(true)) {
       ObjectNode probe = (ObjectNode) validInput.deepCopy();
-      probe.put("seaUnexpectedProperty", true);
+      probe.put("zalavaUnexpectedProperty", true);
       addIfInvalid(schemaSource, probe, probes);
     }
     return List.copyOf(probes);
@@ -96,7 +96,7 @@ final class ContractSchemaValidation {
       default -> {}
     }
     if (definition.has("enum"))
-      values.add(JSON.getNodeFactory().stringNode("__sea_invalid_enum__"));
+      values.add(JSON.getNodeFactory().stringNode("__zalava_invalid_enum__"));
     if (definition.has("format"))
       values.add(
           JSON.getNodeFactory().stringNode("not-a-" + definition.path("format").stringValue("")));

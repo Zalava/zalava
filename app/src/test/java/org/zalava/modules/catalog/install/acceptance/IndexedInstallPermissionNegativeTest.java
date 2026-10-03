@@ -56,9 +56,9 @@ class IndexedInstallPermissionNegativeTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> "indexed-install-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "IndexedInstallPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "indexed-install-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "IndexedInstallPassword-123");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
@@ -72,7 +72,7 @@ class IndexedInstallPermissionNegativeTest {
   void memberCannotDecideAModuleReleaseInstallation() throws Exception {
     mockMvc
         .perform(
-            post("/sea/control/module-release-installations/any-request/allow")
+            post("/zalava/control/module-release-installations/any-request/allow")
                 .with(user("indexed-install-member").roles("MEMBER"))
                 .with(csrf()))
         .andExpect(status().isForbidden());
@@ -82,7 +82,8 @@ class IndexedInstallPermissionNegativeTest {
   @Test
   void anonymousCannotDecideAModuleReleaseInstallation() throws Exception {
     mockMvc
-        .perform(post("/sea/control/module-release-installations/any-request/allow").with(csrf()))
+        .perform(
+            post("/zalava/control/module-release-installations/any-request/allow").with(csrf()))
         .andExpect(status().is3xxRedirection());
     assertThat(enabledRegistryExists()).isFalse();
   }
@@ -93,7 +94,7 @@ class IndexedInstallPermissionNegativeTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-indexed-install-permission-");
+      Path workspace = Files.createTempDirectory("zalava-indexed-install-permission-");
       Files.writeString(workspace.resolve("AGENT.md"), "Indexed install permission workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable permission workspace.");
       return workspace;

@@ -44,7 +44,7 @@ import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.api.ZalavaVerificationContributor;
 import org.zalava.api.ZalavaVerificationDescriptor;
 import org.zalava.api.ZalavaVerificationStep;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.modules.catalog.LocalArtifactInstallRequest;
 import org.zalava.modules.catalog.ModuleReleaseIndex;
 import org.zalava.modules.catalog.SourceModuleIndex;
@@ -54,8 +54,8 @@ import org.zalava.modules.catalog.install.application.port.out.CuratedMavenArtif
 import org.zalava.modules.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
 import org.zalava.modules.development.ModuleDevelopmentContract;
 import org.zalava.modules.development.application.port.in.DevelopmentRequestManagement;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 
 @SpringBootTest
@@ -71,8 +71,8 @@ class DevelopmentAdminRestApiComponentTest {
   private static final Path WORKSPACE = createWorkspace();
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private SeaRuntime seaRuntime;
-  @Autowired private SeaToolApprovalRequests approvals;
+  @Autowired private ZalavaRuntime zalavaRuntime;
+  @Autowired private ZalavaToolApprovalRequests approvals;
   @Autowired private LocalArtifactModuleInstallation localArtifactInstallations;
   @Autowired private DevelopmentRequestManagement developmentRequests;
   @Autowired private org.zalava.identity.accounts.application.port.in.AccountLifecycle accounts;
@@ -96,7 +96,7 @@ class DevelopmentAdminRestApiComponentTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
     registry.add("agent.modules.local-artifact-roots", () -> WORKSPACE.toString());
@@ -104,7 +104,7 @@ class DevelopmentAdminRestApiComponentTest {
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
-    registry.add("sea.accounts.bootstrap-login", () -> "development-admin");
+    registry.add("zalava.accounts.bootstrap-login", () -> "development-admin");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
   }
@@ -112,39 +112,39 @@ class DevelopmentAdminRestApiComponentTest {
   @Test
   void exposesRuntimeQueriesForLoadedModulesAndProviders() throws Exception {
     mockMvc
-        .perform(get("/api/sea/modules"))
+        .perform(get("/api/zalava/modules"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].moduleId").value("test-module"));
     mockMvc
-        .perform(get("/api/sea/providers"))
+        .perform(get("/api/zalava/providers"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].provider.providerId").value("scoped-provider"));
     mockMvc
-        .perform(get("/api/sea/providers/scoped-provider"))
+        .perform(get("/api/zalava/providers/scoped-provider"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.provider.providerId").value("scoped-provider"))
         .andExpect(jsonPath("$.module.moduleId").value("test-module"))
         .andExpect(jsonPath("$.factory.factoryId").value("local-factory"));
     mockMvc
-        .perform(get("/api/sea/providers/scoped-provider/tools"))
+        .perform(get("/api/zalava/providers/scoped-provider/tools"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].name").value("write"));
     mockMvc
-        .perform(get("/api/sea/providers/scoped-provider/resources"))
+        .perform(get("/api/zalava/providers/scoped-provider/resources"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].uri").value("sea://scoped/example"));
+        .andExpect(jsonPath("$[0].uri").value("zalava://scoped/example"));
     mockMvc
-        .perform(get("/api/sea/providers/scoped-provider/prompts"))
+        .perform(get("/api/zalava/providers/scoped-provider/prompts"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].name").value("example"));
-    mockMvc.perform(get("/api/sea/providers/missing-provider")).andExpect(status().isNotFound());
+    mockMvc.perform(get("/api/zalava/providers/missing-provider")).andExpect(status().isNotFound());
   }
 
   @Test
   void invokesToolsAndDecidesPermissionRequests() throws Exception {
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/tools/write/invoke")
+            post("/api/zalava/providers/scoped-provider/tools/write/invoke")
                 .contentType("application/json")
                 .content("{\"arguments\":{\"path\":\"test\"}}"))
         .andExpect(status().isAccepted())
@@ -159,12 +159,12 @@ class DevelopmentAdminRestApiComponentTest {
             .requestId();
 
     mockMvc
-        .perform(post("/api/sea/permission-requests/" + requestId + "/allow"))
+        .perform(post("/api/zalava/permission-requests/" + requestId + "/allow"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true));
 
     mockMvc
-        .perform(post("/api/sea/permission-requests/" + requestId + "/deny"))
+        .perform(post("/api/zalava/permission-requests/" + requestId + "/deny"))
         .andExpect(status().isConflict());
   }
 
@@ -173,43 +173,43 @@ class DevelopmentAdminRestApiComponentTest {
     // A deny decision is recorded and returned to the caller.
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/tools/write/invoke")
+            post("/api/zalava/providers/scoped-provider/tools/write/invoke")
                 .contentType("application/json")
                 .content("{\"actorId\":\"deny-actor\",\"arguments\":{\"path\":\"deny\"}}"))
         .andExpect(status().isAccepted());
     String denyId =
         approvals.recentEntries().stream()
-            .filter(entry -> entry.decision() == SeaToolApprovalRequests.Decision.PENDING)
+            .filter(entry -> entry.decision() == ZalavaToolApprovalRequests.Decision.PENDING)
             .filter(entry -> entry.actorId().equals("deny-actor"))
             .findFirst()
             .orElseThrow()
             .requestId();
     mockMvc
-        .perform(post("/api/sea/permission-requests/" + denyId + "/deny"))
+        .perform(post("/api/zalava/permission-requests/" + denyId + "/deny"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decision").value("denied"));
 
     // A saved tool policy permits subsequent invocations for the same actor and tool.
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/tools/write/invoke")
+            post("/api/zalava/providers/scoped-provider/tools/write/invoke")
                 .contentType("application/json")
                 .content("{\"actorId\":\"policy-actor\",\"arguments\":{\"path\":\"first\"}}"))
         .andExpect(status().isAccepted());
     String policyId =
         approvals.recentEntries().stream()
-            .filter(entry -> entry.decision() == SeaToolApprovalRequests.Decision.PENDING)
+            .filter(entry -> entry.decision() == ZalavaToolApprovalRequests.Decision.PENDING)
             .filter(entry -> entry.actorId().equals("policy-actor"))
             .findFirst()
             .orElseThrow()
             .requestId();
     mockMvc
-        .perform(post("/api/sea/permission-requests/" + policyId + "/allow-tool"))
+        .perform(post("/api/zalava/permission-requests/" + policyId + "/allow-tool"))
         .andExpect(status().isOk());
 
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/tools/write/invoke")
+            post("/api/zalava/providers/scoped-provider/tools/write/invoke")
                 .contentType("application/json")
                 .content("{\"actorId\":\"policy-actor\",\"arguments\":{\"path\":\"first\"}}"))
         .andExpect(status().isOk())
@@ -220,22 +220,22 @@ class DevelopmentAdminRestApiComponentTest {
   void readsResourcesAndResolvesPrompts() throws Exception {
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/resources/read")
+            post("/api/zalava/providers/scoped-provider/resources/read")
                 .contentType("application/json")
                 .content("{}"))
         .andExpect(status().isBadRequest());
 
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/resources/read")
+            post("/api/zalava/providers/scoped-provider/resources/read")
                 .contentType("application/json")
-                .content("{\"uri\":\"sea://scoped/example\"}"))
+                .content("{\"uri\":\"zalava://scoped/example\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true));
 
     mockMvc
         .perform(
-            post("/api/sea/providers/scoped-provider/prompts/example/resolve")
+            post("/api/zalava/providers/scoped-provider/prompts/example/resolve")
                 .contentType("application/json")
                 .content("{\"arguments\":{}}"))
         .andExpect(status().isOk())
@@ -243,9 +243,9 @@ class DevelopmentAdminRestApiComponentTest {
 
     mockMvc
         .perform(
-            post("/api/sea/providers/missing-provider/resources/read")
+            post("/api/zalava/providers/missing-provider/resources/read")
                 .contentType("application/json")
-                .content("{\"uri\":\"sea://x\"}"))
+                .content("{\"uri\":\"zalava://x\"}"))
         .andExpect(status().isNotFound());
   }
 
@@ -253,7 +253,7 @@ class DevelopmentAdminRestApiComponentTest {
   void moduleInstallationAdminRejectsInvalidLocalArtifactRequests() throws Exception {
     mockMvc
         .perform(
-            post("/api/sea/local-module-installations")
+            post("/api/zalava/local-module-installations")
                 .contentType("application/json")
                 .content(
                     "{\"moduleId\":\"zalava-module-local\",\"indexYaml\":\"schemaVersion: 1\\nmodules: []\",\"artifactPath\":\"/tmp/none.jar\",\"developmentRequestId\":\"request-1\"}"))
@@ -267,22 +267,22 @@ class DevelopmentAdminRestApiComponentTest {
         localArtifactInstallations.create(module(), artifact.toString(), null);
 
     mockMvc
-        .perform(get("/api/sea/local-module-installations/" + request.requestId()))
+        .perform(get("/api/zalava/local-module-installations/" + request.requestId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.moduleId").value("zalava-module-local"))
         .andExpect(jsonPath("$.status").value("pending"));
 
     mockMvc
-        .perform(post("/api/sea/local-module-installations/" + request.requestId() + "/deny"))
+        .perform(post("/api/zalava/local-module-installations/" + request.requestId() + "/deny"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("denied"));
 
     mockMvc
-        .perform(post("/api/sea/local-module-installations/" + request.requestId() + "/allow"))
+        .perform(post("/api/zalava/local-module-installations/" + request.requestId() + "/allow"))
         .andExpect(status().isConflict());
 
     mockMvc
-        .perform(get("/api/sea/local-module-installations/missing-request"))
+        .perform(get("/api/zalava/local-module-installations/missing-request"))
         .andExpect(status().isNotFound());
   }
 
@@ -292,7 +292,7 @@ class DevelopmentAdminRestApiComponentTest {
 
     mockMvc
         .perform(
-            post("/api/sea/development-requests")
+            post("/api/zalava/development-requests")
                 .contentType("application/json")
                 .content(
                     "{\"contract\":" + contractJson + ",\"reason\":\"Build a fixture module\"}"))
@@ -304,13 +304,13 @@ class DevelopmentAdminRestApiComponentTest {
     String id = latestDevelopmentRequestId();
 
     mockMvc
-        .perform(get("/api/sea/development-requests/" + id))
+        .perform(get("/api/zalava/development-requests/" + id))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.moduleId").value("zalava-module-local"));
 
     mockMvc
         .perform(
-            post("/api/sea/development-requests/" + id + "/revisions")
+            post("/api/zalava/development-requests/" + id + "/revisions")
                 .contentType("application/json")
                 .content(
                     "{\"contract\":" + contractJson + ",\"reason\":\"Revised fixture reason\"}"))
@@ -319,25 +319,25 @@ class DevelopmentAdminRestApiComponentTest {
 
     mockMvc
         .perform(
-            post("/api/sea/development-requests/" + id + "/exports")
+            post("/api/zalava/development-requests/" + id + "/exports")
                 .contentType("application/json")
                 .content("{\"workspaceRoot\":\"" + WORKSPACE.resolve("fixture-export") + "\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.requestId").value(id));
 
     mockMvc
-        .perform(post("/api/sea/development-requests/" + id + "/installation-approval"))
+        .perform(post("/api/zalava/development-requests/" + id + "/installation-approval"))
         .andExpect(status().isConflict());
 
     mockMvc
-        .perform(get("/api/sea/development-requests/missing-request"))
+        .perform(get("/api/zalava/development-requests/missing-request"))
         .andExpect(status().isNotFound());
   }
 
   @Test
   void controlWorkspaceRendersRuntimeAndVerificationState() throws Exception {
     mockMvc
-        .perform(get("/sea/control/workspace"))
+        .perform(get("/zalava/control/workspace"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("test-module")))
         .andExpect(content().string(containsString("scoped-provider")))
@@ -351,14 +351,14 @@ class DevelopmentAdminRestApiComponentTest {
     String requestId = createModuleReleaseInstallation();
 
     mockMvc
-        .perform(get("/api/sea/module-release-installations/" + requestId))
+        .perform(get("/api/zalava/module-release-installations/" + requestId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.moduleId").value("zalava-module-tika"))
         .andExpect(jsonPath("$.version").value("1.0.1"))
         .andExpect(jsonPath("$.status").value("pending"));
 
     mockMvc
-        .perform(post("/api/sea/module-release-installations/" + requestId + "/allow"))
+        .perform(post("/api/zalava/module-release-installations/" + requestId + "/allow"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("succeeded"));
   }
@@ -368,21 +368,21 @@ class DevelopmentAdminRestApiComponentTest {
     String requestId = createModuleReleaseInstallation();
 
     mockMvc
-        .perform(post("/api/sea/module-release-installations/" + requestId + "/deny"))
+        .perform(post("/api/zalava/module-release-installations/" + requestId + "/deny"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("denied"));
 
     mockMvc
-        .perform(post("/api/sea/module-release-installations/" + requestId + "/allow"))
+        .perform(post("/api/zalava/module-release-installations/" + requestId + "/allow"))
         .andExpect(status().isConflict());
 
     mockMvc
-        .perform(get("/api/sea/module-release-installations/missing-request"))
+        .perform(get("/api/zalava/module-release-installations/missing-request"))
         .andExpect(status().isNotFound());
 
     mockMvc
         .perform(
-            post("/api/sea/module-release-installations")
+            post("/api/zalava/module-release-installations")
                 .contentType("application/json")
                 .content(
                     "{\"moduleId\":\"unknown-module\",\"version\":\"1.0.1\",\"developmentRequestId\":null}"))
@@ -393,7 +393,7 @@ class DevelopmentAdminRestApiComponentTest {
     String body =
         mockMvc
             .perform(
-                post("/api/sea/module-release-installations")
+                post("/api/zalava/module-release-installations")
                     .contentType("application/json")
                     .content(
                         "{\"moduleId\":\"zalava-module-tika\",\"version\":\"1.0.1\",\"developmentRequestId\":null}"))
@@ -470,7 +470,7 @@ class DevelopmentAdminRestApiComponentTest {
         "Local Fixture",
         "Locally developed fixture module",
         java.net.URI.create("https://github.com/example/zalava-module-local"),
-        new SourceModuleIndex.Artifact("ai.sea.modules", "zalava-module-local", "1.2.3"),
+        new SourceModuleIndex.Artifact("ai.zalava.modules", "zalava-module-local", "1.2.3"),
         null,
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(">=1.0.0"),
@@ -492,7 +492,7 @@ class DevelopmentAdminRestApiComponentTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     when(provider.descriptor()).thenReturn(descriptor);
     when(provider.capabilities()).thenReturn(ProviderCapabilities.toolsOnly());
@@ -506,11 +506,11 @@ class DevelopmentAdminRestApiComponentTest {
                     List.of("member-safe"),
                     Map.of("type", "object"))));
     when(provider.listResources())
-        .thenReturn(List.of(new ResourceDescriptor("sea://scoped/example", "Example resource")));
+        .thenReturn(List.of(new ResourceDescriptor("zalava://scoped/example", "Example resource")));
     when(provider.listPrompts())
         .thenReturn(List.of(new PromptDescriptor("example", "Example prompt")));
     when(provider.readResource(
-            org.mockito.ArgumentMatchers.eq("sea://scoped/example"),
+            org.mockito.ArgumentMatchers.eq("zalava://scoped/example"),
             org.mockito.ArgumentMatchers.any()))
         .thenReturn(ZalavaOperationResult.success(Map.of("content", "example")));
     when(provider.resolvePrompt(
@@ -528,7 +528,7 @@ class DevelopmentAdminRestApiComponentTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-admin-rest-test-");
+      Path workspace = Files.createTempDirectory("zalava-admin-rest-test-");
       Files.writeString(workspace.resolve("AGENT.md"), "Test agent prompt.");
       Files.writeString(workspace.resolve("INFO.md"), "Test environment info.");
       Path skill = Files.createDirectories(workspace.resolve("skills/test-skill"));
@@ -626,7 +626,7 @@ class DevelopmentAdminRestApiComponentTest {
 
     @Bean
     @Primary
-    SeaRuntime loadedSeaRuntime() {
+    ZalavaRuntime loadedZalavaRuntime() {
       ZalavaModule module =
           new ZalavaModule() {
             @Override
@@ -652,7 +652,7 @@ class DevelopmentAdminRestApiComponentTest {
                                   new ZalavaVerificationStep(
                                       "Write check",
                                       "POST",
-                                      "/api/sea/providers/scoped-provider/tools/write/invoke",
+                                      "/api/zalava/providers/scoped-provider/tools/write/invoke",
                                       "write",
                                       true,
                                       true,
@@ -668,15 +668,15 @@ class DevelopmentAdminRestApiComponentTest {
           };
       ProviderFactoryDescriptor factory =
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
-      return new SeaRuntime() {
+      return new ZalavaRuntime() {
         @Override
         public List<ZalavaModule> modules() {
           return List.of(module);
         }
 
         @Override
-        public List<LoadedSeaProvider> loadedProviders() {
-          return List.of(new LoadedSeaProvider(module.descriptor(), factory, scopedProvider()));
+        public List<LoadedZalavaProvider> loadedProviders() {
+          return List.of(new LoadedZalavaProvider(module.descriptor(), factory, scopedProvider()));
         }
 
         @Override

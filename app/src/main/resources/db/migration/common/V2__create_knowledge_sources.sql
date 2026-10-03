@@ -12,7 +12,7 @@ CREATE TABLE knowledge_source (
     CONSTRAINT knowledge_source_byte_count CHECK (byte_count >= 0),
     CONSTRAINT knowledge_source_visibility CHECK (visibility IN ('PRIVATE', 'GROUP_SHARED')),
     CONSTRAINT knowledge_source_processing_state CHECK (processing_state IN ('PENDING', 'PROCESSING', 'READY', 'FAILED', 'DELETION_REQUESTED', 'DELETED')),
-    CONSTRAINT knowledge_source_owner FOREIGN KEY (owner_account_id) REFERENCES sea_account(id)
+    CONSTRAINT knowledge_source_owner FOREIGN KEY (owner_account_id) REFERENCES zalava_account(id)
 );
 
 CREATE INDEX knowledge_source_owner_visibility_idx

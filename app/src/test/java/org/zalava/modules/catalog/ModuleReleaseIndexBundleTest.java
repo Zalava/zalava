@@ -116,7 +116,7 @@ class ModuleReleaseIndexBundleTest {
               repository: https://github.com/example/zalava-module-example
               license: MIT
             compatibility:
-              seaRuntime: ">=1.0.0"
+              zalavaRuntime: ">=1.0.0"
             security:
               permissions: []
         """

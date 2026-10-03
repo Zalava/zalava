@@ -15,7 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 
 /** Local-control adapter for the manual module-development workflow. */
 @Controller
-@RequestMapping(SeaControlUiController.PATH + "/development-requests")
+@RequestMapping(ZalavaControlUiController.PATH + "/development-requests")
 class DevelopmentRequestControlController {
 
   private static final int MAX_CONTRACT_JSON_LENGTH = 50_000;
@@ -23,13 +23,13 @@ class DevelopmentRequestControlController {
   private static final int MAX_ERROR_LENGTH = 300;
   private static final ObjectMapper JSON = new ObjectMapper();
 
-  private final SeaControlUiController workspaceView;
+  private final ZalavaControlUiController workspaceView;
   private final DevelopmentRequestManagement requests;
   private final DevelopmentWorkspaceExport workspaces;
   private final DevelopmentCandidateSubmission candidates;
 
   DevelopmentRequestControlController(
-      SeaControlUiController workspaceView,
+      ZalavaControlUiController workspaceView,
       DevelopmentRequestManagement requests,
       DevelopmentWorkspaceExport workspaces,
       DevelopmentCandidateSubmission candidates) {
@@ -44,7 +44,7 @@ class DevelopmentRequestControlController {
     return render(
         model,
         () ->
-            SeaControlUiController.DevelopmentRequestEntry.from(
+            ZalavaControlUiController.DevelopmentRequestEntry.from(
                 requests.create(
                     contract(contractJson), required(reason, "Reason", MAX_FIELD_LENGTH))));
   }
@@ -58,7 +58,7 @@ class DevelopmentRequestControlController {
     return render(
         model,
         () ->
-            SeaControlUiController.DevelopmentRequestEntry.from(
+            ZalavaControlUiController.DevelopmentRequestEntry.from(
                 requests.revise(
                     id(requestId),
                     contract(contractJson),
@@ -81,7 +81,7 @@ class DevelopmentRequestControlController {
     return render(
         model,
         () ->
-            SeaControlUiController.DevelopmentRequestEntry.from(
+            ZalavaControlUiController.DevelopmentRequestEntry.from(
                 requests.transition(
                     id(requestId),
                     org.zalava.modules.development.DevelopmentRequestStatus.IN_DEVELOPMENT)));
@@ -98,7 +98,7 @@ class DevelopmentRequestControlController {
     return render(
         model,
         () ->
-            SeaControlUiController.DevelopmentRequestEntry.from(
+            ZalavaControlUiController.DevelopmentRequestEntry.from(
                 candidates.submit(
                     id(requestId), required(artifactPath, "Candidate path", MAX_FIELD_LENGTH))));
   }
@@ -113,7 +113,7 @@ class DevelopmentRequestControlController {
   String inspect(@PathVariable String requestId, Model model) {
     return render(
         model,
-        () -> SeaControlUiController.DevelopmentRequestEntry.from(requests.get(id(requestId))));
+        () -> ZalavaControlUiController.DevelopmentRequestEntry.from(requests.get(id(requestId))));
   }
 
   @PostMapping("/inspect")
@@ -121,12 +121,12 @@ class DevelopmentRequestControlController {
     return inspect(requestId, model);
   }
 
-  private SeaControlUiController.DevelopmentRequestEntry exported(
+  private ZalavaControlUiController.DevelopmentRequestEntry exported(
       String requestId, String workspaceRoot) {
     var workspace =
         workspaces.export(
             id(requestId), required(workspaceRoot, "Workspace path", MAX_FIELD_LENGTH));
-    return SeaControlUiController.DevelopmentRequestEntry.exported(
+    return ZalavaControlUiController.DevelopmentRequestEntry.exported(
         workspace.requestId().value(), workspace.sha256().keySet().stream().sorted().toList());
   }
 
@@ -166,6 +166,6 @@ class DevelopmentRequestControlController {
 
   @FunctionalInterface
   private interface DevelopmentOperation {
-    SeaControlUiController.DevelopmentRequestEntry run() throws Exception;
+    ZalavaControlUiController.DevelopmentRequestEntry run() throws Exception;
   }
 }

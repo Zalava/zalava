@@ -143,7 +143,7 @@ public final class ActorTaskExecution {
 
   private String pendingFeedback(ActorTaskExecutionReference execution) {
     var pending = approvals.pendingFor(execution.actor(), execution.taskReference());
-    if (pending.isEmpty()) return "Waiting for approval of a side-effecting SEA tool call.";
+    if (pending.isEmpty()) return "Waiting for approval of a side-effecting Zalava tool call.";
     return pending.stream()
         .map(
             approval ->

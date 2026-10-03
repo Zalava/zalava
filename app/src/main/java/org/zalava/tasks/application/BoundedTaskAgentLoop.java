@@ -8,7 +8,7 @@ import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.Task;
 
 /**
- * SEA-owned task-agent state machine.
+ * Zalava-owned task-agent state machine.
  *
  * <p>The model adapter supplies one turn at a time. It cannot decide whether a run may continue:
  * this loop owns iteration and elapsed-time limits, terminal state mapping, and the feedback that

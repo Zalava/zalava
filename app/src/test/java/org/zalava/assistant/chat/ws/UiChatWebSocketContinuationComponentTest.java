@@ -44,8 +44,8 @@ class UiChatWebSocketContinuationComponentTest {
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> "continuation-component-admin");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "continuation-component-admin");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
@@ -106,7 +106,7 @@ class UiChatWebSocketContinuationComponentTest {
 
   private static TextMessage command(String type, ConversationReference source, String extra) {
     return new TextMessage(
-        "{\"protocol\":\"sea.ui/v1\",\"type\":\""
+        "{\"protocol\":\"zalava.ui/v1\",\"type\":\""
             + type
             + "\",\"conversationId\":\""
             + source.value()

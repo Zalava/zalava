@@ -17,7 +17,9 @@ import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 import org.zalava.platform.observability.application.port.out.OperationalMetrics;
 
-/** Coordinates SEA-owned lifecycle changes; no processor module gets direct storage authority. */
+/**
+ * Coordinates Zalava-owned lifecycle changes; no processor module gets direct storage authority.
+ */
 public class KnowledgeSourceLifecycle {
   private final KnowledgeSourceStore sources;
   private final KnowledgeDerivationStore derivations;

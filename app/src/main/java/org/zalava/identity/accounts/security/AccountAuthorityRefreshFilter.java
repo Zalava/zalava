@@ -12,9 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 public class AccountAuthorityRefreshFilter extends OncePerRequestFilter {
-  private final SeaAccountUserDetailsService users;
+  private final ZalavaAccountUserDetailsService users;
 
-  public AccountAuthorityRefreshFilter(SeaAccountUserDetailsService users) {
+  public AccountAuthorityRefreshFilter(ZalavaAccountUserDetailsService users) {
     this.users = users;
   }
 

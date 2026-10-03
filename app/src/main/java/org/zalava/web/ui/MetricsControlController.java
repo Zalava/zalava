@@ -17,11 +17,11 @@ class MetricsControlController {
     this.observability = observability;
   }
 
-  @GetMapping(SeaControlUiController.PATH + "/metrics")
+  @GetMapping(ZalavaControlUiController.PATH + "/metrics")
   Object metrics() {
     String target = observability.viewerUrl();
     if (target == null) {
-      return new ModelAndView("sea/control/metrics").addObject("metricsEnabled", false);
+      return new ModelAndView("zalava/control/metrics").addObject("metricsEnabled", false);
     }
     return ResponseEntity.status(302)
         .header(HttpHeaders.LOCATION, URI.create(target).toString())

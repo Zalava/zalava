@@ -24,8 +24,8 @@ class PostgreSqlSchemaParityIntegrationTest {
   @Container
   static final PostgreSQLContainer postgres =
       new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
-          .withDatabaseName("sea_schema_parity")
-          .withUsername("sea_test")
+          .withDatabaseName("zalava_schema_parity")
+          .withUsername("zalava_test")
           .withPassword("test-only-password");
 
   @Autowired private JdbcClient jdbc;
@@ -39,15 +39,15 @@ class PostgreSqlSchemaParityIntegrationTest {
     registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> "postgres-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "PostgresPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> "postgres-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "PostgresPassword-123");
   }
 
   @Test
-  void startsFreshPostgreSqlWithFlywaySeaAndJobRunrPersistence() {
+  void startsFreshPostgreSqlWithFlywayZalavaAndJobRunrPersistence() {
     assertThat(tableExists("flyway_schema_history")).isTrue();
-    assertThat(tableExists("sea_account")).isTrue();
+    assertThat(tableExists("zalava_account")).isTrue();
     assertThat(tableExists("knowledge_source")).isTrue();
     assertThat(tableExists("knowledge_derivation")).isTrue();
     assertThat(tableExists("knowledge_extraction_record")).isTrue();

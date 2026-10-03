@@ -13,7 +13,7 @@ class ContractSchemaValidationTest {
   private static final String INPUT_SCHEMA =
       """
             {"type":"object","required":["name","count","enabled","date"],"additionalProperties":false,
-             "properties":{"name":{"type":"string","enum":["sea"]},"count":{"type":"integer","minimum":1,"maximum":3},
+             "properties":{"name":{"type":"string","enum":["zalava"]},"count":{"type":"integer","minimum":1,"maximum":3},
              "enabled":{"type":"boolean"},"date":{"type":"string","format":"date"}}}
             """;
 
@@ -23,7 +23,7 @@ class ContractSchemaValidationTest {
         ContractSchemaValidation.invalidInputs(
             INPUT_SCHEMA,
             JSON.readTree(
-                "{\"name\":\"sea\",\"count\":2,\"enabled\":true,\"date\":\"2026-08-01\"}"));
+                "{\"name\":\"zalava\",\"count\":2,\"enabled\":true,\"date\":\"2026-08-01\"}"));
 
     assertThat(cases).hasSizeGreaterThanOrEqualTo(9);
     assertThat(cases)
@@ -31,7 +31,7 @@ class ContractSchemaValidationTest {
         .anySatisfy(value -> assertThat(value.path("name").isNumber()).isTrue())
         .anySatisfy(
             value ->
-                assertThat(value.path("name").stringValue("")).isEqualTo("__sea_invalid_enum__"))
+                assertThat(value.path("name").stringValue("")).isEqualTo("__zalava_invalid_enum__"))
         .anySatisfy(
             value ->
                 assertThat(value.path("count").isNumber() && value.path("count").asInt() < 1)
@@ -40,7 +40,7 @@ class ContractSchemaValidationTest {
             value ->
                 assertThat(value.path("count").isNumber() && value.path("count").asInt() > 3)
                     .isTrue())
-        .anySatisfy(value -> assertThat(value.has("seaUnexpectedProperty")).isTrue());
+        .anySatisfy(value -> assertThat(value.has("zalavaUnexpectedProperty")).isTrue());
   }
 
   @Test

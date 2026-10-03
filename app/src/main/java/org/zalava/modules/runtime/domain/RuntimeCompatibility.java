@@ -1,6 +1,6 @@
 package org.zalava.modules.runtime.domain;
 
-/** Inclusive-minimum, optional-exclusive-maximum SEA runtime compatibility range. */
+/** Inclusive-minimum, optional-exclusive-maximum Zalava runtime compatibility range. */
 public record RuntimeCompatibility(RuntimeVersion minimum, RuntimeVersion exclusiveMaximum) {
 
   public static RuntimeCompatibility parse(String value) {

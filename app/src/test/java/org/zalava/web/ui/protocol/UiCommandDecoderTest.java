@@ -46,7 +46,7 @@ class UiCommandDecoderTest {
 
   @Test
   void rejectsUnknownVersionsMalformedAndUnknownCommands() {
-    assertThat(UiCommandDecoder.decode(Map.of("protocol", "sea.ui/v2", "type", "chat.create")))
+    assertThat(UiCommandDecoder.decode(Map.of("protocol", "zalava.ui/v2", "type", "chat.create")))
         .isEmpty();
     assertThat(UiCommandDecoder.decode(Map.of("type", "chat.send", "message", "hello"))).isEmpty();
     assertThat(UiCommandDecoder.decode(Map.of("type", "permission.grant", "requestId", "p-1")))

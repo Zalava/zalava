@@ -26,7 +26,7 @@ public class DevelopmentRequestConfiguration {
   @Bean
   DevelopmentRequestManagement rawDevelopmentRequestManagement(
       DevelopmentRequestStore requests,
-      @Value("${sea.module-api.version:0.1.0-alpha.3}") String moduleApiVersion) {
+      @Value("${zalava.module-api.version:0.1.0-alpha.3}") String moduleApiVersion) {
     return new DefaultDevelopmentRequestManagement(requests, Clock.systemUTC(), moduleApiVersion);
   }
 

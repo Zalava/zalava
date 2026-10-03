@@ -17,17 +17,16 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
-/** Parses the module metadata produced alongside a locally developed SEA artifact. */
+/** Parses the module metadata produced alongside a locally developed Zalava artifact. */
 public final class LocalArtifactModuleMetadataLoader {
 
   private static final int SUPPORTED_SCHEMA_VERSION = 1;
-  private static final String RETIRED_SEA_MODULE_SPI =
-      "META-INF/services/org.zalava.sea.ZalavaModule";
+  private static final String RETIRED_MODULE_SPI = "META-INF/services/org.zalava.sea.ZalavaModule";
 
   /** Reads module-owned metadata from an uploaded JAR without extracting it. */
   public SourceModuleIndex loadJar(Path artifact) {
     try (JarFile jar = new JarFile(artifact.toFile())) {
-      if (jar.getJarEntry(RETIRED_SEA_MODULE_SPI) != null) {
+      if (jar.getJarEntry(RETIRED_MODULE_SPI) != null) {
         throw invalid("uploaded JAR", "must not use the retired ZalavaModule SPI descriptor");
       }
       var entry = jar.getJarEntry("module-metadata.yaml");
@@ -88,8 +87,8 @@ public final class LocalArtifactModuleMetadataLoader {
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(
             text(
-                map(value.get("compatibility"), path + ".compatibility").get("seaRuntime"),
-                path + ".compatibility.seaRuntime")),
+                map(value.get("compatibility"), path + ".compatibility").get("zalavaRuntime"),
+                path + ".compatibility.zalavaRuntime")),
         map(value.get("configurationSchema"), path + ".configurationSchema"),
         factories(value.get("factories"), path + ".factories"),
         operations(value.get("operations"), path + ".operations"),

@@ -9,7 +9,7 @@ import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 /**
  * Bridges the application-owned engine port to the module-provided {@link ManagedServiceEngine}
- * service. The endpoint, socket authority, and any imperative engine handle stay SEA-owned: this
+ * service. The endpoint, socket authority, and any imperative engine handle stay Zalava-owned: this
  * adapter forwards only validated records and bounded queries, and the engine is absent until a
  * module providing the contract is enabled.
  */

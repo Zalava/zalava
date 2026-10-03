@@ -20,7 +20,7 @@ import org.zalava.web.control.application.port.in.BootstrapVerificationQueries;
 import org.zalava.web.control.application.port.in.InvocationLogQueries;
 
 /**
- * Read-only operational monitoring over evidence SEA already records: live and terminal jobs,
+ * Read-only operational monitoring over evidence Zalava already records: live and terminal jobs,
  * persisted agent-run evidence, the bounded provider/tool invocation audit and provider readiness.
  * Cross-actor run and provider evidence keeps this screen administrator-only (see {@code
  * AccountConfiguration}); it composes existing read-only ports and adds no instrumentation.
@@ -238,8 +238,8 @@ public class MonitoringController {
 
   private static String statusDetail(Task.Status status) {
     return switch (status) {
-      case in_progress -> "SEA is working on this job now.";
-      case awaiting_human_input -> "SEA needs input before this job can continue.";
+      case in_progress -> "Zalava is working on this job now.";
+      case awaiting_human_input -> "Zalava needs input before this job can continue.";
       case todo -> "Waiting to start.";
       case completed, cancelled, failed -> "";
     };

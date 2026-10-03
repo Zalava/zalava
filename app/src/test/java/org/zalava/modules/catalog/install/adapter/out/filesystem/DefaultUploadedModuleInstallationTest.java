@@ -31,7 +31,7 @@ class DefaultUploadedModuleInstallationTest {
             artifactId: zalava-module-example
             version: 1.0.0
           compatibility:
-            seaRuntime: ">=1.0.0"
+            zalavaRuntime: ">=1.0.0"
           configurationSchema:
             type: object
           factories:
@@ -78,7 +78,7 @@ class DefaultUploadedModuleInstallationTest {
             jar(
                 Map.of(
                     "module-metadata.yaml", METADATA.getBytes(),
-                    "META-INF/sea-module-bundle.yaml",
+                    "META-INF/zalava-module-bundle.yaml",
                         "module:\n  path: module.jar\n".getBytes())));
     assertThat(request.artifactBundle()).isTrue();
   }

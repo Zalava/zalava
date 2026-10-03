@@ -24,7 +24,7 @@ public final class JdbcChannelLinkChallengeStore implements ChannelLinkChallenge
   @Override
   public Optional<ChannelLinkChallenge> findActiveByCodeHash(String hash, Instant now) {
     return jdbc.sql(
-            "select * from sea_channel_link_challenge where code_hash = :hash and consumed_at is null and expires_at > :now")
+            "select * from zalava_channel_link_challenge where code_hash = :hash and consumed_at is null and expires_at > :now")
         .param("hash", hash)
         .param("now", Timestamp.from(now))
         .query(this::map)
@@ -34,7 +34,7 @@ public final class JdbcChannelLinkChallengeStore implements ChannelLinkChallenge
   @Override
   public ChannelLinkChallenge save(ChannelLinkChallenge value) {
     jdbc.sql(
-            "insert into sea_channel_link_challenge (id, account_id, channel_id, operations, code_hash, expires_at, consumed_at) values (:id, :account, :channel, :operations, :hash, :expires, :consumed)")
+            "insert into zalava_channel_link_challenge (id, account_id, channel_id, operations, code_hash, expires_at, consumed_at) values (:id, :account, :channel, :operations, :hash, :expires, :consumed)")
         .param("id", value.id())
         .param("account", value.owner().accountId().value())
         .param("channel", value.channel())
@@ -49,7 +49,7 @@ public final class JdbcChannelLinkChallengeStore implements ChannelLinkChallenge
   @Override
   public boolean consume(UUID id, Instant consumedAt) {
     return jdbc.sql(
-                "update sea_channel_link_challenge set consumed_at = :consumed where id = :id and consumed_at is null and expires_at > :now")
+                "update zalava_channel_link_challenge set consumed_at = :consumed where id = :id and consumed_at is null and expires_at > :now")
             .param("id", id)
             .param("consumed", Timestamp.from(consumedAt))
             .param("now", Timestamp.from(consumedAt))

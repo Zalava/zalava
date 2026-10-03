@@ -11,16 +11,18 @@ import org.zalava.assistant.channels.runtime.application.port.in.ChannelRuntime;
 import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 
-/** Composition boundary for module channel transports and the SEA-owned chat continuation path. */
+/**
+ * Composition boundary for module channel transports and the Zalava-owned chat continuation path.
+ */
 @Configuration
 public class ChannelRuntimeConfiguration {
   @Bean(destroyMethod = "close")
   ChannelRuntime channelRuntime(
       ChannelIdentityLinks identities,
       ActorChatCommands chats,
-      SeaRuntime modules,
+      ZalavaRuntime modules,
       FileSystemModuleConfigurationStore configurations,
       org.zalava.assistant.conversation.application.port.in.ConversationContinuation continuation) {
     AtomicReference<DefaultChannelRuntime> runtime = new AtomicReference<>();

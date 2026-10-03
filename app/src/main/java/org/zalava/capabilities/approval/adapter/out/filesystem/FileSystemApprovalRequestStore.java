@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests.Entry;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests.Entry;
 import org.zalava.capabilities.approval.application.port.out.ApprovalRequestStore;
 import tools.jackson.databind.ObjectMapper;
 
@@ -22,7 +22,7 @@ public final class FileSystemApprovalRequestStore implements ApprovalRequestStor
       directory = workspace.resolve("approval-requests");
       Files.createDirectories(directory);
     } catch (IOException ex) {
-      throw new IllegalStateException("Unable to create SEA approval request store", ex);
+      throw new IllegalStateException("Unable to create Zalava approval request store", ex);
     }
   }
 
@@ -35,7 +35,7 @@ public final class FileSystemApprovalRequestStore implements ApprovalRequestStor
           .sorted(Comparator.comparing(Entry::createdAt).reversed())
           .toList();
     } catch (IOException ex) {
-      throw new IllegalStateException("Unable to load SEA approval requests", ex);
+      throw new IllegalStateException("Unable to load Zalava approval requests", ex);
     }
   }
 
@@ -53,7 +53,7 @@ public final class FileSystemApprovalRequestStore implements ApprovalRequestStor
       }
     } catch (IOException ex) {
       throw new IllegalStateException(
-          "Unable to persist SEA tool approval request: " + entry.requestId(), ex);
+          "Unable to persist Zalava tool approval request: " + entry.requestId(), ex);
     }
   }
 
@@ -63,7 +63,7 @@ public final class FileSystemApprovalRequestStore implements ApprovalRequestStor
       Files.deleteIfExists(path(requestId));
     } catch (IOException ex) {
       throw new IllegalStateException(
-          "Unable to delete SEA tool approval request: " + requestId, ex);
+          "Unable to delete Zalava tool approval request: " + requestId, ex);
     }
   }
 
@@ -71,7 +71,7 @@ public final class FileSystemApprovalRequestStore implements ApprovalRequestStor
     try {
       return JSON.readValue(path.toFile(), Entry.class);
     } catch (RuntimeException ex) {
-      throw new IllegalStateException("Unable to read SEA tool approval request: " + path, ex);
+      throw new IllegalStateException("Unable to read Zalava tool approval request: " + path, ex);
     }
   }
 
@@ -79,7 +79,7 @@ public final class FileSystemApprovalRequestStore implements ApprovalRequestStor
     try {
       UUID.fromString(requestId);
     } catch (IllegalArgumentException exception) {
-      throw new IllegalArgumentException("Invalid SEA approval request id", exception);
+      throw new IllegalArgumentException("Invalid Zalava approval request id", exception);
     }
     return directory.resolve(requestId + ".json");
   }

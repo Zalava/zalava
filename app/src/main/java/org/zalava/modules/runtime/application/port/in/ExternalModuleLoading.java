@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import org.zalava.api.ZalavaModule;
 
-/** Lifecycle boundary for loading externally enabled SEA modules. */
+/** Lifecycle boundary for loading externally enabled Zalava modules. */
 public interface ExternalModuleLoading extends AutoCloseable {
 
   List<ZalavaModule> loadModules();

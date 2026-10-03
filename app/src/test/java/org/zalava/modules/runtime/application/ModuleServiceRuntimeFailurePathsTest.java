@@ -29,7 +29,7 @@ class ModuleServiceRuntimeFailurePathsTest {
             List.of(new ZalavaServiceRequirement("service-a", "9", RequirementMode.REQUIRED)));
 
     assertThatThrownBy(() -> runtime(consumer, provider()))
-        .hasMessageContaining("requires unavailable SEA service service-a");
+        .hasMessageContaining("requires unavailable Zalava service service-a");
 
     ZalavaModule rangedConsumer =
         module(
@@ -123,7 +123,7 @@ class ModuleServiceRuntimeFailurePathsTest {
 
     assertThatThrownBy(() -> runtime(broken))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("SEA service factories must declare a descriptor and contract");
+        .hasMessage("Zalava service factories must declare a descriptor and contract");
   }
 
   @Test
@@ -175,7 +175,7 @@ class ModuleServiceRuntimeFailurePathsTest {
 
     assertThatThrownBy(() -> runtime(module, provider()))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("declares duplicate SEA service service-a");
+        .hasMessageContaining("declares duplicate Zalava service service-a");
   }
 
   @Test
@@ -212,7 +212,7 @@ class ModuleServiceRuntimeFailurePathsTest {
 
     assertThatThrownBy(runtime::close)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Unable to close SEA services")
+        .hasMessage("Unable to close Zalava services")
         .hasSuppressedException(new IllegalStateException("close failed"));
   }
 

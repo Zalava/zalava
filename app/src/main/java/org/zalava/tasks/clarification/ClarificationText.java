@@ -4,9 +4,9 @@ import java.util.stream.Collectors;
 import org.zalava.tasks.clarification.domain.ClarificationRequest;
 
 /**
- * Bounded safe-text rendering for a clarification request. It contains only SEA-validated prompts,
- * choice labels and owner-supplied answers, so a non-web channel can deliver it without leaking
- * model reasoning, tool arguments or private state.
+ * Bounded safe-text rendering for a clarification request. It contains only Zalava-validated
+ * prompts, choice labels and owner-supplied answers, so a non-web channel can deliver it without
+ * leaking model reasoning, tool arguments or private state.
  */
 public final class ClarificationText {
   private ClarificationText() {}
@@ -15,7 +15,7 @@ public final class ClarificationText {
 
   public static String render(ClarificationRequest request) {
     StringBuilder text = new StringBuilder();
-    text.append("SEA needs clarification (request ")
+    text.append("Zalava needs clarification (request ")
         .append(request.requestId())
         .append("): ")
         .append(request.prompt());

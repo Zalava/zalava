@@ -3,7 +3,7 @@ package org.zalava.knowledge.application.port.out;
 import java.util.Optional;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 
-/** SEA-owned original-byte boundary. No module receives the managed-root path. */
+/** Zalava-owned original-byte boundary. No module receives the managed-root path. */
 public interface KnowledgeBlobStore {
   BlobReceipt write(KnowledgeSourceId sourceId, byte[] content);
 

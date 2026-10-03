@@ -42,16 +42,16 @@ class IndexedInstallPrivatePackagesAuthNegativeTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> "indexed-install-noauth-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "IndexedInstallPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> "indexed-install-noauth-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "IndexedInstallPassword-123");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.catalog.github.token", IndexedInstallCredentials::githubToken);
+    registry.add("zalava.catalog.github.token", IndexedInstallCredentials::githubToken);
     PostgreSqlTestDatabase.register(registry);
   }
 
@@ -62,14 +62,14 @@ class IndexedInstallPrivatePackagesAuthNegativeTest {
         .as("the locator token is required to reach the private catalog")
         .isNotBlank();
 
-    post("/sea/control/module-release-installations/catalog/refresh");
+    post("/zalava/control/module-release-installations/catalog/refresh");
     post(
-        "/sea/control/module-release-installations/catalog/select",
+        "/zalava/control/module-release-installations/catalog/select",
         Map.of("moduleId", IndexedInstallAcceptanceTest.MODULE_ID));
 
     String response =
         post(
-            "/sea/control/module-release-installations",
+            "/zalava/control/module-release-installations",
             Map.of(
                 "moduleId",
                 IndexedInstallAcceptanceTest.MODULE_ID,
@@ -113,7 +113,7 @@ class IndexedInstallPrivatePackagesAuthNegativeTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-indexed-install-noauth-");
+      Path workspace = Files.createTempDirectory("zalava-indexed-install-noauth-");
       Files.writeString(workspace.resolve("AGENT.md"), "Indexed install negative workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable real-network workspace.");
       return workspace;

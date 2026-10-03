@@ -16,7 +16,7 @@ import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.tasks.application.port.in.TaskCommands;
@@ -31,10 +31,10 @@ class ChannelApprovalCommandsTest {
   private static final ObjectMapper JSON = new ObjectMapper();
 
   @Test
-  void ignoresMessagesThatAreNotSeaCommands() {
+  void ignoresMessagesThatAreNotZalavaCommands() {
     ChannelApprovalCommands commands =
         new ChannelApprovalCommands(
-            new SeaToolApprovalRequests(),
+            new ZalavaToolApprovalRequests(),
             mock(ProviderToolOperations.class),
             mock(TaskCommands.class),
             mock(TaskQueries.class));
@@ -44,7 +44,7 @@ class ChannelApprovalCommandsTest {
 
   @Test
   void allowsPendingApprovalAndResumesTask() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -54,7 +54,7 @@ class ChannelApprovalCommandsTest {
     String requestId = createApproval(approvals, reference);
     when(taskQueries.getTask(reference)).thenReturn(task(reference));
 
-    assertThat(commands.handle("/sea approve " + requestId))
+    assertThat(commands.handle("/zalava approve " + requestId))
         .get()
         .asString()
         .contains("Approval granted once")
@@ -63,13 +63,13 @@ class ChannelApprovalCommandsTest {
         .contains("/jobs/2026-06-08/120000-write-file.md");
 
     assertThat(approvals.get(requestId).decision())
-        .isEqualTo(SeaToolApprovalRequests.Decision.ALLOWED);
+        .isEqualTo(ZalavaToolApprovalRequests.Decision.ALLOWED);
     verify(taskCommands).resume(reference);
   }
 
   @Test
   void savesToolPolicyWithoutResumingWhenAnotherApprovalIsPending() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -80,20 +80,20 @@ class ChannelApprovalCommandsTest {
     createApproval(approvals, reference, "notes/b.txt");
     when(taskQueries.getTask(reference)).thenReturn(task(reference));
 
-    assertThat(commands.handle("/sea always-allow-tool " + firstRequestId))
+    assertThat(commands.handle("/zalava always-allow-tool " + firstRequestId))
         .get()
         .asString()
         .contains("Tool approval policy saved")
         .contains("The job is still waiting for another approval.");
 
     assertThat(approvals.get(firstRequestId).approvalScope())
-        .isEqualTo(SeaToolApprovalRequests.ApprovalScope.TOOL);
+        .isEqualTo(ZalavaToolApprovalRequests.ApprovalScope.TOOL);
     verify(taskCommands, never()).resume(reference);
   }
 
   @Test
   void deniesPendingApprovalAndResumesTask() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -103,39 +103,39 @@ class ChannelApprovalCommandsTest {
     String requestId = createApproval(approvals, reference);
     when(taskQueries.getTask(reference)).thenReturn(task(reference));
 
-    assertThat(commands.handle("/sea deny " + requestId))
+    assertThat(commands.handle("/zalava deny " + requestId))
         .get()
         .asString()
         .contains("Approval denied")
         .contains("The job has been queued to continue.");
 
     assertThat(approvals.get(requestId).decision())
-        .isEqualTo(SeaToolApprovalRequests.Decision.DENIED);
+        .isEqualTo(ZalavaToolApprovalRequests.Decision.DENIED);
     verify(taskCommands).resume(reference);
   }
 
   @Test
-  void rejectsMalformedSeaCommandWithoutCallingTaskLayer() {
+  void rejectsMalformedZalavaCommandWithoutCallingTaskLayer() {
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
     ChannelApprovalCommands commands =
         new ChannelApprovalCommands(
-            new SeaToolApprovalRequests(),
+            new ZalavaToolApprovalRequests(),
             mock(ProviderToolOperations.class),
             taskCommands,
             taskQueries);
 
-    assertThat(commands.handle("/sea approve"))
+    assertThat(commands.handle("/zalava approve"))
         .get()
         .asString()
-        .contains("SEA could not understand that approval command.");
+        .contains("Zalava could not understand that approval command.");
     verify(taskCommands, never()).resume(org.mockito.Mockito.any());
     verify(taskQueries, never()).getTask(org.mockito.Mockito.any());
   }
 
   @Test
   void allowsUnscopedApprovalWithoutTaskLookup() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -147,7 +147,7 @@ class ChannelApprovalCommandsTest {
             ProviderToolOperations.ToolInvocationOutcome.executed(
                 ZalavaOperationResult.success(Map.of())));
 
-    assertThat(commands.handle("/sea approve " + requestId))
+    assertThat(commands.handle("/zalava approve " + requestId))
         .get()
         .asString()
         .contains("Approval granted once")
@@ -161,7 +161,7 @@ class ChannelApprovalCommandsTest {
 
   @Test
   void savesUnscopedToolPolicyWithoutTaskLookup() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -173,7 +173,7 @@ class ChannelApprovalCommandsTest {
             ProviderToolOperations.ToolInvocationOutcome.executed(
                 ZalavaOperationResult.success(Map.of())));
 
-    assertThat(commands.handle("/sea always-allow-tool " + requestId))
+    assertThat(commands.handle("/zalava always-allow-tool " + requestId))
         .get()
         .asString()
         .contains("Tool approval policy saved")
@@ -187,7 +187,7 @@ class ChannelApprovalCommandsTest {
 
   @Test
   void deniesUnscopedApprovalWithoutTaskLookup() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -197,7 +197,7 @@ class ChannelApprovalCommandsTest {
     when(providerToolOperations.denyUnscoped(requestId))
         .thenReturn(toolApproval(requestId, ToolApproval.Decision.DENIED));
 
-    assertThat(commands.handle("/sea deny " + requestId))
+    assertThat(commands.handle("/zalava deny " + requestId))
         .get()
         .asString()
         .contains("Approval denied")
@@ -211,7 +211,7 @@ class ChannelApprovalCommandsTest {
 
   @Test
   void resolvesLastToNewestPendingApproval() throws Exception {
-    SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     ProviderToolOperations providerToolOperations = mock(ProviderToolOperations.class);
     TaskCommands taskCommands = mock(TaskCommands.class);
     TaskQueries taskQueries = mock(TaskQueries.class);
@@ -224,7 +224,7 @@ class ChannelApprovalCommandsTest {
             ProviderToolOperations.ToolInvocationOutcome.executed(
                 ZalavaOperationResult.success(Map.of())));
 
-    assertThat(commands.handle("/sea approve last"))
+    assertThat(commands.handle("/zalava approve last"))
         .get()
         .asString()
         .contains("Approval granted once")
@@ -237,28 +237,29 @@ class ChannelApprovalCommandsTest {
   void reportsWhenLastHasNoPendingApproval() {
     ChannelApprovalCommands commands =
         new ChannelApprovalCommands(
-            new SeaToolApprovalRequests(),
+            new ZalavaToolApprovalRequests(),
             mock(ProviderToolOperations.class),
             mock(TaskCommands.class),
             mock(TaskQueries.class));
 
-    assertThat(commands.handle("/sea approve last"))
+    assertThat(commands.handle("/zalava approve last"))
         .get()
         .asString()
-        .contains("SEA approval request not found: last");
+        .contains("Zalava approval request not found: last");
   }
 
-  private static String createApproval(SeaToolApprovalRequests approvals, TaskReference reference)
-      throws Exception {
+  private static String createApproval(
+      ZalavaToolApprovalRequests approvals, TaskReference reference) throws Exception {
     return createApproval(approvals, reference, "notes/a.txt");
   }
 
-  private static String createUnscopedApproval(SeaToolApprovalRequests approvals) throws Exception {
+  private static String createUnscopedApproval(ZalavaToolApprovalRequests approvals)
+      throws Exception {
     return createApproval(approvals, null, "notes/a.txt");
   }
 
   private static String createApproval(
-      SeaToolApprovalRequests approvals, TaskReference reference, String path) throws Exception {
+      ZalavaToolApprovalRequests approvals, TaskReference reference, String path) throws Exception {
     return approvals
         .create(
             new TestProvider(),

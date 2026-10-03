@@ -14,24 +14,24 @@ import org.zalava.api.extensions.speech.SpeechRecognition;
 import org.zalava.api.extensions.speech.SpeechSynthesis;
 import org.zalava.modules.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
-import org.zalava.modules.runtime.DefaultSeaRuntime;
-import org.zalava.modules.runtime.ExternalSeaModuleLoader;
-import org.zalava.modules.runtime.StaticSeaModuleRegistry;
+import org.zalava.modules.runtime.DefaultZalavaRuntime;
+import org.zalava.modules.runtime.ExternalZalavaModuleLoader;
+import org.zalava.modules.runtime.StaticZalavaModuleRegistry;
 
 /**
- * Loads the external speech fixture through the real {@link ExternalSeaModuleLoader} so tests
+ * Loads the external speech fixture through the real {@link ExternalZalavaModuleLoader} so tests
  * exercise the same scoped configuration, secret, and service-resolution path used at runtime.
  */
 final class SpeechFixtureModule implements AutoCloseable {
-  static final String MODULE_ID = "sea-external-module-fixture";
+  static final String MODULE_ID = "zalava-external-module-fixture";
   static final SpeechAudioFormat FORMAT = new SpeechAudioFormat("wav", "pcm_s16le", 16000);
   static final SpeechAudioFormat UNSUPPORTED_FORMAT = new SpeechAudioFormat("wav", "opus", 48000);
   private static final String CREDENTIAL_REFERENCE = "fixture-token";
 
-  private final ExternalSeaModuleLoader loader;
-  private final DefaultSeaRuntime runtime;
+  private final ExternalZalavaModuleLoader loader;
+  private final DefaultZalavaRuntime runtime;
 
-  private SpeechFixtureModule(ExternalSeaModuleLoader loader, DefaultSeaRuntime runtime) {
+  private SpeechFixtureModule(ExternalZalavaModuleLoader loader, DefaultZalavaRuntime runtime) {
     this.loader = loader;
     this.runtime = runtime;
   }
@@ -47,7 +47,7 @@ final class SpeechFixtureModule implements AutoCloseable {
     Path artifact = installFixtureJar(workspace);
     FileSystemModuleEnablement registry = new FileSystemModuleEnablement(workspace);
     registry.enable(enabledModule(artifact));
-    ExternalSeaModuleLoader loader = new ExternalSeaModuleLoader(registry);
+    ExternalZalavaModuleLoader loader = new ExternalZalavaModuleLoader(registry);
     try {
       List<ZalavaModule> modules = loader.loadModules();
       ProviderFactoryContext context =
@@ -58,8 +58,8 @@ final class SpeechFixtureModule implements AutoCloseable {
               FactorySecretAccess.none(),
               Map.of(MODULE_ID, moduleSecrets),
               Map.of());
-      DefaultSeaRuntime runtime =
-          new DefaultSeaRuntime(new StaticSeaModuleRegistry(modules), context);
+      DefaultZalavaRuntime runtime =
+          new DefaultZalavaRuntime(new StaticZalavaModuleRegistry(modules), context);
       return new SpeechFixtureModule(loader, runtime);
     } catch (RuntimeException exception) {
       loader.close();
@@ -105,7 +105,7 @@ final class SpeechFixtureModule implements AutoCloseable {
   }
 
   private static Path installFixtureJar(Path workspace) throws Exception {
-    Path source = Path.of(System.getProperty("sea.test.external-module-jar"));
+    Path source = Path.of(System.getProperty("zalava.test.external-module-jar"));
     Path artifact =
         workspace.resolve(
             "source-module-installation/modules/"

@@ -1,6 +1,6 @@
 package org.zalava.knowledge.domain;
 
-/** A versioned processor result is promoted only after successful SEA validation. */
+/** A versioned processor result is promoted only after successful Zalava validation. */
 public enum DerivationState {
   CANDIDATE,
   ACTIVE,

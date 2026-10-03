@@ -16,10 +16,10 @@ class MicrometerOperationalMetricsTest {
       metrics.agentRun("succeeded", 12, List.of(new OperationalMetrics.ContextUse("memory", 42)));
       metrics.toolInvocation("provider", "read", "succeeded", 8);
 
-      assertThat(registry.get("sea.agent.runs").counter().count()).isEqualTo(1);
-      assertThat(registry.get("sea.agent.context.characters").summary().totalAmount())
+      assertThat(registry.get("zalava.agent.runs").counter().count()).isEqualTo(1);
+      assertThat(registry.get("zalava.agent.context.characters").summary().totalAmount())
           .isEqualTo(42);
-      assertThat(registry.get("sea.provider.tool.duration").timer().count()).isEqualTo(1);
+      assertThat(registry.get("zalava.provider.tool.duration").timer().count()).isEqualTo(1);
       assertThat(registry.getMeters().toString())
           .doesNotContain("actor-1", "secret", "notes/a.txt");
     }
@@ -34,7 +34,8 @@ class MicrometerOperationalMetricsTest {
         metrics.toolInvocation("provider" + suffix, "read", "succeeded", 0);
       }
 
-      assertThat(registry.find("sea.provider.tool.invocations").tags("provider", "other").counter())
+      assertThat(
+              registry.find("zalava.provider.tool.invocations").tags("provider", "other").counter())
           .isNotNull();
     }
   }

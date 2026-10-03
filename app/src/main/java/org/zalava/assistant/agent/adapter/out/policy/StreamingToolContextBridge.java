@@ -12,7 +12,7 @@ import org.zalava.tasks.capture.ActorTaskCreationContext;
 import org.zalava.tasks.domain.ActorTaskReference;
 
 /**
- * Propagates SEA's ThreadLocal request contexts into streamed model turns.
+ * Propagates Zalava's ThreadLocal request contexts into streamed model turns.
  *
  * <p>During a streamed turn, Spring AI executes tool callbacks on reactor threads. {@code
  * ActorExecutionContext} (actor identity → provider policy/scope/audit) and {@code

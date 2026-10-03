@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import org.zalava.identity.accounts.domain.Actor;
 
-/** Resolves SEA-owned private-state paths without accepting a user-controlled path segment. */
+/** Resolves Zalava-owned private-state paths without accepting a user-controlled path segment. */
 public final class ActorScopedPaths {
   private final Path workspace;
 

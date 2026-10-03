@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Bounded, read-only projection of SEA-owned managed services for UI and diagnostics consumers.
- * Provider-agnostic: it exposes only SEA's own durable state and declared endpoints, never engine
- * handles or module internals.
+ * Bounded, read-only projection of Zalava-owned managed services for UI and diagnostics consumers.
+ * Provider-agnostic: it exposes only Zalava's own durable state and declared endpoints, never
+ * engine handles or module internals.
  */
 public interface ManagedServiceQueries {
 

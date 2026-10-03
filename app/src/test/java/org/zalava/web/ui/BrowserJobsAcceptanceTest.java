@@ -35,7 +35,7 @@ import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -62,15 +62,17 @@ class BrowserJobsAcceptanceTest {
   @LocalServerPort private int port;
   @org.springframework.beans.factory.annotation.Autowired private AccountLifecycle accounts;
   @org.springframework.beans.factory.annotation.Autowired private ActorTaskStore tasks;
-  @org.springframework.beans.factory.annotation.Autowired private SeaToolApprovalRequests approvals;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  private ZalavaToolApprovalRequests approvals;
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> OWNER_LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> OWNER_LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "none");
@@ -260,7 +262,7 @@ class BrowserJobsAcceptanceTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     ZalavaToolDescriptor tool =
         new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of());
@@ -281,7 +283,7 @@ class BrowserJobsAcceptanceTest {
             Map.of(
                 "accountRole",
                 "MEMBER",
-                SeaToolApprovalRequests.ACTOR_TASK_REFERENCE,
+                ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE,
                 new ActorTaskExecutionReference(actor, reference).encode())),
         JsonNodeFactory.instance.objectNode());
   }
@@ -306,7 +308,7 @@ class BrowserJobsAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-jobs-");
+      Path root = Files.createTempDirectory("zalava-browser-jobs-");
       Files.writeString(root.resolve("AGENT.md"), "Browser jobs acceptance workspace.");
       return root;
     } catch (IOException exception) {

@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Bounded, model-supplied proposal input. SEA validates scope, length and content safety before a
- * proposal is persisted; a draft is never durable memory on its own.
+ * Bounded, model-supplied proposal input. Zalava validates scope, length and content safety before
+ * a proposal is persisted; a draft is never durable memory on its own.
  */
 public record MemoryProposalDraft(
     MemoryScope scope, String text, Map<String, String> metadata, String reference) {

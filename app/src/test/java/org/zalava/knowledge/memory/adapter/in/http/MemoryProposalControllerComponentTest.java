@@ -18,7 +18,7 @@ import org.zalava.knowledge.memory.application.port.out.ActorMemoryStore;
 import org.zalava.knowledge.memory.domain.MemoryProposal;
 import org.zalava.knowledge.memory.domain.MemoryProposalDraft;
 import org.zalava.knowledge.memory.domain.MemoryScope;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
 /**
@@ -26,7 +26,7 @@ import org.zalava.support.ComponentTestAccounts;
  * the real controller, actor resolver, proposal store and actor memory store, so ownership,
  * approval-to-memory, rejection, revocation and stale-decision handling are proven over real HTTP.
  */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class MemoryProposalControllerComponentTest {
 
   @Autowired private MockMvc mockMvc;

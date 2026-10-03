@@ -24,7 +24,7 @@ import org.zalava.knowledge.memory.domain.MemoryProposal;
 import org.zalava.knowledge.memory.domain.MemoryProposalDraft;
 import org.zalava.knowledge.memory.domain.MemoryProvenance;
 import org.zalava.knowledge.memory.domain.MemoryScope;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
 /**
@@ -32,7 +32,7 @@ import org.zalava.support.ComponentTestAccounts;
  * filter chain, actor resolver, memory store and promotion service, so browse/search, inspect,
  * edit, delete, proposal review, isolation and validation are proven over real HTTP.
  */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class MemoryControllerComponentTest {
 
   @Autowired private MockMvc mockMvc;
@@ -48,14 +48,14 @@ class MemoryControllerComponentTest {
         actor,
         new MemoryDraft(
             MemoryScope.PROJECT,
-            "SEA modules expose providers",
+            "Zalava modules expose providers",
             Map.of(),
             MemoryProvenance.of("user", "run-7")));
 
     mockMvc
         .perform(get("/memory").with(accounts.authenticatedAs(account)))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("SEA modules expose providers")))
+        .andExpect(content().string(containsString("Zalava modules expose providers")))
         .andExpect(content().string(containsString("PROJECT")))
         .andExpect(content().string(containsString("user")))
         .andExpect(content().string(containsString("run-7")));

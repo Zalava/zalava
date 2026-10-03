@@ -24,12 +24,12 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.SeaComponentTestConfiguration;
+import org.zalava.support.ZalavaComponentTestConfiguration;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import({
-  SeaComponentTestConfiguration.class,
+  ZalavaComponentTestConfiguration.class,
   ModuleLifecycleComponentTest.FixtureConfiguration.class,
   BrowserModuleLifecycleAcceptanceTest.AccountConfiguration.class
 })
@@ -43,11 +43,11 @@ class BrowserModuleLifecycleAcceptanceTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.module-configuration.root", WORKSPACE::toString);
+    registry.add("zalava.module-configuration.root", WORKSPACE::toString);
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");

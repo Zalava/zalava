@@ -71,7 +71,7 @@ class ModuleReleaseIndexLoaderTest {
                       repository: https://github.com/Zalava/zalava-module-time.git
                       license: Apache-2.0
                     compatibility:
-                      seaRuntime: \">=1.0.0 <2.0.0\"
+                      zalavaRuntime: \">=1.0.0 <2.0.0\"
                     security:
                       permissions: [time.read]
                 """

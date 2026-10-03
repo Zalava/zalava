@@ -48,7 +48,7 @@ public record ModuleReleaseIndex(int schemaVersion, String moduleId, List<Releas
 
   public record Source(URI repository, String license) {}
 
-  public record Compatibility(String seaRuntime) {}
+  public record Compatibility(String zalavaRuntime) {}
 
   public record Security(List<String> permissions) {
 

@@ -110,7 +110,7 @@ class ChatChannelTest {
     List<String> bubbles = chatChannel.loadHistoryAsHtml("web");
 
     assertThat(bubbles).hasSize(1);
-    assertThat(bubbles.get(0)).contains("ar-msg--agent").contains("SEA assistant");
+    assertThat(bubbles.get(0)).contains("ar-msg--agent").contains("Zalava assistant");
   }
 
   @Test
@@ -189,10 +189,10 @@ class ChatChannelTest {
 
   @Test
   void chatHandlesApprovalCommandWithoutCallingAgent() {
-    when(approvalCommands.handle("/sea approve approval-123"))
+    when(approvalCommands.handle("/zalava approve approval-123"))
         .thenReturn(Optional.of("Approval granted once."));
 
-    ChatTurnResult response = chatChannel.chat("web", "/sea approve approval-123");
+    ChatTurnResult response = chatChannel.chat("web", "/zalava approve approval-123");
 
     assertThat(response.text()).isEqualTo("Approval granted once.");
     assertThat(response.jobReferences()).isEmpty();

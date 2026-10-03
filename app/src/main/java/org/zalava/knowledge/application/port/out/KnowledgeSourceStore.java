@@ -7,7 +7,8 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 
 /**
- * Persistence boundary for SEA-owned metadata; source bytes remain in the separate blob boundary.
+ * Persistence boundary for Zalava-owned metadata; source bytes remain in the separate blob
+ * boundary.
  */
 public interface KnowledgeSourceStore {
   KnowledgeSource register(KnowledgeSource source);

@@ -46,9 +46,9 @@ class BrowserMemoryAcceptanceTest {
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -116,7 +116,7 @@ class BrowserMemoryAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-memory-");
+      Path root = Files.createTempDirectory("zalava-browser-memory-");
       Files.writeString(root.resolve("AGENT.md"), "Browser memory workspace.");
       return root;
     } catch (IOException exception) {

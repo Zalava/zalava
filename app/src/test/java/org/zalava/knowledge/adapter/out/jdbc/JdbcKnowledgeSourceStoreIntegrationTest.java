@@ -30,7 +30,7 @@ import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 import org.zalava.platform.persistence.OptimisticLockConflictException;
-import org.zalava.support.RestartableSeaApplicationContext;
+import org.zalava.support.RestartableZalavaApplicationContext;
 
 @SpringBootTest
 class JdbcKnowledgeSourceStoreIntegrationTest {
@@ -65,9 +65,9 @@ class JdbcKnowledgeSourceStoreIntegrationTest {
   static void properties(DynamicPropertyRegistry registry) {
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
     registry.add("agent.workspace", () -> DATABASE_PATH.getParent().toUri().toString());
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> "knowledge-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "KnowledgePassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> "knowledge-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "KnowledgePassword-123");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
   }
@@ -225,7 +225,7 @@ class JdbcKnowledgeSourceStoreIntegrationTest {
     extractionRecords.record(KnowledgeExtractionRecord.succeeded(active, "restart evidence"));
 
     try (ConfigurableApplicationContext restarted =
-        RestartableSeaApplicationContext.start(DATABASE_PATH.getParent())) {
+        RestartableZalavaApplicationContext.start(DATABASE_PATH.getParent())) {
       KnowledgeSearchStore restartedSearch = restarted.getBean(KnowledgeSearchStore.class);
       KnowledgeSourceLifecycle restartedLifecycle =
           restarted.getBean(KnowledgeSourceLifecycle.class);
@@ -319,7 +319,7 @@ class JdbcKnowledgeSourceStoreIntegrationTest {
       Path directory = Files.createTempDirectory("jdbc-knowledge-store-integration-");
       Files.writeString(directory.resolve("AGENT.md"), "Integration test agent prompt.");
       Files.writeString(directory.resolve("INFO.md"), "Integration test environment info.");
-      return directory.resolve("sea");
+      return directory.resolve("zalava");
     } catch (IOException exception) {
       throw new ExceptionInInitializerError(exception);
     }

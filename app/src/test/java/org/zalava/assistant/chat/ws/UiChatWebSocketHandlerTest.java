@@ -47,8 +47,8 @@ class UiChatWebSocketHandlerTest {
             invocation -> {
               var listener = invocation.getArgument(3, ActorChatStreamListener.class);
               listener.onDelta("Hello ");
-              listener.onComplete("Hello SEA", List.of());
-              return new ActorChatTurn("Hello SEA", List.of());
+              listener.onComplete("Hello Zalava", List.of());
+              return new ActorChatTurn("Hello Zalava", List.of());
             })
         .when(commands)
         .streamChat(any(), any(), any(), any());
@@ -60,7 +60,7 @@ class UiChatWebSocketHandlerTest {
         new TextMessage(
             json.writeValueAsString(
                 java.util.Map.of(
-                    "protocol", "sea.ui/v1",
+                    "protocol", "zalava.ui/v1",
                     "type", "chat.send",
                     "conversationId", conversation.value(),
                     "message", "Hello"))));
@@ -91,7 +91,7 @@ class UiChatWebSocketHandlerTest {
 
     var handler = new UiChatWebSocketHandler(json, actors, commands, queries);
     handler.handleTextMessage(
-        session, new TextMessage("{\"protocol\":\"sea.ui/v1\",\"type\":\"chat.create\"}"));
+        session, new TextMessage("{\"protocol\":\"zalava.ui/v1\",\"type\":\"chat.create\"}"));
 
     var sent = ArgumentCaptor.forClass(TextMessage.class);
     verify(session, org.mockito.Mockito.atLeast(2)).sendMessage(sent.capture());
@@ -117,14 +117,14 @@ class UiChatWebSocketHandlerTest {
         new TextMessage(
             json.writeValueAsString(
                 java.util.Map.of(
-                    "protocol", "sea.ui/v1",
+                    "protocol", "zalava.ui/v1",
                     "type", "chat.select",
                     "conversationId", otherActorsConversation.value()))));
 
     var sent = ArgumentCaptor.forClass(TextMessage.class);
     verify(session).sendMessage(sent.capture());
     assertThat(sent.getValue().getPayload())
-        .contains("failure", "SEA could not complete that request")
+        .contains("failure", "Zalava could not complete that request")
         .doesNotContain(otherActorsConversation.value(), "conversation.snapshot");
     verify(queries).history(actor, otherActorsConversation);
   }

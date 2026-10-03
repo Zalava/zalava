@@ -108,13 +108,13 @@ public final class DefaultAgentContextAssembler implements AgentContextAssembler
     String toolSummaryText = toolSummaryText(toolSummaries);
     String boundedToolSummary = boundedToolSummary(boundedPrompt, toolSummaryText);
     String promptWithSummaries =
-        promptWithSection(boundedPrompt, "Selected SEA tool summaries:", boundedToolSummary);
+        promptWithSection(boundedPrompt, "Selected Zalava tool summaries:", boundedToolSummary);
     String definitionText = toolDefinitionText(toolDefinitions);
     String boundedDefinitions =
-        boundedSection(promptWithSummaries, "Selected SEA tool definitions:", definitionText);
+        boundedSection(promptWithSummaries, "Selected Zalava tool definitions:", definitionText);
     String promptWithDefinitions =
         promptWithSection(
-            promptWithSummaries, "Selected SEA tool definitions:", boundedDefinitions);
+            promptWithSummaries, "Selected Zalava tool definitions:", boundedDefinitions);
     String memoryText = memoryText(selectMemories(prompt));
     String boundedMemories =
         boundedSection(promptWithDefinitions, "Selected memories:", memoryText);
@@ -160,7 +160,7 @@ public final class DefaultAgentContextAssembler implements AgentContextAssembler
   }
 
   private String boundedToolSummary(String prompt, String toolSummary) {
-    return boundedSection(prompt, "Selected SEA tool summaries:", toolSummary);
+    return boundedSection(prompt, "Selected Zalava tool summaries:", toolSummary);
   }
 
   private String boundedSection(String currentPrompt, String heading, String content) {

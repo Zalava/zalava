@@ -12,7 +12,7 @@ sourceSets {
 }
 
 def frontendDirectory = layout.projectDirectory.dir('frontend')
-def frontendOutput = layout.projectDirectory.dir('src/main/resources/static/sea-chat')
+def frontendOutput = layout.projectDirectory.dir('src/main/resources/static/zalava-chat')
 
 tasks.register('installFrontend', Exec) {
     workingDir frontendDirectory
@@ -95,7 +95,7 @@ dependencies {
 }
 
 tasks.register('externalModuleFixtureJar', Jar) {
-    archiveBaseName = 'sea-external-module-fixture'
+    archiveBaseName = 'zalava-external-module-fixture'
     archiveVersion = '1.0.0'
     from sourceSets.externalModuleFixture.output
 }
@@ -104,11 +104,11 @@ springBoot {
     buildInfo {
         excludes = ['time']
     }
-    mainClass = 'org.zalava.SeaApplication'
+    mainClass = 'org.zalava.ZalavaApplication'
 }
 
 bootJar {
-    archiveBaseName = 'sea'
+    archiveBaseName = 'zalava'
     dependsOn tasks.named('precompileJte')
     bootInf {
         into('classes') {
@@ -128,12 +128,12 @@ tasks.named('bootBuildImage') {
     imageName = "ghcr.io/zalava/zalava:${project.version}"
     buildCache {
         volume {
-            name = 'sea-local-build-cache'
+            name = 'zalava-local-build-cache'
         }
     }
     launchCache {
         volume {
-            name = 'sea-local-launch-cache'
+            name = 'zalava-local-launch-cache'
         }
     }
     def leydenTrainingNetwork = providers.gradleProperty('leyden.training.network')
@@ -166,10 +166,10 @@ tasks.named('bootBuildImage') {
 }
 
 tasks.named('test') {
-    def configuredForks = providers.gradleProperty('sea.test.max-parallel-forks').getOrElse('2')
+    def configuredForks = providers.gradleProperty('zalava.test.max-parallel-forks').getOrElse('2')
     maxParallelForks = configuredForks.toInteger()
     if (maxParallelForks < 1) {
-        throw new GradleException('sea.test.max-parallel-forks must be at least 1')
+        throw new GradleException('zalava.test.max-parallel-forks must be at least 1')
     }
     dependsOn tasks.named('externalModuleFixtureJar')
     dependsOn tasks.named('bootJar')
@@ -190,11 +190,11 @@ tasks.named('test') {
         excludeTags 'memory-selection-measurement'
         excludeTags 'skill-activation-measurement'
     }
-    systemProperty 'sea.test.external-module-jar',
+    systemProperty 'zalava.test.external-module-jar',
             tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
-    systemProperty 'sea.test.boot-jar',
+    systemProperty 'zalava.test.boot-jar',
         tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
-    systemProperty 'sea.test.version', project.version
+    systemProperty 'zalava.test.version', project.version
 }
 
 tasks.register('architectureTest', Test) {
@@ -217,7 +217,7 @@ tasks.register('releasedModuleAcceptanceTest', Test) {
     classpath = sourceSets.test.runtimeClasspath
     maxParallelForks = 1
     useJUnitPlatform { includeTags 'released-module-distributable' }
-    systemProperty 'sea.test.boot-jar', tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
+    systemProperty 'zalava.test.boot-jar', tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
     reports.html.required = true
     reports.junitXml.required = true
 }
@@ -273,9 +273,9 @@ tasks.register('indexedInstallAcceptanceTest', Test) {
     reports.junitXml.required = true
     [
         'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
-        'sea.indexed-install.github-packages-username': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
-        'sea.indexed-install.github-packages-token': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
-        'sea.indexed-install.module-locator-url': 'Zalava_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+        'zalava.indexed-install.github-packages-username': 'ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'zalava.indexed-install.github-packages-token': 'ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'zalava.indexed-install.module-locator-url': 'ZALAVA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
     ].each { propertyName, environmentName ->
         def value = providers.systemProperty(propertyName)
                 .orElse(providers.gradleProperty(propertyName))
@@ -303,9 +303,9 @@ tasks.register('moduleCompatAcceptanceTest', Test) {
     reports.junitXml.required = true
     [
         'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
-        'sea.indexed-install.github-packages-username': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
-        'sea.indexed-install.github-packages-token': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
-        'sea.indexed-install.module-locator-url': 'Zalava_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+        'zalava.indexed-install.github-packages-username': 'ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'zalava.indexed-install.github-packages-token': 'ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'zalava.indexed-install.module-locator-url': 'ZALAVA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
     ].each { propertyName, environmentName ->
         def value = providers.systemProperty(propertyName)
                 .orElse(providers.gradleProperty(propertyName))
@@ -318,7 +318,7 @@ tasks.register('moduleCompatAcceptanceTest', Test) {
 
 tasks.register('ocrWorkerAcceptanceTest', Test) {
     group = 'verification'
-    description = 'Runs the opt-in real sea-ocr-worker acceptance lane against disposable Zalava.'
+    description = 'Runs the opt-in real zalava-ocr-worker acceptance lane against disposable Zalava.'
     dependsOn tasks.named('testClasses')
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
@@ -334,9 +334,9 @@ tasks.register('ocrWorkerAcceptanceTest', Test) {
     reports.junitXml.required = true
     [
         'zalava.indexed-install.publish-token': 'ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN',
-        'sea.indexed-install.github-packages-username': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
-        'sea.indexed-install.github-packages-token': 'Zalava_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
-        'sea.indexed-install.module-locator-url': 'Zalava_INDEXED_INSTALL_MODULE_LOCATOR_URL'
+        'zalava.indexed-install.github-packages-username': 'ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME',
+        'zalava.indexed-install.github-packages-token': 'ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN',
+        'zalava.indexed-install.module-locator-url': 'ZALAVA_INDEXED_INSTALL_MODULE_LOCATOR_URL'
     ].each { propertyName, environmentName ->
         def value = providers.systemProperty(propertyName)
                 .orElse(providers.gradleProperty(propertyName))
@@ -345,10 +345,10 @@ tasks.register('ocrWorkerAcceptanceTest', Test) {
             systemProperty propertyName, value.get()
         }
     }
-    def workerImage = providers.gradleProperty('sea.ocr-worker.image')
-            .orElse(providers.environmentVariable('Zalava_OCR_WORKER_IMAGE'))
+    def workerImage = providers.gradleProperty('zalava.ocr-worker.image')
+            .orElse(providers.environmentVariable('ZALAVA_OCR_WORKER_IMAGE'))
     if (workerImage.present) {
-        systemProperty 'sea.ocr-worker.image', workerImage.get()
+        systemProperty 'zalava.ocr-worker.image', workerImage.get()
     }
 }
 
@@ -484,7 +484,7 @@ tasks.register('leydenImageIntegrationTest', Test) {
     }
     def requestedImageName = providers.gradleProperty('leyden.image-name')
     if (requestedImageName.present) {
-        systemProperty 'sea.leyden.image-name', requestedImageName.get()
+        systemProperty 'zalava.leyden.image-name', requestedImageName.get()
     }
 }
 

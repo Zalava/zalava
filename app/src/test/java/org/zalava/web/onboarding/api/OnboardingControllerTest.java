@@ -19,12 +19,12 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.zalava.support.OnboardingWorkspaceComponentTest;
-import org.zalava.support.SeaComponentTestInitializer;
+import org.zalava.support.ZalavaComponentTestInitializer;
 
 @OnboardingWorkspaceComponentTest
 class OnboardingControllerTest {
 
-  private static final Path WORKSPACE = SeaComponentTestInitializer.workspacePath();
+  private static final Path WORKSPACE = ZalavaComponentTestInitializer.workspacePath();
 
   @Autowired private MockMvc mockMvc;
 
@@ -47,7 +47,7 @@ class OnboardingControllerTest {
     mockMvc
         .perform(get("/onboarding/welcome"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>SEA Setup</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Setup</title>")))
         .andExpect(content().string(containsString("htmx.org@2.0.8")))
         .andExpect(content().string(containsString("Setup Wizard")))
         .andExpect(content().string(containsString("Set up")))

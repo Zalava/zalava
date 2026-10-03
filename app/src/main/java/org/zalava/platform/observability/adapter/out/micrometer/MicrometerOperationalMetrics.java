@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.zalava.platform.observability.application.port.out.OperationalMetrics;
 
-/** Micrometer adapter with SEA-owned cardinality and privacy constraints. */
+/** Micrometer adapter with Zalava-owned cardinality and privacy constraints. */
 @Component
 public final class MicrometerOperationalMetrics implements OperationalMetrics {
   private static final int MAX_DYNAMIC_VALUES = 20;
@@ -31,13 +31,13 @@ public final class MicrometerOperationalMetrics implements OperationalMetrics {
   public void agentRun(String outcome, long durationMillis, List<ContextUse> contextUse) {
     safely(
         () -> {
-          count("sea.agent.runs", "outcome", fixed(outcome));
-          timer("sea.agent.run.duration", durationMillis, "outcome", fixed(outcome));
+          count("zalava.agent.runs", "outcome", fixed(outcome));
+          timer("zalava.agent.run.duration", durationMillis, "outcome", fixed(outcome));
           contextUse.forEach(
               use -> {
                 String source = bounded(contextSources, use.sourceCategory());
                 registry
-                    .summary("sea.agent.context.characters", "source", source)
+                    .summary("zalava.agent.context.characters", "source", source)
                     .record(Math.max(0, use.charactersUsed()));
               });
         });
@@ -50,7 +50,7 @@ public final class MicrometerOperationalMetrics implements OperationalMetrics {
           String boundedProvider = bounded(providers, provider);
           String boundedTool = bounded(tools, tool);
           count(
-              "sea.provider.tool.invocations",
+              "zalava.provider.tool.invocations",
               "provider",
               boundedProvider,
               "tool",
@@ -58,7 +58,7 @@ public final class MicrometerOperationalMetrics implements OperationalMetrics {
               "outcome",
               fixed(outcome));
           timer(
-              "sea.provider.tool.duration",
+              "zalava.provider.tool.duration",
               durationMillis,
               "provider",
               boundedProvider,
@@ -73,9 +73,9 @@ public final class MicrometerOperationalMetrics implements OperationalMetrics {
   public void taskExecution(String outcome, String state, long durationMillis) {
     safely(
         () -> {
-          count("sea.task.executions", "outcome", fixed(outcome), "state", fixed(state));
+          count("zalava.task.executions", "outcome", fixed(outcome), "state", fixed(state));
           timer(
-              "sea.task.execution.duration",
+              "zalava.task.execution.duration",
               durationMillis,
               "outcome",
               fixed(outcome),
@@ -89,7 +89,7 @@ public final class MicrometerOperationalMetrics implements OperationalMetrics {
     safely(
         () ->
             count(
-                "sea.knowledge.lifecycle",
+                "zalava.knowledge.lifecycle",
                 "operation",
                 fixed(operation),
                 "outcome",
@@ -109,7 +109,7 @@ public final class MicrometerOperationalMetrics implements OperationalMetrics {
     try {
       operation.run();
     } catch (RuntimeException ignored) {
-      /* metrics must never affect SEA use cases */
+      /* metrics must never affect Zalava use cases */
     }
   }
 

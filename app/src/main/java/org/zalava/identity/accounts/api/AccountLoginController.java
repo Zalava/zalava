@@ -44,7 +44,7 @@ public class AccountLoginController {
       var account = accounts.findByLoginName(authentication.getName()).orElseThrow();
       accounts.changePassword(account.id(), currentPassword, replacementPassword);
       return authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))
-          ? "redirect:/sea/control"
+          ? "redirect:/zalava/control"
           : "redirect:/dashboard";
     } catch (RuntimeException exception) {
       model.addAttribute("error", "Password could not be changed");

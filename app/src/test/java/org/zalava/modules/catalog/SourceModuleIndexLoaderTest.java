@@ -154,7 +154,7 @@ class SourceModuleIndexLoaderTest {
                     description: Workspace-bound file operations
                     supportUrl: https://github.com/example/zalava-module-files
                     artifact:
-                      groupId: ai.sea.modules
+                      groupId: ai.zalava.modules
                       artifactId: zalava-module-files
                       version: 1.0.0
                     source:
@@ -164,7 +164,7 @@ class SourceModuleIndexLoaderTest {
                       command: ["./gradlew", "build"]
                       verificationCommand: ["./gradlew", "test"]
                     compatibility:
-                      seaRuntime: ">=0.1.0"
+                      zalavaRuntime: ">=0.1.0"
                     configurationSchema:
                       type: object
                     factories:

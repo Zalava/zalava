@@ -24,7 +24,7 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -33,7 +33,7 @@ import tools.jackson.databind.ObjectMapper;
  * pipeline, proving ownership, bounds, replay and deletion boundaries the mock-based handler tests
  * cannot see.
  */
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 @ResourceLock("secure-component-runtime")
 class UiChatWebSocketAttachmentComponentTest {
   private static final AtomicInteger LOGINS = new AtomicInteger();
@@ -124,7 +124,7 @@ class UiChatWebSocketAttachmentComponentTest {
         session,
         new TextMessage(
             objectMapper.writeValueAsString(
-                Map.of("protocol", "sea.ui/v1", "type", "chat.create"))));
+                Map.of("protocol", "zalava.ui/v1", "type", "chat.create"))));
     String conversationId = conversationId(payloads(session));
 
     handler.handleTextMessage(session, sendChat(conversationId, attachmentId));
@@ -142,7 +142,7 @@ class UiChatWebSocketAttachmentComponentTest {
     return new TextMessage(
         objectMapper.writeValueAsString(
             Map.of(
-                "protocol", "sea.ui/v1",
+                "protocol", "zalava.ui/v1",
                 "type", "attachment.put",
                 "intent", intent,
                 "name", name,
@@ -154,7 +154,7 @@ class UiChatWebSocketAttachmentComponentTest {
     return new TextMessage(
         objectMapper.writeValueAsString(
             Map.of(
-                "protocol", "sea.ui/v1",
+                "protocol", "zalava.ui/v1",
                 "type", "attachment.delete",
                 "attachmentId", attachmentId)));
   }
@@ -163,7 +163,7 @@ class UiChatWebSocketAttachmentComponentTest {
     return new TextMessage(
         objectMapper.writeValueAsString(
             Map.of(
-                "protocol", "sea.ui/v1",
+                "protocol", "zalava.ui/v1",
                 "type", "chat.send",
                 "conversationId", conversationId,
                 "message", "summarize the attachment",

@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.zalava.support.SeaComponentTest;
+import org.zalava.support.ZalavaComponentTest;
 
-@SeaComponentTest
+@ZalavaComponentTest
 class VirtualThreadRuntimeConfigurationTest {
 
   @Autowired

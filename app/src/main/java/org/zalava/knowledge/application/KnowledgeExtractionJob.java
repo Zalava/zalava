@@ -58,7 +58,7 @@ public final class KnowledgeExtractionJob {
         || source.processingState() == SourceProcessingState.DELETED) {
       return;
     }
-    RuntimeQueries.LoadedSeaService<ContentExtractor> service =
+    RuntimeQueries.LoadedZalavaService<ContentExtractor> service =
         runtime.findService(ContentExtractor.CONTRACT).orElse(null);
     if (service == null) {
       throw new IllegalStateException("No active ContentExtractor service is available");

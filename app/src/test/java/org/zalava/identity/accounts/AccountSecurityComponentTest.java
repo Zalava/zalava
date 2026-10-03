@@ -29,12 +29,12 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.modules.catalog.install.application.port.in.LocalArtifactModuleInstallation;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 import org.zalava.web.control.application.AdministratorControlAuthorization;
 
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 @ResourceLock("secure-component-runtime")
-@TestPropertySource(properties = "sea.test.context=account-security")
+@TestPropertySource(properties = "zalava.test.context=account-security")
 class AccountSecurityComponentTest {
   @Autowired MockMvc mockMvc;
   @Autowired FilterChainProxy securityFilterChain;
@@ -55,14 +55,14 @@ class AccountSecurityComponentTest {
 
   @Test
   void controlRejectsAnonymousAndMemberRequests() throws Exception {
-    mockMvc.perform(get("/sea/control")).andExpect(status().is3xxRedirection());
+    mockMvc.perform(get("/zalava/control")).andExpect(status().is3xxRedirection());
     var member = accounts.create("member", "MemberPassword-123", AccountRole.MEMBER);
     accounts.changePassword(member.id(), "MemberPassword-123", "ChangedMemberPassword-123");
     mockMvc
-        .perform(get("/sea/control").with(user("member").roles("MEMBER")))
+        .perform(get("/zalava/control").with(user("member").roles("MEMBER")))
         .andExpect(status().isForbidden());
     mockMvc
-        .perform(get("/sea/control/metrics").with(user("member").roles("MEMBER")))
+        .perform(get("/zalava/control/metrics").with(user("member").roles("MEMBER")))
         .andExpect(status().isForbidden());
   }
 
@@ -138,7 +138,7 @@ class AccountSecurityComponentTest {
 
     var request =
         new MockHttpServletRequest(
-            "POST", "/sea/control/module-release-installations/catalog/refresh");
+            "POST", "/zalava/control/module-release-installations/catalog/refresh");
     request.setCookies(response.getCookie("XSRF-TOKEN"));
     request.addHeader("X-XSRF-TOKEN", token.getToken());
     var continued = new AtomicBoolean();
@@ -170,15 +170,15 @@ class AccountSecurityComponentTest {
     accounts.changePassword(member.id(), "MemberPassword-123", "ChangedMemberPassword-123");
 
     mockMvc
-        .perform(get("/sea/accounts").with(user("accounts-member").roles("MEMBER")))
+        .perform(get("/zalava/accounts").with(user("accounts-member").roles("MEMBER")))
         .andExpect(status().isForbidden());
     mockMvc
-        .perform(get("/sea/accounts").with(user("accounts-admin").roles("ADMIN")))
+        .perform(get("/zalava/accounts").with(user("accounts-admin").roles("ADMIN")))
         .andExpect(status().isOk())
         .andExpect(content().string(org.hamcrest.Matchers.containsString("Managed accounts")));
     mockMvc
         .perform(
-            post("/sea/accounts/create")
+            post("/zalava/accounts/create")
                 .with(user("accounts-admin").roles("ADMIN"))
                 .param("loginName", "managed-member")
                 .param("temporaryPassword", "ManagedPassword-123")
@@ -186,7 +186,7 @@ class AccountSecurityComponentTest {
         .andExpect(status().isForbidden());
     mockMvc
         .perform(
-            post("/sea/accounts/create")
+            post("/zalava/accounts/create")
                 .with(user("accounts-admin").roles("ADMIN"))
                 .with(csrf())
                 .param("loginName", "managed-member")
@@ -200,7 +200,7 @@ class AccountSecurityComponentTest {
 
     mockMvc
         .perform(
-            post("/sea/accounts/password")
+            post("/zalava/accounts/password")
                 .with(user("accounts-admin").roles("ADMIN"))
                 .with(csrf())
                 .param("accountId", managed.id().value().toString())
@@ -223,7 +223,7 @@ class AccountSecurityComponentTest {
         .isFalse();
     mockMvc
         .perform(
-            post("/sea/accounts/role")
+            post("/zalava/accounts/role")
                 .with(user("accounts-admin").roles("ADMIN"))
                 .with(csrf())
                 .param("accountId", managed.id().value().toString())
@@ -233,7 +233,7 @@ class AccountSecurityComponentTest {
         .isEqualTo(AccountRole.ADMIN);
     mockMvc
         .perform(
-            post("/sea/accounts/enabled")
+            post("/zalava/accounts/enabled")
                 .with(user("accounts-admin").roles("ADMIN"))
                 .with(csrf())
                 .param("accountId", managed.id().value().toString())

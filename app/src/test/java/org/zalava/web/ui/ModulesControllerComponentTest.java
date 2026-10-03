@@ -55,8 +55,8 @@ import org.zalava.modules.managedservices.application.ManagedServiceObservedStat
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 import org.zalava.modules.managedservices.application.port.out.ManagedServiceInstallRequestStore;
 import org.zalava.modules.managedservices.application.port.out.ManagedServiceStateStore;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 import org.zalava.support.ComponentTestAccounts;
 import tools.jackson.databind.ObjectMapper;
@@ -89,11 +89,11 @@ class ModulesControllerComponentTest {
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.managed-restart.dispatcher-enabled", () -> "true");
+    registry.add("zalava.managed-restart.dispatcher-enabled", () -> "true");
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> "modules-test");
-    registry.add("sea.accounts.bootstrap-password", () -> "ModulesTestPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "modules-test");
+    registry.add("zalava.accounts.bootstrap-password", () -> "ModulesTestPassword-123");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "none");
@@ -136,7 +136,7 @@ class ModulesControllerComponentTest {
                         "class=\"navbar-item is-active\" aria-current=\"page\" href=\"/modules\"")))
         .andExpect(content().string(containsString("Loaded modules")))
         .andExpect(content().string(containsString("Built in")))
-        .andExpect(content().string(containsString("Bundled with SEA")))
+        .andExpect(content().string(containsString("Bundled with Zalava")))
         .andExpect(content().string(containsString("data-metric=\"loaded-modules\"")))
         .andExpect(content().string(containsString("No external modules are enabled yet.")));
   }
@@ -176,7 +176,7 @@ class ModulesControllerComponentTest {
             flash()
                 .attribute(
                     "marketplaceMessage",
-                    "Local module zalava-module-example 1.2.3 installed. Restart SEA once to load its classes."));
+                    "Local module zalava-module-example 1.2.3 installed. Restart Zalava once to load its classes."));
 
     assertThat(localDevelopmentProjects.request())
         .isEqualTo(
@@ -275,7 +275,7 @@ class ModulesControllerComponentTest {
   }
 
   @Test
-  void requestsManagedSeaRestartFromModulesPage() throws Exception {
+  void requestsManagedZalavaRestartFromModulesPage() throws Exception {
     mockMvc
         .perform(
             org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
@@ -288,12 +288,12 @@ class ModulesControllerComponentTest {
 
     mockMvc
         .perform(get("/modules"))
-        .andExpect(content().string(containsString("data-sea-restart-status=\"REQUESTED\"")))
-        .andExpect(content().string(containsString("data-action=\"restart-sea\" disabled")));
+        .andExpect(content().string(containsString("data-zalava-restart-status=\"REQUESTED\"")))
+        .andExpect(content().string(containsString("data-action=\"restart-zalava\" disabled")));
   }
 
   @Test
-  void rejectsManagedSeaRestartForMember() throws Exception {
+  void rejectsManagedZalavaRestartForMember() throws Exception {
     var member = accounts.newActivated(AccountRole.MEMBER);
 
     mockMvc
@@ -325,7 +325,7 @@ class ModulesControllerComponentTest {
                 artifactId: uploaded-fixture
                 version: 1.0.0
               compatibility:
-                seaRuntime: ">=1.0.0"
+                zalavaRuntime: ">=1.0.0"
               configurationSchema:
                 type: object
               factories:
@@ -362,7 +362,7 @@ class ModulesControllerComponentTest {
                     "version", "1.2.3",
                     "artifactPath", artifact.toString(),
                     "artifactDigest", digest,
-                    "seaRuntimeCompatibility", "[1.0,2.0)",
+                    "zalavaRuntimeCompatibility", "[1.0,2.0)",
                     "sourceRepository", "https://github.com/Zalava/zalava-module-example",
                     "sourceLicense", "Apache-2.0",
                     "binaryRepositoryId", "local-private",
@@ -390,7 +390,7 @@ class ModulesControllerComponentTest {
             "2026.9.1",
             ManagedServiceLifecycle.RUNNING,
             Set.of("home-assistant-token"),
-            Set.of("/var/lib/sea/managed/home-assistant/config"),
+            Set.of("/var/lib/zalava/managed/home-assistant/config"),
             Set.of(8123),
             Set.of(),
             new ManagedServiceLimits(2000, 1_073_741_824, 256),
@@ -400,7 +400,7 @@ class ModulesControllerComponentTest {
         new ManagedServiceResourceGrant(
             "configured-search",
             Set.of("home-assistant-token"),
-            Set.of("/var/lib/sea/managed/home-assistant/config"),
+            Set.of("/var/lib/zalava/managed/home-assistant/config"),
             Set.of(8123),
             Set.of(),
             new ManagedServiceLimits(2000, 1_073_741_824, 256),
@@ -718,9 +718,9 @@ class ModulesControllerComponentTest {
 
     @Bean
     @Primary
-    SeaRuntime configuredSeaRuntime() {
+    ZalavaRuntime configuredZalavaRuntime() {
       ZalavaModule filesystem =
-          module("sea-filesystem", "SEA Filesystem", ModuleConfigurationDescriptor.none());
+          module("zalava-filesystem", "Zalava Filesystem", ModuleConfigurationDescriptor.none());
       ZalavaModule configuredSearch =
           module(
               "configured-search",
@@ -757,14 +757,14 @@ class ModulesControllerComponentTest {
                               "properties", Map.of("roots", Map.of("type", "array")),
                               "required", List.of("roots"))))));
       ZalavaModule declaredModule = declaredModule();
-      return new SeaRuntime() {
+      return new ZalavaRuntime() {
         @Override
         public List<ZalavaModule> modules() {
           return List.of(filesystem, configuredSearch, configuredFilesystem, declaredModule);
         }
 
         @Override
-        public List<LoadedSeaProvider> loadedProviders() {
+        public List<LoadedZalavaProvider> loadedProviders() {
           return List.of();
         }
 
@@ -808,7 +808,7 @@ class ModulesControllerComponentTest {
               "1.0.0",
               ManagedServiceLifecycle.RUNNING,
               Set.of(),
-              Set.of("/var/lib/sea/managed/declared"),
+              Set.of("/var/lib/zalava/managed/declared"),
               Set.of(9000),
               Set.of(),
               new ManagedServiceLimits(500, 268_435_456, 64),

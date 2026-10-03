@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
 /**
@@ -18,7 +18,7 @@ import org.zalava.support.ComponentTestAccounts;
  * shell, a role only links pages it can actually open, and the chat shell uses the same navigation
  * as the JTE pages.
  */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class NavigationComponentTest {
 
   private static final List<String> ADMIN_LINKS =
@@ -97,7 +97,10 @@ class NavigationComponentTest {
     String chat = bodyOf("/chat");
     assertThat(chat)
         .contains(
-            "id=\"root\"", "/sea-chat/assets/sea-chat.js", href("/jobs"), activeMarkup("/chat"));
+            "id=\"root\"",
+            "/zalava-chat/assets/zalava-chat.js",
+            href("/jobs"),
+            activeMarkup("/chat"));
   }
 
   @Test
@@ -106,8 +109,8 @@ class NavigationComponentTest {
 
     assertThat(dashboard)
         .contains(
-            "aria-controls=\"sea-product-navigation\"",
-            "class=\"sea-navigation-close\"",
+            "aria-controls=\"zalava-product-navigation\"",
+            "class=\"zalava-navigation-close\"",
             "data-nav-initial=\"D\"",
             "closeNavigation()",
             "event.key === 'Escape'",

@@ -35,7 +35,7 @@ class DefaultChannelApprovalCommandsTest {
               }
             });
 
-    assertThat(commands.handle("/sea approve request-1"))
+    assertThat(commands.handle("/zalava approve request-1"))
         .contains(
             "Approval granted once for files/write. The job has been queued to continue. Review: /jobs/2026-08-07/task.md");
     assertThat(resumed).containsExactly("2026-08-07/task.md");

@@ -23,9 +23,9 @@ import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
 import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 class KnowledgeEvidenceComponentTest {
   @Autowired MockMvc mvc;
   @Autowired AccountLifecycle accounts;

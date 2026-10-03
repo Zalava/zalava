@@ -12,7 +12,7 @@ final class ExternalFixtureProviderFactory implements ProviderFactory {
   public ProviderFactoryDescriptor descriptor() {
     return new ProviderFactoryDescriptor(
         "external-fixture-factory",
-        "sea-external-module-fixture",
+        "zalava-external-module-fixture",
         "external-fixture",
         "External fixture factory",
         "Creates the external fixture provider");

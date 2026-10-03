@@ -19,9 +19,9 @@ class PermissionPolicyChannelCommandsTest {
                 new ChannelApproval(
                     "policy-1", "files", "write", null, ChannelApproval.Decision.ALLOWED)));
 
-    String response = commands(policies).handle("/sea policies").orElseThrow();
+    String response = commands(policies).handle("/zalava policies").orElseThrow();
 
-    assertThat(response).contains("SEA active durable tool policies", "files/write", "policy-1");
+    assertThat(response).contains("Zalava active durable tool policies", "files/write", "policy-1");
     assertThat(response).doesNotContain("arguments");
   }
 
@@ -33,10 +33,10 @@ class PermissionPolicyChannelCommandsTest {
                 new ChannelApproval(
                     "policy-1", "files", "write", null, ChannelApproval.Decision.ALLOWED)));
 
-    String response = commands(policies).handle("/sea revoke-policy policy-1").orElseThrow();
+    String response = commands(policies).handle("/zalava revoke-policy policy-1").orElseThrow();
 
     assertThat(policies.revokedRequestId).isEqualTo("policy-1");
-    assertThat(response).contains("SEA revoked durable policy files/write (policy-1)");
+    assertThat(response).contains("Zalava revoked durable policy files/write (policy-1)");
   }
 
   private static DefaultChannelApprovalCommands commands(ChannelApprovalStore policies) {

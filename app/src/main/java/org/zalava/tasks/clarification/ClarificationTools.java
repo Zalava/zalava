@@ -14,19 +14,19 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Model-facing adapter that lets an actor-owned background job request typed clarification. It only
- * records the request; SEA validates the schema, persists it and pauses the loop. The model never
- * answers or decides a clarification.
+ * records the request; Zalava validates the schema, persists it and pauses the loop. The model
+ * never answers or decides a clarification.
  */
 public final class ClarificationTools {
 
   private static final ObjectMapper JSON = new ObjectMapper();
 
-  private final SeaClarifications clarifications;
+  private final ZalavaClarifications clarifications;
   private final ActorExecutionContext actorContext;
   private final TaskExecutionContext taskContext;
 
   public ClarificationTools(
-      SeaClarifications clarifications,
+      ZalavaClarifications clarifications,
       ActorExecutionContext actorContext,
       TaskExecutionContext taskContext) {
     this.clarifications = clarifications;
@@ -73,7 +73,7 @@ public final class ClarificationTools {
           "nextAction", "Stop here and report awaiting_human_input. Do not guess the answer.");
       return json(result);
     } catch (RuntimeException exception) {
-      return error("SEA could not record the clarification request.");
+      return error("Zalava could not record the clarification request.");
     }
   }
 

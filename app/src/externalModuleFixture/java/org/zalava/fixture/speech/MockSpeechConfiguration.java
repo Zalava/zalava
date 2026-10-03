@@ -7,7 +7,7 @@ import org.zalava.api.extensions.speech.SpeechException;
 
 /** Shared scoped configuration and secret lookup for the fixture speech providers. */
 final class MockSpeechConfiguration {
-  static final String MODULE_ID = "sea-external-module-fixture";
+  static final String MODULE_ID = "zalava-external-module-fixture";
   static final String CREDENTIAL_REFERENCE = "credentialRef";
   static final String MAX_BYTES = "maxBytes";
   static final String TRANSCRIPT = "transcript";

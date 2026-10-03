@@ -41,13 +41,13 @@ import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
 import org.zalava.tasks.application.port.out.TaskStore;
@@ -72,8 +72,8 @@ class JobDetailControllerComponentTest {
   @Autowired private AccountLifecycle accounts;
   @Autowired private ActorTaskStore tasks;
   @Autowired private TaskStore legacyTasks;
-  @Autowired private SeaToolApprovalRequests approvals;
-  @Autowired private SeaRuntime seaRuntime;
+  @Autowired private ZalavaToolApprovalRequests approvals;
+  @Autowired private ZalavaRuntime zalavaRuntime;
 
   @BeforeEach
   void enableBootstrapAdministrator() {
@@ -94,10 +94,10 @@ class JobDetailControllerComponentTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.bootstrap-login", () -> "job-detail-admin");
+    registry.add("zalava.accounts.bootstrap-login", () -> "job-detail-admin");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
@@ -188,7 +188,7 @@ class JobDetailControllerComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Actor approval job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     mockMvc
         .perform(
@@ -206,7 +206,7 @@ class JobDetailControllerComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Actor conflict job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     mockMvc
         .perform(
@@ -235,7 +235,7 @@ class JobDetailControllerComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Restricted approval job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "ADMIN");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "ADMIN");
 
     mockMvc
         .perform(
@@ -256,7 +256,7 @@ class JobDetailControllerComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Owner approval job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     mockMvc
         .perform(
@@ -270,7 +270,7 @@ class JobDetailControllerComponentTest {
   void legacyApprovalDecisionsAllowToolAndDeny() throws Exception {
     Task task = legacyTasks.save(task("Legacy approval job", Task.Status.awaiting_human_input));
     String url = legacyJobUrl(task);
-    SeaToolApprovalRequests.Entry approval = legacyApproval(task);
+    ZalavaToolApprovalRequests.Entry approval = legacyApproval(task);
 
     mockMvc
         .perform(post(url + "/approvals/" + approval.requestId() + "/allow-tool").with(csrf()))
@@ -283,7 +283,7 @@ class JobDetailControllerComponentTest {
   void legacyApprovalDecisionsRejectUnknownRequestsAndConflicts() throws Exception {
     Task task = legacyTasks.save(task("Legacy conflict job", Task.Status.awaiting_human_input));
     String url = legacyJobUrl(task);
-    SeaToolApprovalRequests.Entry approval = legacyApproval(task);
+    ZalavaToolApprovalRequests.Entry approval = legacyApproval(task);
 
     mockMvc
         .perform(post(url + "/approvals/unknown-request/allow").with(csrf()))
@@ -301,14 +301,14 @@ class JobDetailControllerComponentTest {
   void legacyApprovalCannotBeDecidedWhileTheJobIsRunning() throws Exception {
     Task task = legacyTasks.save(task("Legacy running job", Task.Status.in_progress));
     String url = legacyJobUrl(task);
-    SeaToolApprovalRequests.Entry approval = legacyApproval(task);
+    ZalavaToolApprovalRequests.Entry approval = legacyApproval(task);
 
     mockMvc
         .perform(post(url + "/approvals/" + approval.requestId() + "/allow").with(csrf()))
         .andExpect(status().isConflict());
   }
 
-  private SeaToolApprovalRequests.Entry actorApproval(
+  private ZalavaToolApprovalRequests.Entry actorApproval(
       Account owner, Actor actor, ActorTaskReference reference, String accountRole) {
     ActorTaskExecutionReference execution = new ActorTaskExecutionReference(actor, reference);
     ZalavaProvider provider = scopedProvider();
@@ -323,12 +323,12 @@ class JobDetailControllerComponentTest {
             Map.of(
                 "accountRole",
                 accountRole,
-                SeaToolApprovalRequests.ACTOR_TASK_REFERENCE,
+                ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE,
                 execution.encode())),
         JsonNodeFactory.instance.objectNode());
   }
 
-  private SeaToolApprovalRequests.Entry legacyApproval(Task task) {
+  private ZalavaToolApprovalRequests.Entry legacyApproval(Task task) {
     ZalavaProvider provider = scopedProvider();
     ZalavaToolDescriptor tool =
         new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));
@@ -374,7 +374,7 @@ class JobDetailControllerComponentTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     when(provider.descriptor()).thenReturn(descriptor);
     when(provider.capabilities()).thenReturn(ProviderCapabilities.toolsOnly());
@@ -418,7 +418,7 @@ class JobDetailControllerComponentTest {
 
     @Bean
     @Primary
-    SeaRuntime loadedSeaRuntime() {
+    ZalavaRuntime loadedZalavaRuntime() {
       ZalavaModule module =
           new ZalavaModule() {
             @Override
@@ -433,15 +433,15 @@ class JobDetailControllerComponentTest {
           };
       ProviderFactoryDescriptor factory =
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
-      return new SeaRuntime() {
+      return new ZalavaRuntime() {
         @Override
         public List<org.zalava.api.ZalavaModule> modules() {
           return List.of(module);
         }
 
         @Override
-        public List<LoadedSeaProvider> loadedProviders() {
-          return List.of(new LoadedSeaProvider(module.descriptor(), factory, scopedProvider()));
+        public List<LoadedZalavaProvider> loadedProviders() {
+          return List.of(new LoadedZalavaProvider(module.descriptor(), factory, scopedProvider()));
         }
 
         @Override

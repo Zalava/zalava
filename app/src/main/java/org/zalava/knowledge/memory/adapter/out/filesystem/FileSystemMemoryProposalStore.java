@@ -48,7 +48,7 @@ public final class FileSystemMemoryProposalStore implements MemoryProposalStore 
       return proposal;
     } catch (IOException exception) {
       throw new IllegalStateException(
-          "Unable to persist SEA memory proposal: " + proposal.id(), exception);
+          "Unable to persist Zalava memory proposal: " + proposal.id(), exception);
     } finally {
       try {
         Files.deleteIfExists(temporary);
@@ -83,7 +83,7 @@ public final class FileSystemMemoryProposalStore implements MemoryProposalStore 
           .sorted(Comparator.comparing(MemoryProposal::createdAt).reversed())
           .toList();
     } catch (IOException exception) {
-      throw new IllegalStateException("Unable to list SEA memory proposals", exception);
+      throw new IllegalStateException("Unable to list Zalava memory proposals", exception);
     }
   }
 
@@ -99,7 +99,7 @@ public final class FileSystemMemoryProposalStore implements MemoryProposalStore 
     try {
       return JSON.readValue(file.toFile(), MemoryProposal.class);
     } catch (RuntimeException exception) {
-      throw new IllegalStateException("Unable to read SEA memory proposal: " + file, exception);
+      throw new IllegalStateException("Unable to read Zalava memory proposal: " + file, exception);
     }
   }
 
@@ -107,7 +107,7 @@ public final class FileSystemMemoryProposalStore implements MemoryProposalStore 
     try {
       UUID.fromString(proposalId);
     } catch (IllegalArgumentException exception) {
-      throw new IllegalArgumentException("Invalid SEA memory proposal id", exception);
+      throw new IllegalArgumentException("Invalid Zalava memory proposal id", exception);
     }
     return proposalId + ".json";
   }
@@ -116,7 +116,7 @@ public final class FileSystemMemoryProposalStore implements MemoryProposalStore 
     try {
       return new Actor(new AccountId(UUID.fromString(proposal.actorId())));
     } catch (IllegalArgumentException exception) {
-      throw new IllegalArgumentException("Invalid SEA memory proposal owner", exception);
+      throw new IllegalArgumentException("Invalid Zalava memory proposal owner", exception);
     }
   }
 }

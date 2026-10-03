@@ -40,8 +40,8 @@ class SourceModuleCatalogLoaderTest {
     assertThat(catalog.entries())
         .extracting(SourceModuleCatalog.Entry::sha256)
         .containsExactly(
-            "12a285d3fd7ea2e446ba5398d1bbf98597c74814347217eeb92aff5910a06210",
-            "c1b6523987aa570a03ca1c8be8391fcab72b6fcdabde308eaa7da97ed3587147");
+            "ebce1897383c79d8bc38be78c20a23bda1e7bfc269e993d69ae412ceeb476798",
+            "7d8c5d23af820101ed8a6859d5ee7fd636cd460e1cf67d35a2f7fc5152721bfe");
     assertThat(catalog.entries())
         .allSatisfy(
             entry ->
@@ -162,7 +162,7 @@ class SourceModuleCatalogLoaderTest {
                 schemaVersion: 1
                 repository:
                   type: maven
-                  indexRepository: https://github.com/example/sea-modules
+                  indexRepository: https://github.com/example/zalava-modules
                   indexPath: catalog.yaml
                 entries:
                   - moduleId: zalava-module-files
@@ -182,7 +182,7 @@ class SourceModuleCatalogLoaderTest {
                 schemaVersion: 1
                 repository:
                   type: source
-                  indexRepository: ssh://git@github.com/example/sea-modules.git
+                  indexRepository: ssh://git@github.com/example/zalava-modules.git
                   indexPath: catalog.yaml
                 entries:
                   - moduleId: zalava-module-files
@@ -202,7 +202,7 @@ class SourceModuleCatalogLoaderTest {
                 schemaVersion: 1
                 repository:
                   type: source
-                  indexRepository: https://github.com/example/sea-modules
+                  indexRepository: https://github.com/example/zalava-modules
                   indexPath: ../catalog.yaml
                 entries:
                   - moduleId: zalava-module-files
@@ -222,7 +222,7 @@ class SourceModuleCatalogLoaderTest {
                 schemaVersion: 1
                 repository:
                   type: source
-                  indexRepository: https://github.com/example/sea-modules
+                  indexRepository: https://github.com/example/zalava-modules
                   indexPath: catalog.yaml
                 mavenRepositories:
                   - repositoryId: maven-central
@@ -247,7 +247,7 @@ class SourceModuleCatalogLoaderTest {
                 schemaVersion: 1
                 repository:
                   type: source
-                  indexRepository: https://github.com/example/sea-modules
+                  indexRepository: https://github.com/example/zalava-modules
                   indexPath: catalog.yaml
                 mavenRepositories:
                   - repositoryId: maven-central
@@ -280,7 +280,7 @@ class SourceModuleCatalogLoaderTest {
                 schemaVersion: 1
                 repository:
                   type: source
-                  indexRepository: https://github.com/example/sea-modules
+                  indexRepository: https://github.com/example/zalava-modules
                   indexPath: catalog.yaml
                 mavenRepositories:
                   - repositoryId: maven-central
@@ -307,7 +307,7 @@ class SourceModuleCatalogLoaderTest {
                     description: Workspace-bound file operations
                     supportUrl: https://github.com/example/zalava-module-files
                     artifact:
-                      groupId: ai.sea.modules
+                      groupId: ai.zalava.modules
                       artifactId: zalava-module-files
                       version: 1.0.0
                     source:
@@ -317,7 +317,7 @@ class SourceModuleCatalogLoaderTest {
                       command: ["./gradlew", "build"]
                       verificationCommand: ["./gradlew", "test"]
                     compatibility:
-                      seaRuntime: ">=0.1.0"
+                      zalavaRuntime: ">=0.1.0"
                     configurationSchema:
                       type: object
                     factories:

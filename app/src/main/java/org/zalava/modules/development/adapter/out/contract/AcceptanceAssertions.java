@@ -7,7 +7,7 @@ import org.zalava.modules.development.ModuleDevelopmentContract;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/** Deterministic, deliberately small assertion language for SEA-owned acceptance scenarios. */
+/** Deterministic, deliberately small assertion language for Zalava-owned acceptance scenarios. */
 final class AcceptanceAssertions {
   private static final ObjectMapper JSON = new ObjectMapper();
 

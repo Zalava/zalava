@@ -29,7 +29,7 @@ import org.zalava.modules.development.application.DefaultDevelopmentRequestManag
 import org.zalava.modules.development.application.DefaultDevelopmentWorkspaceExport;
 import org.zalava.modules.development.application.DevelopmentCandidateValidationGateway;
 import org.zalava.modules.development.application.port.out.DevelopmentRequestStore;
-import org.zalava.modules.runtime.ExternalSeaModuleLoader;
+import org.zalava.modules.runtime.ExternalZalavaModuleLoader;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -62,12 +62,12 @@ class DevelopmentCandidateSubmissionTest {
     JsonNode exported = JSON.readTree(tools.export(requestId.value(), workspace.toString()));
     JsonNode begun = JSON.readTree(tools.begin(requestId.value()));
     assertThat(exported.path("workspacePath").stringValue("")).isEqualTo(workspace.toString());
-    assertThat(workspace.resolve(".sea-request/development-contract.yaml")).exists();
+    assertThat(workspace.resolve(".zalava-request/development-contract.yaml")).exists();
     assertThat(begun.path("status").stringValue("")).isEqualTo("IN_DEVELOPMENT");
 
     Path rejectedArtifact =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("rejected.jar"));
     JSON.readTree(tools.submit(requestId.value(), rejectedArtifact.toString()));
     ModuleDevelopmentRequest rejected = store.get(requestId);
@@ -83,7 +83,7 @@ class DevelopmentCandidateSubmissionTest {
         tools.revise(requestId.value(), contract("{}"), "Correct rejected fixture candidate"));
     Path acceptedArtifact =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("accepted.jar"));
     JsonNode submitted =
         JSON.readTree(tools.submit(requestId.value(), acceptedArtifact.toString()));
@@ -109,8 +109,8 @@ class DevelopmentCandidateSubmissionTest {
     assertThat(requests.transition(requestId, DevelopmentRequestStatus.INSTALLED).status())
         .isEqualTo(DevelopmentRequestStatus.INSTALLED);
 
-    try (ExternalSeaModuleLoader restarted =
-        new ExternalSeaModuleLoader(new FileSystemModuleEnablement(managedWorkspace))) {
+    try (ExternalZalavaModuleLoader restarted =
+        new ExternalZalavaModuleLoader(new FileSystemModuleEnablement(managedWorkspace))) {
       var provider =
           restarted
               .loadModules()
@@ -139,7 +139,7 @@ class DevelopmentCandidateSubmissionTest {
     ModuleDevelopmentRequest request = inDevelopment(store);
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("fixture.jar"));
     var submission = submission(store);
 
@@ -166,7 +166,7 @@ class DevelopmentCandidateSubmissionTest {
         inDevelopment(store, contract("{}", "{\"value\":\"different\"}"));
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("mismatched-example.jar"));
 
     ModuleDevelopmentRequest evaluated = submission(store).submit(request.id(), fixture.toString());
@@ -189,7 +189,7 @@ class DevelopmentCandidateSubmissionTest {
         new ModuleDevelopmentContract(
             base.module(),
             base.purpose(),
-            base.targetSeaApiVersion(),
+            base.targetZalavaApiVersion(),
             base.tools(),
             List.of(new ModuleDevelopmentContract.ExpectedError("UNKNOWN_TOOL", "Unknown tool")),
             List.of(
@@ -208,7 +208,7 @@ class DevelopmentCandidateSubmissionTest {
     ModuleDevelopmentRequest request = inDevelopment(store, requestContract);
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("error-envelope.jar"));
 
     ModuleDevelopmentRequest evaluated = submission(store).submit(request.id(), fixture.toString());
@@ -246,7 +246,7 @@ class DevelopmentCandidateSubmissionTest {
         new ModuleDevelopmentContract(
             base.module(),
             base.purpose(),
-            base.targetSeaApiVersion(),
+            base.targetZalavaApiVersion(),
             base.tools(),
             base.expectedErrors(),
             base.acceptanceScenarios(),
@@ -256,7 +256,7 @@ class DevelopmentCandidateSubmissionTest {
     ModuleDevelopmentRequest request = inDevelopment(store, requestContract);
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("response-limit.jar"));
 
     ModuleDevelopmentRequest evaluated = submission(store).submit(request.id(), fixture.toString());
@@ -284,7 +284,7 @@ class DevelopmentCandidateSubmissionTest {
                 "{\"type\":\"object\"}"));
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("schema-mismatch.jar"));
 
     ModuleDevelopmentRequest evaluated = submission(store).submit(request.id(), fixture.toString());
@@ -310,7 +310,7 @@ class DevelopmentCandidateSubmissionTest {
                 "{\"type\":\"object\",\"required\":[\"result\"],\"properties\":{\"result\":{\"type\":\"integer\"}}}"));
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("output-mismatch.jar"));
 
     ModuleDevelopmentRequest evaluated = submission(store).submit(request.id(), fixture.toString());
@@ -331,7 +331,7 @@ class DevelopmentCandidateSubmissionTest {
         inDevelopment(store, contract("{\"fail\":true,\"apiToken\":\"private-token\"}"));
     Path fixture =
         Files.copy(
-            Path.of(System.getProperty("sea.test.external-module-jar")),
+            Path.of(System.getProperty("zalava.test.external-module-jar")),
             trustedRoot.resolve("failed-invocation.jar"));
 
     ModuleDevelopmentRequest evaluated = submission(store).submit(request.id(), fixture.toString());
@@ -427,7 +427,7 @@ class DevelopmentCandidateSubmissionTest {
   private static ModuleDevelopmentContract contractWithSchemas(
       String inputSchema, String outputSchema, String exampleInput, String expectedOutput) {
     return new ModuleDevelopmentContract(
-        new ModuleDevelopmentContract.Module("sea-external-module-fixture", "1.0.0"),
+        new ModuleDevelopmentContract.Module("zalava-external-module-fixture", "1.0.0"),
         "Fixture evaluation",
         "1.0.0",
         List.of(
@@ -454,14 +454,14 @@ class DevelopmentCandidateSubmissionTest {
 
   private static SourceModuleIndex.Module fixtureModule() {
     return new SourceModuleIndex.Module(
-        "sea-external-module-fixture",
+        "zalava-external-module-fixture",
         "1.0.0",
         "External fixture",
         "Fixture manual pilot module",
-        URI.create("https://example.test/modules/sea-external-module-fixture"),
-        new SourceModuleIndex.Artifact("org.zalava", "sea-external-module-fixture", "1.0.0"),
+        URI.create("https://example.test/modules/zalava-external-module-fixture"),
+        new SourceModuleIndex.Artifact("org.zalava", "zalava-external-module-fixture", "1.0.0"),
         new SourceModuleIndex.Source(
-            URI.create("https://example.test/sea-external-module-fixture"), "Apache-2.0"),
+            URI.create("https://example.test/zalava-external-module-fixture"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(">=1.0.0"),
         Map.of(),

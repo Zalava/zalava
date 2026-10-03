@@ -120,7 +120,7 @@ class SpringAiAgentModelTest {
     ChatClient chatClient = mock(ChatClient.class);
     ChatClient.ChatClientRequestSpec request = mock(ChatClient.ChatClientRequestSpec.class);
     ChatClient.CallResponseSpec response = mock(ChatClient.CallResponseSpec.class);
-    Result expected = new Result("sea");
+    Result expected = new Result("zalava");
     when(chatClient.prompt("prompt")).thenReturn(request);
     when(request.tools(any(Object[].class))).thenReturn(request);
     when(request.advisors(org.mockito.ArgumentMatchers.<Consumer<ChatClient.AdvisorSpec>>any()))

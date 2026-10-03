@@ -43,7 +43,7 @@ class ModuleServiceRuntimeTest {
   @Test
   void rejectsMissingRequiredServiceAndAllowsOptionalService() {
     assertThatThrownBy(() -> runtime(module("consumer", List.of(), List.of(required(A)))))
-        .hasMessageContaining("requires unavailable SEA service service-a");
+        .hasMessageContaining("requires unavailable Zalava service service-a");
     runtime(
             module(
                 "optional",
@@ -82,13 +82,13 @@ class ModuleServiceRuntimeTest {
                 runtime(
                     module("one", List.of(factory("one", A, new ArrayList<>())), List.of()),
                     module("two", List.of(factory("two", A, new ArrayList<>())), List.of())))
-        .hasMessageContaining("Multiple SEA service providers");
+        .hasMessageContaining("Multiple Zalava service providers");
     ZalavaModule one =
         module("one", List.of(factory("one", A, new ArrayList<>())), List.of(required(B)));
     ZalavaModule two =
         module("two", List.of(factory("two", B, new ArrayList<>())), List.of(required(A)));
     assertThatThrownBy(() -> runtime(one, two))
-        .hasMessageContaining("Cyclic SEA service dependency");
+        .hasMessageContaining("Cyclic Zalava service dependency");
   }
 
   @Test

@@ -10,9 +10,9 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.support.SeaComponentTest;
+import org.zalava.support.ZalavaComponentTest;
 
-@SeaComponentTest
+@ZalavaComponentTest
 class DevelopmentRestApiProfileRestrictionTest {
 
   private static final Path WORKSPACE = createWorkspace();
@@ -21,12 +21,12 @@ class DevelopmentRestApiProfileRestrictionTest {
 
   @Test
   void doesNotExposeDevelopmentRestApiWithoutDevelopmentOrTestProfile() throws Exception {
-    mockMvc.perform(get("/api/sea/modules")).andExpect(status().isNotFound());
+    mockMvc.perform(get("/api/zalava/modules")).andExpect(status().isNotFound());
   }
 
   @Test
   void exposesControlUiIndependentlyFromDevelopmentRestApiProfile() throws Exception {
-    mockMvc.perform(get("/sea/control")).andExpect(status().isOk());
+    mockMvc.perform(get("/zalava/control")).andExpect(status().isOk());
   }
 
   @Test
@@ -34,7 +34,7 @@ class DevelopmentRestApiProfileRestrictionTest {
       throws Exception {
     mockMvc
         .perform(
-            post("/sea/control/source-module-installations")
+            post("/zalava/control/source-module-installations")
                 .param("moduleId", "example")
                 .param("indexYaml", "schemaVersion: 1\nmodules: []"))
         .andExpect(status().isNotFound());
@@ -42,7 +42,7 @@ class DevelopmentRestApiProfileRestrictionTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-admin-profile-restriction-test-");
+      Path workspace = Files.createTempDirectory("zalava-admin-profile-restriction-test-");
       Files.writeString(workspace.resolve("AGENT.md"), "Test agent prompt.");
       Files.writeString(workspace.resolve("INFO.md"), "Test environment info.");
       Path skill = Files.createDirectories(workspace.resolve("skills/test-skill"));

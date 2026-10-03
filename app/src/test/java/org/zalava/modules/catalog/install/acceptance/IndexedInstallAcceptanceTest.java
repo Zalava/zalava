@@ -32,10 +32,10 @@ import org.zalava.api.InvocationContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.support.PostgreSqlTestDatabase;
-import org.zalava.support.RestartableSeaApplicationContext;
+import org.zalava.support.RestartableZalavaApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -43,9 +43,9 @@ import tools.jackson.databind.ObjectMapper;
  * Opt-in real-network acceptance for the indexed module-install pipeline.
  *
  * <p>Runs the production adapters against the private locator catalog, the commit-pinned release
- * index, GitHub Packages artifact download and the SEA administrator control surface. The control
- * surface is exercised with screen security disabled because the lane owns a disposable workspace
- * and port; administrator authorization is covered separately by {@link
+ * index, GitHub Packages artifact download and the Zalava administrator control surface. The
+ * control surface is exercised with screen security disabled because the lane owns a disposable
+ * workspace and port; administrator authorization is covered separately by {@link
  * IndexedInstallPermissionNegativeTest}. Credentials are supplied by the invoking environment and
  * never persisted.
  */
@@ -70,21 +70,21 @@ class IndexedInstallAcceptanceTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> "indexed-install-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "IndexedInstallPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> "indexed-install-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "IndexedInstallPassword-123");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.catalog.github.token", IndexedInstallCredentials::githubToken);
+    registry.add("zalava.catalog.github.token", IndexedInstallCredentials::githubToken);
     registry.add(
-        "sea.catalog.github-packages.username", IndexedInstallCredentials::packagesUsername);
-    registry.add("sea.catalog.github-packages.token", IndexedInstallCredentials::packagesToken);
+        "zalava.catalog.github-packages.username", IndexedInstallCredentials::packagesUsername);
+    registry.add("zalava.catalog.github-packages.token", IndexedInstallCredentials::packagesToken);
     String locator = IndexedInstallCredentials.moduleLocatorUrl();
-    if (!locator.isBlank()) registry.add("sea.catalog.module-locator.url", () -> locator);
+    if (!locator.isBlank()) registry.add("zalava.catalog.module-locator.url", () -> locator);
     PostgreSqlTestDatabase.register(registry);
   }
 
@@ -97,7 +97,7 @@ class IndexedInstallAcceptanceTest {
     tamperStagedDownload();
 
     String response =
-        post("/sea/control/module-release-installations/" + latestRequestId() + "/allow");
+        post("/zalava/control/module-release-installations/" + latestRequestId() + "/allow");
 
     assertThat(response).contains("digest");
     assertThat(latestRequestStatus()).isEqualTo("FAILED");
@@ -112,13 +112,13 @@ class IndexedInstallAcceptanceTest {
     refreshAndSelect();
 
     String firstRequest = prepare();
-    assertThat(post("/sea/control/module-release-installations/" + firstRequest + "/deny"))
+    assertThat(post("/zalava/control/module-release-installations/" + firstRequest + "/deny"))
         .contains("Installation denied");
     assertThat(latestRequestStatus()).isEqualTo("DENIED");
     assertThat(enabledModule(MODULE_ID)).isNull();
 
     String approvedRequest = prepare();
-    assertThat(post("/sea/control/module-release-installations/" + approvedRequest + "/allow"))
+    assertThat(post("/zalava/control/module-release-installations/" + approvedRequest + "/allow"))
         .contains("Module enabled");
     assertThat(latestRequestStatus()).isEqualTo("SUCCEEDED");
 
@@ -129,14 +129,15 @@ class IndexedInstallAcceptanceTest {
     assertThat(enabled.path("sourceRepository").stringValue(""))
         .isEqualTo("https://github.com/Zalava/zalava-module-time.git");
     assertThat(enabled.path("sourceLicense").stringValue("")).isEqualTo("Apache-2.0");
-    assertThat(enabled.path("seaRuntimeCompatibility").stringValue("")).isEqualTo(">=1.0.0 <2.0.0");
+    assertThat(enabled.path("zalavaRuntimeCompatibility").stringValue(""))
+        .isEqualTo(">=1.0.0 <2.0.0");
     assertThat(enabled.path("binaryRepositoryId").stringValue("")).isEqualTo("github-packages");
     assertThat(enabled.path("declaredPermissions")).isEmpty();
     Path installedJar = Path.of(enabled.path("artifactPath").stringValue(""));
     assertThat(installedJar).exists();
 
-    try (var restarted = RestartableSeaApplicationContext.start(WORKSPACE)) {
-      SeaRuntime runtime = restarted.getBean(SeaRuntime.class);
+    try (var restarted = RestartableZalavaApplicationContext.start(WORKSPACE)) {
+      ZalavaRuntime runtime = restarted.getBean(ZalavaRuntime.class);
       List<ZalavaModule> installedModules =
           runtime.modules().stream()
               .filter(module -> module.descriptor().moduleId().equals(MODULE_ID))
@@ -145,7 +146,7 @@ class IndexedInstallAcceptanceTest {
       assertThat(installedModules.getFirst().descriptor().version()).isEqualTo(VERSION);
       assertThat(moduleClassLoaderUrls(installedModules.getFirst())).contains(installedJar.toUri());
 
-      LoadedSeaProvider loaded =
+      LoadedZalavaProvider loaded =
           runtime
               .findLoadedProvider("jdk-time")
               .orElseThrow(() -> new AssertionError("not loaded"));
@@ -189,11 +190,11 @@ class IndexedInstallAcceptanceTest {
   }
 
   private void refreshAndSelect() throws Exception {
-    assertThat(post("/sea/control/module-release-installations/catalog/refresh"))
+    assertThat(post("/zalava/control/module-release-installations/catalog/refresh"))
         .contains("Refresh catalog");
     assertThat(
             post(
-                "/sea/control/module-release-installations/catalog/select",
+                "/zalava/control/module-release-installations/catalog/select",
                 Map.of("moduleId", MODULE_ID)))
         .contains(MODULE_ID);
   }
@@ -201,7 +202,7 @@ class IndexedInstallAcceptanceTest {
   private String prepare() throws Exception {
     String response =
         post(
-            "/sea/control/module-release-installations",
+            "/zalava/control/module-release-installations",
             Map.of("moduleId", MODULE_ID, "version", VERSION));
     assertThat(response).contains(MODULE_ID);
     return latestRequestId();
@@ -291,7 +292,7 @@ class IndexedInstallAcceptanceTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-indexed-install-");
+      Path workspace = Files.createTempDirectory("zalava-indexed-install-");
       Files.writeString(workspace.resolve("AGENT.md"), "Indexed install acceptance workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable real-network workspace.");
       return workspace;

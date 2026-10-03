@@ -39,10 +39,10 @@ import org.zalava.modules.managedservices.application.ManagedServiceInstallExcep
 import org.zalava.modules.managedservices.application.port.in.DeclaredManagedServices;
 import org.zalava.modules.managedservices.application.port.in.ManagedServiceQueries;
 import org.zalava.modules.managedservices.application.port.in.ModuleManagedServiceInstallation;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.ManagedSeaRuntime;
-import org.zalava.modules.runtime.SeaRuntime;
-import org.zalava.modules.runtime.application.port.in.ManagedSeaRestart;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ManagedZalavaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
+import org.zalava.modules.runtime.application.port.in.ManagedZalavaRestart;
 
 @Controller
 public class ModulesController {
@@ -56,7 +56,7 @@ public class ModulesController {
   private static final int MAX_REQUEST_ID_LENGTH = 128;
   private static final int MAX_ERROR_LENGTH = 300;
 
-  private final SeaRuntime seaRuntime;
+  private final ZalavaRuntime zalavaRuntime;
   private final ModuleQueries moduleQueries;
   private final FileSystemModuleConfigurationStore moduleConfigurationStore;
   private final ModuleMarketplace marketplace;
@@ -68,10 +68,10 @@ public class ModulesController {
   private final ManagedServiceQueries managedServiceQueries;
   private final DeclaredManagedServices declaredManagedServices;
   private final ModuleManagedServiceInstallation moduleManagedServiceInstallation;
-  private final ManagedSeaRestart managedSeaRestart;
+  private final ManagedZalavaRestart managedZalavaRestart;
 
   public ModulesController(
-      SeaRuntime seaRuntime,
+      ZalavaRuntime zalavaRuntime,
       ModuleQueries moduleQueries,
       FileSystemModuleConfigurationStore moduleConfigurationStore,
       ModuleMarketplace marketplace,
@@ -83,8 +83,8 @@ public class ModulesController {
       ManagedServiceQueries managedServiceQueries,
       DeclaredManagedServices declaredManagedServices,
       ModuleManagedServiceInstallation moduleManagedServiceInstallation,
-      ManagedSeaRestart managedSeaRestart) {
-    this.seaRuntime = seaRuntime;
+      ManagedZalavaRestart managedZalavaRestart) {
+    this.zalavaRuntime = zalavaRuntime;
     this.moduleQueries = moduleQueries;
     this.moduleConfigurationStore = moduleConfigurationStore;
     this.marketplace = marketplace;
@@ -96,7 +96,7 @@ public class ModulesController {
     this.managedServiceQueries = managedServiceQueries;
     this.declaredManagedServices = declaredManagedServices;
     this.moduleManagedServiceInstallation = moduleManagedServiceInstallation;
-    this.managedSeaRestart = managedSeaRestart;
+    this.managedZalavaRestart = managedZalavaRestart;
   }
 
   @GetMapping("/modules")
@@ -109,7 +109,7 @@ public class ModulesController {
   @PostMapping("/modules/restart")
   public String restartSea(RedirectAttributes redirectAttributes) {
     try {
-      ManagedSeaRestart.Status status = managedSeaRestart.request();
+      ManagedZalavaRestart.Status status = managedZalavaRestart.request();
       redirectAttributes.addFlashAttribute("marketplaceMessage", status.message());
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
@@ -148,7 +148,7 @@ public class ModulesController {
               + request.module().version()
               + " installed ("
               + request.artifactDigest()
-              + "). Restart SEA once to load its classes.");
+              + "). Restart Zalava once to load its classes.");
     } catch (java.io.IOException exception) {
       redirectAttributes.addFlashAttribute(
           "marketplaceError", "Unable to read uploaded module JAR.");
@@ -184,7 +184,7 @@ public class ModulesController {
               + requestedModuleId
               + " "
               + requestedVersion
-              + " installed. Restart SEA once to load its classes.");
+              + " installed. Restart Zalava once to load its classes.");
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
     }
@@ -212,7 +212,7 @@ public class ModulesController {
               + requestedVersion
               + " ("
               + installed.artifactDigest()
-              + "). Restart SEA once to load its classes.");
+              + "). Restart Zalava once to load its classes.");
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
     }
@@ -261,7 +261,7 @@ public class ModulesController {
       redirectAttributes.addFlashAttribute(
           "marketplaceMessage",
           result.changed()
-              ? "Disabled " + requested + ". Restart SEA to unload it from this running process."
+              ? "Disabled " + requested + ". Restart Zalava to unload it from this running process."
               : requested + " is not enabled; nothing changed.");
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
@@ -272,7 +272,7 @@ public class ModulesController {
   @GetMapping("/modules/{moduleId}")
   public String moduleDetail(@PathVariable String moduleId, Model model, CsrfToken csrf) {
     Optional<ZalavaModule> loaded =
-        seaRuntime.modules().stream()
+        zalavaRuntime.modules().stream()
             .filter(module -> module.descriptor().moduleId().equals(moduleId))
             .findFirst();
     Optional<ModuleQueries.EnabledModule> enabled =
@@ -356,7 +356,7 @@ public class ModulesController {
               factories,
               references),
           secrets);
-      if (seaRuntime instanceof ManagedSeaRuntime managedRuntime) {
+      if (zalavaRuntime instanceof ManagedZalavaRuntime managedRuntime) {
         managedRuntime.applyCandidate(moduleId);
         redirectAttributes.addFlashAttribute(
             "configurationMessage", "Configuration applied. Start the module when ready.");
@@ -378,11 +378,11 @@ public class ModulesController {
   @PostMapping("/modules/{moduleId}/start")
   public String startModule(@PathVariable String moduleId, RedirectAttributes redirectAttributes) {
     try {
-      ((ManagedSeaRuntime) seaRuntime).start(moduleId);
+      ((ManagedZalavaRuntime) zalavaRuntime).start(moduleId);
       redirectAttributes.addFlashAttribute("moduleMessage", "Module started.");
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute(
-          "moduleError", "Module could not start. Review its configuration and SEA logs.");
+          "moduleError", "Module could not start. Review its configuration and Zalava logs.");
     }
     return "redirect:/modules/" + moduleId;
   }
@@ -390,7 +390,7 @@ public class ModulesController {
   @PostMapping("/modules/{moduleId}/stop")
   public String stopModule(@PathVariable String moduleId, RedirectAttributes redirectAttributes) {
     try {
-      ((ManagedSeaRuntime) seaRuntime).stop(moduleId);
+      ((ManagedZalavaRuntime) zalavaRuntime).stop(moduleId);
       redirectAttributes.addFlashAttribute("moduleMessage", "Module stopped.");
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute(
@@ -461,13 +461,13 @@ public class ModulesController {
                     Function.identity(),
                     (first, ignored) -> first));
     Map<String, Long> providerCounts =
-        seaRuntime.loadedProviders().stream()
+        zalavaRuntime.loadedProviders().stream()
             .collect(
                 Collectors.groupingBy(
                     loadedProvider -> loadedProvider.module().moduleId(), Collectors.counting()));
 
     List<ModuleEntry> loadedModules =
-        seaRuntime.modules().stream()
+        zalavaRuntime.modules().stream()
             .map(
                 module -> {
                   ModuleQueries.EnabledModule enabledModule =
@@ -503,7 +503,7 @@ public class ModulesController {
         moduleReleaseInstallation.recent(RECENT_INSTALLATION_LIMIT).stream()
             .map(ModulesController::toInstallationRequestEntry)
             .toList();
-    ManagedSeaRestart.Status restart = managedSeaRestart.status();
+    ManagedZalavaRestart.Status restart = managedZalavaRestart.status();
 
     return new ModulesModel(
         loadedModules,
@@ -540,7 +540,7 @@ public class ModulesController {
     String lifecycleState =
         loaded == null
             ? enabled == null ? "AVAILABLE" : "AWAITING_RESTART"
-            : seaRuntime instanceof ManagedSeaRuntime managedRuntime
+            : zalavaRuntime instanceof ManagedZalavaRuntime managedRuntime
                 ? managedRuntime.state(moduleId).state().name()
                 : "RUNNING";
     String version =
@@ -558,10 +558,10 @@ public class ModulesController {
             ? provenance(enabled)
             : loaded != null && isExternal(loaded)
                 ? "External module (restart to unload)"
-                : "Bundled with SEA";
+                : "Bundled with Zalava";
     List<String> permissions = enabled != null ? enabled.declaredPermissions() : List.of();
     List<ProviderEntry> providers =
-        seaRuntime.loadedProviders().stream()
+        zalavaRuntime.loadedProviders().stream()
             .filter(provider -> provider.module().moduleId().equals(moduleId))
             .map(ModulesController::toProviderEntry)
             .sorted(Comparator.comparing(ProviderEntry::providerId))
@@ -642,7 +642,7 @@ public class ModulesController {
     String provenance =
         enabled != null
             ? provenance(enabled)
-            : external ? "External module (restart to unload)" : "Bundled with SEA";
+            : external ? "External module (restart to unload)" : "Bundled with Zalava";
     return new ModuleEntry(
         descriptor.moduleId(),
         descriptor.displayName(),
@@ -702,7 +702,7 @@ public class ModulesController {
     return message;
   }
 
-  private static ProviderEntry toProviderEntry(LoadedSeaProvider loadedProvider) {
+  private static ProviderEntry toProviderEntry(LoadedZalavaProvider loadedProvider) {
     ProviderDescriptor provider = loadedProvider.provider().descriptor();
     List<ToolEntry> tools =
         loadedProvider.provider().listTools().stream()
@@ -809,7 +809,7 @@ public class ModulesController {
   }
 
   private ZalavaModule module(String moduleId) {
-    return seaRuntime.modules().stream()
+    return zalavaRuntime.modules().stream()
         .filter(candidate -> candidate.descriptor().moduleId().equals(moduleId))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("Unknown module: " + moduleId));

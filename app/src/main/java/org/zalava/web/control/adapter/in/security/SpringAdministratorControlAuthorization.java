@@ -28,7 +28,7 @@ public final class SpringAdministratorControlAuthorization
   public SpringAdministratorControlAuthorization(
       ActorExecutionContext actorExecution,
       AuthenticatedActorResolver actors,
-      @Value("${sea.accounts.security-enabled:true}") boolean securityEnabled) {
+      @Value("${zalava.accounts.security-enabled:true}") boolean securityEnabled) {
     this.actorExecution = actorExecution;
     this.actors = actors;
     this.securityEnabled = securityEnabled;

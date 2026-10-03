@@ -3,7 +3,7 @@ package org.zalava.tasks.domain;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Opaque public task reference, valid only when paired with an authenticated SEA actor. */
+/** Opaque public task reference, valid only when paired with an authenticated Zalava actor. */
 public record ActorTaskReference(String value) {
   public ActorTaskReference {
     Objects.requireNonNull(value, "value");

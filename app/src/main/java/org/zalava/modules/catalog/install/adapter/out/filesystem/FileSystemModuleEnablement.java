@@ -60,7 +60,7 @@ public final class FileSystemModuleEnablement implements ModuleEnablement, Enabl
             module.version(),
             artifact.toString(),
             module.artifactDigest(),
-            module.seaRuntimeCompatibility(),
+            module.zalavaRuntimeCompatibility(),
             module.sourceRepository(),
             module.sourceLicense(),
             module.binaryRepositoryId(),

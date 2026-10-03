@@ -26,7 +26,7 @@ import org.zalava.assistant.agent.application.port.out.AgentRunStore;
 import org.zalava.assistant.agent.domain.AgentRun;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 import org.zalava.tasks.application.port.in.TaskQueries;
 import org.zalava.tasks.domain.RecurringTask;
@@ -43,7 +43,7 @@ import org.zalava.web.control.application.port.in.InvocationLogQueries.Entry;
  * evidence links and the administrator-only authority boundary without touching the shared
  * component workspace.
  */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class MonitoringControllerComponentTest {
 
   @Autowired private MockMvc mockMvc;

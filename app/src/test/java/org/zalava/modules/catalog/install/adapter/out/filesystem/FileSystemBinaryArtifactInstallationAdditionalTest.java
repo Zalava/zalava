@@ -16,7 +16,7 @@ class FileSystemBinaryArtifactInstallationAdditionalTest {
   @TempDir Path workspace;
 
   private static SourceModuleIndex.Artifact artifact() {
-    return new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0");
+    return new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0");
   }
 
   @Test

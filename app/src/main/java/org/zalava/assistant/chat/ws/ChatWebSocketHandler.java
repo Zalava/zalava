@@ -32,7 +32,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 @ConditionalOnProperty(
-    name = "sea.chat.transport",
+    name = "zalava.chat.transport",
     havingValue = "spring-websocket",
     matchIfMissing = true)
 public class ChatWebSocketHandler extends TextWebSocketHandler {
@@ -131,14 +131,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
           // Explicit continuation is available through the product JSON adapter.
         }
         case UiCommand.DecideApproval ignored -> {
-          // Approval decisions are intentionally available only on the authenticated SEA UI
+          // Approval decisions are intentionally available only on the authenticated Zalava UI
           // adapter.
         }
         case UiCommand.PutAttachment ignored -> {
-          // Attachments are intentionally available only on the authenticated SEA UI adapter.
+          // Attachments are intentionally available only on the authenticated Zalava UI adapter.
         }
         case UiCommand.DeleteAttachment ignored -> {
-          // Attachments are intentionally available only on the authenticated SEA UI adapter.
+          // Attachments are intentionally available only on the authenticated Zalava UI adapter.
         }
       }
     } catch (Exception exception) {
@@ -310,7 +310,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
   private String historyHtml(Actor actor, ConversationReference reference) {
     List<ChatMessage> history = actorQueries.history(actor, reference);
     if (history.isEmpty())
-      return ChatHtml.agentBubble("Hi! I'm your SEA assistant. How can I help you today?");
+      return ChatHtml.agentBubble("Hi! I'm your Zalava assistant. How can I help you today?");
     return history.stream()
         .filter(message -> message.role() != ChatMessage.Role.SYSTEM)
         .map(

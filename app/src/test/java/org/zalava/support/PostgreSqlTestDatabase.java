@@ -5,7 +5,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 public final class PostgreSqlTestDatabase {
 
   private static final String JDBC_URL =
-      "jdbc:tc:postgresql:18.4-alpine:///sea_test?TC_DAEMON=true";
+      "jdbc:tc:postgresql:18.4-alpine:///zalava_test?TC_DAEMON=true";
 
   private PostgreSqlTestDatabase() {}
 

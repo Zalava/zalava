@@ -17,22 +17,22 @@ import org.zalava.api.ZalavaProvider;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import tools.jackson.databind.ObjectMapper;
 
 @RestController
-@RequestMapping("/api/sea")
+@RequestMapping("/api/zalava")
 @Profile({"dev", "test"})
 public class ProviderOperationAdminController {
 
   private static final ObjectMapper JSON = new ObjectMapper();
 
-  private final SeaRuntime seaRuntime;
+  private final ZalavaRuntime zalavaRuntime;
   private final ProviderToolOperations providerToolOperations;
 
   public ProviderOperationAdminController(
-      SeaRuntime seaRuntime, ProviderToolOperations providerToolOperations) {
-    this.seaRuntime = seaRuntime;
+      ZalavaRuntime zalavaRuntime, ProviderToolOperations providerToolOperations) {
+    this.zalavaRuntime = zalavaRuntime;
     this.providerToolOperations = providerToolOperations;
   }
 
@@ -106,13 +106,13 @@ public class ProviderOperationAdminController {
   }
 
   private ZalavaProvider findProvider(String providerId) {
-    return seaRuntime
+    return zalavaRuntime
         .findLoadedProvider(providerId)
-        .map(org.zalava.modules.runtime.LoadedSeaProvider::provider)
+        .map(org.zalava.modules.runtime.LoadedZalavaProvider::provider)
         .orElseThrow(
             () ->
                 new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "SEA provider not found: " + providerId));
+                    HttpStatus.NOT_FOUND, "Zalava provider not found: " + providerId));
   }
 
   private static <T> T executeToolUseCase(Supplier<T> operation) {
@@ -142,7 +142,7 @@ public class ProviderOperationAdminController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
     } catch (RuntimeException ex) {
       throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR, "SEA operation failed", ex);
+          HttpStatus.INTERNAL_SERVER_ERROR, "Zalava operation failed", ex);
     }
   }
 

@@ -13,14 +13,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.support.SeaComponentTestConfiguration;
-import org.zalava.support.SeaComponentTestInitializer;
+import org.zalava.support.ZalavaComponentTestConfiguration;
+import org.zalava.support.ZalavaComponentTestInitializer;
 
-/** Proves the SEA Control Metrics link only appears when a viewer resolves. */
-@SpringBootTest(properties = "sea.observability.mode=managed")
+/** Proves the Zalava Control Metrics link only appears when a viewer resolves. */
+@SpringBootTest(properties = "zalava.observability.mode=managed")
 @AutoConfigureMockMvc
-@ContextConfiguration(initializers = SeaComponentTestInitializer.class)
-@Import(SeaComponentTestConfiguration.class)
+@ContextConfiguration(initializers = ZalavaComponentTestInitializer.class)
+@Import(ZalavaComponentTestConfiguration.class)
 class ManagedObservabilityControlUiComponentTest {
 
   @Autowired private MockMvc mockMvc;
@@ -28,12 +28,12 @@ class ManagedObservabilityControlUiComponentTest {
   @Test
   void linksAndRedirectsToTheManagedViewer() throws Exception {
     mockMvc
-        .perform(get("/sea/control"))
+        .perform(get("/zalava/control"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("href=\"/sea/control/metrics\"")));
+        .andExpect(content().string(containsString("href=\"/zalava/control/metrics\"")));
 
     mockMvc
-        .perform(get("/sea/control/metrics"))
+        .perform(get("/zalava/control/metrics"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("http://127.0.0.1:3000"));
   }

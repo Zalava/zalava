@@ -15,14 +15,14 @@ import org.zalava.api.ProviderFactory;
 import org.zalava.api.ZalavaModule;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 
 class S5StarterModulesStepTest {
 
   @TempDir Path configurationRoot;
 
   private FileSystemModuleConfigurationStore store;
-  private SeaRuntime runtime;
+  private ZalavaRuntime runtime;
 
   @BeforeEach
   void setUp() {
@@ -87,7 +87,7 @@ class S5StarterModulesStepTest {
 
     Map<String, Object> session = new HashMap<>();
     assertThat(step.processStep(Map.of("action", "select", "moduleId", "unknown"), session))
-        .isEqualTo("This starter module is not available in this SEA installation.");
+        .isEqualTo("This starter module is not available in this Zalava installation.");
 
     assertThat(step.processStep(Map.of("action", "select", "moduleId", "time"), session)).isEmpty();
     assertThat(session.get("onboarding.starter.module-id")).isEqualTo("time");
@@ -178,15 +178,15 @@ class S5StarterModulesStepTest {
         Map.of("city", Map.of("type", "string", "description", "City to report")));
   }
 
-  private static SeaRuntime runtimeWith(ZalavaModule... modules) {
-    return new SeaRuntime() {
+  private static ZalavaRuntime runtimeWith(ZalavaModule... modules) {
+    return new ZalavaRuntime() {
       @Override
       public List<ZalavaModule> modules() {
         return List.of(modules);
       }
 
       @Override
-      public List<org.zalava.modules.runtime.LoadedSeaProvider> loadedProviders() {
+      public List<org.zalava.modules.runtime.LoadedZalavaProvider> loadedProviders() {
         return List.of();
       }
     };

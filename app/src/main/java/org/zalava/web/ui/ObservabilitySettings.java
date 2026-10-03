@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolved metrics viewer settings. The SEA Control navigation and the metrics redirect boundary
+ * Resolved metrics viewer settings. The Zalava Control navigation and the metrics redirect boundary
  * both read the same validated value, so a link is only shown when it can actually resolve.
  */
 @Component
@@ -15,8 +15,8 @@ public class ObservabilitySettings {
   private final String externalGrafanaUrl;
 
   ObservabilitySettings(
-      @Value("${sea.observability.mode:disabled}") String mode,
-      @Value("${sea.observability.external-grafana-url:}") String externalGrafanaUrl) {
+      @Value("${zalava.observability.mode:disabled}") String mode,
+      @Value("${zalava.observability.external-grafana-url:}") String externalGrafanaUrl) {
     this.mode = mode;
     this.externalGrafanaUrl = externalGrafanaUrl;
   }

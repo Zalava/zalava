@@ -31,7 +31,7 @@ import org.zalava.assistant.agent.application.port.out.AgentRunStore;
 import org.zalava.assistant.agent.domain.AgentRun;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.SeaComponentTestConfiguration;
+import org.zalava.support.ZalavaComponentTestConfiguration;
 import org.zalava.tasks.application.port.out.TaskStore;
 import org.zalava.tasks.domain.Task;
 
@@ -43,14 +43,14 @@ import org.zalava.tasks.domain.Task;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import({
-  SeaComponentTestConfiguration.class,
+  ZalavaComponentTestConfiguration.class,
   BrowserMonitoringAcceptanceTest.AccountConfiguration.class
 })
 class BrowserMonitoringAcceptanceTest {
 
   private static final Path WORKSPACE = workspace();
   private static final Path DIAGNOSTICS = diagnostics();
-  private static final Path APPLICATION_LOG = WORKSPACE.resolve("sea-browser.log");
+  private static final Path APPLICATION_LOG = WORKSPACE.resolve("zalava-browser.log");
 
   private static final String ADMIN_LOGIN = "browser-monitoring-admin-" + UUID.randomUUID();
   private static final String ADMIN_PASSWORD = "BrowserMonitoringPassword-123";
@@ -66,9 +66,9 @@ class BrowserMonitoringAcceptanceTest {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("logging.file.name", APPLICATION_LOG::toString);
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> ADMIN_LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> ADMIN_PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> ADMIN_LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> ADMIN_PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -98,7 +98,7 @@ class BrowserMonitoringAcceptanceTest {
         var response = page.navigate(baseUrl() + "/monitoring");
         assertThat(response.status()).isEqualTo(200);
         page.locator("[data-monitoring-snapshot]").waitFor();
-        assertThat(page.locator(".sea-navbar .navbar-item.is-active").innerText().trim())
+        assertThat(page.locator(".zalava-navbar .navbar-item.is-active").innerText().trim())
             .isEqualTo("Monitoring");
         assertThat(page.locator("body").innerText()).contains("Monitoring live job");
         assertThat(page.locator("[data-empty=\"runs\"]").count()).isEqualTo(1);
@@ -179,7 +179,7 @@ class BrowserMonitoringAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-monitoring-");
+      Path root = Files.createTempDirectory("zalava-browser-monitoring-");
       Files.writeString(root.resolve("AGENT.md"), "Browser monitoring acceptance workspace.");
       return root;
     } catch (IOException exception) {

@@ -25,7 +25,8 @@ public final class JdbcChannelIdentityLinkStore implements ChannelIdentityLinkSt
 
   @Override
   public Optional<ChannelIdentityLink> findActive(ExternalChannelIdentity identity) {
-    return jdbc.sql("select * from sea_channel_identity_link where active_identity_key = :identity")
+    return jdbc.sql(
+            "select * from zalava_channel_identity_link where active_identity_key = :identity")
         .param("identity", activeKey(identity))
         .query(this::map)
         .optional();
@@ -33,7 +34,7 @@ public final class JdbcChannelIdentityLinkStore implements ChannelIdentityLinkSt
 
   @Override
   public Optional<ChannelIdentityLink> findById(UUID id) {
-    return jdbc.sql("select * from sea_channel_identity_link where id = :id")
+    return jdbc.sql("select * from zalava_channel_identity_link where id = :id")
         .param("id", id)
         .query(this::map)
         .optional();
@@ -42,7 +43,7 @@ public final class JdbcChannelIdentityLinkStore implements ChannelIdentityLinkSt
   @Override
   public List<ChannelIdentityLink> findByOwner(Actor owner) {
     return jdbc.sql(
-            "select * from sea_channel_identity_link where account_id = :account order by linked_at desc")
+            "select * from zalava_channel_identity_link where account_id = :account order by linked_at desc")
         .param("account", owner.accountId().value())
         .query(this::map)
         .list();
@@ -53,7 +54,7 @@ public final class JdbcChannelIdentityLinkStore implements ChannelIdentityLinkSt
     if (findById(link.id()).isEmpty()) {
       jdbc.sql(
               """
-              insert into sea_channel_identity_link
+              insert into zalava_channel_identity_link
                   (id, channel_id, external_subject, active_identity_key, account_id, operations, linked_at, revoked_at)
               values (:id, :channel, :subject, :activeIdentity, :account, :operations, :linkedAt, :revokedAt)
               """)
@@ -70,7 +71,7 @@ public final class JdbcChannelIdentityLinkStore implements ChannelIdentityLinkSt
     }
     jdbc.sql(
             """
-            update sea_channel_identity_link
+            update zalava_channel_identity_link
             set active_identity_key = :activeIdentity, revoked_at = :revokedAt
             where id = :id
             """)

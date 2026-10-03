@@ -13,10 +13,10 @@ public final class ExternalFixtureZalavaModule implements ZalavaModule {
   @Override
   public ModuleDescriptor descriptor() {
     return new ModuleDescriptor(
-        "sea-external-module-fixture",
+        "zalava-external-module-fixture",
         "1.0.0",
         "External fixture",
-        "Independently packaged SEA module used by runtime loading tests");
+        "Independently packaged Zalava module used by runtime loading tests");
   }
 
   @Override

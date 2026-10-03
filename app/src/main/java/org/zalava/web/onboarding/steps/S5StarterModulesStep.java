@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.zalava.api.ModuleConfigurationStatus;
 import org.zalava.api.ZalavaModule;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.web.onboarding.OnboardingProvider;
 
 /** Host-owned optional starter selection; modules cannot contribute wizard steps. */
@@ -19,15 +19,15 @@ import org.zalava.web.onboarding.OnboardingProvider;
 public class S5StarterModulesStep implements OnboardingProvider {
   public static final String ID = "starters";
   private static final String SESSION_SELECTION = "onboarding.starter.module-id";
-  private final SeaRuntime seaRuntime;
+  private final ZalavaRuntime zalavaRuntime;
   private final FileSystemModuleConfigurationStore configurationStore;
   private final Set<String> curatedModuleIds;
 
   public S5StarterModulesStep(
-      SeaRuntime seaRuntime,
+      ZalavaRuntime zalavaRuntime,
       FileSystemModuleConfigurationStore configurationStore,
-      @Value("${sea.onboarding.starter-module-ids:}") List<String> starterModuleIds) {
-    this.seaRuntime = seaRuntime;
+      @Value("${zalava.onboarding.starter-module-ids:}") List<String> starterModuleIds) {
+    this.zalavaRuntime = zalavaRuntime;
     this.configurationStore = configurationStore;
     this.curatedModuleIds =
         starterModuleIds.stream()
@@ -85,7 +85,7 @@ public class S5StarterModulesStep implements OnboardingProvider {
       String moduleId = formParams.get("moduleId");
       if (availableModules().stream()
           .noneMatch(module -> module.descriptor().moduleId().equals(moduleId))) {
-        return "This starter module is not available in this SEA installation.";
+        return "This starter module is not available in this Zalava installation.";
       }
       session.put(SESSION_SELECTION, moduleId);
       return "";
@@ -103,7 +103,7 @@ public class S5StarterModulesStep implements OnboardingProvider {
   }
 
   private List<ZalavaModule> availableModules() {
-    return seaRuntime.modules().stream()
+    return zalavaRuntime.modules().stream()
         .filter(module -> curatedModuleIds.contains(module.descriptor().moduleId()))
         .filter(
             module ->

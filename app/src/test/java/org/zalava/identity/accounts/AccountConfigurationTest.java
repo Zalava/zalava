@@ -31,6 +31,6 @@ class AccountConfigurationTest {
   void rejectsUnsupportedBcryptStrength() {
     assertThatIllegalArgumentException()
         .isThrownBy(() -> configuration.passwordEncoder(3))
-        .withMessage("sea.accounts.password-encoder-strength must be between 4 and 31");
+        .withMessage("zalava.accounts.password-encoder-strength must be between 4 and 31");
   }
 }

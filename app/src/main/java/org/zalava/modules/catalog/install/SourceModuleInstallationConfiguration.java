@@ -55,10 +55,10 @@ import org.zalava.modules.catalog.install.application.port.out.ModuleReleaseInst
 import org.zalava.modules.development.adapter.out.filesystem.FileSystemInstalledModuleAcceptanceStore;
 import org.zalava.modules.development.application.DevelopmentCandidateValidationGateway;
 import org.zalava.modules.development.application.port.out.InstalledModuleAcceptanceStore;
-import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemManagedSeaRestart;
+import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemManagedZalavaRestart;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
-import org.zalava.modules.runtime.application.AdministratorAuthorizedManagedSeaRestart;
-import org.zalava.modules.runtime.application.port.in.ManagedSeaRestart;
+import org.zalava.modules.runtime.application.AdministratorAuthorizedManagedZalavaRestart;
+import org.zalava.modules.runtime.application.port.in.ManagedZalavaRestart;
 import org.zalava.web.control.application.AdministratorControlAuthorization;
 
 @Configuration
@@ -70,20 +70,20 @@ public class SourceModuleInstallationConfiguration {
   }
 
   @Bean
-  ManagedSeaRestart rawManagedSeaRestart(
+  ManagedZalavaRestart rawManagedZalavaRestart(
       @Value("${agent.workspace:Unknown}") Resource workspace,
-      @Value("${sea.managed-restart.dispatcher-enabled:false}") boolean dispatcherEnabled)
+      @Value("${zalava.managed-restart.dispatcher-enabled:false}") boolean dispatcherEnabled)
       throws IOException {
-    return new FileSystemManagedSeaRestart(
+    return new FileSystemManagedZalavaRestart(
         workspace.getFilePath(), Clock.systemUTC(), dispatcherEnabled);
   }
 
   @Bean
   @Primary
-  ManagedSeaRestart managedSeaRestart(
-      @Qualifier("rawManagedSeaRestart") ManagedSeaRestart delegate,
+  ManagedZalavaRestart managedZalavaRestart(
+      @Qualifier("rawManagedZalavaRestart") ManagedZalavaRestart delegate,
       AdministratorControlAuthorization authorization) {
-    return new AdministratorAuthorizedManagedSeaRestart(delegate, authorization);
+    return new AdministratorAuthorizedManagedZalavaRestart(delegate, authorization);
   }
 
   @Bean
@@ -116,8 +116,8 @@ public class SourceModuleInstallationConfiguration {
   @Bean
   CuratedMavenArtifactResolver curatedMavenArtifactResolver(
       @Value("${agent.workspace:Unknown}") Resource workspace,
-      @Value("${sea.catalog.github-packages.username:}") String githubPackagesUsername,
-      @Value("${sea.catalog.github-packages.token:}") String githubPackagesToken)
+      @Value("${zalava.catalog.github-packages.username:}") String githubPackagesUsername,
+      @Value("${zalava.catalog.github-packages.token:}") String githubPackagesToken)
       throws IOException {
     if (githubPackagesUsername.isBlank() && githubPackagesToken.isBlank())
       return new JdkCuratedMavenArtifactResolver(workspace.getFilePath());
@@ -131,7 +131,7 @@ public class SourceModuleInstallationConfiguration {
 
   @Bean
   ModuleReleaseIndexRetrieval moduleReleaseIndexRetrieval(
-      @Value("${sea.catalog.github.token:}") String githubToken) {
+      @Value("${zalava.catalog.github.token:}") String githubToken) {
     return new JdkModuleReleaseIndexRetrieval(githubToken);
   }
 
@@ -144,7 +144,7 @@ public class SourceModuleInstallationConfiguration {
   ControlCatalogDiscovery controlCatalogDiscovery(
       ModuleLocatorReleaseLocator locator,
       ModuleReleaseIndexRetrieval releaseIndexes,
-      @Value("${sea.catalog.github.token:}") String githubToken) {
+      @Value("${zalava.catalog.github.token:}") String githubToken) {
     return new ControlCatalogDiscovery(locator, releaseIndexes, githubToken);
   }
 
@@ -184,9 +184,9 @@ public class SourceModuleInstallationConfiguration {
   @Bean
   ModuleLocatorReleaseLocator moduleLocatorReleaseLocator(
       @Value(
-              "${sea.catalog.module-locator.url:https://raw.githubusercontent.com/cordin/zalava-catalog/main/catalog.yaml}")
+              "${zalava.catalog.module-locator.url:https://raw.githubusercontent.com/cordin/zalava-catalog/main/catalog.yaml}")
           String catalogUrl,
-      @Value("${sea.catalog.github.token:}") String githubToken) {
+      @Value("${zalava.catalog.github.token:}") String githubToken) {
     return new JdkModuleLocatorReleaseLocator(URI.create(catalogUrl), githubToken);
   }
 

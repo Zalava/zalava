@@ -54,7 +54,7 @@ public final class DefaultBinaryModuleInstallation implements BinaryModuleInstal
                   request.module().version(),
                   installed.path(),
                   installed.digest(),
-                  request.module().compatibility().seaRuntime(),
+                  request.module().compatibility().zalavaRuntime(),
                   source == null ? null : source.repository().toString(),
                   source == null ? null : source.license(),
                   request.repositoryId(),
@@ -113,10 +113,10 @@ public final class DefaultBinaryModuleInstallation implements BinaryModuleInstal
       requireText(module.source().license(), "source license");
     }
     if (module.compatibility() == null
-        || module.compatibility().seaRuntime() == null
-        || module.compatibility().seaRuntime().isBlank()) {
+        || module.compatibility().zalavaRuntime() == null
+        || module.compatibility().zalavaRuntime().isBlank()) {
       throw new SourceModuleInstallationException(
-          "Binary module SEA runtime compatibility is required");
+          "Binary module Zalava runtime compatibility is required");
     }
     if (module.security() == null || module.security().permissions() == null) {
       throw new SourceModuleInstallationException(

@@ -5,7 +5,7 @@ import org.zalava.modules.managedservices.application.ManagedServiceInstallReque
 
 /**
  * Turns a module's declared managed services into an aggregate administrator-approvable install
- * request. SEA derives a grant equal to the declared desired state, so approval can only confirm
+ * request. Zalava derives a grant equal to the declared desired state, so approval can only confirm
  * what the module declared, never widen it.
  */
 public interface ModuleManagedServiceInstallation {

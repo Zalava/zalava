@@ -3,7 +3,7 @@ package org.zalava.assistant.agent.application;
 import java.util.Arrays;
 import java.util.List;
 
-/** SEA-owned deterministic boundary for content crossing the model boundary. */
+/** Zalava-owned deterministic boundary for content crossing the model boundary. */
 public final class ModelBoundary {
 
   public static final String REDACTION = "[REDACTED]";

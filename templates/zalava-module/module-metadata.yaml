@@ -16,7 +16,7 @@ modules:
       command: ["gradle", "build"]
       verificationCommand: ["gradle", "test"]
     compatibility:
-      seaRuntime: ">=1.0.0"
+      zalavaRuntime: ">=1.0.0"
     configurationSchema:
       type: object
       additionalProperties: false

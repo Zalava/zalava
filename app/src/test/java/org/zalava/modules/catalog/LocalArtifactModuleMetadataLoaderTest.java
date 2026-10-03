@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Behavior tests for {@link LocalArtifactModuleMetadataLoader} — the parser for the metadata file
- * shipped alongside a locally developed SEA artifact. Covers the happy path and every structural
+ * shipped alongside a locally developed Zalava artifact. Covers the happy path and every structural
  * rejection the loader performs.
  */
 class LocalArtifactModuleMetadataLoaderTest {
@@ -33,7 +33,7 @@ class LocalArtifactModuleMetadataLoaderTest {
     assertThat(module.source()).isNull();
     assertThat(module.build().command()).isEmpty();
     assertThat(module.build().verificationCommand()).isEmpty();
-    assertThat(module.compatibility().seaRuntime()).isEqualTo(">=1.0.0");
+    assertThat(module.compatibility().zalavaRuntime()).isEqualTo(">=1.0.0");
     assertThat(module.configurationSchema()).containsEntry("type", "object");
     assertThat(module.factories())
         .extracting(SourceModuleIndex.Factory::factoryId)
@@ -245,11 +245,11 @@ class LocalArtifactModuleMetadataLoaderTest {
                     description: Locally developed fixture module
                     supportUrl: https://github.com/example/zalava-module-local
                     artifact:
-                      groupId: ai.sea.modules
+                      groupId: ai.zalava.modules
                       artifactId: zalava-module-local
                       version: 1.2.3
                     compatibility:
-                      seaRuntime: ">=1.0.0"
+                      zalavaRuntime: ">=1.0.0"
                     configurationSchema:
                       type: object
                     factories:

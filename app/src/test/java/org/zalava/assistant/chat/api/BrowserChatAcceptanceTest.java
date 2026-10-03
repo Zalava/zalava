@@ -23,9 +23,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * Real-browser foundation for the SEA chat entry point. The only substituted boundary is the model:
- * the HTTP server, JTE assets, WebSocket transport and conversation persistence all run exactly as
- * they do in SEA.
+ * Real-browser foundation for the Zalava chat entry point. The only substituted boundary is the
+ * model: the HTTP server, JTE assets, WebSocket transport and conversation persistence all run
+ * exactly as they do in Zalava.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -58,9 +58,9 @@ class BrowserChatAcceptanceTest {
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> "BrowserTestPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> "BrowserTestPassword-123");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -171,7 +171,7 @@ class BrowserChatAcceptanceTest {
                 new Page.GetByRoleOptions().setName("Send"))
             .click();
         page.getByRole(com.microsoft.playwright.options.AriaRole.ALERT)
-            .getByText("SEA could not complete that request")
+            .getByText("Zalava could not complete that request")
             .waitFor();
         assertThat(page.locator(".messages").getAttribute("aria-busy")).isEqualTo("false");
 
@@ -316,7 +316,7 @@ class BrowserChatAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-acceptance-");
+      Path root = Files.createTempDirectory("zalava-browser-acceptance-");
       Files.writeString(root.resolve("AGENT.md"), "Browser acceptance test workspace.");
       Files.writeString(root.resolve("INFO.md"), "Disposable test environment.");
       return root;

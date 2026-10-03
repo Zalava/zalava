@@ -31,12 +31,12 @@ import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
-import org.zalava.modules.runtime.SeaModuleRegistry;
-import org.zalava.modules.runtime.StaticSeaModuleRegistry;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.modules.runtime.StaticZalavaModuleRegistry;
+import org.zalava.modules.runtime.ZalavaModuleRegistry;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 @Import(ModuleLifecycleComponentTest.FixtureConfiguration.class)
 class ModuleLifecycleComponentTest {
   private static final Path WORKSPACE = workspace();
@@ -44,7 +44,7 @@ class ModuleLifecycleComponentTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.module-configuration.root", WORKSPACE::toString);
+    registry.add("zalava.module-configuration.root", WORKSPACE::toString);
   }
 
   private static Path workspace() {
@@ -102,10 +102,10 @@ class ModuleLifecycleComponentTest {
   static class FixtureConfiguration {
     @Bean
     @Primary
-    SeaModuleRegistry lifecycleFixtureRegistry(Set<ZalavaModule> builtIns) {
+    ZalavaModuleRegistry lifecycleFixtureRegistry(Set<ZalavaModule> builtIns) {
       List<ZalavaModule> modules = new ArrayList<>(builtIns);
       modules.add(new FixtureModule());
-      return new StaticSeaModuleRegistry(modules);
+      return new StaticZalavaModuleRegistry(modules);
     }
 
     @Bean

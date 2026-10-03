@@ -49,7 +49,7 @@ class FileSystemSkillCatalogTest {
         name: shopping-helper
         description: Add and read shopping list items.
         version: 1.2.0
-        seaApiVersion: 1.3.0
+        zalavaApiVersion: 1.3.0
         visibility: admin
         capabilities:
           - shopping
@@ -70,7 +70,7 @@ class FileSystemSkillCatalogTest {
     assertThat(skill.recommendedTools()).containsExactly("addItem", "listItems");
     assertThat(skill.policyConstraints()).containsExactly("household");
     assertThat(skill.validationSteps()).containsExactly("run focused tests");
-    assertThat(skill.seaApiVersion()).isEqualTo("1.3.0");
+    assertThat(skill.zalavaApiVersion()).isEqualTo("1.3.0");
     assertThat(skill.visibility()).isEqualTo(SkillVisibility.ADMIN);
   }
 

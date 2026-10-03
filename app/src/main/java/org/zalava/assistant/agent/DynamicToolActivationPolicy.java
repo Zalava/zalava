@@ -10,7 +10,7 @@ import org.zalava.identity.accounts.domain.AccountRole;
 
 public final class DynamicToolActivationPolicy {
 
-  private static final String SEA_BACKED = "sea_backed";
+  private static final String ZALAVA_BACKED = "zalava_backed";
   private static final Set<String> BLOCKED_TAGS =
       Set.of(
           "legacy",
@@ -35,8 +35,8 @@ public final class DynamicToolActivationPolicy {
     List<String> rejections = new ArrayList<>();
     List<String> notes = new ArrayList<>();
 
-    if (!combinedTags.contains(SEA_BACKED)) {
-      rejections.add("missing SEA-backed trust marker");
+    if (!combinedTags.contains(ZALAVA_BACKED)) {
+      rejections.add("missing Zalava-backed trust marker");
     }
     List<String> blocked = combinedTags.stream().filter(BLOCKED_TAGS::contains).sorted().toList();
     if (!blocked.isEmpty()) {
@@ -50,7 +50,7 @@ public final class DynamicToolActivationPolicy {
     }
     notes.add("permission boundary: provider=" + match.providerId());
     notes.add("compatibility boundary: provider-scoped callback");
-    notes.add("integrity boundary: SEA-backed installed provider metadata");
+    notes.add("integrity boundary: Zalava-backed installed provider metadata");
     notes.add("audit boundary: ProviderToolOperations observation");
     if (match.sideEffecting()) {
       notes.add("approval boundary: side-effecting calls require execution approval");

@@ -170,7 +170,7 @@ class DevelopmentCandidateValidationGatewayTest {
         new ModuleDevelopmentContract.OperationalRequirements(
             1_000L, 10_000L, false, List.of(), false, false, "25"),
         new ModuleDevelopmentContract.DeliveryRequirements(
-            "sea-module",
+            "zalava-module",
             "example-*.jar",
             "1",
             false,

@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.zalava.identity.accounts.domain.Actor;
 
-/** An owner-scoped file reference attached through the SEA conversation surface. */
+/** An owner-scoped file reference attached through the Zalava conversation surface. */
 public record ChatAttachment(
     String id,
     Actor owner,

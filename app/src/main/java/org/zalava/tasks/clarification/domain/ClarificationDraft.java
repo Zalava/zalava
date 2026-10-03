@@ -2,7 +2,7 @@ package org.zalava.tasks.clarification.domain;
 
 import java.util.List;
 
-/** Bounded model-supplied draft that SEA validates before persisting a clarification request. */
+/** Bounded model-supplied draft that Zalava validates before persisting a clarification request. */
 public record ClarificationDraft(String prompt, List<Question> questions) {
 
   public ClarificationDraft {

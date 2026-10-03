@@ -6,7 +6,7 @@ import org.zalava.api.extensions.channels.IncomingInteraction;
 import org.zalava.api.extensions.channels.ZalavaChannel;
 import org.zalava.assistant.channels.runtime.domain.ChannelIngressResult;
 
-/** SEA-owned registry and routing boundary for module-provided channels. */
+/** Zalava-owned registry and routing boundary for module-provided channels. */
 public interface ChannelRuntime extends AutoCloseable {
   void register(ZalavaChannel channel);
 

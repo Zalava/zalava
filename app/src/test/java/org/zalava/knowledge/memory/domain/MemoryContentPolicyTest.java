@@ -12,7 +12,8 @@ class MemoryContentPolicyTest {
     assertThatCode(() -> MemoryContentPolicy.validate(MemoryScope.USER, "Prefers concise answers"))
         .doesNotThrowAnyException();
     assertThatCode(
-            () -> MemoryContentPolicy.validate(MemoryScope.PROJECT, "SEA uses provider instances"))
+            () ->
+                MemoryContentPolicy.validate(MemoryScope.PROJECT, "Zalava uses provider instances"))
         .doesNotThrowAnyException();
   }
 

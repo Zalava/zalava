@@ -27,7 +27,7 @@ public final class FileSystemClarificationRequestStore implements ClarificationS
       directory = workspace.resolve("clarification-requests");
       Files.createDirectories(directory);
     } catch (IOException ex) {
-      throw new IllegalStateException("Unable to create SEA clarification request store", ex);
+      throw new IllegalStateException("Unable to create Zalava clarification request store", ex);
     }
   }
 
@@ -40,7 +40,7 @@ public final class FileSystemClarificationRequestStore implements ClarificationS
           .sorted(Comparator.comparing(ClarificationRequest::createdAt).reversed())
           .toList();
     } catch (IOException ex) {
-      throw new IllegalStateException("Unable to load SEA clarification requests", ex);
+      throw new IllegalStateException("Unable to load Zalava clarification requests", ex);
     }
   }
 
@@ -58,7 +58,7 @@ public final class FileSystemClarificationRequestStore implements ClarificationS
       }
     } catch (IOException ex) {
       throw new IllegalStateException(
-          "Unable to persist SEA clarification request: " + request.requestId(), ex);
+          "Unable to persist Zalava clarification request: " + request.requestId(), ex);
     } finally {
       try {
         Files.deleteIfExists(temporary);
@@ -73,7 +73,7 @@ public final class FileSystemClarificationRequestStore implements ClarificationS
       Files.deleteIfExists(path(requestId));
     } catch (IOException ex) {
       throw new IllegalStateException(
-          "Unable to delete SEA clarification request: " + requestId, ex);
+          "Unable to delete Zalava clarification request: " + requestId, ex);
     }
   }
 
@@ -81,7 +81,7 @@ public final class FileSystemClarificationRequestStore implements ClarificationS
     try {
       return JSON.readValue(path.toFile(), ClarificationRequest.class);
     } catch (RuntimeException ex) {
-      throw new IllegalStateException("Unable to read SEA clarification request: " + path, ex);
+      throw new IllegalStateException("Unable to read Zalava clarification request: " + path, ex);
     }
   }
 
@@ -89,7 +89,7 @@ public final class FileSystemClarificationRequestStore implements ClarificationS
     try {
       UUID.fromString(requestId);
     } catch (IllegalArgumentException exception) {
-      throw new IllegalArgumentException("Invalid SEA clarification request id", exception);
+      throw new IllegalArgumentException("Invalid Zalava clarification request id", exception);
     }
     return directory.resolve(requestId + ".json");
   }

@@ -58,7 +58,7 @@ class ChatWebSocketStreamingComponentTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");

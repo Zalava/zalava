@@ -26,7 +26,7 @@ class FileSystemLocalArtifactInstallRequestStoreTest {
         "Test Module",
         "A test module",
         URI.create("https://example.com/support"),
-        new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0"),
+        new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0"),
         new SourceModuleIndex.Source(URI.create("https://github.com/test"), "MIT"),
         new SourceModuleIndex.Build(List.of("echo ok"), List.of("echo verify")),
         new SourceModuleIndex.Compatibility(">=1.0.0"),

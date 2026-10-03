@@ -9,7 +9,7 @@ import java.util.Objects;
  *
  * <p>Activation captures the validated, bounded content and the descriptor version it was selected
  * from, so the selection is auditable and can be rolled back by deactivation. Activation grants no
- * tool, scope or permission: it only records that a SEA-owned, policy-checked skill body may be
+ * tool, scope or permission: it only records that a Zalava-owned, policy-checked skill body may be
  * offered to the owning actor's agent context as untrusted instructions.
  */
 public record SkillActivation(

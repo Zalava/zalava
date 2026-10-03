@@ -8,7 +8,7 @@ import org.zalava.identity.channels.domain.ChannelIdentityLink;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 
-/** SEA-owned authority boundary used by channel ingress before any work starts. */
+/** Zalava-owned authority boundary used by channel ingress before any work starts. */
 public interface ChannelIdentityLinks {
   ChannelIdentityLink link(
       Actor owner, ExternalChannelIdentity identity, ChannelOperationScope scope);

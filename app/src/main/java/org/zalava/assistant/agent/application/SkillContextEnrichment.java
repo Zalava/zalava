@@ -11,7 +11,7 @@ import org.zalava.knowledge.skills.domain.SkillActivation;
  *
  * <p>It owns no actor input and cannot widen the activation decision made by {@link
  * SkillActivations}: it merely renders already-validated bodies under an untrusted heading. A skill
- * body can never add a tool, grant a permission or override SEA authority.
+ * body can never add a tool, grant a permission or override Zalava authority.
  */
 public final class SkillContextEnrichment {
 

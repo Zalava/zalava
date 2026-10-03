@@ -28,7 +28,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.SeaComponentTestConfiguration;
+import org.zalava.support.ZalavaComponentTestConfiguration;
 
 /**
  * Real-browser acceptance for the product navigation shell. It proves the same navigation appears
@@ -38,7 +38,7 @@ import org.zalava.support.SeaComponentTestConfiguration;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import({
-  SeaComponentTestConfiguration.class,
+  ZalavaComponentTestConfiguration.class,
   BrowserNavigationAcceptanceTest.AccountConfiguration.class
 })
 class BrowserNavigationAcceptanceTest {
@@ -75,9 +75,9 @@ class BrowserNavigationAcceptanceTest {
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> ADMIN_LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> ADMIN_PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> ADMIN_LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> ADMIN_PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -101,9 +101,9 @@ class BrowserNavigationAcceptanceTest {
         for (Map.Entry<String, String> pageEntry : PAGES.entrySet()) {
           var response = page.navigate(baseUrl() + pageEntry.getKey());
           assertThat(response.status()).isEqualTo(200);
-          page.locator(".sea-navbar").waitFor();
+          page.locator(".zalava-navbar").waitFor();
           assertThat(menuLabels(page)).containsExactlyElementsOf(ADMIN_MENU);
-          assertThat(page.locator(".sea-navbar .navbar-item.is-active").innerText().trim())
+          assertThat(page.locator(".zalava-navbar .navbar-item.is-active").innerText().trim())
               .isEqualTo(pageEntry.getValue());
         }
         for (String link : PAGES.keySet()) {
@@ -111,7 +111,7 @@ class BrowserNavigationAcceptanceTest {
         }
 
         page.navigate(baseUrl() + "/chat");
-        page.locator(".sea-navbar").waitFor();
+        page.locator(".zalava-navbar").waitFor();
         page.getByText("Connected").waitFor();
         assertThat(page.locator("#root").count()).isEqualTo(1);
       } finally {
@@ -152,20 +152,21 @@ class BrowserNavigationAcceptanceTest {
           List.of(new int[] {390, 844}, new int[] {768, 1024}, new int[] {1366, 768})) {
         page.setViewportSize(viewport[0], viewport[1]);
         assertThat(page.navigate(baseUrl() + "/dashboard").status()).isEqualTo(200);
-        page.locator(".sea-navbar").waitFor();
+        page.locator(".zalava-navbar").waitFor();
         if (viewport[0] <= 640) {
           page.locator(".navbar-burger").focus();
           page.keyboard().press("Enter");
-          page.locator(".sea-navigation-close")
+          page.locator(".zalava-navigation-close")
               .waitFor(
                   new com.microsoft.playwright.Locator.WaitForOptions()
                       .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
           page.keyboard().press("Tab");
-          page.waitForFunction("document.activeElement.classList.contains('sea-navigation-close')");
+          page.waitForFunction(
+              "document.activeElement.classList.contains('zalava-navigation-close')");
           assertThat(
                   (Boolean)
                       page.evaluate(
-                          "document.activeElement.classList.contains('sea-navigation-close')"))
+                          "document.activeElement.classList.contains('zalava-navigation-close')"))
               .isTrue();
           var modules =
               page.getByRole(
@@ -199,12 +200,12 @@ class BrowserNavigationAcceptanceTest {
       page.setViewportSize(1366, 768);
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
       assertThat(page.navigate(baseUrl() + "/dashboard").status()).isEqualTo(200);
-      page.locator(".sea-navbar").waitFor();
+      page.locator(".zalava-navbar").waitFor();
       // PNG byte hashes also encode OS font rendering. Keep the image for visual review
       // and verify the reviewed layout independently of native glyph rasterization.
       page.screenshot(
           new Page.ScreenshotOptions().setPath(DIAGNOSTICS.resolve("dashboard-expanded.png")));
-      var sidebar = page.locator(".sea-navbar").boundingBox();
+      var sidebar = page.locator(".zalava-navbar").boundingBox();
       var content = page.locator("main").boundingBox();
       assertThat(sidebar.x).isZero();
       assertThat(sidebar.y).isZero();
@@ -230,8 +231,8 @@ class BrowserNavigationAcceptanceTest {
       assertThat(page.locator("a[aria-current='page']").innerText()).isEqualTo("Dashboard");
       page.route("**/bulma.min.css", route -> route.abort());
       page.reload();
-      page.locator(".sea-navbar").waitFor();
-      assertThat(page.locator(".sea-navbar").boundingBox().width).isEqualTo(240);
+      page.locator(".zalava-navbar").waitFor();
+      assertThat(page.locator(".zalava-navbar").boundingBox().width).isEqualTo(240);
       assertThat(page.locator("main").boundingBox().x).isEqualTo(240);
     }
   }
@@ -249,7 +250,7 @@ class BrowserNavigationAcceptanceTest {
         for (String path : List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/memory")) {
           var response = page.navigate(baseUrl() + path);
           assertThat(response.status()).isEqualTo(200);
-          page.locator(".sea-navbar").waitFor();
+          page.locator(".zalava-navbar").waitFor();
           assertThat(menuLabels(page)).containsExactlyElementsOf(MEMBER_MENU);
         }
         for (String hidden : MEMBER_HIDDEN) {
@@ -262,7 +263,7 @@ class BrowserNavigationAcceptanceTest {
   }
 
   private List<String> menuLabels(Page page) {
-    return page.locator(".sea-navbar .navbar-start a").allTextContents();
+    return page.locator(".zalava-navbar .navbar-start a").allTextContents();
   }
 
   private void startTrace(BrowserContext context) {
@@ -308,7 +309,7 @@ class BrowserNavigationAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-navigation-");
+      Path root = Files.createTempDirectory("zalava-browser-navigation-");
       Files.writeString(root.resolve("AGENT.md"), "Browser navigation acceptance workspace.");
       return root;
     } catch (IOException exception) {

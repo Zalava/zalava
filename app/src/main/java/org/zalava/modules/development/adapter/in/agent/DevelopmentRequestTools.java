@@ -37,7 +37,7 @@ public final class DevelopmentRequestTools {
   @Tool(
       name = "createModuleDevelopmentRequest",
       description =
-          "Creates SEA's authoritative external-module development request from a structured complete contract. Gather unresolved product decisions before calling it. If the user supplied an external workspace, use the returned requestId to call exportModuleDevelopmentWorkspace next. SEA does not start Codex or create a repository.")
+          "Creates Zalava's authoritative external-module development request from a structured complete contract. Gather unresolved product decisions before calling it. If the user supplied an external workspace, use the returned requestId to call exportModuleDevelopmentWorkspace next. Zalava does not start Codex or create a repository.")
   public String create(
       @ToolParam(
               description =
@@ -52,7 +52,7 @@ public final class DevelopmentRequestTools {
       description =
           "Revises the authoritative structured contract after candidate feedback. It never changes user files in an exported workspace.")
   public String revise(
-      @ToolParam(description = "SEA development request id") String requestId,
+      @ToolParam(description = "Zalava development request id") String requestId,
       @ToolParam(description = "Complete replacement structured module development contract")
           ModuleDevelopmentContract contract,
       @ToolParam(description = "Reason for this revision") String reason) {
@@ -65,9 +65,9 @@ public final class DevelopmentRequestTools {
   @Tool(
       name = "exportModuleDevelopmentWorkspace",
       description =
-          "Exports SEA-owned request material to an explicit user-selected directory. It never overwrites implementation files outside .sea-request. After success, call beginModuleDevelopment before relaying the returned workspace path, Codex command, and initial prompt to the user; SEA never launches or monitors Codex.")
+          "Exports Zalava-owned request material to an explicit user-selected directory. It never overwrites implementation files outside .zalava-request. After success, call beginModuleDevelopment before relaying the returned workspace path, Codex command, and initial prompt to the user; Zalava never launches or monitors Codex.")
   public String export(
-      @ToolParam(description = "SEA development request id") String requestId,
+      @ToolParam(description = "Zalava development request id") String requestId,
       @ToolParam(description = "Explicit external workspace directory") String workspaceRoot) {
     DevelopmentWorkspace workspace =
         workspaces.export(id(requestId), required(workspaceRoot, "workspaceRoot", MAX_PATH_LENGTH));
@@ -78,7 +78,7 @@ public final class DevelopmentRequestTools {
             "workspacePath", workspace.root(),
             "files", workspace.sha256().keySet().stream().sorted().toList(),
             "codexCommand", "cd " + workspace.root() + " && codex",
-            "initialPrompt", "Read .sea-request/CODEX_TASK.md and begin the implementation.",
+            "initialPrompt", "Read .zalava-request/CODEX_TASK.md and begin the implementation.",
             "nextSteps",
                 java.util.List.of(
                     "Open a terminal in the exported workspace.",
@@ -90,7 +90,7 @@ public final class DevelopmentRequestTools {
       name = "beginModuleDevelopment",
       description =
           "Explicitly records that the user is beginning manual development after export. It transitions only an EXPORTED request to IN_DEVELOPMENT, which permits later candidate submission. It never launches Codex, submits a candidate, installs, or activates a module.")
-  public String begin(@ToolParam(description = "SEA development request id") String requestId) {
+  public String begin(@ToolParam(description = "Zalava development request id") String requestId) {
     return json(
         summary(requests.transition(id(requestId), DevelopmentRequestStatus.IN_DEVELOPMENT)));
   }
@@ -100,7 +100,7 @@ public final class DevelopmentRequestTools {
       description =
           "Submits one trusted local module JAR for bounded evaluation. A result still requires a separate installation approval; this tool never installs or activates a module.")
   public String submit(
-      @ToolParam(description = "SEA development request id") String requestId,
+      @ToolParam(description = "Zalava development request id") String requestId,
       @ToolParam(description = "Trusted local candidate JAR path") String artifactPath) {
     return json(
         summary(
@@ -112,7 +112,8 @@ public final class DevelopmentRequestTools {
       name = "inspectModuleDevelopmentRequest",
       description =
           "Returns bounded request revision and candidate evaluation evidence, including the explicit installation-approval handoff.")
-  public String inspect(@ToolParam(description = "SEA development request id") String requestId) {
+  public String inspect(
+      @ToolParam(description = "Zalava development request id") String requestId) {
     return json(summary(requests.get(id(requestId))));
   }
 

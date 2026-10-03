@@ -26,11 +26,11 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
   public List<ToolMatch> search(String query, int maxResults) {
     String normalizedQuery = normalize(query);
     if (normalizedQuery.isBlank()) {
-      throw new IllegalArgumentException("SEA tool search query must not be blank");
+      throw new IllegalArgumentException("Zalava tool search query must not be blank");
     }
     if (maxResults < 1 || maxResults > MAX_RESULTS) {
       throw new IllegalArgumentException(
-          "SEA tool search maxResults must be between 1 and " + MAX_RESULTS);
+          "Zalava tool search maxResults must be between 1 and " + MAX_RESULTS);
     }
 
     List<String> queryTerms = Arrays.stream(normalizedQuery.split(" ")).distinct().toList();
@@ -65,10 +65,10 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
         providerCatalog
             .findProvider(providerId)
             .orElseThrow(
-                () -> new IllegalArgumentException("SEA provider not found: " + providerId));
+                () -> new IllegalArgumentException("Zalava provider not found: " + providerId));
     if (!searchable(provider)) {
       throw new IllegalArgumentException(
-          "SEA provider is not available for tool discovery: " + providerId);
+          "Zalava provider is not available for tool discovery: " + providerId);
     }
     ZalavaToolDescriptor tool =
         provider.listTools().stream()
@@ -77,7 +77,7 @@ public final class DefaultInstalledToolDiscovery implements ToolDiscovery {
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
-                        "SEA tool not found: " + providerId + ":" + toolName));
+                        "Zalava tool not found: " + providerId + ":" + toolName));
     ProviderDescriptor descriptor = provider.descriptor();
     return new ToolDefinition(
         descriptor.providerId(),

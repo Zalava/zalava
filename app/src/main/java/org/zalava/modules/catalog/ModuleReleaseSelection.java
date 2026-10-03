@@ -48,7 +48,7 @@ public final class ModuleReleaseSelection {
             release.artifact().version()),
         new SourceModuleIndex.Source(release.source().repository(), release.source().license()),
         new SourceModuleIndex.Build(List.of(), List.of()),
-        new SourceModuleIndex.Compatibility(release.compatibility().seaRuntime()),
+        new SourceModuleIndex.Compatibility(release.compatibility().zalavaRuntime()),
         Map.of(),
         List.of(),
         List.of(),

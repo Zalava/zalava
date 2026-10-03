@@ -69,9 +69,9 @@ public class ChatHtml {
                           hx-vals='js:{"type": "userMessage", "conversationId": document.getElementById("channel-select") ? document.getElementById("channel-select").value : "web"}'>
                         <div class="field is-grouped chat-input-group">
                             <div class="control is-expanded">
-                                <label class="is-sr-only" for="message-input">Message SEA</label>
+                                <label class="is-sr-only" for="message-input">Message Zalava</label>
                                 <textarea id="message-input" class="textarea" name="message" rows="1"
-                                    placeholder="Message SEA..."
+                                    placeholder="Message Zalava..."
                                     autocomplete="off" spellcheck="true" autofocus></textarea>
                             </div>
                             <div class="control">

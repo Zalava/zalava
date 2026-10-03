@@ -29,7 +29,7 @@ public final class MemberProviderCapabilityPolicy {
             .map(value -> value.strip().toLowerCase(Locale.ROOT))
             .collect(java.util.stream.Collectors.toUnmodifiableSet());
     boolean allowed =
-        tags.contains("sea_backed")
+        tags.contains("zalava_backed")
             && tags.contains(MEMBER_SAFE)
             && provider.descriptor().scope() != null
             && !provider.descriptor().scope().isEmpty()

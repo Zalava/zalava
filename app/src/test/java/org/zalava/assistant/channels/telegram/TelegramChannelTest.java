@@ -207,10 +207,10 @@ class TelegramChannelTest {
   void handlesApprovalCommandWithoutCallingAgent() throws TelegramApiException {
     ChannelApprovalCommands approvalCommands = mock(ChannelApprovalCommands.class);
     TelegramChannel channel = channelWithApprovalCommands("allowed_user", approvalCommands);
-    when(approvalCommands.handle("/sea approve approval-123"))
+    when(approvalCommands.handle("/zalava approve approval-123"))
         .thenReturn(Optional.of("Approval granted once for filesystem-workspace/writeFile."));
 
-    channel.consume(updateFrom("allowed_user", "/sea approve approval-123", 42L, 567));
+    channel.consume(updateFrom("allowed_user", "/zalava approve approval-123", 42L, 567));
 
     verify(agent, never()).respondTo(anyString(), anyString());
     verify(telegramClient)

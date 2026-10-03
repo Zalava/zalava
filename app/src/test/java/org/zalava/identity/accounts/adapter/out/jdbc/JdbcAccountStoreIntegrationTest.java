@@ -32,9 +32,9 @@ class JdbcAccountStoreIntegrationTest {
     registry.add("agent.workspace", () -> DATABASE_PATH.getParent().toUri().toString());
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> "integration-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "IntegrationPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> "integration-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "IntegrationPassword-123");
   }
 
   @Test
@@ -119,7 +119,7 @@ class JdbcAccountStoreIntegrationTest {
       Path directory = Files.createTempDirectory("jdbc-account-store-integration-");
       Files.writeString(directory.resolve("AGENT.md"), "Integration test agent prompt.");
       Files.writeString(directory.resolve("INFO.md"), "Integration test environment info.");
-      return directory.resolve("sea");
+      return directory.resolve("zalava");
     } catch (IOException exception) {
       throw new ExceptionInInitializerError(exception);
     }

@@ -11,7 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
@@ -28,14 +28,14 @@ public class DashboardController {
   private static final DateTimeFormatter ACTIVITY_TIME = DateTimeFormatter.ofPattern("HH:mm");
 
   private final TaskQueries taskQueries;
-  private final SeaToolApprovalRequests approvalRequests;
+  private final ZalavaToolApprovalRequests approvalRequests;
   private final ActorTaskCommands actorTasks;
   private final AuthenticatedActorResolver actors;
   private final org.zalava.tasks.application.port.in.ActorJobEvidenceQueries evidenceQueries;
 
   public DashboardController(
       TaskQueries taskQueries,
-      SeaToolApprovalRequests approvalRequests,
+      ZalavaToolApprovalRequests approvalRequests,
       ActorTaskCommands actorTasks,
       AuthenticatedActorResolver actors,
       org.zalava.tasks.application.port.in.ActorJobEvidenceQueries evidenceQueries) {
@@ -104,12 +104,12 @@ public class DashboardController {
 
   private List<ApprovalEntry> pendingApprovals(Actor actor) {
     return approvalRequests.recentActorTaskEntries(actor).stream()
-        .filter(entry -> entry.decision() == SeaToolApprovalRequests.Decision.PENDING)
+        .filter(entry -> entry.decision() == ZalavaToolApprovalRequests.Decision.PENDING)
         .map(
             entry -> {
               var reference =
                   ActorTaskExecutionReference.parse(
-                          entry.attributes().get(SeaToolApprovalRequests.ACTOR_TASK_REFERENCE))
+                          entry.attributes().get(ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE))
                       .taskReference();
               return new ApprovalEntry(
                   entry.toolName(), entry.providerId(), "/jobs/" + reference.value());
@@ -120,7 +120,7 @@ public class DashboardController {
   private List<ApprovalEntry> pendingApprovals() {
     List<ApprovalEntry> approvals = new ArrayList<>();
     approvalRequests.recentEntries().stream()
-        .filter(entry -> entry.decision() == SeaToolApprovalRequests.Decision.PENDING)
+        .filter(entry -> entry.decision() == ZalavaToolApprovalRequests.Decision.PENDING)
         .filter(entry -> entry.taskReference() != null)
         .forEach(
             entry ->
@@ -163,8 +163,8 @@ public class DashboardController {
 
   private static String currentWorkDetail(Task.Status status) {
     return switch (status) {
-      case in_progress -> "SEA is working on this job now.";
-      case awaiting_human_input -> "SEA needs your input before this job can continue.";
+      case in_progress -> "Zalava is working on this job now.";
+      case awaiting_human_input -> "Zalava needs your input before this job can continue.";
       case todo, completed, cancelled, failed -> "";
     };
   }

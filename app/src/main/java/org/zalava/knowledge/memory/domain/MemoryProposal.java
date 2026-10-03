@@ -9,9 +9,9 @@ import java.util.Objects;
  * A reviewable proposal to promote model-originated content into durable memory.
  *
  * <p>The model can only create a {@link Status#PENDING} proposal. Promotion into an actor-owned
- * {@link Memory} requires an explicit owner approval through the SEA surface; the proposal records
- * its provenance, review history and the resulting memory identity so approval, rejection and
- * revocation stay auditable and survive a restart.
+ * {@link Memory} requires an explicit owner approval through the Zalava surface; the proposal
+ * records its provenance, review history and the resulting memory identity so approval, rejection
+ * and revocation stay auditable and survive a restart.
  */
 public record MemoryProposal(
     String id,

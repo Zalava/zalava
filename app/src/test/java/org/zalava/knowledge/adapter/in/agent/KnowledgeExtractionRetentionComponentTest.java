@@ -29,14 +29,14 @@ import org.zalava.knowledge.domain.KnowledgeDerivation;
 import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
 import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 
 /**
- * Full-context MockMvc component test for the SEA-owned knowledge lifecycle retention seam: an
+ * Full-context MockMvc component test for the Zalava-owned knowledge lifecycle retention seam: an
  * OCR-derived source keeps its active derivation, citation identity and actor authorization when a
  * later bounded extraction fails, is shared, is revoked and is confirmed-deleted.
  */
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 class KnowledgeExtractionRetentionComponentTest {
   @Autowired MockMvc mvc;
   @Autowired AccountLifecycle accounts;

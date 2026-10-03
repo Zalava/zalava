@@ -9,7 +9,7 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 
-/** Resolves the current authenticated principal to SEA's application-owned actor identity. */
+/** Resolves the current authenticated principal to Zalava's application-owned actor identity. */
 @Component
 public final class AuthenticatedActorResolver {
   private final AccountLifecycle accounts;

@@ -73,7 +73,7 @@ class DefaultModuleManagedServiceInstallationTest {
         "1.0.0",
         ManagedServiceLifecycle.RUNNING,
         Set.of(),
-        Set.of("/var/lib/sea/managed/declared"),
+        Set.of("/var/lib/zalava/managed/declared"),
         Set.of(9000),
         Set.of(),
         new ManagedServiceLimits(500, 268_435_456, 64),

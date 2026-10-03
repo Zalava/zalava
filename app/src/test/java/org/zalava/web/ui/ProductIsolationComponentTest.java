@@ -27,19 +27,19 @@ import org.zalava.api.ProviderCapabilities;
 import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 import tools.jackson.databind.node.JsonNodeFactory;
 
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 @ResourceLock("secure-component-runtime")
 class ProductIsolationComponentTest {
   private static final AtomicInteger LOGINS = new AtomicInteger();
@@ -47,7 +47,7 @@ class ProductIsolationComponentTest {
   @Autowired MockMvc mockMvc;
   @Autowired AccountLifecycle accounts;
   @Autowired ActorTaskStore tasks;
-  @Autowired SeaToolApprovalRequests approvals;
+  @Autowired ZalavaToolApprovalRequests approvals;
 
   @Test
   void productRoutesRequireAuthenticationAndPermitPersistedMembers() throws Exception {
@@ -114,7 +114,7 @@ class ProductIsolationComponentTest {
                 Map.of(
                     "accountRole",
                     "MEMBER",
-                    SeaToolApprovalRequests.ACTOR_TASK_REFERENCE,
+                    ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE,
                     execution.encode())),
             JsonNodeFactory.instance.objectNode());
 
@@ -172,7 +172,7 @@ class ProductIsolationComponentTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     when(provider.descriptor()).thenReturn(descriptor);
     return provider;

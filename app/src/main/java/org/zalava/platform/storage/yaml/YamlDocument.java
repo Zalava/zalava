@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * SEA's immutable representation of one persisted text document.
+ * Zalava's immutable representation of one persisted text document.
  *
  * <p>The parser owns the delimiter syntax. This type only protects callers from mutable metadata
  * crossing persistence boundaries.

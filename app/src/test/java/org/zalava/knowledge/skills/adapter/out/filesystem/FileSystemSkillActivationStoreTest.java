@@ -63,6 +63,6 @@ class FileSystemSkillActivationStoreTest {
 
     assertThatThrownBy(() -> store.find(actor, "../escape"))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid SEA skill name");
+        .hasMessage("Invalid Zalava skill name");
   }
 }

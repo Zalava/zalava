@@ -7,6 +7,6 @@ final class ProviderEnabledComponentTestInitializer
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
   @Override
   public void initialize(ConfigurableApplicationContext context) {
-    SeaComponentTestInitializer.initialize(context, false, true);
+    ZalavaComponentTestInitializer.initialize(context, false, true);
   }
 }

@@ -42,8 +42,8 @@ class JobEvidenceControllerComponentTest {
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> "job-evidence-component-admin");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "job-evidence-component-admin");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");

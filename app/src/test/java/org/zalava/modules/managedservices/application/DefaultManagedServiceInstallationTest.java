@@ -201,7 +201,7 @@ class DefaultManagedServiceInstallationTest {
         revision,
         ManagedServiceLifecycle.RUNNING,
         Set.of(),
-        Set.of("/var/lib/sea/managed/" + serviceId),
+        Set.of("/var/lib/zalava/managed/" + serviceId),
         Set.of(),
         Set.of(),
         new ManagedServiceLimits(1_000, 10, 1),
@@ -213,7 +213,7 @@ class DefaultManagedServiceInstallationTest {
     return new ManagedServiceResourceGrant(
         moduleId,
         Set.of(),
-        Set.of("/var/lib/sea/managed/" + serviceId),
+        Set.of("/var/lib/zalava/managed/" + serviceId),
         Set.of(),
         Set.of(),
         new ManagedServiceLimits(1_000, 10, 1),

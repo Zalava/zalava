@@ -34,7 +34,7 @@ class AgentRequestToolSelectorTest {
                     "tool",
                     "description",
                     true,
-                    List.of("sea_backed"),
+                    List.of("zalava_backed"),
                     Map.of("scope", "value"))),
             List.of(
                 new AgentRequestTools.ToolDefinitionSummary(
@@ -42,7 +42,7 @@ class AgentRequestToolSelectorTest {
                     "tool",
                     "description",
                     true,
-                    List.of("sea_backed"),
+                    List.of("zalava_backed"),
                     Map.of("scope", "value"),
                     Map.of("type", "object"),
                     false)));
@@ -70,7 +70,7 @@ class AgentRequestToolSelectorTest {
               assertThat(summary.toolName()).isEqualTo("tool");
               assertThat(summary.description()).isEqualTo("description");
               assertThat(summary.sideEffecting()).isTrue();
-              assertThat(summary.policyTags()).containsExactly("sea_backed");
+              assertThat(summary.policyTags()).containsExactly("zalava_backed");
               assertThat(summary.scope()).containsEntry("scope", "value");
             });
     assertThat(result.toolDefinitions())

@@ -44,13 +44,13 @@ import reactor.core.publisher.Flux;
 /**
  * Real-composition scripted acceptance for the merged CTX-STRUCT-01 structured-output path.
  *
- * <p>Only the provider {@link ChatModel} is scripted. SEA's real {@link SpringAiAgentModel}, {@link
- * ModelBoundaryAgentModel}, {@link DefaultAgentExecution} and {@link FileSystemAgentRunRecorder}
- * run unchanged, together with Spring AI's real {@code StructuredOutputValidationAdvisor} and
- * {@code ChatModelCallAdvisor}. This drives the schema validation, the two retry attempts, attempt
- * counting and run evidence through actual advisor composition rather than a mocked advisor
- * configuration. It is excluded from {@code :app:check} and runs through {@code
- * structuredOutputAcceptanceTest}.
+ * <p>Only the provider {@link ChatModel} is scripted. Zalava's real {@link SpringAiAgentModel},
+ * {@link ModelBoundaryAgentModel}, {@link DefaultAgentExecution} and {@link
+ * FileSystemAgentRunRecorder} run unchanged, together with Spring AI's real {@code
+ * StructuredOutputValidationAdvisor} and {@code ChatModelCallAdvisor}. This drives the schema
+ * validation, the two retry attempts, attempt counting and run evidence through actual advisor
+ * composition rather than a mocked advisor configuration. It is excluded from {@code :app:check}
+ * and runs through {@code structuredOutputAcceptanceTest}.
  */
 @Tag("structured-output-acceptance")
 class StructuredOutputAcceptanceTest {

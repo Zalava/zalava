@@ -39,7 +39,7 @@ class ChannelTaskNotifierTest {
   }
 
   @Test
-  void sendsSeaApprovalPromptToLatestChannel() {
+  void sendsZalavaApprovalPromptToLatestChannel() {
     ChannelRegistry channelRegistry = mock(ChannelRegistry.class);
     Channel channel = mock(Channel.class);
     when(channelRegistry.getLatestChannel()).thenReturn(channel);
@@ -49,26 +49,26 @@ class ChannelTaskNotifierTest {
         "Release",
         Task.Status.awaiting_human_input,
         """
-                SEA is waiting for your approval before continuing this job.
+                Zalava is waiting for your approval before continuing this job.
 
                 Request approval-123
-                SEA requests approval to run publish on provider release-provider for actor telegram-42.
-                Allow once: /sea approve approval-123
-                Always allow tool: /sea always-allow-tool approval-123
-                Deny: /sea deny approval-123
+                Zalava requests approval to run publish on provider release-provider for actor telegram-42.
+                Allow once: /zalava approve approval-123
+                Always allow tool: /zalava always-allow-tool approval-123
+                Deny: /zalava deny approval-123
                 """);
 
     verify(channel)
         .sendMessage(
             """
                 📋 Task 'Release' is waiting for your input:
-                SEA is waiting for your approval before continuing this job.
+                Zalava is waiting for your approval before continuing this job.
 
                 Request approval-123
-                SEA requests approval to run publish on provider release-provider for actor telegram-42.
-                Allow once: /sea approve approval-123
-                Always allow tool: /sea always-allow-tool approval-123
-                Deny: /sea deny approval-123
+                Zalava requests approval to run publish on provider release-provider for actor telegram-42.
+                Allow once: /zalava approve approval-123
+                Always allow tool: /zalava always-allow-tool approval-123
+                Deny: /zalava deny approval-123
                 """);
   }
 

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
-import org.zalava.knowledge.memory.application.SeaMemoryPromotions;
+import org.zalava.knowledge.memory.application.ZalavaMemoryPromotions;
 import org.zalava.knowledge.memory.application.port.in.MemoryPromotions;
 import org.zalava.knowledge.memory.domain.MemoryContentPolicy;
 import org.zalava.knowledge.memory.domain.MemoryProposal;
@@ -71,8 +71,8 @@ public final class MemoryProposalController {
     return MemoryProposalResponse.from(promotions.revoke(actors.actor(authentication), proposalId));
   }
 
-  @ExceptionHandler(SeaMemoryPromotions.NotFoundException.class)
-  ResponseEntity<Map<String, String>> notFound(SeaMemoryPromotions.NotFoundException exception) {
+  @ExceptionHandler(ZalavaMemoryPromotions.NotFoundException.class)
+  ResponseEntity<Map<String, String>> notFound(ZalavaMemoryPromotions.NotFoundException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(Map.of("error", exception.getMessage()));
   }

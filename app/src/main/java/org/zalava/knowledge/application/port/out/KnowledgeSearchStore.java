@@ -5,7 +5,7 @@ import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.SourceProcessingState;
 
-/** Native-index candidate lookup; authorization remains with the SEA application layer. */
+/** Native-index candidate lookup; authorization remains with the Zalava application layer. */
 public interface KnowledgeSearchStore {
   List<Candidate> findCandidates(SearchCriteria criteria);
 

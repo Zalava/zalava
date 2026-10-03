@@ -14,8 +14,8 @@ import org.zalava.identity.accounts.domain.AccountRole;
 
 public final class AgentRequestTools {
 
-  public static final int MAX_SEA_TOOLS = 5;
-  static final int MAX_SEA_TOOL_CANDIDATES = 20;
+  public static final int MAX_ZALAVA_TOOLS = 5;
+  static final int MAX_ZALAVA_TOOL_CANDIDATES = 20;
 
   private final List<Object> bootstrapTools;
   private final ToolDiscovery toolDiscovery;
@@ -35,7 +35,7 @@ public final class AgentRequestTools {
         toolDiscovery,
         callbackCatalog,
         new DynamicToolActivationPolicy(),
-        new SessionToolActivations(MAX_SEA_TOOLS),
+        new SessionToolActivations(MAX_ZALAVA_TOOLS),
         List.of());
   }
 
@@ -49,7 +49,7 @@ public final class AgentRequestTools {
         toolDiscovery,
         callbackCatalog,
         new DynamicToolActivationPolicy(),
-        new SessionToolActivations(MAX_SEA_TOOLS),
+        new SessionToolActivations(MAX_ZALAVA_TOOLS),
         noMatchTools);
   }
 
@@ -64,7 +64,7 @@ public final class AgentRequestTools {
         toolDiscovery,
         callbackCatalog,
         new DynamicToolActivationPolicy(),
-        new SessionToolActivations(MAX_SEA_TOOLS),
+        new SessionToolActivations(MAX_ZALAVA_TOOLS),
         noMatchTools,
         remoteDiscovery,
         new PolicyFilteredToolSearch(null, new DynamicToolActivationPolicy(), false));
@@ -82,7 +82,7 @@ public final class AgentRequestTools {
         toolDiscovery,
         callbackCatalog,
         new DynamicToolActivationPolicy(),
-        new SessionToolActivations(MAX_SEA_TOOLS),
+        new SessionToolActivations(MAX_ZALAVA_TOOLS),
         noMatchTools,
         remoteDiscovery,
         toolSearch);
@@ -98,7 +98,7 @@ public final class AgentRequestTools {
         toolDiscovery,
         callbackCatalog,
         activationPolicy,
-        new SessionToolActivations(MAX_SEA_TOOLS),
+        new SessionToolActivations(MAX_ZALAVA_TOOLS),
         List.of());
   }
 
@@ -208,15 +208,15 @@ public final class AgentRequestTools {
       sessionActivations.activatedTools(conversationId).stream()
           .filter(match -> activationPolicy.allows(match, accountRole))
           .filter(match -> selectedToolKeys.add(ToolKey.from(match)))
-          .limit(MAX_SEA_TOOLS)
+          .limit(MAX_ZALAVA_TOOLS)
           .peek(selectedMatches::add)
           .map(match -> callbackCatalog.callback(match.providerId(), match.toolName()))
           .filter(callback -> !requestTools.contains(callback))
           .forEach(requestTools::add);
     }
-    int remainingToolSlots = Math.max(0, MAX_SEA_TOOLS - selectedToolKeys.size());
+    int remainingToolSlots = Math.max(0, MAX_ZALAVA_TOOLS - selectedToolKeys.size());
     List<ToolDiscovery.ToolMatch> discoveredMatches =
-        toolDiscovery.search(input, MAX_SEA_TOOL_CANDIDATES);
+        toolDiscovery.search(input, MAX_ZALAVA_TOOL_CANDIDATES);
     List<ToolDiscovery.ToolMatch> selectionCandidates = discoveredMatches;
     if (remainingToolSlots > 0 && hasText(conversationId) && toolSearch.enabled()) {
       List<ToolDiscovery.ToolMatch> searched =

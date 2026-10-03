@@ -7,10 +7,10 @@ import java.util.Map;
 /**
  * A durable, actor-owned clarification request.
  *
- * <p>It is deliberately separate from {@code SeaToolApprovalRequests}: a clarification pauses a job
- * until the owner supplies an answer, while an approval asks the owner to permit a side-effecting
- * tool call. Model text can request a clarification but never decides it; SEA owns the typed
- * questions, choices, persistence and single-use answer.
+ * <p>It is deliberately separate from {@code ZalavaToolApprovalRequests}: a clarification pauses a
+ * job until the owner supplies an answer, while an approval asks the owner to permit a
+ * side-effecting tool call. Model text can request a clarification but never decides it; Zalava
+ * owns the typed questions, choices, persistence and single-use answer.
  */
 public record ClarificationRequest(
     String requestId,

@@ -22,22 +22,22 @@ class LeydenImageIntegrationTest {
 
   @Test
   void buildsLeydenCacheAgainstDisposablePostgresqlContainer() throws Exception {
-    String requestedImageName = System.getProperty("sea.leyden.image-name");
+    String requestedImageName = System.getProperty("zalava.leyden.image-name");
     String imageName =
-        requestedImageName == null ? "sea-leyden-test:" + UUID.randomUUID() : requestedImageName;
+        requestedImageName == null ? "zalava-leyden-test:" + UUID.randomUUID() : requestedImageName;
     String databasePassword = "leyden-" + UUID.randomUUID();
     DockerClient dockerClient = DockerClientFactory.instance().client();
 
     try (Network network = Network.newNetwork();
         PostgreSQLContainer postgres =
             new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
-                .withDatabaseName("sea_leyden")
-                .withUsername("sea_leyden")
+                .withDatabaseName("zalava_leyden")
+                .withUsername("zalava_leyden")
                 .withPassword(databasePassword)
                 .withNetwork(network)
                 .withNetworkAliases(DATABASE_ALIAS)) {
       postgres.start();
-      Path buildLog = Files.createTempFile("sea-leyden-image-", ".log");
+      Path buildLog = Files.createTempFile("zalava-leyden-image-", ".log");
       try {
         Process build =
             new ProcessBuilder(
@@ -49,7 +49,7 @@ class LeydenImageIntegrationTest {
                     "-Pleyden.training.network=" + network.getId(),
                     "-Pleyden.training.jdbc-url=jdbc:postgresql://"
                         + DATABASE_ALIAS
-                        + ":5432/sea_leyden",
+                        + ":5432/zalava_leyden",
                     "-Pleyden.training.username=" + postgres.getUsername(),
                     "-Pleyden.training.password=" + databasePassword)
                 .directory(Path.of("..").toFile())

@@ -64,7 +64,7 @@ class AgentContextAssemblerTest {
 
     assertThat(context.prompt())
         .contains("update list")
-        .contains("Selected SEA tool summaries:")
+        .contains("Selected Zalava tool summaries:")
         .contains("shopping-list/addItem")
         .contains("sideEffects=true");
     assertThat(context.sourceCount()).isEqualTo(2);
@@ -84,8 +84,8 @@ class AgentContextAssemblerTest {
                 List.of(), List.of(toolSummary()), List.of(toolDefinition())));
 
     assertThat(context.prompt())
-        .contains("Selected SEA tool summaries:")
-        .contains("Selected SEA tool definitions:")
+        .contains("Selected Zalava tool summaries:")
+        .contains("Selected Zalava tool definitions:")
         .contains("inputSchema=")
         .contains("type=object");
     assertThat(context.sourceMetrics())
@@ -106,7 +106,7 @@ class AgentContextAssemblerTest {
                     "tool",
                     "x".repeat(200),
                     false,
-                    List.of("sea_backed"),
+                    List.of("zalava_backed"),
                     java.util.Map.of())));
 
     assertThat(context.prompt()).hasSizeLessThanOrEqualTo(80);
@@ -133,7 +133,7 @@ class AgentContextAssemblerTest {
                         "tool",
                         "x".repeat(300),
                         false,
-                        List.of("sea_backed"),
+                        List.of("zalava_backed"),
                         java.util.Map.of(),
                         java.util.Map.of("type", "object", "description", "y".repeat(300)),
                         true))));
@@ -154,7 +154,7 @@ class AgentContextAssemblerTest {
                 new AgentMemory(
                     "memory-1",
                     AgentMemoryScope.PROJECT,
-                    "SEA uses draft pull requests for every scoped step.",
+                    "Zalava uses draft pull requests for every scoped step.",
                     Map.of("topic", "workflow"),
                     Instant.parse("2026-06-28T10:00:00Z"))));
     DefaultAgentContextAssembler assembler = new DefaultAgentContextAssembler(800, 3, memoryStore);
@@ -208,7 +208,7 @@ class AgentContextAssemblerTest {
         "addItem",
         "Add an item to the active list",
         true,
-        List.of("sea_backed", "shopping-list"),
+        List.of("zalava_backed", "shopping-list"),
         java.util.Map.of("list", "active"));
   }
 
@@ -218,7 +218,7 @@ class AgentContextAssemblerTest {
         "addItem",
         "Add an item to the active list",
         true,
-        List.of("sea_backed", "shopping-list"),
+        List.of("zalava_backed", "shopping-list"),
         java.util.Map.of("list", "active"),
         java.util.Map.of(
             "type",

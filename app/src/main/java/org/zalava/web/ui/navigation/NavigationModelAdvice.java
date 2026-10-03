@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @ControllerAdvice
 public final class NavigationModelAdvice {
 
-  private final SeaNavigation navigation;
+  private final ZalavaNavigation navigation;
 
-  public NavigationModelAdvice(SeaNavigation navigation) {
+  public NavigationModelAdvice(ZalavaNavigation navigation) {
     this.navigation = navigation;
   }
 

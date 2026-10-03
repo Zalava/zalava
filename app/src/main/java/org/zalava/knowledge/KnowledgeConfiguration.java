@@ -37,8 +37,8 @@ class KnowledgeConfiguration {
 
   @Bean
   ContentExtractionLimits knowledgeExtractionLimits(
-      @Value("${sea.knowledge.maximum-upload-bytes:10485760}") long maximumUploadBytes,
-      @Value("${sea.knowledge.maximum-text-characters:1000000}") int maximumTextCharacters) {
+      @Value("${zalava.knowledge.maximum-upload-bytes:10485760}") long maximumUploadBytes,
+      @Value("${zalava.knowledge.maximum-text-characters:1000000}") int maximumTextCharacters) {
     return new ContentExtractionLimits(maximumUploadBytes, maximumTextCharacters, 100, 4096, 1000);
   }
 
@@ -104,7 +104,7 @@ class KnowledgeConfiguration {
 
   @Bean
   KnowledgeBlobStore knowledgeBlobStore(
-      @Value("${sea.knowledge.managed-data-root:}") String managedDataRoot,
+      @Value("${zalava.knowledge.managed-data-root:}") String managedDataRoot,
       @Value("${agent.workspace:Unknown}") Resource workspace)
       throws java.io.IOException {
     return new FileSystemKnowledgeBlobStore(

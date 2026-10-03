@@ -17,14 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.support.MutableWorkspaceComponentTest;
-import org.zalava.support.SeaComponentTestInitializer;
+import org.zalava.support.ZalavaComponentTestInitializer;
 import org.zalava.tasks.application.port.out.TaskStore;
 import org.zalava.tasks.domain.Task;
 
 @MutableWorkspaceComponentTest
 class JobsControllerComponentTest {
 
-  private static final Path WORKSPACE = SeaComponentTestInitializer.workspacePath();
+  private static final Path WORKSPACE = ZalavaComponentTestInitializer.workspacePath();
 
   @Autowired private MockMvc mockMvc;
 

@@ -9,7 +9,7 @@ import org.zalava.assistant.channels.application.port.out.ChannelTasks;
 import org.zalava.assistant.channels.domain.ChannelApproval;
 
 public final class DefaultChannelApprovalCommands implements ChannelApprovalCommands {
-  private static final String PREFIX = "/sea";
+  private static final String PREFIX = "/zalava";
   private static final String LAST_REQUEST = "last";
 
   private final ChannelApprovalStore approvals;
@@ -28,13 +28,13 @@ public final class DefaultChannelApprovalCommands implements ChannelApprovalComm
     ParsedCommand command = parse(message).orElse(null);
     if (command == null) return Optional.empty();
     if (command.action() == Action.INVALID)
-      return Optional.of("SEA could not understand that approval command.");
+      return Optional.of("Zalava could not understand that approval command.");
     try {
       if (command.action() == Action.LIST_POLICIES) return Optional.of(policyList());
       if (command.action() == Action.REVOKE_POLICY) {
         ChannelApproval policy = approvals.revokeToolPolicy(command.requestId());
         return Optional.of(
-            "SEA revoked durable policy %s/%s (%s)."
+            "Zalava revoked durable policy %s/%s (%s)."
                 .formatted(policy.providerId(), policy.toolName(), policy.requestId()));
       }
       String requestId = resolveRequestId(command.requestId());
@@ -42,7 +42,7 @@ public final class DefaultChannelApprovalCommands implements ChannelApprovalComm
       if (!request.isTaskScoped()) return Optional.of(handleUnscoped(command.action(), request));
       if (!tasks.isAwaitingHumanInput(request.taskReference())) {
         return Optional.of(
-            "SEA cannot decide that approval because the job is not waiting for input.");
+            "Zalava cannot decide that approval because the job is not waiting for input.");
       }
       ChannelApproval decided =
           switch (command.action()) {
@@ -50,8 +50,8 @@ public final class DefaultChannelApprovalCommands implements ChannelApprovalComm
             case ALWAYS_ALLOW_TOOL -> approvals.allowTool(requestId, request.taskReference());
             case DENY -> approvals.deny(requestId, request.taskReference());
             case LIST_POLICIES, REVOKE_POLICY ->
-                throw new IllegalArgumentException("Invalid SEA approval command");
-            case INVALID -> throw new IllegalArgumentException("Invalid SEA approval command");
+                throw new IllegalArgumentException("Invalid Zalava approval command");
+            case INVALID -> throw new IllegalArgumentException("Invalid Zalava approval command");
           };
       boolean resumed = false;
       if (!approvals.recent().stream()
@@ -64,21 +64,21 @@ public final class DefaultChannelApprovalCommands implements ChannelApprovalComm
       }
       return Optional.of(response(command.action(), decided, request.taskReference(), resumed));
     } catch (NotFoundException ex) {
-      return Optional.of("SEA approval request not found: " + command.requestId());
+      return Optional.of("Zalava approval request not found: " + command.requestId());
     } catch (AlreadyDecidedException ex) {
-      return Optional.of("SEA approval request was already decided: " + command.requestId());
+      return Optional.of("Zalava approval request was already decided: " + command.requestId());
     } catch (ChannelProviderOperationException ex) {
       return Optional.of(
           switch (ex.code()) {
-            case APPROVAL_NOT_FOUND -> "SEA approval request not found: " + command.requestId();
+            case APPROVAL_NOT_FOUND -> "Zalava approval request not found: " + command.requestId();
             case APPROVAL_CONFLICT ->
-                "SEA approval request was already decided: " + command.requestId();
-            case OTHER -> "SEA could not complete that approval command: " + ex.getMessage();
+                "Zalava approval request was already decided: " + command.requestId();
+            case OTHER -> "Zalava could not complete that approval command: " + ex.getMessage();
           });
     } catch (IllegalArgumentException ex) {
-      return Optional.of("SEA could not understand that approval command.");
+      return Optional.of("Zalava could not understand that approval command.");
     } catch (RuntimeException ex) {
-      return Optional.of("SEA could not complete that approval command: " + ex.getMessage());
+      return Optional.of("Zalava could not complete that approval command: " + ex.getMessage());
     }
   }
 
@@ -93,7 +93,7 @@ public final class DefaultChannelApprovalCommands implements ChannelApprovalComm
 
   private String policyList() {
     var policies = approvals.activeToolPolicies();
-    if (policies.isEmpty()) return "SEA has no active durable tool policies.";
+    if (policies.isEmpty()) return "Zalava has no active durable tool policies.";
     String listed =
         policies.stream()
             .limit(10)
@@ -104,7 +104,7 @@ public final class DefaultChannelApprovalCommands implements ChannelApprovalComm
             .reduce((left, right) -> left + "; " + right)
             .orElseThrow();
     String suffix = policies.size() > 10 ? "; additional policies omitted" : "";
-    return "SEA active durable tool policies: " + listed + suffix;
+    return "Zalava active durable tool policies: " + listed + suffix;
   }
 
   private String handleUnscoped(Action action, ChannelApproval request) {

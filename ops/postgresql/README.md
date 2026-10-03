@@ -1,6 +1,6 @@
 # Zalava PostgreSQL runtime configuration
 
-SEA supports PostgreSQL as its database. Run PostgreSQL with a database and
+Zalava supports PostgreSQL as its database. Run PostgreSQL with a database and
 credentials supplied from the operator's secret store, then set these values in
 the user-owned Zalava environment file:
 
