@@ -2,7 +2,7 @@ package org.zalava.api.extensions.channels;
 
 import java.util.Objects;
 
-/** One deduplicable interaction submitted by a channel module to the SEA-owned Core port. */
+/** One deduplicable interaction submitted by a channel module to the Zalava-owned Core port. */
 public record IncomingInteraction(
     String interactionId,
     ExternalIdentityReference identity,

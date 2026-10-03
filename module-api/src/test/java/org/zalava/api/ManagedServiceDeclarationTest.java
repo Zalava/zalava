@@ -48,7 +48,7 @@ class ManagedServiceDeclarationTest {
         "1.0.0",
         ManagedServiceLifecycle.RUNNING,
         Set.of("home-token"),
-        Set.of("/var/lib/sea/managed/home"),
+        Set.of("/var/lib/zalava/managed/home"),
         Set.of(8123),
         Set.of(),
         new ManagedServiceLimits(1000, 1024, 10),

@@ -6,11 +6,11 @@ import java.util.Set;
 import org.zalava.api.ZalavaServiceContract;
 
 /**
- * SEA-owned typed service contract for one speech recognition provider supplied by a module.
+ * Zalava-owned typed service contract for one speech recognition provider supplied by a module.
  *
- * <p>SEA owns provider selection and scoping; a recognition provider receives only audio accepted
- * through its session, bounded by its declared capabilities. Sessions are {@link AutoCloseable};
- * the provider must release every resource on close. Contract version 1.
+ * <p>Zalava owns provider selection and scoping; a recognition provider receives only audio
+ * accepted through its session, bounded by its declared capabilities. Sessions are {@link
+ * AutoCloseable}; the provider must release every resource on close. Contract version 1.
  */
 public interface SpeechRecognition {
 

@@ -16,7 +16,7 @@ import org.zalava.api.extensions.web.ZalavaWebResponse;
 /**
  * Registers a module's web extensions and invokes their handlers with synthetic requests. It
  * asserts the exact routes a module declares and the responses its handlers return for a supplied
- * request; SEA's route parsing, security and HTTP chrome remain host-owned and are not
+ * request; Zalava's route parsing, security and HTTP chrome remain host-owned and are not
  * reimplemented.
  */
 public final class WebExtensionFixture {

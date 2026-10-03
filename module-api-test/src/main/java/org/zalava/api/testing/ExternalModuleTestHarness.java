@@ -14,7 +14,8 @@ import org.zalava.api.ModuleDescriptor;
 import org.zalava.api.ZalavaModule;
 
 /**
- * Loads an external module under SEA's isolated module classloader boundary for repository tests.
+ * Loads an external module under Zalava's isolated module classloader boundary for repository
+ * tests.
  *
  * <p>The host supplies the stable {@link ZalavaModule} API through the parent classloader. Every
  * supplied artifact is loaded only by one child loader, matching the current single-module
@@ -50,12 +51,12 @@ public final class ExternalModuleTestHarness implements AutoCloseable {
           .forEach(modules::add);
     } catch (ServiceConfigurationError | RuntimeException exception) {
       throw new ExternalModuleTestHarnessException(
-          "Unable to load external SEA module service", exception);
+          "Unable to load external Zalava module service", exception);
     }
 
     if (modules.size() != 1) {
       throw new ExternalModuleTestHarnessException(
-          "Expected exactly one external SEA module service but discovered " + modules.size());
+          "Expected exactly one external Zalava module service but discovered " + modules.size());
     }
 
     ZalavaModule module = modules.getFirst();
@@ -64,22 +65,22 @@ public final class ExternalModuleTestHarness implements AutoCloseable {
       descriptor = module.descriptor();
     } catch (LinkageError | RuntimeException exception) {
       throw new ExternalModuleTestHarnessException(
-          "Unable to read external SEA module descriptor", exception);
+          "Unable to read external Zalava module descriptor", exception);
     }
     if (descriptor == null) {
       throw new ExternalModuleTestHarnessException(
-          "External SEA module descriptor must not be null");
+          "External Zalava module descriptor must not be null");
     }
     if (!expectedModuleId.equals(descriptor.moduleId())) {
       throw new ExternalModuleTestHarnessException(
-          "Expected external SEA module "
+          "Expected external Zalava module "
               + expectedModuleId
               + " but discovered "
               + descriptor.moduleId());
     }
     if (!expectedVersion.equals(descriptor.version())) {
       throw new ExternalModuleTestHarnessException(
-          "Expected external SEA module version "
+          "Expected external Zalava module version "
               + expectedVersion
               + " but discovered "
               + descriptor.version());

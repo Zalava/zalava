@@ -46,7 +46,7 @@ class ExternalModuleTestHarnessTest {
         ExternalModuleTestHarness.load(fixture.moduleJar(), List.of())) {
       assertThatThrownBy(() -> harness.loadModule("fixture-module", "1.0.0"))
           .isInstanceOf(ExternalModuleTestHarnessException.class)
-          .hasMessage("Unable to read external SEA module descriptor")
+          .hasMessage("Unable to read external Zalava module descriptor")
           .hasCauseInstanceOf(NoClassDefFoundError.class);
     }
   }
@@ -118,7 +118,7 @@ class ExternalModuleTestHarnessTest {
     try (ExternalModuleTestHarness harness = ExternalModuleTestHarness.load(emptyJar, List.of())) {
       assertThatThrownBy(() -> harness.loadModule("fixture-module", "1.0.0"))
           .isInstanceOf(ExternalModuleTestHarnessException.class)
-          .hasMessage("Expected exactly one external SEA module service but discovered 0");
+          .hasMessage("Expected exactly one external Zalava module service but discovered 0");
     }
 
     Fixture fixture = fixture(false);
@@ -126,10 +126,10 @@ class ExternalModuleTestHarnessTest {
         ExternalModuleTestHarness.load(fixture.moduleJar(), List.of())) {
       assertThatThrownBy(() -> harness.loadModule("other-module", "1.0.0"))
           .isInstanceOf(ExternalModuleTestHarnessException.class)
-          .hasMessage("Expected external SEA module other-module but discovered fixture-module");
+          .hasMessage("Expected external Zalava module other-module but discovered fixture-module");
       assertThatThrownBy(() -> harness.loadModule("fixture-module", "2.0.0"))
           .isInstanceOf(ExternalModuleTestHarnessException.class)
-          .hasMessage("Expected external SEA module version 2.0.0 but discovered 1.0.0");
+          .hasMessage("Expected external Zalava module version 2.0.0 but discovered 1.0.0");
     }
   }
 
@@ -175,18 +175,18 @@ class ExternalModuleTestHarnessTest {
     try (ExternalModuleTestHarness harness = ExternalModuleTestHarness.load(artifact, List.of())) {
       assertThatThrownBy(() -> harness.loadModule("fixture-module", "1.0.0"))
           .isInstanceOf(ExternalModuleTestHarnessException.class)
-          .hasMessage("External SEA module descriptor must not be null");
+          .hasMessage("External Zalava module descriptor must not be null");
     }
   }
 
   @Test
-  void exposesNoSpringOrSeaApplicationClassesThroughTheHostParent() {
+  void exposesNoSpringOrZalavaApplicationClassesThroughTheHostParent() {
     ClassLoader hostParent = ZalavaModule.class.getClassLoader();
 
     assertThatThrownBy(() -> hostParent.loadClass("org.springframework.context.ApplicationContext"))
         .isInstanceOf(ClassNotFoundException.class);
     assertThatThrownBy(
-            () -> hostParent.loadClass("org.zalava.modules.runtime.ExternalSeaModuleLoader"))
+            () -> hostParent.loadClass("org.zalava.modules.runtime.ExternalZalavaModuleLoader"))
         .isInstanceOf(ClassNotFoundException.class);
   }
 

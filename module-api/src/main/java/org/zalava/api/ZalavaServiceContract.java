@@ -2,7 +2,7 @@ package org.zalava.api;
 
 import java.util.Objects;
 
-/** Stable, SEA-owned identifier for one typed module service contract. */
+/** Stable, Zalava-owned identifier for one typed module service contract. */
 public record ZalavaServiceContract<T>(
     String serviceId, String contractVersion, Class<T> serviceType) {
 

@@ -106,7 +106,7 @@ public final class ProviderFactoryContext {
 
   public <T> Optional<T> service(ZalavaServiceContract<T> contract) {
     if (scopedTypedServices == null)
-      throw new IllegalStateException("No typed SEA service scope is available");
+      throw new IllegalStateException("No typed Zalava service scope is available");
     return scopedTypedServices.service(contract);
   }
 

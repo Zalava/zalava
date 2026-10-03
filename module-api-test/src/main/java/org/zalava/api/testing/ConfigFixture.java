@@ -7,10 +7,10 @@ import org.zalava.api.FactorySecretAccess;
 import org.zalava.api.ProviderFactoryContext;
 
 /**
- * Builds the scoped configuration, secrets and host services that SEA would supply to a module's
+ * Builds the scoped configuration, secrets and host services that Zalava would supply to a module's
  * provider factories. The fixture mirrors the nested {@code
  * modules.<moduleId>.factories.<factoryId>} shape resolved by {@link
- * ProviderFactoryContext#forFactory(String, String)} without booting SEA.
+ * ProviderFactoryContext#forFactory(String, String)} without booting Zalava.
  */
 public final class ConfigFixture {
   private final Map<String, Object> modules = new LinkedHashMap<>();
@@ -34,7 +34,7 @@ public final class ConfigFixture {
     return this;
   }
 
-  /** Declares the configuration block SEA supplies to one module's service factories. */
+  /** Declares the configuration block Zalava supplies to one module's service factories. */
   public ConfigFixture serviceConfiguration(String moduleId, Map<String, Object> values) {
     return factoryConfiguration(moduleId, "services", values);
   }

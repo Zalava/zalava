@@ -24,7 +24,7 @@ public record ZalavaVerificationStep(
     return new ZalavaVerificationStep(
         label,
         "POST",
-        "/api/sea/providers/" + providerId + "/tools/" + toolName + "/invoke",
+        "/api/zalava/providers/" + providerId + "/tools/" + toolName + "/invoke",
         toolName,
         sideEffecting,
         confirmationRequired,
