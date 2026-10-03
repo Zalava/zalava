@@ -150,7 +150,7 @@ public final class SpringAiAgentModel implements AgentModel {
 
     @Override
     public String getName() {
-      return "sea-structured-attempt-counter";
+      return "zalava-structured-attempt-counter";
     }
 
     @Override

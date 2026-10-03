@@ -6,9 +6,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.zalava.support.SeaComponentTest;
+import org.zalava.support.ZalavaComponentTest;
 
-@SeaComponentTest
+@ZalavaComponentTest
 class TestDataSourceIsolationComponentTest {
 
   @Autowired private DataSource dataSource;

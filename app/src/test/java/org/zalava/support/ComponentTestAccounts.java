@@ -8,7 +8,7 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 
-/** Creates activated SEA accounts and matching MockMvc identities for component tests. */
+/** Creates activated Zalava accounts and matching MockMvc identities for component tests. */
 public final class ComponentTestAccounts {
 
   private static final AtomicInteger LOGINS = new AtomicInteger();

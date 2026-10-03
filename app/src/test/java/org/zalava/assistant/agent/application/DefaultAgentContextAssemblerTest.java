@@ -98,7 +98,7 @@ class DefaultAgentContextAssemblerTest {
                         "addItem",
                         "Add an item",
                         true,
-                        List.of("sea_backed"),
+                        List.of("zalava_backed"),
                         Map.of("list", "active"))),
                 List.of(
                     new AgentToolSelection.ToolDefinitionSummary(
@@ -106,14 +106,14 @@ class DefaultAgentContextAssemblerTest {
                         "addItem",
                         "Add an item",
                         true,
-                        List.of("sea_backed"),
+                        List.of("zalava_backed"),
                         Map.of("list", "active"),
                         Map.of("type", "object"),
                         true))));
 
     assertThat(context.prompt())
         .contains(
-            "shopping-list/addItem: Add an item; sideEffects=true; policyTags=[sea_backed]; scope={list=active}")
+            "shopping-list/addItem: Add an item; sideEffects=true; policyTags=[zalava_backed]; scope={list=active}")
         .contains("inputSchema={type=object}")
         .contains("PROJECT memory-1: workflow memory; metadata={source=test}");
     assertThat(context.sourceMetrics())

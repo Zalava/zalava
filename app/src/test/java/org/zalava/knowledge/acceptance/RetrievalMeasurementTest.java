@@ -29,7 +29,7 @@ import org.zalava.knowledge.domain.KnowledgeEvidence;
 import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
-import org.zalava.support.RestartableSeaApplicationContext;
+import org.zalava.support.RestartableZalavaApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -37,7 +37,7 @@ import tools.jackson.databind.ObjectMapper;
  * Opt-in permission-safe retrieval measurement lane for KNOW-SEM-01.
  *
  * <p>Seeds a small synthetic household corpus across two actors and two visibility scopes against a
- * real PostgreSQL-backed SEA, then measures lexical relevance/ranking through the citation path
+ * real PostgreSQL-backed Zalava, then measures lexical relevance/ranking through the citation path
  * ({@link KnowledgeEvidenceQueries}) and isolation across restart, revocation and deletion. It also
  * probes authorization-before-ranking with many private candidates preceding one authorized
  * candidate.
@@ -53,7 +53,7 @@ class RetrievalMeasurementTest {
   private static final Map<String, String> DATABASE_OVERRIDE =
       Map.of(
           "spring.datasource.url",
-          "jdbc:tc:postgresql:18.4-alpine:///sea_retrieval_"
+          "jdbc:tc:postgresql:18.4-alpine:///zalava_retrieval_"
               + UUID.randomUUID().toString().replace("-", "")
               + "?TC_DAEMON=true");
 
@@ -68,7 +68,7 @@ class RetrievalMeasurementTest {
     Map<String, KnowledgeSourceId> sourceByLabel = new LinkedHashMap<>();
 
     ConfigurableApplicationContext first =
-        RestartableSeaApplicationContext.start(workspace, DATABASE_OVERRIDE);
+        RestartableZalavaApplicationContext.start(workspace, DATABASE_OVERRIDE);
     Map<String, Actor> actors = new LinkedHashMap<>();
     try {
       for (String key : List.of("alice", "bob")) {
@@ -172,7 +172,7 @@ class RetrievalMeasurementTest {
       first = null;
 
       ConfigurableApplicationContext restarted =
-          RestartableSeaApplicationContext.start(workspace, DATABASE_OVERRIDE);
+          RestartableZalavaApplicationContext.start(workspace, DATABASE_OVERRIDE);
       try {
         KnowledgeEvidenceQueries restartedEvidence =
             restarted.getBean(KnowledgeEvidenceQueries.class);
@@ -494,7 +494,7 @@ class RetrievalMeasurementTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-retrieval-measurement-");
+      Path workspace = Files.createTempDirectory("zalava-retrieval-measurement-");
       Files.writeString(workspace.resolve("AGENT.md"), "Retrieval measurement workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable measurement workspace.");
       return workspace;

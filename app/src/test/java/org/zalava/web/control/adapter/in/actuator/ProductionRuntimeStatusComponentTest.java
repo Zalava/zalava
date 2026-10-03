@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.support.SeaComponentTest;
+import org.zalava.support.ZalavaComponentTest;
 
-@SeaComponentTest
-@TestPropertySource(properties = "sea.observability.management-port=8080")
+@ZalavaComponentTest
+@TestPropertySource(properties = "zalava.observability.management-port=8080")
 class ProductionRuntimeStatusComponentTest {
 
   private static final Path WORKSPACE = createWorkspace();
@@ -38,10 +38,11 @@ class ProductionRuntimeStatusComponentTest {
     mockMvc
         .perform(get("/actuator/info"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.sea.coreVersion").value(System.getProperty("sea.test.version")))
-        .andExpect(jsonPath("$.sea.releaseImage").value("sea-local:component"))
-        .andExpect(jsonPath("$.sea.releaseRevision").value("component"))
-        .andExpect(jsonPath("$.sea.modules").isArray())
+        .andExpect(
+            jsonPath("$.zalava.coreVersion").value(System.getProperty("zalava.test.version")))
+        .andExpect(jsonPath("$.zalava.releaseImage").value("zalava-local:component"))
+        .andExpect(jsonPath("$.zalava.releaseRevision").value("component"))
+        .andExpect(jsonPath("$.zalava.modules").isArray())
         .andExpect(jsonPath("$.env").doesNotExist());
   }
 

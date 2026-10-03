@@ -21,8 +21,8 @@ class ClarificationToolsTest {
   private final ActorTaskReference reference = ActorTaskReference.newReference();
   private final ActorExecutionContext actorContext = new ActorExecutionContext();
   private final TaskExecutionContext taskContext = new TaskExecutionContext();
-  private final SeaClarifications clarifications =
-      new SeaClarifications(new NoOpStore(), Instant::now);
+  private final ZalavaClarifications clarifications =
+      new ZalavaClarifications(new NoOpStore(), Instant::now);
   private final ClarificationTools tools =
       new ClarificationTools(clarifications, actorContext, taskContext);
 

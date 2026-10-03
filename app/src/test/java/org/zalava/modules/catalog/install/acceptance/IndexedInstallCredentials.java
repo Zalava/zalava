@@ -8,9 +8,10 @@ final class IndexedInstallCredentials {
 
   private static final String ZALAVA_PUBLISH_TOKEN = "zalava.indexed-install.publish-token";
   private static final String GITHUB_PACKAGES_USERNAME =
-      "sea.indexed-install.github-packages-username";
-  private static final String GITHUB_PACKAGES_TOKEN = "sea.indexed-install.github-packages-token";
-  private static final String MODULE_LOCATOR_URL = "sea.indexed-install.module-locator-url";
+      "zalava.indexed-install.github-packages-username";
+  private static final String GITHUB_PACKAGES_TOKEN =
+      "zalava.indexed-install.github-packages-token";
+  private static final String MODULE_LOCATOR_URL = "zalava.indexed-install.module-locator-url";
 
   private IndexedInstallCredentials() {}
 
@@ -19,15 +20,15 @@ final class IndexedInstallCredentials {
   }
 
   static String packagesUsername() {
-    return value(GITHUB_PACKAGES_USERNAME, "SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME");
+    return value(GITHUB_PACKAGES_USERNAME, "ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME");
   }
 
   static String packagesToken() {
-    return value(GITHUB_PACKAGES_TOKEN, "SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN");
+    return value(GITHUB_PACKAGES_TOKEN, "ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN");
   }
 
   static String moduleLocatorUrl() {
-    return value(MODULE_LOCATOR_URL, "SEA_INDEXED_INSTALL_MODULE_LOCATOR_URL");
+    return value(MODULE_LOCATOR_URL, "ZALAVA_INDEXED_INSTALL_MODULE_LOCATOR_URL");
   }
 
   static void requireAvailable() {

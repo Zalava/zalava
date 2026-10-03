@@ -10,13 +10,13 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.util.Assert;
 
 /**
- * SEA compatibility {@link ChatMemory} that keeps the complete conversation history in the
+ * Zalava compatibility {@link ChatMemory} that keeps the complete conversation history in the
  * repository and applies a window only when reading.
  *
  * <p>Missing upstream equivalent: the maintained {@code
  * org.springframework.ai.chat.memory.MessageWindowChatMemory} (Spring AI 2.0.0) trims the
  * repository on every {@code add}, evicts older system messages when a new one arrives, and snaps
- * the window to a user-turn boundary. SEA needs the opposite persistence contract: appends must
+ * the window to a user-turn boundary. Zalava needs the opposite persistence contract: appends must
  * retain full history for rollback/audit, the read view must preserve insertion order, and every
  * system message must survive the window.
  *

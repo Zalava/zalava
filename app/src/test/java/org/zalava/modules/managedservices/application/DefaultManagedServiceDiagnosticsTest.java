@@ -111,7 +111,7 @@ class DefaultManagedServiceDiagnosticsTest {
             "1",
             ManagedServiceLifecycle.RUNNING,
             java.util.Set.of(),
-            java.util.Set.of("/var/lib/sea/managed/" + serviceId),
+            java.util.Set.of("/var/lib/zalava/managed/" + serviceId),
             java.util.Set.of(),
             java.util.Set.of(),
             new ManagedServiceLimits(1_000, 10, 1),
@@ -121,7 +121,7 @@ class DefaultManagedServiceDiagnosticsTest {
         new ManagedServiceResourceGrant(
             "home-module",
             java.util.Set.of(),
-            java.util.Set.of("/var/lib/sea/managed/" + serviceId),
+            java.util.Set.of("/var/lib/zalava/managed/" + serviceId),
             java.util.Set.of(),
             java.util.Set.of(),
             new ManagedServiceLimits(1_000, 10, 1),

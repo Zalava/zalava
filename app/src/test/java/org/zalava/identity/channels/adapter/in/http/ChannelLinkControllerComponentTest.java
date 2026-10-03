@@ -14,11 +14,11 @@ import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.identity.channels.domain.ExternalChannelIdentity;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
 /** Full-context HTTP ownership and security boundary for channel links. */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class ChannelLinkControllerComponentTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private ComponentTestAccounts accounts;

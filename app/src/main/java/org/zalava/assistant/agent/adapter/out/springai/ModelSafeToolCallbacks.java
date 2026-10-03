@@ -57,7 +57,7 @@ final class ModelSafeToolCallbacks {
     if (readableName.length() > MAX_READABLE_LENGTH) {
       readableName = readableName.substring(0, MAX_READABLE_LENGTH);
     }
-    return "sea_" + readableName + "_" + hash(originalName == null ? "" : originalName);
+    return "zalava_" + readableName + "_" + hash(originalName == null ? "" : originalName);
   }
 
   private static String hash(String value) {

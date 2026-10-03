@@ -64,7 +64,7 @@ class KnowledgeExtractionJobTest {
     when(runtime.findService(ContentExtractor.CONTRACT))
         .thenReturn(
             Optional.of(
-                new RuntimeQueries.LoadedSeaService<>(
+                new RuntimeQueries.LoadedZalavaService<>(
                     new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
@@ -134,7 +134,7 @@ class KnowledgeExtractionJobTest {
     when(runtime.findService(ContentExtractor.CONTRACT))
         .thenReturn(
             Optional.of(
-                new RuntimeQueries.LoadedSeaService<>(
+                new RuntimeQueries.LoadedZalavaService<>(
                     new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
@@ -232,7 +232,7 @@ class KnowledgeExtractionJobTest {
         request ->
             new org.zalava.api.extensions.content.ContentExtractionFailure(
                 request.source(),
-                new ContentProcessor("sea-ocr-worker", "1"),
+                new ContentProcessor("zalava-ocr-worker", "1"),
                 org.zalava.api.extensions.content.ContentExtractionFailureCategory.UNAVAILABLE,
                 "OCR worker is unavailable");
     configureExtractableSource(lifecycle, sources, blobs, runtime, extractor);
@@ -288,7 +288,7 @@ class KnowledgeExtractionJobTest {
     when(runtime.findService(ContentExtractor.CONTRACT))
         .thenReturn(
             Optional.of(
-                new RuntimeQueries.LoadedSeaService<>(
+                new RuntimeQueries.LoadedZalavaService<>(
                     new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))
@@ -312,7 +312,7 @@ class KnowledgeExtractionJobTest {
     when(runtime.findService(ContentExtractor.CONTRACT))
         .thenReturn(
             Optional.of(
-                new RuntimeQueries.LoadedSeaService<>(
+                new RuntimeQueries.LoadedZalavaService<>(
                     new ZalavaServiceDescriptor("content-extractor", "zalava-module-tika", "1"),
                     extractor)));
     when(lifecycle.beginReprocessing(owner, sourceId, "zalava-module-tika", "1"))

@@ -21,12 +21,12 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 /**
- * SEA compatibility {@link BaseChatMemoryAdvisor} that removes duplicate messages shared between
+ * Zalava compatibility {@link BaseChatMemoryAdvisor} that removes duplicate messages shared between
  * memory and the request instructions before advising the prompt.
  *
  * <p>Missing upstream equivalent: the maintained {@code
  * org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor} (Spring AI 2.0.0) only skips
- * the whole memory block when it is already present in the prompt. SEA also needs per-message
+ * the whole memory block when it is already present in the prompt. Zalava also needs per-message
  * deduplication so a repeated instruction already stored in memory is not added twice across
  * synchronous and streaming turns.
  */

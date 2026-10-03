@@ -9,7 +9,7 @@ public record RoutePattern(String source, List<String> segments) {
   public static RoutePattern parse(String path) {
     String normalized = normalize(path);
     if (normalized.contains("//") || normalized.contains("..")) {
-      throw new IllegalArgumentException("SEA web extension route path is invalid: " + path);
+      throw new IllegalArgumentException("Zalava web extension route path is invalid: " + path);
     }
     return new RoutePattern(normalized, segments(normalized));
   }

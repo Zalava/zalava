@@ -83,7 +83,7 @@ class DefaultLocalDevelopmentProjectInstallationTest {
               repository: https://github.com/example/docker.git
               license: Apache-2.0
             build: {command: [], verificationCommand: []}
-            compatibility: {seaRuntime: ">=1.0.0 <2.0.0"}
+            compatibility: {zalavaRuntime: ">=1.0.0 <2.0.0"}
             configurationSchema: {type: object}
             factories:
               - factoryId: docker

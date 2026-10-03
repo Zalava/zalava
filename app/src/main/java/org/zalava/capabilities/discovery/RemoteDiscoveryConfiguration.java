@@ -38,11 +38,11 @@ public class RemoteDiscoveryConfiguration {
 
   @Bean
   RemoteModuleCatalog remoteModuleCatalog(
-      @Value("${sea.discovery.remote.enabled:false}") boolean enabled,
-      @Value("${sea.discovery.remote.module-locator-url:}") String moduleLocatorUrl,
-      @Value("${sea.discovery.remote.github.token:}") String githubToken,
-      @Value("${sea.discovery.remote.max-modules:5}") int maxModules,
-      @Value("${sea.discovery.remote.max-candidates:10}") int maxCandidates) {
+      @Value("${zalava.discovery.remote.enabled:false}") boolean enabled,
+      @Value("${zalava.discovery.remote.module-locator-url:}") String moduleLocatorUrl,
+      @Value("${zalava.discovery.remote.github.token:}") String githubToken,
+      @Value("${zalava.discovery.remote.max-modules:5}") int maxModules,
+      @Value("${zalava.discovery.remote.max-candidates:10}") int maxCandidates) {
     if (!enabled || moduleLocatorUrl.isBlank()) {
       return RemoteModuleCatalog.disabled();
     }
@@ -57,7 +57,7 @@ public class RemoteDiscoveryConfiguration {
   @Bean
   RemoteCandidatePolicy remoteCandidatePolicy(
       @Value(
-              "${sea.discovery.remote.blocked-permissions:shell,broad-access,unrestricted-host,"
+              "${zalava.discovery.remote.blocked-permissions:shell,broad-access,unrestricted-host,"
                   + "host-filesystem-unrestricted,credentials}")
           String blockedPermissions) {
     Set<String> blocked = new LinkedHashSet<>();
@@ -74,7 +74,7 @@ public class RemoteDiscoveryConfiguration {
       RemoteModuleCatalog catalog,
       RemoteCandidatePolicy policy,
       CapabilityGapEvidenceStore evidenceStore,
-      @Value("${sea.discovery.remote.max-candidates:10}") int maxCandidates) {
+      @Value("${zalava.discovery.remote.max-candidates:10}") int maxCandidates) {
     return new DefaultRemoteCapabilityDiscovery(
         catalog, policy, evidenceStore, Clock.systemUTC(), maxCandidates);
   }

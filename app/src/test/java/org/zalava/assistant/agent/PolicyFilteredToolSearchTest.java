@@ -9,9 +9,9 @@ import org.springframework.ai.tool.toolsearch.ToolIndex;
 import org.springframework.ai.tool.toolsearch.ToolReference;
 import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
 import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackNames;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolIndex;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolReferences;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolReferences;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.identity.accounts.domain.AccountRole;
 
@@ -21,7 +21,7 @@ class PolicyFilteredToolSearchTest {
 
   @Test
   void selectsOnlyQueryRelevantCandidates() {
-    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new SeaToolIndex());
+    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new ZalavaToolIndex());
     List<ToolDiscovery.ToolMatch> candidates =
         List.of(
             match("workspace", "readNote", "Reads a note from the workspace.", false, List.of()),
@@ -37,7 +37,7 @@ class PolicyFilteredToolSearchTest {
   @Test
   void reAppliesPolicyAndDropsBlockedCandidates() {
     PolicyFilteredToolSearch search =
-        new PolicyFilteredToolSearch(new SeaToolIndex(), policy, true);
+        new PolicyFilteredToolSearch(new ZalavaToolIndex(), policy, true);
     List<ToolDiscovery.ToolMatch> candidates =
         List.of(
             match("workspace", "readNote", "Reads a note.", false, List.of()),
@@ -51,7 +51,7 @@ class PolicyFilteredToolSearchTest {
 
   @Test
   void rejectsMemberCandidatesWithoutMemberSafeScope() {
-    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new SeaToolIndex());
+    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new ZalavaToolIndex());
     ToolDiscovery.ToolMatch memberReady =
         new ToolDiscovery.ToolMatch(
             "shared",
@@ -59,11 +59,11 @@ class PolicyFilteredToolSearchTest {
             "readNote",
             "Reads a shared note.",
             false,
-            List.of("sea_backed", "member-safe"),
-            List.of("sea_backed"),
+            List.of("zalava_backed", "member-safe"),
+            List.of("zalava_backed"),
             Map.of("household", "shared"));
     ToolDiscovery.ToolMatch memberMissing =
-        match("private", "readSecret", "Reads a private note.", false, List.of("sea_backed"));
+        match("private", "readSecret", "Reads a private note.", false, List.of("zalava_backed"));
 
     List<ToolDiscovery.ToolMatch> selected =
         search.select(
@@ -74,7 +74,7 @@ class PolicyFilteredToolSearchTest {
 
   @Test
   void boundsResultsByMaxResultsAndKeepsTheIndexLimit() {
-    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new SeaToolIndex());
+    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new ZalavaToolIndex());
     List<ToolDiscovery.ToolMatch> candidates =
         java.util.stream.IntStream.range(0, 12)
             .mapToObj(
@@ -90,7 +90,7 @@ class PolicyFilteredToolSearchTest {
   @Test
   void returnsNothingWhenDisabled() {
     PolicyFilteredToolSearch search =
-        new PolicyFilteredToolSearch(new SeaToolIndex(), policy, false);
+        new PolicyFilteredToolSearch(new ZalavaToolIndex(), policy, false);
     List<ToolDiscovery.ToolMatch> candidates =
         List.of(match("workspace", "readNote", "Reads a note.", false, List.of()));
 
@@ -104,7 +104,7 @@ class PolicyFilteredToolSearchTest {
 
   @Test
   void returnsNothingForBlankQueryOrEmptyCandidates() {
-    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new SeaToolIndex());
+    PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(new ZalavaToolIndex());
 
     assertThat(
             search.select(
@@ -140,10 +140,10 @@ class PolicyFilteredToolSearchTest {
 
   @Test
   void clearsOnlyTheSearchedSessionFromTheSharedIndex() {
-    SeaToolIndex index = new SeaToolIndex();
+    ZalavaToolIndex index = new ZalavaToolIndex();
     PolicyFilteredToolSearch search = new PolicyFilteredToolSearch(index, policy, true);
     ToolDiscovery.ToolMatch other = match("other", "otherTool", "Unrelated.", false, List.of());
-    index.indexTool("session-b", SeaToolReferences.from(other));
+    index.indexTool("session-b", ZalavaToolReferences.from(other));
 
     search.select(
         "session-a",
@@ -154,7 +154,7 @@ class PolicyFilteredToolSearchTest {
 
     assertThat(index.search(request("session-b", "unrelated", 5)).toolReferences())
         .extracting(ToolReference::toolName)
-        .containsExactly(SeaToolCallbackNames.forTool("other", "otherTool"));
+        .containsExactly(ZalavaToolCallbackNames.forTool("other", "otherTool"));
   }
 
   private static ToolDiscovery.ToolMatch match(
@@ -164,7 +164,7 @@ class PolicyFilteredToolSearchTest {
       boolean sideEffecting,
       List<String> tags) {
     List<String> combined =
-        java.util.stream.Stream.concat(java.util.stream.Stream.of("sea_backed"), tags.stream())
+        java.util.stream.Stream.concat(java.util.stream.Stream.of("zalava_backed"), tags.stream())
             .distinct()
             .toList();
     return new ToolDiscovery.ToolMatch(
@@ -174,7 +174,7 @@ class PolicyFilteredToolSearchTest {
         description,
         sideEffecting,
         combined,
-        List.of("sea_backed"),
+        List.of("zalava_backed"),
         Map.of("root", "workspace"));
   }
 

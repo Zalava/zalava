@@ -147,7 +147,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             () ->
                 new ProviderToolOperationException(
                     ProviderToolOperationException.Code.PROVIDER_NOT_FOUND,
-                    "SEA provider not found: " + providerId));
+                    "Zalava provider not found: " + providerId));
   }
 
   private static ZalavaToolDescriptor findTool(ZalavaProvider provider, String toolName) {
@@ -158,7 +158,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             () ->
                 new ProviderToolOperationException(
                     ProviderToolOperationException.Code.TOOL_NOT_FOUND,
-                    "SEA provider tool not found: " + toolName));
+                    "Zalava provider tool not found: " + toolName));
   }
 
   private ToolInvocationOutcome denied(
@@ -175,7 +175,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
         new InvocationContext(context.actorId(), false, Map.copyOf(attributes)),
         false,
         "permission_denied",
-        "SEA permission denied invocation",
+        "Zalava permission denied invocation",
         null,
         System.nanoTime());
     return ToolInvocationOutcome.denied(approval);
@@ -203,7 +203,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     } catch (RuntimeException ex) {
       observe(provider, tool, context, false, "execution", ex.getMessage(), null, startedAt);
       throw new ProviderToolOperationException(
-          ProviderToolOperationException.Code.EXECUTION, "SEA operation failed", ex);
+          ProviderToolOperationException.Code.EXECUTION, "Zalava operation failed", ex);
     }
   }
 
@@ -213,7 +213,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             "status", "already_executed",
             "approvalRequestId", approval.requestId(),
             "message",
-                "This permission request was already approved and executed from SEA control."));
+                "This permission request was already approved and executed from Zalava control."));
   }
 
   private void observe(
@@ -259,7 +259,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   private static Map<String, String> operatorApprovedAttributes(
       Map<String, String> attributes, String requestId) {
     Map<String, String> approved = new LinkedHashMap<>(attributes);
-    approved.put("source", "sea-control-permission-request");
+    approved.put("source", "zalava-control-permission-request");
     approved.put("permissionRequestId", requestId);
     return Map.copyOf(approved);
   }
@@ -272,7 +272,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   }
 
   private static String classification(ZalavaToolDescriptor tool) {
-    return "sea_backed";
+    return "zalava_backed";
   }
 
   private static ToolApproval approvalDecision(java.util.function.Supplier<ToolApproval> decision) {
@@ -281,7 +281,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     } catch (ToolApprovalPort.ApprovalNotFoundException ex) {
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.APPROVAL_NOT_FOUND,
-          "SEA tool approval request not found: " + ex.getMessage(),
+          "Zalava tool approval request not found: " + ex.getMessage(),
           ex);
     } catch (ToolApprovalPort.ApprovalConflictException ex) {
       throw new ProviderToolOperationException(

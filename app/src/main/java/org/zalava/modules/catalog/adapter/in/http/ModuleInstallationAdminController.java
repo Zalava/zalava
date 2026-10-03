@@ -22,7 +22,7 @@ import org.zalava.modules.catalog.install.application.port.in.ModuleReleaseInsta
 import org.zalava.modules.development.DevelopmentRequestId;
 
 @RestController
-@RequestMapping("/api/sea")
+@RequestMapping("/api/zalava")
 @Profile({"dev", "test"})
 public class ModuleInstallationAdminController {
 
@@ -59,7 +59,7 @@ public class ModuleInstallationAdminController {
               request.artifactPath(),
               new DevelopmentRequestId(request.developmentRequestId()));
       return ResponseEntity.created(
-              URI.create("/api/sea/local-module-installations/" + created.requestId()))
+              URI.create("/api/zalava/local-module-installations/" + created.requestId()))
           .body(LocalArtifactInstallationResponse.from(created));
     } catch (IllegalArgumentException | SourceModuleInstallationException ex) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
@@ -106,7 +106,7 @@ public class ModuleInstallationAdminController {
               new ModuleLocatorInstallation.Request(
                   request.moduleId(), request.version(), request.developmentRequestId()));
       return ResponseEntity.created(
-              URI.create("/api/sea/module-release-installations/" + created.requestId()))
+              URI.create("/api/zalava/module-release-installations/" + created.requestId()))
           .body(ModuleReleaseInstallationResponse.from(created));
     } catch (IllegalArgumentException | SourceModuleInstallationException ex) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);

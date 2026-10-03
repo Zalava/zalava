@@ -14,7 +14,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
-/** Strict parser for the dedicated, public SEA module locator catalog. */
+/** Strict parser for the dedicated, public Zalava module locator catalog. */
 public final class ModuleLocatorIndexLoader {
 
   public ModuleLocatorIndex load(String yaml) {

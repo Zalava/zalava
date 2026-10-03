@@ -62,7 +62,7 @@ class DefaultTaskExecutionTest {
         .notify(
             "Write file",
             Task.Status.awaiting_human_input,
-            "Waiting for approval of a side-effecting SEA tool call.");
+            "Waiting for approval of a side-effecting Zalava tool call.");
   }
 
   @Test
@@ -90,12 +90,12 @@ class DefaultTaskExecutionTest {
                     "filesystem-workspace",
                     "writeFile",
                     "telegram-42",
-                    "SEA requests approval to run writeFile on provider filesystem-workspace for actor telegram-42.",
+                    "Zalava requests approval to run writeFile on provider filesystem-workspace for actor telegram-42.",
                     "side-effecting",
                     "{\"path\":\"notes/a.txt\"}",
-                    "/sea approve approval-123",
-                    "/sea always-allow-tool approval-123",
-                    "/sea deny approval-123",
+                    "/zalava approve approval-123",
+                    "/zalava always-allow-tool approval-123",
+                    "/zalava deny approval-123",
                     Map.of("root", "workspace"),
                     List.of("filesystem.write"))));
 
@@ -108,23 +108,23 @@ class DefaultTaskExecutionTest {
         .hasValueSatisfying(
             feedback ->
                 assertThat(feedback)
-                    .contains("SEA is waiting for your approval before continuing this job.")
+                    .contains("Zalava is waiting for your approval before continuing this job.")
                     .contains("Request approval-123")
                     .contains(
-                        "SEA requests approval to run writeFile on provider filesystem-workspace")
+                        "Zalava requests approval to run writeFile on provider filesystem-workspace")
                     .contains("Provider/tool: filesystem-workspace/writeFile")
                     .contains("Arguments: {\"path\":\"notes/a.txt\"}")
                     .contains("Scope: {root=workspace}")
                     .contains("Policy tags: filesystem.write")
-                    .contains("Allow once: /sea approve approval-123")
-                    .contains("Always allow tool: /sea always-allow-tool approval-123")
-                    .contains("Deny: /sea deny approval-123")
+                    .contains("Allow once: /zalava approve approval-123")
+                    .contains("Always allow tool: /zalava always-allow-tool approval-123")
+                    .contains("Deny: /zalava deny approval-123")
                     .contains("Review job controls: /jobs/2026-06-08/120000-write-file.md"));
     verify(notifier)
         .notify(
             eq("Write file"),
             eq(Task.Status.awaiting_human_input),
-            org.mockito.ArgumentMatchers.contains("/sea approve approval-123"));
+            org.mockito.ArgumentMatchers.contains("/zalava approve approval-123"));
   }
 
   @Test
@@ -207,7 +207,7 @@ class DefaultTaskExecutionTest {
     String persisted = Files.readString(Path.of(task.getId()));
     assertThat(failed.getStatus()).isEqualTo(Task.Status.failed);
     assertThat(failed.getFailureDetail())
-        .contains("SEA could not complete this job after multiple attempts.");
+        .contains("Zalava could not complete this job after multiple attempts.");
     assertThat(persisted)
         .doesNotContain("super-secret")
         .doesNotContain("/private/key.txt")

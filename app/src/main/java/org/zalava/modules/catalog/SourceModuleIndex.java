@@ -44,7 +44,7 @@ public record SourceModuleIndex(int schemaVersion, List<Module> modules) {
     }
   }
 
-  public record Compatibility(String seaRuntime) {}
+  public record Compatibility(String zalavaRuntime) {}
 
   public record Factory(String factoryId, String providerType) {}
 

@@ -39,11 +39,12 @@ class DefaultChannelApprovalCommandsOutcomesTest {
     assertThat(commands.handle("hello there")).isEmpty();
     assertThat(commands.handle(null)).isEmpty();
     assertThat(commands.handle("  ")).isEmpty();
-    // Bare /sea and wrong-arity commands are readable errors, not silence.
-    assertThat(commands.handle("/sea")).contains("SEA could not understand that approval command.");
-    assertThat(commands.handle("/SEA approve req extra"))
-        .contains("SEA could not understand that approval command.");
-    assertThat(commands.handle("sea approve req")).isEmpty();
+    // Bare /zalava and wrong-arity commands are readable errors, not silence.
+    assertThat(commands.handle("/zalava"))
+        .contains("Zalava could not understand that approval command.");
+    assertThat(commands.handle("/Zalava approve req extra"))
+        .contains("Zalava could not understand that approval command.");
+    assertThat(commands.handle("zalava approve req")).isEmpty();
   }
 
   @Test
@@ -51,10 +52,10 @@ class DefaultChannelApprovalCommandsOutcomesTest {
     FakeApprovals approvals = new FakeApprovals(null);
     DefaultChannelApprovalCommands commands = commands(approvals, waiting(true));
 
-    assertThat(commands.handle("/sea blink req-1"))
-        .contains("SEA could not understand that approval command.");
-    assertThat(commands.handle("/sea approve"))
-        .contains("SEA could not understand that approval command.");
+    assertThat(commands.handle("/zalava blink req-1"))
+        .contains("Zalava could not understand that approval command.");
+    assertThat(commands.handle("/zalava approve"))
+        .contains("Zalava could not understand that approval command.");
   }
 
   @Test
@@ -64,7 +65,7 @@ class DefaultChannelApprovalCommandsOutcomesTest {
     FakeApprovals approvals = new FakeApprovals(pending, List.of(pending));
     DefaultChannelApprovalCommands commands = commands(approvals, waiting(true));
 
-    assertThat(commands.handle("/sea approve LAST"))
+    assertThat(commands.handle("/zalava approve LAST"))
         .contains("Approval granted once for files/write. The approved tool has run.");
     assertThat(approvals.lastResolvedId).isEqualTo("req-1");
   }
@@ -74,7 +75,8 @@ class DefaultChannelApprovalCommandsOutcomesTest {
     FakeApprovals approvals = new FakeApprovals(null, List.of());
     DefaultChannelApprovalCommands commands = commands(approvals, waiting(true));
 
-    assertThat(commands.handle("/sea deny last")).contains("SEA approval request not found: last");
+    assertThat(commands.handle("/zalava deny last"))
+        .contains("Zalava approval request not found: last");
   }
 
   @Test
@@ -104,11 +106,11 @@ class DefaultChannelApprovalCommandsOutcomesTest {
             },
             waiting(true));
 
-    assertThat(commands.handle("/sea approve req-2"))
+    assertThat(commands.handle("/zalava approve req-2"))
         .contains("Approval granted once for files/write. The approved tool has run.");
-    assertThat(commands.handle("/sea always-allow-tool req-2"))
+    assertThat(commands.handle("/zalava always-allow-tool req-2"))
         .contains("Tool approval policy saved for files/write. The approved tool has run.");
-    assertThat(commands.handle("/sea deny req-2"))
+    assertThat(commands.handle("/zalava deny req-2"))
         .contains("Approval denied for files/write. The tool was not run.");
     assertThat(operations).containsExactly("allow", "allowTool", "deny");
   }
@@ -121,8 +123,8 @@ class DefaultChannelApprovalCommandsOutcomesTest {
     FakeApprovals approvals = new FakeApprovals(taskScoped, List.of(taskScoped));
     DefaultChannelApprovalCommands commands = commands(approvals, waiting(false));
 
-    assertThat(commands.handle("/sea deny req-3"))
-        .contains("SEA cannot decide that approval because the job is not waiting for input.");
+    assertThat(commands.handle("/zalava deny req-3"))
+        .contains("Zalava cannot decide that approval because the job is not waiting for input.");
   }
 
   @Test
@@ -155,7 +157,7 @@ class DefaultChannelApprovalCommandsOutcomesTest {
               }
             });
 
-    assertThat(commands.handle("/sea deny req-4"))
+    assertThat(commands.handle("/zalava deny req-4"))
         .contains(
             "Approval denied for files/write. The job is still waiting for another approval. Review: /jobs/2026-09-02/task.md");
     assertThat(resumed).isEmpty();
@@ -170,8 +172,8 @@ class DefaultChannelApprovalCommandsOutcomesTest {
             throw new DefaultChannelApprovalCommands.NotFoundException(requestId);
           }
         };
-    assertThat(commands(notFound, waiting(true)).handle("/sea approve ghost"))
-        .contains("SEA approval request not found: ghost");
+    assertThat(commands(notFound, waiting(true)).handle("/zalava approve ghost"))
+        .contains("Zalava approval request not found: ghost");
 
     FakeApprovals decided =
         new FakeApprovals(pendingUnscoped()) {
@@ -180,11 +182,11 @@ class DefaultChannelApprovalCommandsOutcomesTest {
             throw new DefaultChannelApprovalCommands.AlreadyDecidedException(requestId);
           }
         };
-    assertThat(commands(decided, waiting(true)).handle("/sea approve req-9"))
-        .contains("SEA approval request was already decided: req-9");
+    assertThat(commands(decided, waiting(true)).handle("/zalava approve req-9"))
+        .contains("Zalava approval request was already decided: req-9");
 
-    assertThat(commands(notFound, waiting(true)).handle("/sea approve ghost-last"))
-        .contains("SEA approval request not found: ghost-last");
+    assertThat(commands(notFound, waiting(true)).handle("/zalava approve ghost-last"))
+        .contains("Zalava approval request not found: ghost-last");
   }
 
   @Test
@@ -224,12 +226,12 @@ class DefaultChannelApprovalCommandsOutcomesTest {
             },
             waiting(true));
 
-    assertThat(commands.handle("/sea approve req-1"))
-        .contains("SEA approval request not found: req-1");
-    assertThat(commands.handle("/sea always-allow-tool req-1"))
-        .contains("SEA approval request was already decided: req-1");
-    assertThat(commands.handle("/sea deny req-1"))
-        .contains("SEA could not complete that approval command: backend exploded");
+    assertThat(commands.handle("/zalava approve req-1"))
+        .contains("Zalava approval request not found: req-1");
+    assertThat(commands.handle("/zalava always-allow-tool req-1"))
+        .contains("Zalava approval request was already decided: req-1");
+    assertThat(commands.handle("/zalava deny req-1"))
+        .contains("Zalava could not complete that approval command: backend exploded");
   }
 
   @Test
@@ -253,8 +255,8 @@ class DefaultChannelApprovalCommandsOutcomesTest {
             },
             waiting(true));
 
-    assertThat(commands.handle("/sea approve req-1"))
-        .contains("SEA could not complete that approval command: unexpected");
+    assertThat(commands.handle("/zalava approve req-1"))
+        .contains("Zalava could not complete that approval command: unexpected");
   }
 
   private static ChannelApproval pendingUnscoped() {

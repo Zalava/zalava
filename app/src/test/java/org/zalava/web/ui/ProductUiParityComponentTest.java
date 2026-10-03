@@ -13,9 +13,9 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class ProductUiParityComponentTest {
 
   private static final Path WORKSPACE = createWorkspace();
@@ -23,7 +23,7 @@ class ProductUiParityComponentTest {
   @Autowired private MockMvc mockMvc;
 
   @Test
-  void completedSetupUsesSeaProductRoutesAndNavigation() throws Exception {
+  void completedSetupUsesZalavaProductRoutesAndNavigation() throws Exception {
     mockMvc
         .perform(get("/"))
         .andExpect(status().is3xxRedirection())
@@ -55,7 +55,7 @@ class ProductUiParityComponentTest {
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("<title>Zalava Chat</title>")))
         .andExpect(content().string(containsString("id=\"root\"")))
-        .andExpect(content().string(containsString("/sea-chat/assets/sea-chat.js")))
+        .andExpect(content().string(containsString("/zalava-chat/assets/zalava-chat.js")))
         .andExpect(content().string(containsString("href=\"/jobs\"")));
   }
 

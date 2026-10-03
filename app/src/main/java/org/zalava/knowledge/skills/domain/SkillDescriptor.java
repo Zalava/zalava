@@ -5,10 +5,10 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Versioned, storage-independent metadata for one SEA skill.
+ * Versioned, storage-independent metadata for one Zalava skill.
  *
- * <p>A descriptor is instruction metadata only: {@code recommendedTools} names SEA tools the skill
- * may reference, but a descriptor never carries, resolves or executes a tool. Activation and
+ * <p>A descriptor is instruction metadata only: {@code recommendedTools} names Zalava tools the
+ * skill may reference, but a descriptor never carries, resolves or executes a tool. Activation and
  * content loading are a separate concern (the maintained SkillsTool runtime), so discovery cannot
  * conflate metadata with executable capability.
  */
@@ -20,7 +20,7 @@ public record SkillDescriptor(
     List<String> recommendedTools,
     List<String> policyConstraints,
     List<String> validationSteps,
-    String seaApiVersion,
+    String zalavaApiVersion,
     SkillVisibility visibility,
     SkillProvenance provenance,
     SkillStatus status) {
@@ -43,7 +43,8 @@ public record SkillDescriptor(
     recommendedTools = immutable(recommendedTools, "recommendedTools");
     policyConstraints = immutable(policyConstraints, "policyConstraints");
     validationSteps = immutable(validationSteps, "validationSteps");
-    seaApiVersion = seaApiVersion == null || seaApiVersion.isBlank() ? null : seaApiVersion.strip();
+    zalavaApiVersion =
+        zalavaApiVersion == null || zalavaApiVersion.isBlank() ? null : zalavaApiVersion.strip();
     Objects.requireNonNull(visibility, "visibility must not be null");
     Objects.requireNonNull(provenance, "provenance must not be null");
     Objects.requireNonNull(status, "status must not be null");
@@ -63,7 +64,7 @@ public record SkillDescriptor(
         recommendedTools,
         policyConstraints,
         validationSteps,
-        seaApiVersion,
+        zalavaApiVersion,
         visibility,
         provenance,
         newStatus);

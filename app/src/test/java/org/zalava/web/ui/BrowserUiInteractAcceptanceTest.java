@@ -36,7 +36,7 @@ import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -48,10 +48,10 @@ import org.zalava.tasks.domain.Task;
 import tools.jackson.databind.node.JsonNodeFactory;
 
 /**
- * Real-browser acceptance for the packaged interactive SEA conversation surface. It drives the
+ * Real-browser acceptance for the packaged interactive Zalava conversation surface. It drives the
  * built React bundle over the real WebSocket transport and proves that only server-observed
- * execution state and pending approval details are shown, recovered from SEA after reconnect, and
- * that an owner decision persists without any client-side policy authority.
+ * execution state and pending approval details are shown, recovered from Zalava after reconnect,
+ * and that an owner decision persists without any client-side policy authority.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -68,15 +68,17 @@ class BrowserUiInteractAcceptanceTest {
   @LocalServerPort private int port;
   @org.springframework.beans.factory.annotation.Autowired private AccountLifecycle accounts;
   @org.springframework.beans.factory.annotation.Autowired private ActorTaskStore tasks;
-  @org.springframework.beans.factory.annotation.Autowired private SeaToolApprovalRequests approvals;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  private ZalavaToolApprovalRequests approvals;
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> OWNER_LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> OWNER_LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "none");
@@ -171,7 +173,7 @@ class BrowserUiInteractAcceptanceTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     ZalavaToolDescriptor tool =
         new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of());
@@ -192,7 +194,7 @@ class BrowserUiInteractAcceptanceTest {
             Map.of(
                 "accountRole",
                 "MEMBER",
-                SeaToolApprovalRequests.ACTOR_TASK_REFERENCE,
+                ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE,
                 new ActorTaskExecutionReference(actor, reference).encode())),
         JsonNodeFactory.instance.objectNode());
   }
@@ -217,7 +219,7 @@ class BrowserUiInteractAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-interact-");
+      Path root = Files.createTempDirectory("zalava-browser-interact-");
       Files.writeString(root.resolve("AGENT.md"), "Browser interact acceptance workspace.");
       return root;
     } catch (IOException exception) {

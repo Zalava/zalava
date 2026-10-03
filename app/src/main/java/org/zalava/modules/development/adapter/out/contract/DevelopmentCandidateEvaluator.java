@@ -13,7 +13,7 @@ import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
 import org.zalava.modules.development.CandidateEvaluation;
 import org.zalava.modules.development.ModuleDevelopmentContract;
 import org.zalava.modules.development.ModuleDevelopmentRequest;
-import org.zalava.modules.runtime.ExternalSeaModuleLoader;
+import org.zalava.modules.runtime.ExternalZalavaModuleLoader;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -35,8 +35,8 @@ public final class DevelopmentCandidateEvaluator
     List<String> evidence = new ArrayList<>();
     List<CandidateEvaluation.Invocation> invocations = new ArrayList<>();
     List<CandidateEvaluation.Requirement> requirements = new ArrayList<>();
-    try (ExternalSeaModuleLoader loader =
-        new ExternalSeaModuleLoader(() -> List.of(enabled(request, artifact)))) {
+    try (ExternalZalavaModuleLoader loader =
+        new ExternalZalavaModuleLoader(() -> List.of(enabled(request, artifact)))) {
       List<ZalavaModule> modules = loader.loadModules();
       ModuleDevelopmentContract contract = request.currentRevision().contract();
       ZalavaModule module = modules.getFirst();
@@ -270,7 +270,8 @@ public final class DevelopmentCandidateEvaluator
       List<CandidateEvaluation.Requirement> requirements) {
     if (contract.expectedErrors().isEmpty()) return;
     ZalavaOperationResult response =
-        provider.callTool("__sea_expected_error__", java.util.Map.of(), InvocationContext.system());
+        provider.callTool(
+            "__zalava_expected_error__", java.util.Map.of(), InvocationContext.system());
     String expected = contract.expectedErrors().getFirst().code();
     requireExpectedError(response, expected, "expected error");
     requirements.add(

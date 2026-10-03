@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackCatalog;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackCatalog;
 import org.zalava.capabilities.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 
@@ -23,15 +23,15 @@ class AgentRequestToolsTest {
   private final ToolDiscovery discovery = mock(ToolDiscovery.class);
   private final ToolCallback readCallback = mock(ToolCallback.class);
   private final ToolCallback writeCallback = mock(ToolCallback.class);
-  private final SeaToolCallbackCatalog callbackCatalog = mock(SeaToolCallbackCatalog.class);
+  private final ZalavaToolCallbackCatalog callbackCatalog = mock(ZalavaToolCallbackCatalog.class);
   private final AgentRequestTools requestTools =
       new AgentRequestTools(List.of(taskTool, mcpTools), discovery, callbackCatalog);
 
   @Test
-  void preservesBootstrapToolsAndAddsMatchingSeaCallbacks() {
+  void preservesBootstrapToolsAndAddsMatchingZalavaCallbacks() {
     ToolDiscovery.ToolMatch read = match("files", "read");
     ToolDiscovery.ToolMatch write = match("files", "write");
-    when(discovery.search("read and update notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read and update notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read, write));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
     when(callbackCatalog.callback("files", "write")).thenReturn(writeCallback);
@@ -41,10 +41,10 @@ class AgentRequestToolsTest {
   }
 
   @Test
-  void resolvesLoadedSeaCallbacksForEachChatRequest() {
+  void resolvesLoadedZalavaCallbacksForEachChatRequest() {
     ToolCallback timeCallback = mock(ToolCallback.class);
     when(callbackCatalog.callbacks()).thenReturn(List.of(timeCallback));
-    when(discovery.search("hello", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("hello", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
     assertThat(
@@ -55,9 +55,9 @@ class AgentRequestToolsTest {
   }
 
   @Test
-  void returnsCompactSummariesForSelectedSeaCallbacks() {
+  void returnsCompactSummariesForSelectedZalavaCallbacks() {
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
     when(discovery.load("files", "read")).thenReturn(definition("files", "read"));
@@ -73,7 +73,7 @@ class AgentRequestToolsTest {
               assertThat(summary.providerId()).isEqualTo("files");
               assertThat(summary.toolName()).isEqualTo("read");
               assertThat(summary.description()).isEqualTo("read files");
-              assertThat(summary.policyTags()).contains("sea_backed");
+              assertThat(summary.policyTags()).contains("zalava_backed");
             });
     assertThat(selection.toolDefinitions())
         .singleElement()
@@ -89,7 +89,7 @@ class AgentRequestToolsTest {
   @Test
   void keepsDefinitionUnavailableWhenSelectedToolCannotBeLoaded() {
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
     when(discovery.load("files", "read"))
@@ -111,9 +111,9 @@ class AgentRequestToolsTest {
   @Test
   void reusesActivatedCallbacksForConversation() {
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
-    when(discovery.search("follow up", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("follow up", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -122,16 +122,16 @@ class AgentRequestToolsTest {
     assertThat(requestTools.forInput("conversation-1", "follow up"))
         .containsExactly(taskTool, mcpTools, readCallback);
 
-    verify(discovery).search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES);
-    verify(discovery).search("follow up", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES);
+    verify(discovery).search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES);
+    verify(discovery).search("follow up", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES);
   }
 
   @Test
   void keepsActivatedCallbacksScopedToConversation() {
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
-    when(discovery.search("follow up", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("follow up", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -140,12 +140,12 @@ class AgentRequestToolsTest {
     assertThat(requestTools.forInput("conversation-2", "follow up"))
         .containsExactly(taskTool, mcpTools);
 
-    verify(discovery).search("follow up", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES);
+    verify(discovery).search("follow up", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES);
   }
 
   @Test
   void keepsOnlyBootstrapToolsWhenDiscoveryHasNoMatches() {
-    when(discovery.search("answer from context", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("answer from context", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
     assertThat(requestTools.forInput("answer from context")).containsExactly(taskTool, mcpTools);
@@ -157,7 +157,7 @@ class AgentRequestToolsTest {
     AgentRequestTools tools =
         new AgentRequestTools(
             List.of(taskTool, mcpTools), discovery, callbackCatalog, List.of(recommendation));
-    when(discovery.search("forecast pollen", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("forecast pollen", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
     AgentRequestTools.RequestToolSelection selection =
@@ -175,7 +175,7 @@ class AgentRequestToolsTest {
         new AgentRequestTools(
             List.of(taskTool, mcpTools), discovery, callbackCatalog, List.of(recommendation));
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -188,7 +188,7 @@ class AgentRequestToolsTest {
     AgentRequestTools tools =
         new AgentRequestTools(
             List.of(taskTool, mcpTools), discovery, callbackCatalog, List.of(), remoteDiscovery);
-    when(discovery.search("forecast pollen", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("forecast pollen", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
     tools.resolve("conversation-1", "forecast pollen");
@@ -203,7 +203,7 @@ class AgentRequestToolsTest {
         new AgentRequestTools(
             List.of(taskTool, mcpTools), discovery, callbackCatalog, List.of(), remoteDiscovery);
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -217,7 +217,7 @@ class AgentRequestToolsTest {
     AgentRequestTools tools =
         new AgentRequestTools(
             List.of(taskTool, mcpTools), discovery, callbackCatalog, List.of(), remoteDiscovery);
-    when(discovery.search("forecast pollen", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("forecast pollen", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
     when(remoteDiscovery.discover("forecast pollen", 0))
         .thenThrow(new IllegalStateException("evidence store unavailable"));
@@ -229,15 +229,15 @@ class AgentRequestToolsTest {
   void keepsOnlyBootstrapToolsForBlankInput() {
     assertThat(requestTools.forInput(" ")).containsExactly(taskTool, mcpTools);
 
-    verify(discovery, never()).search(" ", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES);
+    verify(discovery, never()).search(" ", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES);
   }
 
   @Test
   void treatsBlankConversationIdAsStateless() {
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
-    when(discovery.search("follow up", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("follow up", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -251,7 +251,7 @@ class AgentRequestToolsTest {
     ToolDiscovery.ToolMatch read = match("files", "read");
     AgentRequestTools tools =
         new AgentRequestTools(List.of(taskTool, readCallback), discovery, callbackCatalog);
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(read));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -260,16 +260,16 @@ class AgentRequestToolsTest {
 
   @Test
   void usesBoundedDiscoveryForEachRequest() {
-    when(discovery.search("first", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("first", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
-    when(discovery.search("second", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("second", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
     requestTools.forInput("first");
     requestTools.forInput("second");
 
-    verify(discovery).search("first", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES);
-    verify(discovery).search("second", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES);
+    verify(discovery).search("first", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES);
+    verify(discovery).search("second", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES);
   }
 
   @Test
@@ -280,7 +280,8 @@ class AgentRequestToolsTest {
             .toList();
     List<ToolCallback> callbacks =
         java.util.stream.IntStream.range(0, 6).mapToObj(index -> mock(ToolCallback.class)).toList();
-    when(discovery.search("many", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES)).thenReturn(matches);
+    when(discovery.search("many", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
+        .thenReturn(matches);
     for (int i = 0; i < callbacks.size(); i++) {
       when(callbackCatalog.callback("provider", "tool-" + i)).thenReturn(callbacks.get(i));
     }
@@ -289,7 +290,7 @@ class AgentRequestToolsTest {
         .containsExactlyElementsOf(
             java.util.stream.Stream.concat(
                     java.util.stream.Stream.of(taskTool, mcpTools),
-                    callbacks.stream().limit(AgentRequestTools.MAX_SEA_TOOLS))
+                    callbacks.stream().limit(AgentRequestTools.MAX_ZALAVA_TOOLS))
                 .toList());
   }
 
@@ -303,9 +304,9 @@ class AgentRequestToolsTest {
     ToolDiscovery.ToolMatch extraMatch = match("provider", "extra");
     List<ToolCallback> callbacks =
         java.util.stream.IntStream.range(0, 6).mapToObj(index -> mock(ToolCallback.class)).toList();
-    when(discovery.search("first", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("first", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(firstMatches);
-    when(discovery.search("second", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("second", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(newMatch, extraMatch));
     for (int i = 0; i < firstMatches.size(); i++) {
       when(callbackCatalog.callback("provider", "persisted-" + i)).thenReturn(callbacks.get(i));
@@ -326,10 +327,10 @@ class AgentRequestToolsTest {
   }
 
   @Test
-  void skipsMatchesWithoutSeaBackedTrustMetadata() {
+  void skipsMatchesWithoutZalavaBackedTrustMetadata() {
     ToolDiscovery.ToolMatch untrusted =
         match("files", "read", false, List.of("filesystem"), List.of("filesystem"));
-    when(discovery.search("read notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(untrusted));
 
     assertThat(requestTools.forInput("read notes")).containsExactly(taskTool, mcpTools);
@@ -343,9 +344,9 @@ class AgentRequestToolsTest {
             "host-shell",
             "execute",
             true,
-            List.of("sea_backed", "shell", "broad-access"),
-            List.of("sea_backed"));
-    when(discovery.search("run command", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+            List.of("zalava_backed", "shell", "broad-access"),
+            List.of("zalava_backed"));
+    when(discovery.search("run command", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(blocked));
 
     assertThat(requestTools.forInput("run command")).containsExactly(taskTool, mcpTools);
@@ -355,7 +356,7 @@ class AgentRequestToolsTest {
   @Test
   void reappliesPolicyBeforeUsingStoredActivation() {
     SessionToolActivations sessionActivations =
-        new SessionToolActivations(AgentRequestTools.MAX_SEA_TOOLS);
+        new SessionToolActivations(AgentRequestTools.MAX_ZALAVA_TOOLS);
     sessionActivations.activate(
         "conversation-1",
         List.of(
@@ -363,8 +364,8 @@ class AgentRequestToolsTest {
                 "host-shell",
                 "execute",
                 true,
-                List.of("sea_backed", "shell"),
-                List.of("sea_backed"))));
+                List.of("zalava_backed", "shell"),
+                List.of("zalava_backed"))));
     AgentRequestTools tools =
         new AgentRequestTools(
             List.of(taskTool, mcpTools),
@@ -372,7 +373,7 @@ class AgentRequestToolsTest {
             callbackCatalog,
             new DynamicToolActivationPolicy(),
             sessionActivations);
-    when(discovery.search("continue", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("continue", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of());
 
     assertThat(tools.forInput("conversation-1", "continue")).containsExactly(taskTool, mcpTools);
@@ -382,9 +383,14 @@ class AgentRequestToolsTest {
   @Test
   void keepsScanningCandidatesAfterPolicyRejections() {
     ToolDiscovery.ToolMatch blocked =
-        match("host-shell", "execute", true, List.of("sea_backed", "shell"), List.of("sea_backed"));
+        match(
+            "host-shell",
+            "execute",
+            true,
+            List.of("zalava_backed", "shell"),
+            List.of("zalava_backed"));
     ToolDiscovery.ToolMatch read = match("files", "read");
-    when(discovery.search("read after blocked", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("read after blocked", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(List.of(blocked, read));
     when(callbackCatalog.callback("files", "read")).thenReturn(readCallback);
 
@@ -412,7 +418,8 @@ class AgentRequestToolsTest {
           matchWithDescription("provider", "apple" + index, "Handles apples number " + index));
     }
     corpus.add(matchWithDescription("files", "readNotes", "Read notes from the workspace."));
-    when(discovery.search("notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES)).thenReturn(corpus);
+    when(discovery.search("notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
+        .thenReturn(corpus);
     when(callbackCatalog.callback("files", "readNotes")).thenReturn(readCallback);
     for (int index = 0; index < 5; index++) {
       when(callbackCatalog.callback("provider", "apple" + index))
@@ -426,7 +433,7 @@ class AgentRequestToolsTest {
             List.of(),
             RemoteCapabilityDiscovery.noop(),
             new PolicyFilteredToolSearch(
-                new org.zalava.capabilities.discovery.adapter.out.springai.SeaToolIndex()));
+                new org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex()));
 
     AgentRequestTools.RequestToolSelection selection = searched.resolve("conversation-1", "notes");
 
@@ -441,7 +448,7 @@ class AgentRequestToolsTest {
         List.of(
             matchWithDescription("provider", "apple", "Handles apples."),
             matchWithDescription("files", "readNotes", "Read notes from the workspace."));
-    when(discovery.search("unmatched phrase", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES))
+    when(discovery.search("unmatched phrase", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
         .thenReturn(corpus);
     ToolCallback apple = mock(ToolCallback.class);
     when(callbackCatalog.callback("provider", "apple")).thenReturn(apple);
@@ -456,7 +463,7 @@ class AgentRequestToolsTest {
             List.of(),
             RemoteCapabilityDiscovery.noop(),
             new PolicyFilteredToolSearch(
-                new org.zalava.capabilities.discovery.adapter.out.springai.SeaToolIndex()));
+                new org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex()));
 
     AgentRequestTools.RequestToolSelection expected =
         deterministic.resolve("conversation-1", "unmatched phrase");
@@ -474,7 +481,8 @@ class AgentRequestToolsTest {
             .mapToObj(
                 index -> matchWithDescription("provider", "read" + index, "Read notes " + index))
             .toList();
-    when(discovery.search("notes", AgentRequestTools.MAX_SEA_TOOL_CANDIDATES)).thenReturn(corpus);
+    when(discovery.search("notes", AgentRequestTools.MAX_ZALAVA_TOOL_CANDIDATES))
+        .thenReturn(corpus);
     for (int index = 0; index < 8; index++) {
       when(callbackCatalog.callback("provider", "read" + index))
           .thenReturn(mock(ToolCallback.class));
@@ -487,12 +495,12 @@ class AgentRequestToolsTest {
             List.of(),
             RemoteCapabilityDiscovery.noop(),
             new PolicyFilteredToolSearch(
-                new org.zalava.capabilities.discovery.adapter.out.springai.SeaToolIndex()));
+                new org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex()));
 
     AgentRequestTools.RequestToolSelection selection = searched.resolve("conversation-1", "notes");
 
-    assertThat(selection.toolSummaries()).hasSize(AgentRequestTools.MAX_SEA_TOOLS);
-    assertThat(selection.tools()).hasSize(1 + AgentRequestTools.MAX_SEA_TOOLS);
+    assertThat(selection.toolSummaries()).hasSize(AgentRequestTools.MAX_ZALAVA_TOOLS);
+    assertThat(selection.tools()).hasSize(1 + AgentRequestTools.MAX_ZALAVA_TOOLS);
   }
 
   private static ToolDiscovery.ToolMatch matchWithDescription(
@@ -503,8 +511,8 @@ class AgentRequestToolsTest {
         toolName,
         description,
         false,
-        List.of("sea_backed", "filesystem"),
-        List.of("sea_backed", "filesystem"),
+        List.of("zalava_backed", "filesystem"),
+        List.of("zalava_backed", "filesystem"),
         Map.of());
   }
 
@@ -518,8 +526,8 @@ class AgentRequestToolsTest {
         providerId,
         toolName,
         sideEffecting,
-        List.of("sea_backed", "filesystem"),
-        List.of("sea_backed", "filesystem"));
+        List.of("zalava_backed", "filesystem"),
+        List.of("zalava_backed", "filesystem"));
   }
 
   private static ToolDiscovery.ToolMatch match(
@@ -546,8 +554,8 @@ class AgentRequestToolsTest {
         toolName,
         toolName + " files",
         false,
-        List.of("sea_backed", "filesystem"),
-        List.of("sea_backed", "filesystem"),
+        List.of("zalava_backed", "filesystem"),
+        List.of("zalava_backed", "filesystem"),
         Map.of(),
         Map.of("type", "object", "properties", Map.of("path", Map.of("type", "string"))));
   }

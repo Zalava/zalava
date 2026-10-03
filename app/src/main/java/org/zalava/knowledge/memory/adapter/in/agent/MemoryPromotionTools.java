@@ -6,7 +6,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.knowledge.memory.application.SeaMemoryPromotions;
+import org.zalava.knowledge.memory.application.ZalavaMemoryPromotions;
 import org.zalava.knowledge.memory.application.port.in.MemoryPromotions;
 import org.zalava.knowledge.memory.domain.MemoryContentPolicy;
 import org.zalava.knowledge.memory.domain.MemoryProposal;
@@ -16,9 +16,10 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Model-facing adapter that lets the current actor's model propose durable memory.
  *
- * <p>It only records a pending proposal under the trusted actor identity: SEA validates scope and
- * content, the proposal stays reviewable, and promotion requires an explicit owner approval through
- * the SEA review surface. The model never writes, approves, consolidates or revokes durable memory.
+ * <p>It only records a pending proposal under the trusted actor identity: Zalava validates scope
+ * and content, the proposal stays reviewable, and promotion requires an explicit owner approval
+ * through the Zalava review surface. The model never writes, approves, consolidates or revokes
+ * durable memory.
  */
 public final class MemoryPromotionTools {
 
@@ -53,14 +54,14 @@ public final class MemoryPromotionTools {
       result.put(
           "nextAction", "Report the pending proposal id and wait for the owner to review it.");
       return json(result);
-    } catch (SeaMemoryPromotions.DuplicateMemoryException exception) {
+    } catch (ZalavaMemoryPromotions.DuplicateMemoryException exception) {
       return error("An identical durable memory already exists.");
     } catch (MemoryContentPolicy.UnsafeMemoryContentException exception) {
       return error(exception.getMessage());
     } catch (IllegalArgumentException exception) {
-      return error("SEA rejected the memory proposal: " + exception.getMessage());
+      return error("Zalava rejected the memory proposal: " + exception.getMessage());
     } catch (RuntimeException exception) {
-      return error("SEA could not record the memory proposal.");
+      return error("Zalava could not record the memory proposal.");
     }
   }
 

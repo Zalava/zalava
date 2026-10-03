@@ -176,12 +176,6 @@ public final class FileSystemBinaryArtifactInstallation implements BinaryArtifac
 
   private static BundleManifest bundleManifest(java.util.jar.JarFile archive) {
     java.util.jar.JarEntry entry = archive.getJarEntry("META-INF/zalava-module-bundle.yaml");
-    var legacyEntry = archive.getJarEntry("META-INF/sea-module-bundle.yaml");
-    if (entry != null && legacyEntry != null) {
-      throw new SourceModuleInstallationException(
-          "Binary artifact bundle must declare exactly one manifest");
-    }
-    if (entry == null) entry = legacyEntry;
     if (entry == null || entry.isDirectory()) {
       throw new SourceModuleInstallationException("Binary artifact bundle manifest is required");
     }
@@ -283,8 +277,7 @@ public final class FileSystemBinaryArtifactInstallation implements BinaryArtifac
       java.util.jar.JarFile archive, BundleManifest manifest) {
     Set<String> declared = new HashSet<>();
     declared.add("META-INF/zalava-module-bundle.yaml");
-    declared.add("META-INF/sea-module-bundle.yaml");
-    // The module embeds its own metadata document at the bundle root; SEA reads it during
+    // The module embeds its own metadata document at the bundle root; Zalava reads it during
     // installation and never extracts it into the managed module directory.
     declared.add("module-metadata.yaml");
     declared.add(manifest.module().path());

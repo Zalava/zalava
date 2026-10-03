@@ -14,12 +14,12 @@
 <div id="onboarding-step" class="step-fragment">
     <p class="is-uppercase has-text-weight-semibold has-text-grey is-size-7 mb-3">Step ${currentStepNumber} of ${totalSteps} · Optional</p>
     <h2 class="title is-3 mb-3">Choose a starter module</h2>
-    <p class="subtitle is-5 has-text-grey-dark">SEA recommends these locally available modules. You can finish without one, or configure a selected module using the same safe setup flow available later in Modules.</p>
+    <p class="subtitle is-5 has-text-grey-dark">Zalava recommends these locally available modules. You can finish without one, or configure a selected module using the same safe setup flow available later in Modules.</p>
     @if(error != null)
         <article class="message is-danger"><div class="message-body">${error}</div></article>
     @endif
     @if(starterModules.isEmpty())
-        <p class="notification is-light">No curated starter modules are available in this SEA installation. You can add modules later from Modules.</p>
+        <p class="notification is-light">No curated starter modules are available in this Zalava installation. You can add modules later from Modules.</p>
     @else
         @for(StarterModule starter : starterModules)
             <section class="box mb-3" data-starter-module="${starter.moduleId()}">

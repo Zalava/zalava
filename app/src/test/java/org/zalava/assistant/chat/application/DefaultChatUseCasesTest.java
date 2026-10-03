@@ -40,13 +40,13 @@ class DefaultChatUseCasesTest {
 
   @Test
   void handlesApprovalWithoutCallingAgent() {
-    when(approvals.handle("/sea approve a")).thenReturn(Optional.of("Approved"));
+    when(approvals.handle("/zalava approve a")).thenReturn(Optional.of("Approved"));
 
-    ChatTurn result = useCases.chat("web", "/sea approve a");
+    ChatTurn result = useCases.chat("web", "/zalava approve a");
 
     assertThat(result.text()).isEqualTo("Approved");
     assertThat(result.taskReferences()).isEmpty();
-    verify(agent, never()).respondTo("web", "/sea approve a");
+    verify(agent, never()).respondTo("web", "/zalava approve a");
   }
 
   @Test

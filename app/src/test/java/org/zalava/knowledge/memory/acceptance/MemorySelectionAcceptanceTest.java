@@ -36,7 +36,7 @@ import org.zalava.knowledge.memory.domain.MemoryScope;
 class MemorySelectionAcceptanceTest {
 
   private static final String MEMORY_DIRECTORY =
-      "SEA keeps durable memory under users/<account-id>/memory";
+      "Zalava keeps durable memory under users/<account-id>/memory";
   private static final String FOCUSED_TESTS =
       "Prefer focused regression tests for every reproduced defect";
   private static final String STYLE = "The user prefers concise answers with short sentences";

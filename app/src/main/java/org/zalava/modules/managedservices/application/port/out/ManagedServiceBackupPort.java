@@ -4,7 +4,7 @@ import java.util.Objects;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 
 /**
- * Application-owned backup boundary executed by SEA itself, never by a module. A backup covers
+ * Application-owned backup boundary executed by Zalava itself, never by a module. A backup covers
  * exactly the data paths the service record declares; refusing silent no-ops keeps "backed up"
  * meaningful for rollback decisions.
  */

@@ -123,7 +123,7 @@ try (ModuleContractKit kit =
           .factoryConfiguration("my-module", "my-factory", Map.of("region", "eu"));
 
   try (ProviderFixture providers = kit.providers(config)) {
-    SeaOperationResult result =
+    ZalavaOperationResult result =
         providers.invoke("my-provider", "my_tool", Map.of());
     assertThat(result.success()).isTrue();
   }

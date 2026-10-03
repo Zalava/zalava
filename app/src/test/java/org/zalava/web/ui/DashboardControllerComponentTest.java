@@ -30,7 +30,7 @@ import org.zalava.api.ProviderCapabilities;
 import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -56,7 +56,7 @@ class DashboardControllerComponentTest {
   @Autowired private AccountLifecycle accounts;
   @Autowired private ActorTaskStore tasks;
   @Autowired private TaskStore legacyTasks;
-  @Autowired private SeaToolApprovalRequests approvals;
+  @Autowired private ZalavaToolApprovalRequests approvals;
 
   @BeforeEach
   void enableBootstrapAdministrator() {
@@ -77,10 +77,10 @@ class DashboardControllerComponentTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.bootstrap-login", () -> "dashboard-admin");
+    registry.add("zalava.accounts.bootstrap-login", () -> "dashboard-admin");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
@@ -120,7 +120,7 @@ class DashboardControllerComponentTest {
             Map.of(
                 "accountRole",
                 "MEMBER",
-                SeaToolApprovalRequests.ACTOR_TASK_REFERENCE,
+                ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE,
                 execution.encode())),
         JsonNodeFactory.instance.objectNode());
 
@@ -168,7 +168,7 @@ class DashboardControllerComponentTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     when(provider.descriptor()).thenReturn(descriptor);
     when(provider.capabilities()).thenReturn(ProviderCapabilities.toolsOnly());

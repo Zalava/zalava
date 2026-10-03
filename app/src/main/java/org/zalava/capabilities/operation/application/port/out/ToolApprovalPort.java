@@ -26,7 +26,7 @@ public interface ToolApprovalPort {
   Optional<ToolApproval> findAllowedToolPolicy(
       String actorId, String providerId, String toolName, Map<String, String> providerScope);
 
-  /** Resolves a durable policy using the complete SEA invocation authority. */
+  /** Resolves a durable policy using the complete Zalava invocation authority. */
   default Optional<ToolApproval> findAllowedToolPolicy(
       InvocationContext context, ZalavaProvider provider, ZalavaToolDescriptor tool) {
     return findAllowedToolPolicy(

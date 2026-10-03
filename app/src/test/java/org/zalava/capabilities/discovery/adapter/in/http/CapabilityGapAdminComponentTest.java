@@ -49,9 +49,9 @@ class CapabilityGapAdminComponentTest {
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.discovery.remote.enabled", () -> "true");
+    registry.add("zalava.discovery.remote.enabled", () -> "true");
     registry.add(
-        "sea.discovery.remote.module-locator-url", () -> "https://catalog.example/catalog.yaml");
+        "zalava.discovery.remote.module-locator-url", () -> "https://catalog.example/catalog.yaml");
   }
 
   @Test
@@ -59,7 +59,7 @@ class CapabilityGapAdminComponentTest {
     remoteDiscovery.discover("forecast pollen", 0);
 
     mockMvc
-        .perform(get("/api/sea/capability-gap/evidence"))
+        .perform(get("/api/zalava/capability-gap/evidence"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].classification").value("weak_match"))
         .andExpect(jsonPath("$[0].queryDigest", startsWith("sha256:")))
@@ -80,13 +80,13 @@ class CapabilityGapAdminComponentTest {
   @Test
   void rejectsAnOutOfRangeEvidenceLimit() throws Exception {
     mockMvc
-        .perform(get("/api/sea/capability-gap/evidence").param("limit", "0"))
+        .perform(get("/api/zalava/capability-gap/evidence").param("limit", "0"))
         .andExpect(status().isBadRequest());
   }
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-discovery-component-workspace-");
+      Path workspace = Files.createTempDirectory("zalava-discovery-component-workspace-");
       Files.writeString(workspace.resolve("AGENT.md"), "Test agent prompt.");
       Files.writeString(workspace.resolve("INFO.md"), "Test environment info.");
       return workspace;

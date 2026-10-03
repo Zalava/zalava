@@ -31,10 +31,10 @@ import org.zalava.web.ui.protocol.UiEvent;
 import org.zalava.web.ui.protocol.UiEventJson;
 import tools.jackson.databind.ObjectMapper;
 
-/** Authenticated JSON WebSocket adapter consumed by the packaged interactive SEA frontend. */
+/** Authenticated JSON WebSocket adapter consumed by the packaged interactive Zalava frontend. */
 @Component
 @ConditionalOnProperty(
-    name = "sea.chat.transport",
+    name = "zalava.chat.transport",
     havingValue = "spring-websocket",
     matchIfMissing = true)
 public final class UiChatWebSocketHandler extends TextWebSocketHandler {
@@ -157,7 +157,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
       }
     } catch (RuntimeException exception) {
       log.warn("UI chat command failed", exception);
-      sendFailure(session, "command", "SEA could not complete that request");
+      sendFailure(session, "command", "Zalava could not complete that request");
     }
   }
 
@@ -237,7 +237,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
           @Override
           public void onError(RuntimeException failure) {
             log.warn("UI chat stream failed", failure);
-            sendFailure(session, "chat.send", "SEA could not complete that request");
+            sendFailure(session, "chat.send", "Zalava could not complete that request");
           }
         });
   }

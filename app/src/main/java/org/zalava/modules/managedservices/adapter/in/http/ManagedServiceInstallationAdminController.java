@@ -22,7 +22,7 @@ import org.zalava.modules.managedservices.application.port.in.ManagedServiceInst
 
 /** Administrator HTTP surface for the managed-service install workflow (dev/test profiles). */
 @RestController
-@RequestMapping("/api/sea")
+@RequestMapping("/api/zalava")
 @Profile({"dev", "test"})
 public class ManagedServiceInstallationAdminController {
 
@@ -50,7 +50,7 @@ public class ManagedServiceInstallationAdminController {
                                   java.util.Set.copyOf(item.dependsOn())))
                       .toList()));
       return ResponseEntity.created(
-              URI.create("/api/sea/managed-service-installations/" + created.requestId()))
+              URI.create("/api/zalava/managed-service-installations/" + created.requestId()))
           .body(ManagedServiceInstallationResponse.from(created));
     } catch (ManagedServiceInstallPlanningException | IllegalArgumentException ex) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);

@@ -13,7 +13,7 @@ import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryProposalStore;
 import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryStore;
-import org.zalava.knowledge.memory.application.SeaMemoryPromotions;
+import org.zalava.knowledge.memory.application.ZalavaMemoryPromotions;
 import org.zalava.knowledge.memory.domain.MemoryProposal;
 import org.zalava.knowledge.memory.domain.MemoryProposalDraft;
 import org.zalava.knowledge.memory.domain.MemoryScope;
@@ -24,13 +24,13 @@ class MemoryPromotionToolsTest {
 
   private final ActorExecutionContext actors = new ActorExecutionContext();
   private final Actor actor = new Actor(AccountId.newId());
-  private SeaMemoryPromotions promotions;
+  private ZalavaMemoryPromotions promotions;
   private MemoryPromotionTools tools;
 
   @BeforeEach
   void setUp() {
     promotions =
-        new SeaMemoryPromotions(
+        new ZalavaMemoryPromotions(
             new FileSystemMemoryProposalStore(workspace),
             new FileSystemMemoryStore(workspace),
             java.time.Instant::now);

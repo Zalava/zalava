@@ -55,7 +55,7 @@ module artifacts. Missing prerequisites are reported, never counted as passing.
 
 Use an explicit step branch, scoped evidence, tests, staged-diff review and a
 ready-for-review PR. Use `gh stack` for dependent PRs. The repository-explicit
-`scripts/sea-workflow` supports verification and publication across public
+`scripts/zalava-workflow` supports verification and publication across public
 repositories, with a separately persisted plan and explicit changed-file allowlist.
 Never merge autonomously; publish only immutable versions from verified merged
 default-branch commits and successful publication workflows.

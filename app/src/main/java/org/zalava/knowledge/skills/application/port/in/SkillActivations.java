@@ -10,10 +10,10 @@ import org.zalava.knowledge.skills.domain.SkillActivation;
 /**
  * Actor-owned, policy-controlled skill activation.
  *
- * <p>Activation validates a discovered skill against SEA policy and the configured content budget,
- * persists the selection for the requesting actor and makes its body available only to that actor's
- * context as untrusted instructions. It never grants a tool or permission, and deactivation is the
- * rollback path.
+ * <p>Activation validates a discovered skill against Zalava policy and the configured content
+ * budget, persists the selection for the requesting actor and makes its body available only to that
+ * actor's context as untrusted instructions. It never grants a tool or permission, and deactivation
+ * is the rollback path.
  */
 public interface SkillActivations {
 

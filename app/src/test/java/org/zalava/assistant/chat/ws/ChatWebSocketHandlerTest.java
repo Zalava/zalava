@@ -254,12 +254,12 @@ class ChatWebSocketHandlerTest {
         .contains("chat-messages")
         .contains("history")
         .contains("chat-input-area")
-        .contains("Message SEA...")
+        .contains("Message Zalava...")
         .contains("<form id=\"chat-form\" ws-send")
         .doesNotContain("hx-trigger=\"keydown")
         .doesNotContain(
             "<textarea id=\"message-input\" class=\"textarea\" name=\"message\" rows=\"1\"\n"
-                + "                                    placeholder=\"Message SEA...\"\n"
+                + "                                    placeholder=\"Message Zalava...\"\n"
                 + "                                    autocomplete=\"off\" spellcheck=\"true\" autofocus\n"
                 + "                                    ws-send");
   }
@@ -289,7 +289,7 @@ class ChatWebSocketHandlerTest {
         .contains("chat-messages")
         .contains("new history")
         .contains("chat-input-area")
-        .contains("Message SEA...");
+        .contains("Message Zalava...");
   }
 
   @Test
@@ -314,7 +314,7 @@ class ChatWebSocketHandlerTest {
 
     assertThat(String.join("", htmlCaptor.getValue()))
         .contains("chat-input-area")
-        .contains("Message SEA...")
+        .contains("Message Zalava...")
         .doesNotContain("read-only view");
   }
 

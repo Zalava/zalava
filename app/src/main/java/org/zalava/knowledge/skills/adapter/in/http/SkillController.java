@@ -84,7 +84,7 @@ public final class SkillController {
       List<String> recommendedTools,
       List<String> policyConstraints,
       List<String> validationSteps,
-      String seaApiVersion,
+      String zalavaApiVersion,
       String visibility,
       String provenanceSource,
       String provenanceReference) {
@@ -99,7 +99,7 @@ public final class SkillController {
           descriptor.recommendedTools(),
           descriptor.policyConstraints(),
           descriptor.validationSteps(),
-          descriptor.seaApiVersion(),
+          descriptor.zalavaApiVersion(),
           descriptor.visibility().name(),
           descriptor.provenance().source(),
           descriptor.provenance().reference());

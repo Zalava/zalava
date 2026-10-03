@@ -45,9 +45,9 @@ class BrowserOnboardingAcceptanceTest {
         "spring.allConfig.location",
         () -> WORKSPACE.resolve("private/application.private.yaml").toString());
     registry.add("agent.onboarding.completed", () -> "false");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> "OnboardingTestPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> "OnboardingTestPassword-123");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -116,7 +116,7 @@ class BrowserOnboardingAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-onboarding-");
+      Path root = Files.createTempDirectory("zalava-browser-onboarding-");
       Files.writeString(root.resolve("AGENT.md"), "Browser onboarding test workspace.");
       return root;
     } catch (IOException exception) {

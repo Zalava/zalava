@@ -15,7 +15,7 @@ import org.zalava.capabilities.discovery.application.port.in.CapabilityGapEviden
 
 /** Development/test-only, read-only inspection of persisted capability-gap evidence. */
 @RestController
-@RequestMapping("/api/sea/capability-gap")
+@RequestMapping("/api/zalava/capability-gap")
 @Profile({"dev", "test"})
 public class CapabilityGapAdminController {
 

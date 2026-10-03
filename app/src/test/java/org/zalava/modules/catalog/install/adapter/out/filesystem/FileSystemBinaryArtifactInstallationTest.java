@@ -22,7 +22,7 @@ class FileSystemBinaryArtifactInstallationTest {
     Path source = workspace.resolve("source.jar");
     Files.write(source, content);
     var installation = new FileSystemBinaryArtifactInstallation(workspace);
-    var artifact = new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0");
+    var artifact = new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0");
     var result =
         installation.install(new Install("test-module", artifact, source.toString(), digest));
     assertThat(result.path()).contains("test").contains("1.0.0");
@@ -32,7 +32,7 @@ class FileSystemBinaryArtifactInstallationTest {
   @Test
   void rejectsNullSourcePath() {
     var installation = new FileSystemBinaryArtifactInstallation(workspace);
-    var artifact = new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0");
+    var artifact = new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0");
     assertThatThrownBy(
             () -> installation.install(new Install("test-module", artifact, null, "sha256:x")))
         .isInstanceOf(SourceModuleInstallationException.class)
@@ -45,7 +45,7 @@ class FileSystemBinaryArtifactInstallationTest {
     Path source = workspace.resolve("source.jar");
     Files.write(source, content);
     var installation = new FileSystemBinaryArtifactInstallation(workspace);
-    var artifact = new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0");
+    var artifact = new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0");
     assertThatThrownBy(
             () ->
                 installation.install(
@@ -60,7 +60,7 @@ class FileSystemBinaryArtifactInstallationTest {
     Path source = workspace.resolve("source.jar");
     Files.write(source, content);
     var installation = new FileSystemBinaryArtifactInstallation(workspace);
-    var artifact = new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0");
+    var artifact = new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0");
     assertThatThrownBy(
             () ->
                 installation.install(
@@ -72,7 +72,7 @@ class FileSystemBinaryArtifactInstallationTest {
   @Test
   void rejectsSourceOutsideTrustedRoot() {
     var installation = new FileSystemBinaryArtifactInstallation(workspace);
-    var artifact = new SourceModuleIndex.Artifact("ai.sea.modules", "test", "1.0.0");
+    var artifact = new SourceModuleIndex.Artifact("ai.zalava.modules", "test", "1.0.0");
     assertThatThrownBy(
             () ->
                 installation.install(

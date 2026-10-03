@@ -16,13 +16,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.support.SeaComponentTestInitializer;
 import org.zalava.support.SecureMutableWorkspaceComponentTest;
+import org.zalava.support.ZalavaComponentTestInitializer;
 
 @SecureMutableWorkspaceComponentTest
 class SettingsControllerComponentTest {
 
-  private static final Path WORKSPACE = SeaComponentTestInitializer.workspacePath();
+  private static final Path WORKSPACE = ZalavaComponentTestInitializer.workspacePath();
 
   @Autowired private MockMvc mockMvc;
 
@@ -93,7 +93,7 @@ class SettingsControllerComponentTest {
             flash()
                 .attribute(
                     "settingsMessage",
-                    "Telegram channel configuration saved. Restart SEA to apply the change."));
+                    "Telegram channel configuration saved. Restart Zalava to apply the change."));
 
     mockMvc
         .perform(get("/settings"))
@@ -131,7 +131,7 @@ class SettingsControllerComponentTest {
             flash()
                 .attribute(
                     "settingsMessage",
-                    "Telegram channel configuration saved. Restart SEA to apply the change."));
+                    "Telegram channel configuration saved. Restart Zalava to apply the change."));
 
     org.assertj.core.api.Assertions.assertThat(Files.readString(configuration))
         .contains("token: telegram-secret")
@@ -158,7 +158,7 @@ class SettingsControllerComponentTest {
             flash()
                 .attribute(
                     "settingsMessage",
-                    "Telegram channel configuration saved. Restart SEA to apply the change."));
+                    "Telegram channel configuration saved. Restart Zalava to apply the change."));
 
     org.assertj.core.api.Assertions.assertThat(
             Files.readString(WORKSPACE.resolve("private/application.private.yaml")))

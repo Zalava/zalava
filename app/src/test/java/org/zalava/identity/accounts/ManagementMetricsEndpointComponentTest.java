@@ -15,16 +15,16 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.zalava.support.SeaComponentTestConfiguration;
-import org.zalava.support.SeaComponentTestInitializer;
+import org.zalava.support.ZalavaComponentTestConfiguration;
+import org.zalava.support.ZalavaComponentTestInitializer;
 
 /**
  * Regression for the managed metrics stack: Prometheus scrapes the loopback management server
- * without a SEA session, while the public application port keeps its authorization.
+ * without a Zalava session, while the public application port keeps its authorization.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(initializers = SeaComponentTestInitializer.class)
-@Import(SeaComponentTestConfiguration.class)
+@ContextConfiguration(initializers = ZalavaComponentTestInitializer.class)
+@Import(ZalavaComponentTestConfiguration.class)
 class ManagementMetricsEndpointComponentTest {
 
   private static final HttpClient CLIENT =
@@ -36,10 +36,10 @@ class ManagementMetricsEndpointComponentTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> "management-metrics-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "ManagementMetricsPassword-123");
-    registry.add("sea.observability.enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "management-metrics-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "ManagementMetricsPassword-123");
+    registry.add("zalava.observability.enabled", () -> "true");
     registry.add("management.server.port", () -> "0");
   }
 

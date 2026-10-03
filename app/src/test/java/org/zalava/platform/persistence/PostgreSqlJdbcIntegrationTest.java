@@ -19,8 +19,8 @@ class PostgreSqlJdbcIntegrationTest {
   @Container
   static final PostgreSQLContainer postgres =
       new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
-          .withDatabaseName("sea_test")
-          .withUsername("sea_test")
+          .withDatabaseName("zalava_test")
+          .withUsername("zalava_test")
           .withPassword("test-only-password");
 
   @Test
@@ -38,7 +38,7 @@ class PostgreSqlJdbcIntegrationTest {
               .query(String.class)
               .single();
 
-      assertThat(databaseName).isEqualTo("sea_test");
+      assertThat(databaseName).isEqualTo("zalava_test");
     } finally {
       dataSource.close();
     }

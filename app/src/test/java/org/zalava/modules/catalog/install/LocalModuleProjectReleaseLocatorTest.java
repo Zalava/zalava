@@ -72,7 +72,7 @@ class LocalModuleProjectReleaseLocatorTest {
                       repository: https://github.com/example/zalava-module-example
                       license: Apache-2.0
                     compatibility:
-                      seaRuntime: ">=1.0.0 <2.0.0"
+                      zalavaRuntime: ">=1.0.0 <2.0.0"
                     security:
                       permissions: []
                 """

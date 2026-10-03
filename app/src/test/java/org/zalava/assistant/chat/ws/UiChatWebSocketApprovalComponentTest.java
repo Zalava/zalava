@@ -35,13 +35,13 @@ import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
@@ -63,14 +63,14 @@ class UiChatWebSocketApprovalComponentTest {
   @Autowired private UiChatWebSocketHandler handler;
   @Autowired private AccountLifecycle accounts;
   @Autowired private ActorTaskStore tasks;
-  @Autowired private SeaToolApprovalRequests approvals;
+  @Autowired private ZalavaToolApprovalRequests approvals;
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> "ui-interact-component-admin");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "ui-interact-component-admin");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
@@ -85,7 +85,7 @@ class UiChatWebSocketApprovalComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Allow once job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     WebSocketSession session = session(owner.loginName());
     handler.handleTextMessage(
@@ -101,7 +101,7 @@ class UiChatWebSocketApprovalComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Deny job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     WebSocketSession session = session(owner.loginName());
     handler.handleTextMessage(session, command(reference.value(), approval.requestId(), "deny"));
@@ -116,7 +116,7 @@ class UiChatWebSocketApprovalComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Malformed job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     WebSocketSession session = session(owner.loginName());
     handler.handleTextMessage(session, command(reference.value(), approval.requestId(), "maybe"));
@@ -134,7 +134,7 @@ class UiChatWebSocketApprovalComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Already decided job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     WebSocketSession first = session(owner.loginName());
     handler.handleTextMessage(first, command(reference.value(), approval.requestId(), "deny"));
@@ -145,7 +145,7 @@ class UiChatWebSocketApprovalComponentTest {
 
     assertThat(payloads(second))
         .contains("failure")
-        .contains("SEA could not complete that request")
+        .contains("Zalava could not complete that request")
         .doesNotContain("job.updated");
     assertThat(tasks.get(actor, reference).getStatus()).isEqualTo(Task.Status.todo);
   }
@@ -157,18 +157,18 @@ class UiChatWebSocketApprovalComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Owner approval job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "MEMBER");
 
     WebSocketSession session = session(other.loginName());
     handler.handleTextMessage(session, command(reference.value(), approval.requestId(), "deny"));
 
     assertThat(payloads(session))
         .contains("failure")
-        .contains("SEA could not complete that request")
+        .contains("Zalava could not complete that request")
         .doesNotContain("job.updated");
     assertThat(tasks.get(actor, reference).getStatus()).isEqualTo(Task.Status.awaiting_human_input);
     assertThat(approvals.get(actor, reference, approval.requestId()).decision())
-        .isEqualTo(SeaToolApprovalRequests.Decision.PENDING);
+        .isEqualTo(ZalavaToolApprovalRequests.Decision.PENDING);
   }
 
   @Test
@@ -177,7 +177,7 @@ class UiChatWebSocketApprovalComponentTest {
     Actor actor = new Actor(owner.id());
     ActorTaskReference reference = ActorTaskReference.newReference();
     tasks.save(actor, reference, task("Restricted approval job", Task.Status.awaiting_human_input));
-    SeaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "ADMIN");
+    ZalavaToolApprovalRequests.Entry approval = actorApproval(owner, actor, reference, "ADMIN");
 
     WebSocketSession session = session(owner.loginName());
     handler.handleTextMessage(
@@ -190,7 +190,7 @@ class UiChatWebSocketApprovalComponentTest {
   private static TextMessage command(String jobId, String requestId, String decision)
       throws IOException {
     return new TextMessage(
-        "{\"protocol\":\"sea.ui/v1\",\"type\":\"approval.decide\",\"jobId\":\""
+        "{\"protocol\":\"zalava.ui/v1\",\"type\":\"approval.decide\",\"jobId\":\""
             + jobId
             + "\",\"requestId\":\""
             + requestId
@@ -216,7 +216,7 @@ class UiChatWebSocketApprovalComponentTest {
     return sent.getAllValues().stream().map(TextMessage::getPayload).reduce("", String::concat);
   }
 
-  private SeaToolApprovalRequests.Entry actorApproval(
+  private ZalavaToolApprovalRequests.Entry actorApproval(
       Account owner, Actor actor, ActorTaskReference reference, String accountRole) {
     ActorTaskExecutionReference execution = new ActorTaskExecutionReference(actor, reference);
     ZalavaProvider provider = scopedProvider();
@@ -231,7 +231,7 @@ class UiChatWebSocketApprovalComponentTest {
             Map.of(
                 "accountRole",
                 accountRole,
-                SeaToolApprovalRequests.ACTOR_TASK_REFERENCE,
+                ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE,
                 execution.encode())),
         JsonNodeFactory.instance.objectNode());
   }
@@ -258,7 +258,7 @@ class UiChatWebSocketApprovalComponentTest {
             "Test provider",
             "1",
             ProviderCapabilities.toolsOnly(),
-            List.of("sea_backed"),
+            List.of("zalava_backed"),
             Map.of("owner", "self"));
     when(provider.descriptor()).thenReturn(descriptor);
     when(provider.capabilities()).thenReturn(ProviderCapabilities.toolsOnly());
@@ -291,7 +291,7 @@ class UiChatWebSocketApprovalComponentTest {
 
     @Bean
     @Primary
-    SeaRuntime loadedSeaRuntime() {
+    ZalavaRuntime loadedZalavaRuntime() {
       ZalavaModule module =
           new ZalavaModule() {
             @Override
@@ -306,15 +306,15 @@ class UiChatWebSocketApprovalComponentTest {
           };
       ProviderFactoryDescriptor factory =
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
-      return new SeaRuntime() {
+      return new ZalavaRuntime() {
         @Override
         public List<org.zalava.api.ZalavaModule> modules() {
           return List.of(module);
         }
 
         @Override
-        public List<LoadedSeaProvider> loadedProviders() {
-          return List.of(new LoadedSeaProvider(module.descriptor(), factory, scopedProvider()));
+        public List<LoadedZalavaProvider> loadedProviders() {
+          return List.of(new LoadedZalavaProvider(module.descriptor(), factory, scopedProvider()));
         }
 
         @Override

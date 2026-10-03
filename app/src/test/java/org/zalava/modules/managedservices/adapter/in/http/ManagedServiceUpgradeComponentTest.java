@@ -104,14 +104,14 @@ class ManagedServiceUpgradeComponentTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     PostgreSqlTestDatabase.register(registry);
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
-    registry.add("sea.accounts.bootstrap-login", () -> "managed-upgrade-admin");
+    registry.add("zalava.accounts.bootstrap-login", () -> "managed-upgrade-admin");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
   }
@@ -123,7 +123,7 @@ class ManagedServiceUpgradeComponentTest {
     long generation = generationOf(requestId);
 
     mockMvc
-        .perform(get("/api/sea/managed-service-upgrades/" + requestId))
+        .perform(get("/api/zalava/managed-service-upgrades/" + requestId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("pending"))
         .andExpect(jsonPath("$.services[0].previousRevision").value("1"))
@@ -131,7 +131,7 @@ class ManagedServiceUpgradeComponentTest {
 
     mockMvc
         .perform(
-            post("/api/sea/managed-service-upgrades/" + requestId + "/allow")
+            post("/api/zalava/managed-service-upgrades/" + requestId + "/allow")
                 .param("generation", String.valueOf(generation)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("succeeded"))
@@ -146,19 +146,19 @@ class ManagedServiceUpgradeComponentTest {
     assertThat(runtimeEngine.removals).containsExactly("database");
 
     mockMvc
-        .perform(get("/api/sea/managed-services/database"))
+        .perform(get("/api/zalava/managed-services/database"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.serviceId").value("database"))
         .andExpect(jsonPath("$.observedState").value("RUNNING"))
         .andExpect(jsonPath("$.desiredRevision").value("2"));
 
     mockMvc
-        .perform(get("/api/sea/managed-services/database/logs").param("lines", "10"))
+        .perform(get("/api/zalava/managed-services/database/logs").param("lines", "10"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0]").value("line-1"));
 
     mockMvc
-        .perform(post("/api/sea/managed-services/database/restart"))
+        .perform(post("/api/zalava/managed-services/database/restart"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.observedState").value("RUNNING"));
   }
@@ -173,7 +173,7 @@ class ManagedServiceUpgradeComponentTest {
 
     mockMvc
         .perform(
-            post("/api/sea/managed-service-upgrades/" + requestId + "/allow")
+            post("/api/zalava/managed-service-upgrades/" + requestId + "/allow")
                 .param("generation", String.valueOf(generation)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("rolled_back"))
@@ -194,32 +194,32 @@ class ManagedServiceUpgradeComponentTest {
 
     mockMvc
         .perform(
-            post("/api/sea/managed-service-upgrades/" + requestId + "/deny")
+            post("/api/zalava/managed-service-upgrades/" + requestId + "/deny")
                 .param("generation", "99"))
         .andExpect(status().isConflict());
 
     mockMvc
-        .perform(get("/api/sea/managed-service-upgrades/missing-request"))
+        .perform(get("/api/zalava/managed-service-upgrades/missing-request"))
         .andExpect(status().isNotFound());
 
     mockMvc
-        .perform(get("/api/sea/managed-services/ghost-service"))
+        .perform(get("/api/zalava/managed-services/ghost-service"))
         .andExpect(status().isNotFound());
 
     mockMvc
-        .perform(post("/api/sea/managed-services/ghost-service/restart"))
+        .perform(post("/api/zalava/managed-services/ghost-service/restart"))
         .andExpect(status().isNotFound());
 
     mockMvc
         .perform(
-            post("/api/sea/managed-service-upgrades")
+            post("/api/zalava/managed-service-upgrades")
                 .contentType("application/json")
                 .content(upgradeJson("ghost-service", "2")))
         .andExpect(status().isBadRequest());
 
     mockMvc
         .perform(
-            post("/api/sea/managed-service-upgrades/" + requestId + "/deny")
+            post("/api/zalava/managed-service-upgrades/" + requestId + "/deny")
                 .param("generation", String.valueOf(generationOf(requestId))))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("denied"));
@@ -231,7 +231,7 @@ class ManagedServiceUpgradeComponentTest {
     String response =
         mockMvc
             .perform(
-                post("/api/sea/managed-service-installations")
+                post("/api/zalava/managed-service-installations")
                     .contentType("application/json")
                     .content("{\"requests\":[" + installServiceJson(serviceId) + "]}"))
             .andExpect(status().isCreated())
@@ -240,7 +240,7 @@ class ManagedServiceUpgradeComponentTest {
             .getContentAsString();
     String installRequestId = JSON.readTree(response).get("requestId").asText();
     mockMvc
-        .perform(post("/api/sea/managed-service-installations/" + installRequestId + "/allow"))
+        .perform(post("/api/zalava/managed-service-installations/" + installRequestId + "/allow"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("succeeded"));
   }
@@ -249,7 +249,7 @@ class ManagedServiceUpgradeComponentTest {
     String response =
         mockMvc
             .perform(
-                post("/api/sea/managed-service-upgrades")
+                post("/api/zalava/managed-service-upgrades")
                     .contentType("application/json")
                     .content(upgradeJson(serviceId, candidateRevision)))
             .andExpect(status().isCreated())
@@ -262,7 +262,7 @@ class ManagedServiceUpgradeComponentTest {
   private long generationOf(String requestId) throws Exception {
     String response =
         mockMvc
-            .perform(get("/api/sea/managed-service-upgrades/" + requestId))
+            .perform(get("/api/zalava/managed-service-upgrades/" + requestId))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -310,7 +310,7 @@ class ManagedServiceUpgradeComponentTest {
 
   private static Path createWorkspace() {
     try {
-      return Files.createTempDirectory("sea-managed-upgrade-test");
+      return Files.createTempDirectory("zalava-managed-upgrade-test");
     } catch (java.io.IOException ex) {
       throw new IllegalStateException(ex);
     }

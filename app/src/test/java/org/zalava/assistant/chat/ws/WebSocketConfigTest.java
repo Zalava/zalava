@@ -30,10 +30,10 @@ class WebSocketConfigTest {
     WebSocketHandlerRegistration registration = mock(WebSocketHandlerRegistration.class);
     when(registry.addHandler(handler, "/ws/chat")).thenReturn(registration);
 
-    new WebSocketConfig(handler, "https://sea.example, https://localhost:8080")
+    new WebSocketConfig(handler, "https://zalava.example, https://localhost:8080")
         .registerWebSocketHandlers(registry);
 
-    verify(registration).setAllowedOrigins("https://sea.example", "https://localhost:8080");
+    verify(registration).setAllowedOrigins("https://zalava.example", "https://localhost:8080");
   }
 
   @Test

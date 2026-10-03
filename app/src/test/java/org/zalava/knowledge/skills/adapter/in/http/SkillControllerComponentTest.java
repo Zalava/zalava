@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
 /**
@@ -18,7 +18,7 @@ import org.zalava.support.ComponentTestAccounts;
  * controller, actor resolver and filesystem catalogue against the component workspace's maintained
  * {@code SKILL.md}, so ownership/policy visibility and bounded discovery are proven over real HTTP.
  */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class SkillControllerComponentTest {
 
   @Autowired private MockMvc mockMvc;

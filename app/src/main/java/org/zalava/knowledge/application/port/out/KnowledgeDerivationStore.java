@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.zalava.knowledge.domain.KnowledgeDerivation;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 
-/** SEA-owned derivation lifecycle boundary; processors submit no direct storage mutation. */
+/** Zalava-owned derivation lifecycle boundary; processors submit no direct storage mutation. */
 public interface KnowledgeDerivationStore {
   KnowledgeDerivation record(KnowledgeDerivation derivation);
 

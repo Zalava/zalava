@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 
-/** Durable state boundary for SEA-owned managed resources. */
+/** Durable state boundary for Zalava-owned managed resources. */
 public interface ManagedServiceStateStore {
   Optional<ManagedServiceRecord> find(String serviceId);
 

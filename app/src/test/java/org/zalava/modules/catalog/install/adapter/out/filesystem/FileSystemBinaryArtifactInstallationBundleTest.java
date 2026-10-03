@@ -519,7 +519,7 @@ class FileSystemBinaryArtifactInstallationBundleTest {
   // --- helpers ---
 
   private static SourceModuleIndex.Artifact artifact(String artifactId) {
-    return new SourceModuleIndex.Artifact("ai.sea.modules", artifactId, "1.0.0");
+    return new SourceModuleIndex.Artifact("ai.zalava.modules", artifactId, "1.0.0");
   }
 
   private Install install(Path bundleJar) {

@@ -39,11 +39,11 @@ import org.zalava.capabilities.operation.application.port.in.ProviderToolOperati
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
-import org.zalava.modules.runtime.LoadedSeaProvider;
-import org.zalava.modules.runtime.ManagedSeaRuntime;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
+import org.zalava.modules.runtime.ManagedZalavaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.support.PostgreSqlTestDatabase;
-import org.zalava.support.RestartableSeaApplicationContext;
+import org.zalava.support.RestartableZalavaApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -51,10 +51,10 @@ import tools.jackson.databind.ObjectMapper;
  * Opt-in cross-repository compatibility matrix for released external modules.
  *
  * <p>Runs the production indexed-install, approval, restart, configuration, tool and module
- * web-extension paths against a candidate SEA build in a disposable workspace on a random port. The
- * matrix pins each module release by version and SHA-256 and fails when a pinned release, provider,
- * tool, page or expected effect is missing rather than skipping it. Credentials come from the
- * invoking environment and are never persisted.
+ * web-extension paths against a candidate Zalava build in a disposable workspace on a random port.
+ * The matrix pins each module release by version and SHA-256 and fails when a pinned release,
+ * provider, tool, page or expected effect is missing rather than skipping it. Credentials come from
+ * the invoking environment and are never persisted.
  */
 @Tag("module-compat")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -108,7 +108,7 @@ class ModuleCompatibilityAcceptanceTest {
       WORKSPACE.resolve("shopping-list/shopping-list.sqlite");
 
   static {
-    System.setProperty("sea.module.shopping-list.sqlite.path", SHOPPING_DATABASE.toString());
+    System.setProperty("zalava.module.shopping-list.sqlite.path", SHOPPING_DATABASE.toString());
   }
 
   @LocalServerPort private int port;
@@ -118,22 +118,22 @@ class ModuleCompatibilityAcceptanceTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.module-configuration.root", () -> PRIVATE_CONFIGURATION_ROOT.toString());
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> "module-compat-admin");
-    registry.add("sea.accounts.bootstrap-password", () -> "ModuleCompatPassword-123");
+    registry.add("zalava.module-configuration.root", () -> PRIVATE_CONFIGURATION_ROOT.toString());
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> "module-compat-admin");
+    registry.add("zalava.accounts.bootstrap-password", () -> "ModuleCompatPassword-123");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.catalog.github.token", IndexedInstallCredentials::githubToken);
+    registry.add("zalava.catalog.github.token", IndexedInstallCredentials::githubToken);
     registry.add(
-        "sea.catalog.github-packages.username", IndexedInstallCredentials::packagesUsername);
-    registry.add("sea.catalog.github-packages.token", IndexedInstallCredentials::packagesToken);
+        "zalava.catalog.github-packages.username", IndexedInstallCredentials::packagesUsername);
+    registry.add("zalava.catalog.github-packages.token", IndexedInstallCredentials::packagesToken);
     String locator = IndexedInstallCredentials.moduleLocatorUrl();
-    if (!locator.isBlank()) registry.add("sea.catalog.module-locator.url", () -> locator);
+    if (!locator.isBlank()) registry.add("zalava.catalog.module-locator.url", () -> locator);
     PostgreSqlTestDatabase.register(registry);
   }
 
@@ -176,13 +176,13 @@ class ModuleCompatibilityAcceptanceTest {
 
   @Test
   @Order(2)
-  void restartedCandidateSeaLoadsPinnedModulesAndProvesToolAndPageParity() throws Exception {
+  void restartedCandidateZalavaLoadsPinnedModulesAndProvesToolAndPageParity() throws Exception {
     Map<String, String> restartProperties =
-        Map.of("sea.module-configuration.root", PRIVATE_CONFIGURATION_ROOT.toString());
-    try (var restarted = RestartableSeaApplicationContext.start(WORKSPACE, restartProperties)) {
-      SeaRuntime runtime = restarted.getBean(SeaRuntime.class);
+        Map.of("zalava.module-configuration.root", PRIVATE_CONFIGURATION_ROOT.toString());
+    try (var restarted = RestartableZalavaApplicationContext.start(WORKSPACE, restartProperties)) {
+      ZalavaRuntime runtime = restarted.getBean(ZalavaRuntime.class);
       ProviderToolOperations operations = restarted.getBean(ProviderToolOperations.class);
-      ManagedSeaRuntime lifecycle = (ManagedSeaRuntime) runtime;
+      ManagedZalavaRuntime lifecycle = (ManagedZalavaRuntime) runtime;
       assertThat(runtime.modules())
           .extracting(module -> module.descriptor().moduleId())
           .contains(
@@ -203,7 +203,7 @@ class ModuleCompatibilityAcceptanceTest {
       assertThatThrownBy(() -> lifecycle.start(DOCKER.moduleId()))
           .isInstanceOf(IllegalStateException.class);
       assertThat(lifecycle.state(DOCKER.moduleId()).state())
-          .isEqualTo(ManagedSeaRuntime.State.SETUP_REQUIRED);
+          .isEqualTo(ManagedZalavaRuntime.State.SETUP_REQUIRED);
       configurations.saveCandidate(
           new ModuleConfigurationSnapshot(
               DOCKER.moduleId(),
@@ -291,7 +291,7 @@ class ModuleCompatibilityAcceptanceTest {
 
     String response =
         post(
-            "/sea/control/module-release-installations",
+            "/zalava/control/module-release-installations",
             Map.of("moduleId", FILESYSTEM.moduleId(), "version", "9.9.9"));
 
     assertThat(response)
@@ -320,27 +320,27 @@ class ModuleCompatibilityAcceptanceTest {
   private void installPinnedRelease(PinnedRelease pin) throws Exception {
     refreshAndSelect(pin);
     String requestId = prepare(pin);
-    assertThat(post("/sea/control/module-release-installations/" + requestId + "/allow"))
+    assertThat(post("/zalava/control/module-release-installations/" + requestId + "/allow"))
         .contains("Module enabled");
     assertThat(latestRequestStatus()).isEqualTo("SUCCEEDED");
   }
 
   private void refreshAndSelect(String moduleId) throws Exception {
-    assertThat(post("/sea/control/module-release-installations/catalog/refresh"))
+    assertThat(post("/zalava/control/module-release-installations/catalog/refresh"))
         .contains("Refresh catalog");
     assertThat(
             post(
-                "/sea/control/module-release-installations/catalog/select",
+                "/zalava/control/module-release-installations/catalog/select",
                 Map.of("moduleId", moduleId)))
         .contains(moduleId);
   }
 
   private void refreshAndSelect(PinnedRelease pin) throws Exception {
-    assertThat(post("/sea/control/module-release-installations/catalog/refresh"))
+    assertThat(post("/zalava/control/module-release-installations/catalog/refresh"))
         .contains("Refresh catalog");
     assertThat(
             post(
-                "/sea/control/module-release-installations/catalog/select",
+                "/zalava/control/module-release-installations/catalog/select",
                 Map.of("moduleId", pin.moduleId())))
         .contains(pin.moduleId(), pin.version());
   }
@@ -348,7 +348,7 @@ class ModuleCompatibilityAcceptanceTest {
   private String prepare(PinnedRelease pin) throws Exception {
     String response =
         post(
-            "/sea/control/module-release-installations",
+            "/zalava/control/module-release-installations",
             Map.of("moduleId", pin.moduleId(), "version", pin.version()));
     assertThat(response).contains(pin.moduleId(), pin.version());
     assertThat(response)
@@ -379,7 +379,7 @@ class ModuleCompatibilityAcceptanceTest {
   }
 
   private static void assertPinnedModuleLoaded(
-      SeaRuntime runtime, PinnedRelease pin, String providerId, List<String> tools) {
+      ZalavaRuntime runtime, PinnedRelease pin, String providerId, List<String> tools) {
     var module =
         runtime.modules().stream()
             .filter(candidate -> candidate.descriptor().moduleId().equals(pin.moduleId()))
@@ -394,7 +394,7 @@ class ModuleCompatibilityAcceptanceTest {
                             + " was not loaded after restart"));
     assertThat(module.descriptor().version()).isEqualTo(pin.version());
 
-    LoadedSeaProvider provider =
+    LoadedZalavaProvider provider =
         runtime
             .findLoadedProvider(providerId)
             .orElseThrow(

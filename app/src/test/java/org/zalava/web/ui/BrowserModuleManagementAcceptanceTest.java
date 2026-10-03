@@ -67,15 +67,15 @@ class BrowserModuleManagementAcceptanceTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.managed-restart.dispatcher-enabled", () -> "true");
+    registry.add("zalava.managed-restart.dispatcher-enabled", () -> "true");
     registry.add(
-        "sea.module-configuration.root",
+        "zalava.module-configuration.root",
         () -> WORKSPACE.resolve("module-configuration").toString());
     registry.add("agent.modules.local-artifact-roots", () -> WORKSPACE.toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -128,7 +128,7 @@ class BrowserModuleManagementAcceptanceTest {
       page.locator("[data-action=prepare-local-module]").click();
 
       page.getByText(
-              "Local module zalava-module-example 1.2.3 installed. Restart SEA once to load its classes.")
+              "Local module zalava-module-example 1.2.3 installed. Restart Zalava once to load its classes.")
           .waitFor();
     }
 
@@ -162,7 +162,7 @@ class BrowserModuleManagementAcceptanceTest {
   }
 
   @Test
-  void requestsManagedSeaRestartThroughModulesPage() throws IOException {
+  void requestsManagedZalavaRestartThroughModulesPage() throws IOException {
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -171,12 +171,14 @@ class BrowserModuleManagementAcceptanceTest {
       signIn(page);
       page.navigate(baseUrl() + "/modules");
 
-      page.locator("[data-action=restart-sea]").click();
+      page.locator("[data-action=restart-zalava]").click();
 
-      page.locator("[data-sea-restart-status=REQUESTED]").waitFor();
-      assertThat(page.locator("[data-sea-restart-status]").getAttribute("data-sea-restart-status"))
+      page.locator("[data-zalava-restart-status=REQUESTED]").waitFor();
+      assertThat(
+              page.locator("[data-zalava-restart-status]")
+                  .getAttribute("data-zalava-restart-status"))
           .isEqualTo("REQUESTED");
-      assertThat(page.locator("[data-action=restart-sea]").isDisabled()).isTrue();
+      assertThat(page.locator("[data-action=restart-zalava]").isDisabled()).isTrue();
     }
   }
 
@@ -198,7 +200,7 @@ class BrowserModuleManagementAcceptanceTest {
                 artifactId: uploaded-fixture
                 version: 1.0.0
               compatibility:
-                seaRuntime: ">=1.0.0"
+                zalavaRuntime: ">=1.0.0"
               configurationSchema:
                 type: object
               factories:
@@ -253,7 +255,7 @@ class BrowserModuleManagementAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-module-management-");
+      Path root = Files.createTempDirectory("zalava-browser-module-management-");
       Files.writeString(root.resolve("AGENT.md"), "Browser module management workspace.");
       return root;
     } catch (IOException exception) {

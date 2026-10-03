@@ -51,12 +51,12 @@ class BrowserModuleConfigurationAcceptanceTest {
         "spring.allConfig.location",
         () -> WORKSPACE.resolve("private/application.private.yaml").toString());
     registry.add(
-        "sea.module-configuration.root",
+        "zalava.module-configuration.root",
         () -> WORKSPACE.resolve("module-configuration").toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> "ModuleBrowserPassword-123");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> "ModuleBrowserPassword-123");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
@@ -124,7 +124,7 @@ class BrowserModuleConfigurationAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-modules-");
+      Path root = Files.createTempDirectory("zalava-browser-modules-");
       Files.writeString(root.resolve("AGENT.md"), "Browser module configuration workspace.");
       return root;
     } catch (IOException exception) {

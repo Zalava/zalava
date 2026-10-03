@@ -20,7 +20,7 @@ import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 import org.zalava.modules.managedservices.application.port.out.ManagedServiceBackupPort;
 
 /**
- * Filesystem backups for SEA-managed services: every declared data path is archived into its own
+ * Filesystem backups for Zalava-managed services: every declared data path is archived into its own
  * zip inside one timestamped {@code managed-backups/<service-id>/...} directory, so multi-path
  * services restore each path's contents under exactly that path. Backups only cover the declared
  * data paths of the service record; a service that declares none has nothing to preserve and fails

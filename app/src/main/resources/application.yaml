@@ -1,6 +1,6 @@
 spring:
   application:
-    name: SEA
+    name: Zalava
   servlet:
     multipart:
       max-file-size: 100MB
@@ -25,7 +25,7 @@ spring:
 
 management:
   server:
-    port: ${sea.observability.management-port:8082}
+    port: ${zalava.observability.management-port:8082}
   endpoint:
     health:
       probes:
@@ -39,12 +39,12 @@ management:
   prometheus:
     metrics:
       export:
-        enabled: ${sea.observability.enabled:false}
+        enabled: ${zalava.observability.enabled:false}
   info:
     env:
       enabled: false
 
-sea:
+zalava:
   managed-restart:
     dispatcher-enabled: false
   observability:

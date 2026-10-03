@@ -12,9 +12,9 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
 
-/** Administrator-only HTML adapter for managed SEA group accounts. */
+/** Administrator-only HTML adapter for managed Zalava group accounts. */
 @Controller
-@RequestMapping("/sea/accounts")
+@RequestMapping("/zalava/accounts")
 public class AccountManagementController {
   private final AccountLifecycle accounts;
 
@@ -37,9 +37,9 @@ public class AccountManagementController {
       @RequestParam AccountRole role) {
     try {
       accounts.create(loginName, temporaryPassword, role);
-      return "redirect:/sea/accounts";
+      return "redirect:/zalava/accounts";
     } catch (RuntimeException exception) {
-      return "redirect:/sea/accounts?error";
+      return "redirect:/zalava/accounts?error";
     }
   }
 
@@ -47,9 +47,9 @@ public class AccountManagementController {
   String role(@RequestParam String accountId, @RequestParam AccountRole role) {
     try {
       accounts.setRole(accountId(accountId), role);
-      return "redirect:/sea/accounts";
+      return "redirect:/zalava/accounts";
     } catch (RuntimeException exception) {
-      return "redirect:/sea/accounts?error";
+      return "redirect:/zalava/accounts?error";
     }
   }
 
@@ -57,9 +57,9 @@ public class AccountManagementController {
   String enabled(@RequestParam String accountId, @RequestParam boolean enabled) {
     try {
       accounts.setEnabled(accountId(accountId), enabled);
-      return "redirect:/sea/accounts";
+      return "redirect:/zalava/accounts";
     } catch (RuntimeException exception) {
-      return "redirect:/sea/accounts?error";
+      return "redirect:/zalava/accounts?error";
     }
   }
 
@@ -67,9 +67,9 @@ public class AccountManagementController {
   String resetPassword(@RequestParam String accountId, @RequestParam String temporaryPassword) {
     try {
       accounts.resetPassword(accountId(accountId), temporaryPassword);
-      return "redirect:/sea/accounts";
+      return "redirect:/zalava/accounts";
     } catch (RuntimeException exception) {
-      return "redirect:/sea/accounts?error";
+      return "redirect:/zalava/accounts?error";
     }
   }
 

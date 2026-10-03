@@ -11,7 +11,7 @@ import org.zalava.knowledge.memory.domain.MemoryProposalDraft;
  */
 public interface MemoryPromotions {
 
-  /** Records a pending proposal after SEA scope/content validation. */
+  /** Records a pending proposal after Zalava scope/content validation. */
   MemoryProposal propose(Actor actor, MemoryProposalDraft draft);
 
   List<MemoryProposal> pending(Actor actor);

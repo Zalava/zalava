@@ -64,7 +64,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -92,7 +92,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -120,7 +120,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -148,7 +148,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                       - version: "1.0.0"
@@ -162,7 +162,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -190,7 +190,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -218,7 +218,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "http://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -241,7 +241,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -269,7 +269,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: "  "
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: []
                     """))
@@ -318,7 +318,7 @@ class ModuleReleaseIndexLoaderAdditionalTest {
                           repository: "https://github.com/x"
                           license: MIT
                         compatibility:
-                          seaRuntime: ">=1.0.0"
+                          zalavaRuntime: ">=1.0.0"
                         security:
                           permissions: "not-a-list"
                     """))

@@ -156,7 +156,7 @@ class BinaryModuleInstallationTest {
         "Files",
         "Workspace-bound file operations",
         URI.create("https://github.com/example/zalava-module-files"),
-        new SourceModuleIndex.Artifact("ai.sea.modules", "zalava-module-files", "1.0.0"),
+        new SourceModuleIndex.Artifact("ai.zalava.modules", "zalava-module-files", "1.0.0"),
         new SourceModuleIndex.Source(
             URI.create("https://github.com/example/zalava-module-files.git"), "Apache-2.0"),
         new SourceModuleIndex.Build(List.of("./gradlew", "build"), List.of("./gradlew", "test")),

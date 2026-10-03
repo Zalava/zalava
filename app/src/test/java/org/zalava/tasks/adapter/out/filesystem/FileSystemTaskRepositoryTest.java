@@ -128,7 +128,7 @@ class FileSystemTaskRepositoryTest {
             Task.newTask("handle-email", "Process unread email messages")
                 .withFeedback("Processed one message before stopping.")
                 .withStatus(Task.Status.failed)
-                .withFailureDetail("SEA could not complete this job after multiple attempts."));
+                .withFailureDetail("Zalava could not complete this job after multiple attempts."));
 
     String persisted = Files.readString(Path.of(saved.getId()));
     Task loaded = repository.getTaskById(saved.getId());
@@ -136,10 +136,10 @@ class FileSystemTaskRepositoryTest {
     assertThat(persisted)
         .contains("status: failed")
         .contains("agentFeedback: Processed one message before stopping.")
-        .contains("failureDetail: SEA could not complete this job after multiple attempts.");
+        .contains("failureDetail: Zalava could not complete this job after multiple attempts.");
     assertThat(loaded.getAgentFeedback()).contains("Processed one message before stopping.");
     assertThat(loaded.getFailureDetail())
-        .contains("SEA could not complete this job after multiple attempts.");
+        .contains("Zalava could not complete this job after multiple attempts.");
   }
 
   @Test

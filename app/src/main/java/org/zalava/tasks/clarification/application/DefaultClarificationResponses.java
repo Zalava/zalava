@@ -3,7 +3,7 @@ package org.zalava.tasks.clarification.application;
 import java.util.List;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
-import org.zalava.tasks.clarification.SeaClarifications;
+import org.zalava.tasks.clarification.ZalavaClarifications;
 import org.zalava.tasks.clarification.application.port.in.ClarificationResponses;
 import org.zalava.tasks.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskReference;
@@ -14,10 +14,11 @@ import org.zalava.tasks.domain.Task;
  * task loop once no clarification or approval remains pending.
  */
 public final class DefaultClarificationResponses implements ClarificationResponses {
-  private final SeaClarifications clarifications;
+  private final ZalavaClarifications clarifications;
   private final ActorTaskCommands tasks;
 
-  public DefaultClarificationResponses(SeaClarifications clarifications, ActorTaskCommands tasks) {
+  public DefaultClarificationResponses(
+      ZalavaClarifications clarifications, ActorTaskCommands tasks) {
     this.clarifications = clarifications;
     this.tasks = tasks;
   }

@@ -6,7 +6,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import tools.jackson.databind.ObjectMapper;
 
-/** Recommendation-only agent adapter for a deterministic missing SEA capability. */
+/** Recommendation-only agent adapter for a deterministic missing Zalava capability. */
 public final class CapabilityGapTools {
 
   private static final int MAX_FIELD_LENGTH = 2_000;
@@ -15,10 +15,10 @@ public final class CapabilityGapTools {
   @Tool(
       name = "recommendModuleDevelopment",
       description =
-          "Records no persistent state. Use only when SEA provider-tool discovery found no match. It returns a reviewable recommendation and requires explicit user confirmation before createModuleDevelopmentRequest may create the authoritative request.")
+          "Records no persistent state. Use only when Zalava provider-tool discovery found no match. It returns a reviewable recommendation and requires explicit user confirmation before createModuleDevelopmentRequest may create the authoritative request.")
   public String recommend(
       @ToolParam(description = "Concise missing capability") String capability,
-      @ToolParam(description = "The user's bounded request that had no SEA provider-tool match")
+      @ToolParam(description = "The user's bounded request that had no Zalava provider-tool match")
           String userRequest) {
     Map<String, Object> recommendation = new LinkedHashMap<>();
     recommendation.put("status", "REVIEW_REQUIRED");

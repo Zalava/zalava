@@ -18,5 +18,5 @@ import org.springframework.test.context.ContextConfiguration;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @ContextConfiguration(initializers = ProviderEnabledComponentTestInitializer.class)
-@Import(SeaComponentTestConfiguration.class)
+@Import(ZalavaComponentTestConfiguration.class)
 public @interface ProviderEnabledComponentTest {}

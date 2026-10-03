@@ -73,16 +73,16 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
   private static WebExtensionDescriptor requireDescriptor(
       ModuleDescriptor module, ZalavaWebExtension extension) {
     if (extension == null) {
-      throw new IllegalArgumentException("SEA web extension must not be null");
+      throw new IllegalArgumentException("Zalava web extension must not be null");
     }
     WebExtensionDescriptor descriptor = extension.descriptor();
     if (descriptor == null) {
-      throw new IllegalArgumentException("SEA web extension descriptor must not be null");
+      throw new IllegalArgumentException("Zalava web extension descriptor must not be null");
     }
     requireText(descriptor.moduleId(), "web extension module id");
     if (!module.moduleId().equals(descriptor.moduleId())) {
       throw new IllegalArgumentException(
-          "SEA web extension "
+          "Zalava web extension "
               + descriptor.extensionId()
               + " belongs to module "
               + descriptor.moduleId()
@@ -97,7 +97,7 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
 
   private static void requireText(String value, String field) {
     if (value == null || value.isBlank()) {
-      throw new IllegalArgumentException("SEA " + field + " must not be blank");
+      throw new IllegalArgumentException("Zalava " + field + " must not be blank");
     }
   }
 
@@ -105,7 +105,7 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
     requireText(value, field);
     if (!SAFE_SEGMENT.matcher(value).matches()) {
       throw new IllegalArgumentException(
-          "SEA " + field + " must be a lowercase route segment: " + value);
+          "Zalava " + field + " must be a lowercase route segment: " + value);
     }
   }
 
@@ -185,7 +185,7 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
 
     private WebPageRegistration route(String method, String path, ZalavaWebHandler handler) {
       if (handler == null) {
-        throw new IllegalArgumentException("SEA web extension route handler must not be null");
+        throw new IllegalArgumentException("Zalava web extension route handler must not be null");
       }
       routes.add(new RegisteredWebRoute(method, RoutePattern.parse(path), handler));
       return this;
@@ -194,7 +194,7 @@ public final class DefaultWebExtensionRoutes implements WebExtensionRoutes {
     private RegisteredWebPage build() {
       if (routes.isEmpty()) {
         throw new IllegalArgumentException(
-            "SEA web extension page " + pageId + " must register at least one route");
+            "Zalava web extension page " + pageId + " must register at least one route");
       }
       return new RegisteredWebPage(
           module.moduleId(),

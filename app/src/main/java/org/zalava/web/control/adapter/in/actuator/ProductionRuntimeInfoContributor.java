@@ -9,21 +9,21 @@ import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 
 @Component
 @EnableConfigurationProperties(ProductionReleaseProperties.class)
 public class ProductionRuntimeInfoContributor implements InfoContributor {
 
-  private final SeaRuntime seaRuntime;
+  private final ZalavaRuntime zalavaRuntime;
   private final ProductionReleaseProperties release;
   private final ObjectProvider<BuildProperties> buildProperties;
 
   public ProductionRuntimeInfoContributor(
-      SeaRuntime seaRuntime,
+      ZalavaRuntime zalavaRuntime,
       ProductionReleaseProperties release,
       ObjectProvider<BuildProperties> buildProperties) {
-    this.seaRuntime = seaRuntime;
+    this.zalavaRuntime = zalavaRuntime;
     this.release = release;
     this.buildProperties = buildProperties;
   }
@@ -31,7 +31,7 @@ public class ProductionRuntimeInfoContributor implements InfoContributor {
   @Override
   public void contribute(Info.Builder builder) {
     builder.withDetail(
-        "sea",
+        "zalava",
         Map.of(
             "coreVersion", coreVersion(),
             "releaseImage", release.image(),
@@ -45,7 +45,7 @@ public class ProductionRuntimeInfoContributor implements InfoContributor {
   }
 
   private List<Map<String, String>> modules() {
-    return seaRuntime.modules().stream()
+    return zalavaRuntime.modules().stream()
         .map(module -> module.descriptor())
         .sorted(Comparator.comparing(descriptor -> descriptor.moduleId()))
         .map(

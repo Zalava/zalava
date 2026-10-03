@@ -11,7 +11,7 @@ import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
-import org.zalava.modules.runtime.ExternalSeaModuleLoadingException;
+import org.zalava.modules.runtime.ExternalZalavaModuleLoadingException;
 
 class ExternalModuleClassLoaderTest {
 
@@ -23,7 +23,7 @@ class ExternalModuleClassLoaderTest {
       assertThat(loader.loadModules()).isEmpty();
       assertThatThrownBy(loader::loadModules)
           .isInstanceOf(IllegalStateException.class)
-          .hasMessage("External SEA modules have already been loaded");
+          .hasMessage("External Zalava modules have already been loaded");
     }
   }
 
@@ -31,7 +31,7 @@ class ExternalModuleClassLoaderTest {
   void rejectsTheRetiredPreviewServiceDescriptorBeforeDiscovery() throws Exception {
     Path artifact = workspace.resolve("preview.jar");
     try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(artifact))) {
-      output.putNextEntry(new JarEntry("META-INF/services/org.zalava.sea.ZalavaModule"));
+      output.putNextEntry(new JarEntry("META-INF/services/org.zalava.zalava.ZalavaModule"));
       output.write("example.LegacyModule".getBytes());
       output.closeEntry();
     }
@@ -49,7 +49,7 @@ class ExternalModuleClassLoaderTest {
     assertThat(ExternalModuleClassLoader.previewServiceDescriptorError("example-module"))
         .isEqualTo(
             "External module example-module uses retired preview SPI service descriptor "
-                + "META-INF/services/org.zalava.sea.ZalavaModule; rebuild it against "
+                + "META-INF/services/org.zalava.zalava.ZalavaModule; rebuild it against "
                 + "org.zalava:module-api:1.0.0 and register "
                 + "META-INF/services/org.zalava.api.ZalavaModule");
   }
@@ -106,10 +106,10 @@ class ExternalModuleClassLoaderTest {
   @Test
   void loadsAndClosesTheHostFaithfulExternalModuleFixture() throws Exception {
     Path artifact = workspace.resolve("fixture.jar");
-    Files.copy(Path.of(System.getProperty("sea.test.external-module-jar")), artifact);
+    Files.copy(Path.of(System.getProperty("zalava.test.external-module-jar")), artifact);
     ModuleEnablement.EnabledModule module =
         new ModuleEnablement.EnabledModule(
-            "sea-external-module-fixture",
+            "zalava-external-module-fixture",
             "1.0.0",
             artifact.toString(),
             "sha256:test",
@@ -122,13 +122,13 @@ class ExternalModuleClassLoaderTest {
 
   @Test
   void reportsFailureTypesWithoutIncludingFailureMessages() {
-    ExternalSeaModuleLoadingException failure =
-        new ExternalSeaModuleLoadingException(
+    ExternalZalavaModuleLoadingException failure =
+        new ExternalZalavaModuleLoadingException(
             "secret-value", new IllegalStateException("also-secret"));
 
     assertThat(ExternalModuleClassLoader.failureTypes(failure))
         .isEqualTo(
-            "org.zalava.modules.runtime.ExternalSeaModuleLoadingException"
+            "org.zalava.modules.runtime.ExternalZalavaModuleLoadingException"
                 + " -> java.lang.IllegalStateException");
   }
 
@@ -141,7 +141,7 @@ class ExternalModuleClassLoaderTest {
   }
 
   @Test
-  void allowsThirdPartyBundlePackagesWhileReservingSeaNamespaces() {
+  void allowsThirdPartyBundlePackagesWhileReservingZalavaNamespaces() {
     assertThat(
             ExternalModuleClassLoader.requiresExclusiveOwnership(
                 "com/fasterxml/jackson/databind/deser"))

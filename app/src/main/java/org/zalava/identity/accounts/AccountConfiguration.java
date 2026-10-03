@@ -40,12 +40,15 @@ public class AccountConfiguration {
 
   @Bean
   PasswordEncoder passwordEncoder(
-      @Value("${sea.accounts.password-encoder-strength:" + DEFAULT_PASSWORD_ENCODER_STRENGTH + "}")
+      @Value(
+              "${zalava.accounts.password-encoder-strength:"
+                  + DEFAULT_PASSWORD_ENCODER_STRENGTH
+                  + "}")
           int strength) {
     if (strength < MINIMUM_PASSWORD_ENCODER_STRENGTH
         || strength > MAXIMUM_PASSWORD_ENCODER_STRENGTH) {
       throw new IllegalArgumentException(
-          "sea.accounts.password-encoder-strength must be between %d and %d"
+          "zalava.accounts.password-encoder-strength must be between %d and %d"
               .formatted(MINIMUM_PASSWORD_ENCODER_STRENGTH, MAXIMUM_PASSWORD_ENCODER_STRENGTH));
     }
     return new BCryptPasswordEncoder(strength);
@@ -87,20 +90,20 @@ public class AccountConfiguration {
   }
 
   @Bean
-  SeaAccountUserDetailsService accountUsers(AccountLifecycle accounts) {
-    return new SeaAccountUserDetailsService(accounts);
+  ZalavaAccountUserDetailsService accountUsers(AccountLifecycle accounts) {
+    return new ZalavaAccountUserDetailsService(accounts);
   }
 
   @Bean
   ApplicationRunner bootstrapAccount(
       AccountLifecycle accounts,
-      @Value("${sea.accounts.bootstrap-login:}") String login,
-      @Value("${sea.accounts.bootstrap-password:}") String password) {
+      @Value("${zalava.accounts.bootstrap-login:}") String login,
+      @Value("${zalava.accounts.bootstrap-password:}") String password) {
     return arguments -> {
       if (accounts.findByLoginName(login.isBlank() ? "bootstrap" : login).isEmpty()) {
         if (login.isBlank() || password.isBlank())
           throw new IllegalStateException(
-              "sea.accounts.bootstrap-login and sea.accounts.bootstrap-password are required for the first administrator");
+              "zalava.accounts.bootstrap-login and zalava.accounts.bootstrap-password are required for the first administrator");
         accounts.bootstrap(login, password);
       }
     };
@@ -108,21 +111,21 @@ public class AccountConfiguration {
 
   @Bean
   @ConditionalOnProperty(
-      name = "sea.accounts.security-enabled",
+      name = "zalava.accounts.security-enabled",
       havingValue = "true",
       matchIfMissing = true)
   SecurityFilterChain accountSecurity(
-      HttpSecurity http, SeaAccountUserDetailsService users, AccountLifecycle accounts)
+      HttpSecurity http, ZalavaAccountUserDetailsService users, AccountLifecycle accounts)
       throws Exception {
     return http.authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(AccountConfiguration::isErrorDispatch)
                     .permitAll()
-                    .requestMatchers("/login", "/sea-control.css", "/css/**", "/actuator/health")
+                    .requestMatchers("/login", "/zalava-control.css", "/css/**", "/actuator/health")
                     .permitAll()
-                    .requestMatchers("/sea/control/**")
+                    .requestMatchers("/zalava/control/**")
                     .hasRole("ADMIN")
-                    .requestMatchers("/sea/accounts/**")
+                    .requestMatchers("/zalava/accounts/**")
                     .hasRole("ADMIN")
                     .requestMatchers(
                         "/dashboard",
@@ -143,8 +146,8 @@ public class AccountConfiguration {
                         "/api/channel-links/**",
                         "/ws/chat",
                         "/ws/ui/chat",
-                        "/sea-chat/**",
-                        "/sea-ui.css")
+                        "/zalava-chat/**",
+                        "/zalava-ui.css")
                     .hasAnyRole("ADMIN", "MEMBER")
                     .requestMatchers("/account/password", "/logout")
                     .authenticated()
@@ -161,7 +164,8 @@ public class AccountConfiguration {
                                   .anyMatch(
                                       authority -> authority.getAuthority().equals("ROLE_ADMIN"));
                           response.sendRedirect(
-                              request.getContextPath() + (admin ? "/sea/control" : "/dashboard"));
+                              request.getContextPath()
+                                  + (admin ? "/zalava/control" : "/dashboard"));
                         })
                     .permitAll())
         .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
@@ -184,7 +188,7 @@ public class AccountConfiguration {
   }
 
   @Bean
-  @ConditionalOnProperty(name = "sea.accounts.security-enabled", havingValue = "false")
+  @ConditionalOnProperty(name = "zalava.accounts.security-enabled", havingValue = "false")
   SecurityFilterChain testSecurity(HttpSecurity http) throws Exception {
     return http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
         .csrf(csrf -> csrf.disable())

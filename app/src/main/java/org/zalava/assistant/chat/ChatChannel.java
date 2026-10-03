@@ -37,7 +37,7 @@ import org.zalava.assistant.chat.domain.ChatTurn;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ConditionalOnProperty(
-    name = "sea.chat.transport",
+    name = "zalava.chat.transport",
     havingValue = "spring-websocket",
     matchIfMissing = true)
 public class ChatChannel implements Channel {
@@ -156,7 +156,8 @@ public class ChatChannel implements Channel {
   public List<String> loadHistoryAsHtml(String conversationId) {
     List<ChatMessage> history = queries.history(conversationId);
     if (history.isEmpty()) {
-      return List.of(ChatHtml.agentBubble("Hi! I'm your SEA assistant. How can I help you today?"));
+      return List.of(
+          ChatHtml.agentBubble("Hi! I'm your Zalava assistant. How can I help you today?"));
     }
     List<String> bubbles = new ArrayList<>();
     for (ChatMessage msg : history) {

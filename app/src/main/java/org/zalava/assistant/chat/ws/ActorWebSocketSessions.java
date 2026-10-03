@@ -9,7 +9,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.zalava.identity.accounts.domain.Actor;
 
-/** Active product WebSocket sessions, partitioned by the authenticated SEA actor. */
+/** Active product WebSocket sessions, partitioned by the authenticated Zalava actor. */
 @Component
 public final class ActorWebSocketSessions {
   private final ConcurrentMap<Actor, Set<WebSocketSession>> sessions = new ConcurrentHashMap<>();

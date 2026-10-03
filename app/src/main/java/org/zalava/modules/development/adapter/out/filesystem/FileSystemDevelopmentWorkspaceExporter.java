@@ -18,7 +18,7 @@ import org.zalava.modules.development.ModuleDevelopmentRequest;
 import org.zalava.modules.development.application.port.out.DevelopmentWorkspacePort;
 import tools.jackson.databind.ObjectMapper;
 
-/** Materializes only SEA-owned request inputs below {@code .sea-request}. */
+/** Materializes only Zalava-owned request inputs below {@code .zalava-request}. */
 @Component
 public final class FileSystemDevelopmentWorkspaceExporter implements DevelopmentWorkspacePort {
 
@@ -47,7 +47,7 @@ public final class FileSystemDevelopmentWorkspaceExporter implements Development
           "workspace root must be an absolute user-selected path");
     }
     Path root = selectedRoot.normalize();
-    Path provided = root.resolve(".sea-request");
+    Path provided = root.resolve(".zalava-request");
     try {
       if (Files.exists(root) && !Files.isDirectory(root))
         throw new DevelopmentRequestException("workspace root is not a directory");
@@ -83,7 +83,7 @@ public final class FileSystemDevelopmentWorkspaceExporter implements Development
                   "requestId",
                   requestId.value(),
                   "authoritativeSource",
-                  "SEA persisted development request",
+                  "Zalava persisted development request",
                   "sha256",
                   hashes)));
       return new DevelopmentWorkspace(requestId, root.toString(), hashes);
@@ -101,7 +101,7 @@ public final class FileSystemDevelopmentWorkspaceExporter implements Development
     if (!target.startsWith(requestRoot))
       throw new DevelopmentRequestException("invalid request export path: " + relative);
     Files.createDirectories(target.getParent());
-    Path temporary = Files.createTempFile(target.getParent(), ".sea-request-", ".tmp");
+    Path temporary = Files.createTempFile(target.getParent(), ".zalava-request-", ".tmp");
     try {
       Files.write(temporary, content);
       try {
@@ -147,44 +147,44 @@ public final class FileSystemDevelopmentWorkspaceExporter implements Development
     return """
         schemaVersion: 1
         # Local artifact metadata does not require source-clone provenance.
-        # services.provided and services.required declare typed SEA service contracts.
+        # services.provided and services.required declare typed Zalava service contracts.
         # Service implementations remain module-local and must not bundle module-api.
         """
         .getBytes(StandardCharsets.UTF_8);
   }
 
   private static byte[] errorEnvelope() {
-    return "# SEA error envelope\n\nReturn an explicit, stable error code for expected failures. Do not expose secrets or host paths.\n"
+    return "# Zalava error envelope\n\nReturn an explicit, stable error code for expected failures. Do not expose secrets or host paths.\n"
         .getBytes(StandardCharsets.UTF_8);
   }
 
   private static byte[] moduleApiCoordinates(ModuleDevelopmentRequest request) {
     return ("org.zalava:module-api:"
-            + request.currentRevision().contract().targetSeaApiVersion()
+            + request.currentRevision().contract().targetZalavaApiVersion()
             + "\n")
         .getBytes(StandardCharsets.UTF_8);
   }
 
   private static byte[] readme(ModuleDevelopmentRequest request) {
-    return ("# SEA development request "
+    return ("# Zalava development request "
             + request.id().value()
             + "\n\n"
-            + "This package is informational. SEA's persisted request is authoritative during validation.\n"
+            + "This package is informational. Zalava's persisted request is authoritative during validation.\n"
             + "Place the final package in `../delivery/` according to `development-contract.yaml`.\n")
         .getBytes(StandardCharsets.UTF_8);
   }
 
   private static byte[] codexTask(ModuleDevelopmentRequest request) {
-    return ("# Implement SEA module "
+    return ("# Implement Zalava module "
             + request.currentRevision().contract().module().moduleId()
             + "\n\n"
-            + "1. Read this entire `.sea-request/` package.\n"
-            + "2. Implement the module outside the SEA repository.\n"
+            + "1. Read this entire `.zalava-request/` package.\n"
+            + "2. Implement the module outside the Zalava repository.\n"
             + "3. Ask the user about product decisions unresolved by the contract.\n"
             + "4. Choose the internal architecture and build layout, then write and run module tests.\n"
             + "5. Build the final package and place it in `delivery/`.\n"
             + "6. Do not edit the exported contract or acceptance scenarios merely to pass validation.\n\n"
-            + "The user runs Codex manually from this workspace; do not assume SEA source access, Git, or automatic installation.\n")
+            + "The user runs Codex manually from this workspace; do not assume Zalava source access, Git, or automatic installation.\n")
         .getBytes(StandardCharsets.UTF_8);
   }
 }

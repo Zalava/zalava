@@ -3,8 +3,8 @@ package org.zalava.web.ui.protocol;
 import java.util.List;
 
 /**
- * Transport-neutral state sent by SEA to a UI. Event data is observable state only; it never grants
- * a permission or authorizes a client-side action.
+ * Transport-neutral state sent by Zalava to a UI. Event data is observable state only; it never
+ * grants a permission or authorizes a client-side action.
  */
 public sealed interface UiEvent
     permits UiEvent.ConversationList,

@@ -19,7 +19,7 @@ import org.zalava.tasks.domain.ActorTaskReference;
 
 /**
  * Covers the streamed-turn context bridge: tool callbacks executing on other threads (as Spring AI
- * does on reactor threads) must still observe the actor principal — SEA's policy/scope/audit
+ * does on reactor threads) must still observe the actor principal — Zalava's policy/scope/audit
  * depends on it — and must record created job references into the caller's capture list.
  */
 class StreamingToolContextBridgeTest {
@@ -152,7 +152,7 @@ class StreamingToolContextBridgeTest {
     };
   }
 
-  /** A {@code @Tool}-annotated object like the ones SEA passes to {@code .tools(...)}. */
+  /** A {@code @Tool}-annotated object like the ones Zalava passes to {@code .tools(...)}. */
   static final class AnnotatedTool {
     private final AtomicReference<String> seen;
     private final ActorExecutionContext actorExecution;

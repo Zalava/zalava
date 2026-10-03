@@ -5,7 +5,8 @@ import java.util.Objects;
 import org.zalava.identity.accounts.domain.Actor;
 
 /**
- * SEA-owned source metadata. The original blob and all derivations are addressed only by this id.
+ * Zalava-owned source metadata. The original blob and all derivations are addressed only by this
+ * id.
  */
 public record KnowledgeSource(
     KnowledgeSourceId id,

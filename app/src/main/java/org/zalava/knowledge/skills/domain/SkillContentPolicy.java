@@ -4,10 +4,10 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * SEA-owned content-safety policy applied when an actor activates a skill body.
+ * Zalava-owned content-safety policy applied when an actor activates a skill body.
  *
  * <p>It is a deterministic boundary: a skill file or remote catalogue cannot bypass it, and it
- * enforces the context budget and the rule that skill instructions never override SEA authority.
+ * enforces the context budget and the rule that skill instructions never override Zalava authority.
  * The policy only inspects content; it never resolves or executes a recommended tool.
  */
 public final class SkillContentPolicy {
@@ -22,7 +22,7 @@ public final class SkillContentPolicy {
     "disregard previous instructions",
     "disregard your instructions",
     "override the system",
-    "override sea",
+    "override zalava",
     "override your instructions",
     "bypass policy",
     "bypass the policy",
@@ -72,7 +72,7 @@ public final class SkillContentPolicy {
     for (String marker : AUTHORITY_OVERRIDE_MARKERS) {
       if (normalized.contains(marker)) {
         throw new UnsafeSkillContentException(
-            "Skill instructions must not attempt to override SEA authority");
+            "Skill instructions must not attempt to override Zalava authority");
       }
     }
     for (String marker : SECRET_MARKERS) {

@@ -75,22 +75,22 @@ public final class DefaultAgentContextAssembler implements AgentContextAssembler
     String boundedSummaries =
         boundedSection(
             boundedPrompt,
-            "Untrusted selected SEA tool summaries:",
+            "Untrusted selected Zalava tool summaries:",
             summaries,
             sourceBudgets.toolSummaries());
     String promptWithSummaries =
         promptWithSection(
-            boundedPrompt, "Untrusted selected SEA tool summaries:", boundedSummaries);
+            boundedPrompt, "Untrusted selected Zalava tool summaries:", boundedSummaries);
     String definitions = toolDefinitionText(resolved.toolDefinitions());
     String boundedDefinitions =
         boundedSection(
             promptWithSummaries,
-            "Untrusted selected SEA tool definitions:",
+            "Untrusted selected Zalava tool definitions:",
             definitions,
             sourceBudgets.toolDefinitions());
     String promptWithDefinitions =
         promptWithSection(
-            promptWithSummaries, "Untrusted selected SEA tool definitions:", boundedDefinitions);
+            promptWithSummaries, "Untrusted selected Zalava tool definitions:", boundedDefinitions);
     String memories = memoryText(selectMemories(prompt));
     String boundedMemories =
         boundedSection(

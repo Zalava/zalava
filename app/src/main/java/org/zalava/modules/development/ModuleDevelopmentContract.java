@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 public record ModuleDevelopmentContract(
     Module module,
     String purpose,
-    String targetSeaApiVersion,
+    String targetZalavaApiVersion,
     List<Tool> tools,
     List<ExpectedError> expectedErrors,
     List<AcceptanceScenario> acceptanceScenarios,
@@ -24,7 +24,7 @@ public record ModuleDevelopmentContract(
   public ModuleDevelopmentContract {
     module = Objects.requireNonNull(module, "module must not be null");
     purpose = requiredText(purpose, "purpose");
-    targetSeaApiVersion = requiredText(targetSeaApiVersion, "targetSeaApiVersion");
+    targetZalavaApiVersion = requiredText(targetZalavaApiVersion, "targetZalavaApiVersion");
     tools = immutableNonEmpty(tools, "tools");
     expectedErrors = expectedErrors == null ? List.of() : List.copyOf(expectedErrors);
     acceptanceScenarios = immutableNonEmpty(acceptanceScenarios, "acceptanceScenarios");

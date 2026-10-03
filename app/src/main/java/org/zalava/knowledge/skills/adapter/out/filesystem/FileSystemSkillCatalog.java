@@ -19,8 +19,8 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
- * Filesystem discovery of SEA skills in the maintained {@code SKILL.md} format (YAML front matter
- * plus Markdown body). Only metadata is read here; body content is left to the maintained
+ * Filesystem discovery of Zalava skills in the maintained {@code SKILL.md} format (YAML front
+ * matter plus Markdown body). Only metadata is read here; body content is left to the maintained
  * SkillsTool runtime. Discovery is bounded and safe: unreadable, oversized or invalid candidates
  * are skipped rather than failing the listing, so a malformed file never breaks the catalogue.
  */
@@ -87,7 +87,7 @@ public final class FileSystemSkillCatalog implements SkillCatalog {
               stringList(frontMatter.get("recommendedTools")),
               stringList(frontMatter.get("policyConstraints")),
               stringList(frontMatter.get("validationSteps")),
-              scalar(frontMatter.get("seaApiVersion")).orElse(null),
+              scalar(frontMatter.get("zalavaApiVersion")).orElse(null),
               SkillVisibility.parse(scalar(frontMatter.get("visibility")).orElse(null)),
               SkillProvenance.local(relative(directory)),
               SkillStatus.INSTALLED));

@@ -20,7 +20,7 @@ import org.zalava.identity.channels.domain.ExternalChannelIdentity;
     properties = {
       "jobrunr.background-job-server.enabled=false",
       "jobrunr.dashboard.enabled=false",
-      "sea.accounts.security-enabled=false"
+      "zalava.accounts.security-enabled=false"
     })
 class JdbcChannelIdentityLinkStoreIntegrationTest {
   @Autowired private AccountLifecycle accounts;

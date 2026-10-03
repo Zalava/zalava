@@ -24,8 +24,8 @@ import org.zalava.assistant.agent.application.port.out.AgentModel;
 import org.zalava.assistant.agent.application.port.out.AgentToolSelector;
 import org.zalava.assistant.agent.domain.AgentContext;
 import org.zalava.assistant.agent.domain.AgentToolSelection;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackCatalog;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolIndex;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackCatalog;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex;
 import org.zalava.capabilities.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -51,7 +51,7 @@ class ContextMeasurementTest {
   @Test
   void compareDeterministicPreselectionAndPolicyFilteredToolSearchOnOneCorpus() {
     List<ToolDiscovery.ToolMatch> corpus = corpus();
-    SeaToolCallbackCatalog callbackCatalog = callbackCatalog();
+    ZalavaToolCallbackCatalog callbackCatalog = callbackCatalog();
     CorpusDiscovery discovery = new CorpusDiscovery(corpus);
 
     Result deterministic =
@@ -148,7 +148,7 @@ class ContextMeasurementTest {
   }
 
   private static AgentRequestTools build(
-      CorpusDiscovery discovery, SeaToolCallbackCatalog callbackCatalog, boolean searchEnabled) {
+      CorpusDiscovery discovery, ZalavaToolCallbackCatalog callbackCatalog, boolean searchEnabled) {
     if (!searchEnabled) {
       return new AgentRequestTools(List.of(), discovery, callbackCatalog);
     }
@@ -158,7 +158,7 @@ class ContextMeasurementTest {
         callbackCatalog,
         List.of(),
         RemoteCapabilityDiscovery.noop(),
-        new PolicyFilteredToolSearch(new SeaToolIndex()));
+        new PolicyFilteredToolSearch(new ZalavaToolIndex()));
   }
 
   private static int absence(Result result, List<ToolDiscovery.ToolMatch> corpus) {
@@ -240,7 +240,7 @@ class ContextMeasurementTest {
       boolean sideEffecting,
       List<String> tags) {
     List<String> policyTags =
-        java.util.stream.Stream.concat(java.util.stream.Stream.of("sea_backed"), tags.stream())
+        java.util.stream.Stream.concat(java.util.stream.Stream.of("zalava_backed"), tags.stream())
             .distinct()
             .toList();
     return new ToolDiscovery.ToolMatch(
@@ -250,12 +250,12 @@ class ContextMeasurementTest {
         description,
         sideEffecting,
         policyTags,
-        List.of("sea_backed"),
+        List.of("zalava_backed"),
         Map.of("root", "workspace"));
   }
 
-  private static SeaToolCallbackCatalog callbackCatalog() {
-    SeaToolCallbackCatalog catalog = mock(SeaToolCallbackCatalog.class);
+  private static ZalavaToolCallbackCatalog callbackCatalog() {
+    ZalavaToolCallbackCatalog catalog = mock(ZalavaToolCallbackCatalog.class);
     when(catalog.callbacks()).thenReturn(List.of());
     when(catalog.callback(anyString(), anyString()))
         .thenAnswer(invocation -> mock(ToolCallback.class));

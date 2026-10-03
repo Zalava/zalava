@@ -36,7 +36,7 @@ import org.zalava.identity.accounts.domain.AccountRole;
  * Real-browser acceptance for bounded attachments. It drives the built React bundle over the real
  * WebSocket transport through the assistant-ui composer primitives and proves task-only
  * attach/use/remove, durable knowledge import, invalid rejection and the mobile composer against
- * real SEA storage and authorization.
+ * real Zalava storage and authorization.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -56,15 +56,15 @@ class BrowserFileAcceptanceTest {
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
-    registry.add("sea.accounts.security-enabled", () -> "true");
-    registry.add("sea.accounts.bootstrap-login", () -> LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> PASSWORD);
+    registry.add("zalava.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.chat.attachment.bind-container", () -> "true");
+    registry.add("zalava.chat.attachment.bind-container", () -> "true");
   }
 
   @Test
@@ -196,7 +196,7 @@ class BrowserFileAcceptanceTest {
 
   private static Path workspace() {
     try {
-      Path root = Files.createTempDirectory("sea-browser-file-");
+      Path root = Files.createTempDirectory("zalava-browser-file-");
       Files.writeString(root.resolve("AGENT.md"), "Browser file acceptance workspace.");
       return root;
     } catch (IOException exception) {

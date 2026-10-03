@@ -11,7 +11,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Allows the loopback management server to be scraped without an authenticated SEA session.
+ * Allows the loopback management server to be scraped without an authenticated Zalava session.
  *
  * <p>Only applies when the management server runs on its own port (the actuator endpoints then
  * exist there and not on the public application port). When both share a port this chain matches
@@ -19,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
  */
 @Configuration
 @ConditionalOnProperty(
-    name = "sea.accounts.security-enabled",
+    name = "zalava.accounts.security-enabled",
     havingValue = "true",
     matchIfMissing = true)
 class ManagementSecurityConfiguration {

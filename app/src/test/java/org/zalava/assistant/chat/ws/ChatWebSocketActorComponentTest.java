@@ -17,14 +17,14 @@ import org.springframework.web.socket.WebSocketSession;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 
 /**
  * Full-context component test for the actor-scoped web chat bootstrap. It drives the real {@link
  * ChatWebSocketHandler} with the real actor chat use cases, which create bare-UUID conversation
  * references, so it catches presentation bugs the mock-based handler tests cannot see.
  */
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 @ResourceLock("secure-component-runtime")
 class ChatWebSocketActorComponentTest {
   private static final AtomicInteger LOGINS = new AtomicInteger();
@@ -41,7 +41,7 @@ class ChatWebSocketActorComponentTest {
     assertThat(payload)
         .contains("chat-input-area")
         .contains("chat-form")
-        .contains("Message SEA...")
+        .contains("Message Zalava...")
         .doesNotContain("read-only view");
     assertThat(payload).contains("channel-selector").contains("Web Chat");
   }

@@ -13,7 +13,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.tasks.adapter.out.clarification.SeaActorTaskClarifications;
+import org.zalava.tasks.adapter.out.clarification.ZalavaActorTaskClarifications;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
 import org.zalava.tasks.application.port.out.ActorTaskAgent;
 import org.zalava.tasks.application.port.out.ActorTaskClarifications;
@@ -21,7 +21,7 @@ import org.zalava.tasks.application.port.out.ActorTaskNotifier;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.application.port.out.TaskScheduler;
-import org.zalava.tasks.clarification.SeaClarifications;
+import org.zalava.tasks.clarification.ZalavaClarifications;
 import org.zalava.tasks.clarification.application.DefaultClarificationResponses;
 import org.zalava.tasks.clarification.application.port.out.ClarificationStore;
 import org.zalava.tasks.clarification.domain.ClarificationDraft;
@@ -42,10 +42,10 @@ class ActorTaskClarificationLoopTest {
   private final ActorTaskReference reference = ActorTaskReference.newReference();
   private final RecordingStore store = new RecordingStore();
   private final RecordingNotifier notifier = new RecordingNotifier();
-  private final SeaClarifications clarifications =
-      new SeaClarifications(new InMemoryStore(), Instant::now);
+  private final ZalavaClarifications clarifications =
+      new ZalavaClarifications(new InMemoryStore(), Instant::now);
   private final ActorTaskClarifications taskClarifications =
-      new SeaActorTaskClarifications(clarifications);
+      new ZalavaActorTaskClarifications(clarifications);
 
   @Test
   void aPendingClarificationParksTheTaskAwaitingHumanInput() {

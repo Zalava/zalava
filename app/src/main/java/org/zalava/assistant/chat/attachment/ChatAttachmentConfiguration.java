@@ -18,7 +18,7 @@ class ChatAttachmentConfiguration {
 
   @Bean
   ChatAttachmentStore chatAttachmentStore(
-      @Value("${sea.chat.attachment.managed-data-root:}") String managedDataRoot,
+      @Value("${zalava.chat.attachment.managed-data-root:}") String managedDataRoot,
       @Value("${agent.workspace:Unknown}") Resource workspace)
       throws IOException {
     return new FileSystemChatAttachmentStore(
@@ -34,7 +34,7 @@ class ChatAttachmentConfiguration {
   ChatAttachments chatAttachments(
       ChatAttachmentStore store,
       KnowledgeImportPort knowledgeImports,
-      @Value("${sea.chat.attachment.maximum-upload-bytes:5242880}") long maximumUploadBytes) {
+      @Value("${zalava.chat.attachment.maximum-upload-bytes:5242880}") long maximumUploadBytes) {
     return new ChatAttachments(store, knowledgeImports, maximumUploadBytes);
   }
 }

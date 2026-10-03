@@ -24,7 +24,7 @@ class FileSystemAgentMemoryStoreTest {
         store.remember(
             new AgentMemoryDraft(
                 AgentMemoryScope.PROJECT,
-                "SEA uses a provider-instance runtime.",
+                "Zalava uses a provider-instance runtime.",
                 Map.of("source", "test")));
 
     FileSystemAgentMemoryStore reloaded =
@@ -35,7 +35,7 @@ class FileSystemAgentMemoryStoreTest {
             memory -> {
               assertThat(memory.id()).isEqualTo(saved.id());
               assertThat(memory.scope()).isEqualTo(AgentMemoryScope.PROJECT);
-              assertThat(memory.text()).isEqualTo("SEA uses a provider-instance runtime.");
+              assertThat(memory.text()).isEqualTo("Zalava uses a provider-instance runtime.");
               assertThat(memory.metadata()).containsEntry("source", "test");
             });
     assertThat(workspaceDir.resolve("memory")).isDirectory();
@@ -71,13 +71,13 @@ class FileSystemAgentMemoryStoreTest {
         store.remember(
             new AgentMemoryDraft(
                 AgentMemoryScope.PROJECT,
-                "Use draft pull requests for SEA steps.",
+                "Use draft pull requests for Zalava steps.",
                 Map.of("topic", "workflow")));
     AgentMemory execution =
         store.remember(
             new AgentMemoryDraft(
                 AgentMemoryScope.EXECUTION,
-                "Gradle cache lives under .gradle/sea-workflow.",
+                "Gradle cache lives under .gradle/zalava-workflow.",
                 Map.of("tool", "gradle")));
 
     assertThat(store.search("draft pull", 10))

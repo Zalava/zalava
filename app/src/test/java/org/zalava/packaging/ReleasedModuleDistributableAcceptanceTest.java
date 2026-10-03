@@ -90,18 +90,18 @@ class ReleasedModuleDistributableAcceptanceTest {
           assertThat(URI.create(protectedPage.headers().get("location")).getPath().split(";", 2)[0])
               .isEqualTo("/login");
         }
-        page.navigate(baseUrl + "/sea/accounts");
-        page.locator("form[action='/sea/accounts/create'] input[name=loginName]")
+        page.navigate(baseUrl + "/zalava/accounts");
+        page.locator("form[action='/zalava/accounts/create'] input[name=loginName]")
             .fill("released-member");
-        page.locator("form[action='/sea/accounts/create'] input[name=temporaryPassword]")
+        page.locator("form[action='/zalava/accounts/create'] input[name=temporaryPassword]")
             .fill(INITIAL_PASSWORD);
-        page.locator("form[action='/sea/accounts/create'] select[name=role]")
+        page.locator("form[action='/zalava/accounts/create'] select[name=role]")
             .selectOption("MEMBER");
-        page.locator("form[action='/sea/accounts/create'] button[type=submit]").click();
+        page.locator("form[action='/zalava/accounts/create'] button[type=submit]").click();
         try (BrowserContext member = browser.newContext()) {
           signIn(member.newPage(), "released-member", INITIAL_PASSWORD, true);
           assertThat(member.request().get(baseUrl + "/modules").status()).isEqualTo(403);
-          assertThat(member.request().get(baseUrl + "/api/sea/modules").status()).isEqualTo(403);
+          assertThat(member.request().get(baseUrl + "/api/zalava/modules").status()).isEqualTo(403);
         }
         page.navigate(baseUrl + "/modules");
         page.locator("input[name=moduleJar]")
@@ -123,7 +123,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         admin.clearCookies();
         signIn(page, LOGIN, PASSWORD, false);
         assertJobEvidence(page, admin, browser, jobEvidence);
-        JsonNode modules = JSON.readTree(admin.request().get(baseUrl + "/api/sea/modules").text());
+        JsonNode modules =
+            JSON.readTree(admin.request().get(baseUrl + "/api/zalava/modules").text());
         Path root = Files.createDirectories(workspace.resolve("filesystem-fixture"));
         Files.writeString(root.resolve("evidence.txt"), "Configured released filesystem");
         page.navigate(baseUrl + "/modules/zalava-module-filesystem");
@@ -168,7 +169,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(denied.status()).isEqualTo(202);
         String deniedId = JSON.readTree(denied.text()).path("requestId").stringValue();
         assertThat(
-                post(admin, page, "/api/sea/permission-requests/" + deniedId + "/deny", Map.of())
+                post(admin, page, "/api/zalava/permission-requests/" + deniedId + "/deny", Map.of())
                     .status())
             .isEqualTo(200);
         page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
@@ -183,7 +184,11 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(pending.status()).isEqualTo(202);
         String requestId = JSON.readTree(pending.text()).path("requestId").stringValue();
         assertThat(
-                post(admin, page, "/api/sea/permission-requests/" + requestId + "/allow", Map.of())
+                post(
+                        admin,
+                        page,
+                        "/api/zalava/permission-requests/" + requestId + "/allow",
+                        Map.of())
                     .status())
             .isEqualTo(200);
         page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
@@ -199,7 +204,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertJobEvidence(page, admin, browser, jobEvidence);
         page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true)).waitFor();
-        assertThat(admin.request().get(baseUrl + "/api/sea/modules").status()).isEqualTo(404);
+        assertThat(admin.request().get(baseUrl + "/api/zalava/modules").status()).isEqualTo(404);
         page.locator("form:has(input[name=name][value='SDK acceptance milk']) input[type=checkbox]")
             .check();
         page.waitForURL(baseUrl + "/apps/zalava-module-shopping-list/shopping-list/items/bought");
@@ -252,7 +257,7 @@ class ReleasedModuleDistributableAcceptanceTest {
     java.util.UUID accountId;
     try (var connection = dataSource.getConnection();
         var statement =
-            connection.prepareStatement("SELECT id FROM sea_account WHERE login_name = ?")) {
+            connection.prepareStatement("SELECT id FROM zalava_account WHERE login_name = ?")) {
       statement.setString(1, LOGIN);
       try (var row = statement.executeQuery()) {
         assertThat(row.next()).isTrue();
@@ -381,14 +386,14 @@ class ReleasedModuleDistributableAcceptanceTest {
       port = socket.getLocalPort();
     }
     baseUrl = "http://127.0.0.1:" + port;
-    Path jar = Path.of(System.getProperty("sea.test.boot-jar")).toAbsolutePath();
+    Path jar = Path.of(System.getProperty("zalava.test.boot-jar")).toAbsolutePath();
     assertThat(jar).exists();
     Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
     process =
         new ProcessBuilder(
                 Path.of(System.getProperty("java.home"), "bin/java").toString(),
                 "-Xmx768m",
-                "-Dsea.module.shopping-list.sqlite.path="
+                "-Dzalava.module.shopping-list.sqlite.path="
                     + workspace.resolve("shopping-list.sqlite"),
                 "-jar",
                 jar.toString(),
@@ -400,10 +405,10 @@ class ReleasedModuleDistributableAcceptanceTest {
                 "--spring.datasource.username=" + postgres.getUsername(),
                 "--spring.datasource.password=" + postgres.getPassword(),
                 "--agent.workspace=" + workspace.toUri(),
-                "--sea.module-configuration.root=" + workspace.resolve("configuration"),
-                "--sea.accounts.security-enabled=true",
-                "--sea.accounts.bootstrap-login=" + LOGIN,
-                "--sea.accounts.bootstrap-password=" + INITIAL_PASSWORD,
+                "--zalava.module-configuration.root=" + workspace.resolve("configuration"),
+                "--zalava.accounts.security-enabled=true",
+                "--zalava.accounts.bootstrap-login=" + LOGIN,
+                "--zalava.accounts.bootstrap-password=" + INITIAL_PASSWORD,
                 "--agent.onboarding.completed=true",
                 "--spring.ai.model.chat=unknown",
                 "--agent.channels.telegram.token=false",
@@ -475,7 +480,7 @@ class ReleasedModuleDistributableAcceptanceTest {
     return post(
         context,
         page,
-        "/api/sea/providers/" + provider + "/tools/" + tool + "/invoke",
+        "/api/zalava/providers/" + provider + "/tools/" + tool + "/invoke",
         Map.of("actorId", LOGIN, "confirmed", false, "arguments", arguments));
   }
 

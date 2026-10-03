@@ -57,7 +57,7 @@ class DevelopmentRequestToolsTest {
     assertThat(exported.path("codexCommand").stringValue(""))
         .isEqualTo("cd /external/zalava-module-time && codex");
     assertThat(exported.path("initialPrompt").stringValue(""))
-        .isEqualTo("Read .sea-request/CODEX_TASK.md and begin the implementation.");
+        .isEqualTo("Read .zalava-request/CODEX_TASK.md and begin the implementation.");
     assertThat(exported.path("nextSteps")).hasSize(3);
 
     management.transition(

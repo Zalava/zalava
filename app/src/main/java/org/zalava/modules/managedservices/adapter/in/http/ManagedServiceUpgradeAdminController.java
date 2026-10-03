@@ -24,7 +24,7 @@ import org.zalava.modules.managedservices.application.port.in.ManagedServiceUpgr
  * instead of silently racing a concurrent decision.
  */
 @RestController
-@RequestMapping("/api/sea")
+@RequestMapping("/api/zalava")
 @Profile({"dev", "test"})
 public class ManagedServiceUpgradeAdminController {
 

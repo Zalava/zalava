@@ -6,7 +6,7 @@ import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaServiceContract;
 import org.zalava.api.ZalavaServiceDescriptor;
-import org.zalava.modules.runtime.LoadedSeaProvider;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
 
 /** Framework-free queries over the providers instantiated for this runtime. */
 public interface RuntimeQueries {
@@ -18,29 +18,29 @@ public interface RuntimeQueries {
     return modules();
   }
 
-  List<LoadedSeaProvider> loadedProviders();
+  List<LoadedZalavaProvider> loadedProviders();
 
   default List<ZalavaProvider> providers() {
-    return loadedProviders().stream().map(LoadedSeaProvider::provider).toList();
+    return loadedProviders().stream().map(LoadedZalavaProvider::provider).toList();
   }
 
-  default Optional<LoadedSeaProvider> findLoadedProvider(String providerId) {
+  default Optional<LoadedZalavaProvider> findLoadedProvider(String providerId) {
     return loadedProviders().stream()
         .filter(provider -> provider.provider().descriptor().providerId().equals(providerId))
         .findFirst();
   }
 
   default Optional<ZalavaProvider> findProvider(String providerId) {
-    return findLoadedProvider(providerId).map(LoadedSeaProvider::provider);
+    return findLoadedProvider(providerId).map(LoadedZalavaProvider::provider);
   }
 
   /**
-   * Resolves one active SEA-owned typed service without exposing its factory, classloader, module
-   * configuration, or any Spring infrastructure.
+   * Resolves one active Zalava-owned typed service without exposing its factory, classloader,
+   * module configuration, or any Spring infrastructure.
    */
-  default <T> Optional<LoadedSeaService<T>> findService(ZalavaServiceContract<T> contract) {
+  default <T> Optional<LoadedZalavaService<T>> findService(ZalavaServiceContract<T> contract) {
     return Optional.empty();
   }
 
-  record LoadedSeaService<T>(ZalavaServiceDescriptor descriptor, T service) {}
+  record LoadedZalavaService<T>(ZalavaServiceDescriptor descriptor, T service) {}
 }

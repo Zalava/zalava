@@ -16,7 +16,7 @@ import org.zalava.api.ZalavaServiceFactoryContext;
 import org.zalava.api.ZalavaServiceRequirement;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
-/** Fail-closed resolver for SEA-owned typed services, independent of Spring. */
+/** Fail-closed resolver for Zalava-owned typed services, independent of Spring. */
 final class ModuleServiceRuntime implements AutoCloseable {
   private final Map<String, ZalavaModule> modules = new HashMap<>();
   private final Map<String, ZalavaServiceFactory<?>> factories = new HashMap<>();
@@ -47,7 +47,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
     return source.withTypedServices(scopes);
   }
 
-  <T> java.util.Optional<RuntimeQueries.LoadedSeaService<T>> findService(
+  <T> java.util.Optional<RuntimeQueries.LoadedZalavaService<T>> findService(
       ZalavaServiceContract<T> contract) {
     Objects.requireNonNull(contract, "contract");
     ZalavaServiceFactory<?> factory = factories.get(contract.serviceId());
@@ -59,25 +59,25 @@ final class ModuleServiceRuntime implements AutoCloseable {
       return java.util.Optional.empty();
     }
     return java.util.Optional.of(
-        new RuntimeQueries.LoadedSeaService<>(
+        new RuntimeQueries.LoadedZalavaService<>(
             factory.descriptor(), contract.serviceType().cast(instance)));
   }
 
   private void register(ZalavaModule module, ZalavaServiceFactory<?> factory) {
     if (factory == null || factory.descriptor() == null || factory.contract() == null) {
       throw new IllegalStateException(
-          "SEA service factories must declare a descriptor and contract");
+          "Zalava service factories must declare a descriptor and contract");
     }
     String id = factory.descriptor().serviceId();
     if (!module.descriptor().moduleId().equals(factory.descriptor().moduleId())) {
-      throw new IllegalStateException("SEA service " + id + " is declared by the wrong module");
+      throw new IllegalStateException("Zalava service " + id + " is declared by the wrong module");
     }
     if (!id.equals(factory.contract().serviceId())
         || !factory.descriptor().contractVersion().equals(factory.contract().contractVersion())) {
-      throw new IllegalStateException("SEA service descriptor does not match contract: " + id);
+      throw new IllegalStateException("Zalava service descriptor does not match contract: " + id);
     }
     if (factories.putIfAbsent(id, factory) != null) {
-      throw new IllegalStateException("Multiple SEA service providers declared for " + id);
+      throw new IllegalStateException("Multiple Zalava service providers declared for " + id);
     }
   }
 
@@ -90,7 +90,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
           throw new IllegalStateException(
               "Module "
                   + module.descriptor().moduleId()
-                  + " requires unavailable SEA service "
+                  + " requires unavailable Zalava service "
                   + requirement.serviceId());
         }
       }
@@ -100,7 +100,8 @@ final class ModuleServiceRuntime implements AutoCloseable {
   private void resolve(String moduleId, Set<String> visiting, Set<String> complete) {
     if (complete.contains(moduleId)) return;
     if (!visiting.add(moduleId))
-      throw new IllegalStateException("Cyclic SEA service dependency involving module " + moduleId);
+      throw new IllegalStateException(
+          "Cyclic Zalava service dependency involving module " + moduleId);
     ZalavaModule module = modules.get(moduleId);
     for (ZalavaServiceRequirement requirement : requirements(module).values()) {
       ZalavaServiceFactory<?> factory = factories.get(requirement.serviceId());
@@ -118,7 +119,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
     Object value = factory.create(scope(module));
     if (!factory.contract().serviceType().isInstance(value)) {
       throw new IllegalStateException(
-          "SEA service factory returned an incompatible implementation for " + id);
+          "Zalava service factory returned an incompatible implementation for " + id);
     }
     closeables.add(factory);
     instances.put(id, value);
@@ -152,7 +153,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
         throw new IllegalStateException(
             "Module "
                 + module.descriptor().moduleId()
-                + " declares duplicate SEA service "
+                + " declares duplicate Zalava service "
                 + requirement.serviceId());
       }
     }
@@ -177,7 +178,7 @@ final class ModuleServiceRuntime implements AutoCloseable {
       try {
         closeables.get(i).close();
       } catch (Exception exception) {
-        if (failure == null) failure = new IllegalStateException("Unable to close SEA services");
+        if (failure == null) failure = new IllegalStateException("Unable to close Zalava services");
         failure.addSuppressed(exception);
       }
     }

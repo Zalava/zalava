@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.knowledge.application.port.out.KnowledgeSearchStore;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 
-/** PostgreSQL full-text candidates only; callers must apply SEA visibility before disclosure. */
+/** PostgreSQL full-text candidates only; callers must apply Zalava visibility before disclosure. */
 public final class JdbcKnowledgeSearchStore implements KnowledgeSearchStore {
   private final JdbcClient jdbc;
 

@@ -5,7 +5,9 @@ import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.KnowledgeIngestion;
 import org.zalava.knowledge.domain.KnowledgeSource;
 
-/** Delegates a durable chat attachment import to SEA's existing owner-scoped knowledge pipeline. */
+/**
+ * Delegates a durable chat attachment import to Zalava's existing owner-scoped knowledge pipeline.
+ */
 public final class KnowledgeImportAdapter implements KnowledgeImportPort {
   private final KnowledgeIngestion ingestion;
 

@@ -16,10 +16,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
-import org.zalava.tasks.clarification.SeaClarifications;
+import org.zalava.tasks.clarification.ZalavaClarifications;
 import org.zalava.tasks.clarification.domain.ClarificationDraft;
 import org.zalava.tasks.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskReference;
@@ -30,11 +30,11 @@ import org.zalava.tasks.domain.Task;
  * controller, actor resolver, clarification store and task commands, so ownership, idempotency,
  * expiry, cancellation and job resume are proven over real HTTP.
  */
-@AuthenticatedSeaComponentTest
+@AuthenticatedZalavaComponentTest
 class ClarificationControllerComponentTest {
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private SeaClarifications clarifications;
+  @Autowired private ZalavaClarifications clarifications;
   @Autowired private ActorTaskStore tasks;
   @Autowired private ComponentTestAccounts accounts;
 

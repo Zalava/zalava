@@ -24,14 +24,14 @@ public final class JdbcAccountStore implements AccountStore {
 
   @Override
   public List<Account> findAll() {
-    return jdbc.sql("select " + ACCOUNT_COLUMNS + " from sea_account order by login_name")
+    return jdbc.sql("select " + ACCOUNT_COLUMNS + " from zalava_account order by login_name")
         .query(this::map)
         .list();
   }
 
   @Override
   public Optional<Account> findByLoginName(String loginName) {
-    return jdbc.sql("select " + ACCOUNT_COLUMNS + " from sea_account where login_name = :login")
+    return jdbc.sql("select " + ACCOUNT_COLUMNS + " from zalava_account where login_name = :login")
         .param("login", loginName)
         .query(this::map)
         .optional();
@@ -39,7 +39,7 @@ public final class JdbcAccountStore implements AccountStore {
 
   @Override
   public Optional<Account> findById(AccountId id) {
-    return jdbc.sql("select " + ACCOUNT_COLUMNS + " from sea_account where id = :id")
+    return jdbc.sql("select " + ACCOUNT_COLUMNS + " from zalava_account where id = :id")
         .param("id", id.value())
         .query(this::map)
         .optional();
@@ -47,7 +47,7 @@ public final class JdbcAccountStore implements AccountStore {
 
   @Override
   public long enabledAdministratorCount() {
-    return jdbc.sql("select count(*) from sea_account where enabled = true and role = 'ADMIN'")
+    return jdbc.sql("select count(*) from zalava_account where enabled = true and role = 'ADMIN'")
         .query(Long.class)
         .single();
   }
@@ -55,7 +55,7 @@ public final class JdbcAccountStore implements AccountStore {
   @Override
   public Account create(Account account) {
     jdbc.sql(
-            "insert into sea_account (id, login_name, password_hash, enabled, role, password_change_required, created_at, updated_at, version) values (:id, :login, :hash, :enabled, :role, :required, :created, :updated, :version)")
+            "insert into zalava_account (id, login_name, password_hash, enabled, role, password_change_required, created_at, updated_at, version) values (:id, :login, :hash, :enabled, :role, :required, :created, :updated, :version)")
         .param("id", account.id().value())
         .param("login", account.loginName())
         .param("hash", account.passwordHash())
@@ -73,7 +73,7 @@ public final class JdbcAccountStore implements AccountStore {
   public Account save(Account account) {
     int updated =
         jdbc.sql(
-                "update sea_account set password_hash=:hash, enabled=:enabled, role=:role, password_change_required=:required, updated_at=:updated, version=version+1 where id=:id and version=:expectedVersion")
+                "update zalava_account set password_hash=:hash, enabled=:enabled, role=:role, password_change_required=:required, updated_at=:updated, version=version+1 where id=:id and version=:expectedVersion")
             .param("id", account.id().value())
             .param("hash", account.passwordHash())
             .param("enabled", account.enabled())

@@ -19,7 +19,7 @@ public interface ManagedServiceInstallation {
 
   ManagedServiceInstallRequest deny(String requestId);
 
-  /** One submitted service; SEA binds the module authority from the submitted module id. */
+  /** One submitted service; Zalava binds the module authority from the submitted module id. */
   record PlannedRequest(
       String moduleId,
       String serviceId,

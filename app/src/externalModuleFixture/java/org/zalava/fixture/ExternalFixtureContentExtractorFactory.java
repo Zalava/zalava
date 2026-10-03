@@ -22,7 +22,7 @@ final class ExternalFixtureContentExtractorFactory
   public ZalavaServiceDescriptor descriptor() {
     return new ZalavaServiceDescriptor(
         ContentExtractor.CONTRACT.serviceId(),
-        "sea-external-module-fixture",
+        "zalava-external-module-fixture",
         ContentExtractor.CONTRACT.contractVersion());
   }
 

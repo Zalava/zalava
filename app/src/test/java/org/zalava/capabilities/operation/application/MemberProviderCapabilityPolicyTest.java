@@ -23,7 +23,7 @@ class MemberProviderCapabilityPolicyTest {
   @Test
   void permitsOnlyExplicitlyMarkedScopedMemberOperations() {
     TestProvider provider =
-        new TestProvider(List.of("sea_backed"), List.of("member-safe"), Map.of("owner", "self"));
+        new TestProvider(List.of("zalava_backed"), List.of("member-safe"), Map.of("owner", "self"));
     DefaultProviderToolOperations operations = operations(provider);
 
     var outcome =
@@ -41,7 +41,9 @@ class MemberProviderCapabilityPolicyTest {
   void refusesLegacyBroadAccessEvenWhenItClaimsTheMemberMarker() {
     TestProvider provider =
         new TestProvider(
-            List.of("sea_backed", "broad-access"), List.of("member-safe"), Map.of("owner", "self"));
+            List.of("zalava_backed", "broad-access"),
+            List.of("member-safe"),
+            Map.of("owner", "self"));
     DefaultProviderToolOperations operations = operations(provider);
 
     assertThatThrownBy(
@@ -57,7 +59,7 @@ class MemberProviderCapabilityPolicyTest {
 
   @Test
   void defaultsToDenyWithoutAnExplicitMarkerOrProviderScope() {
-    TestProvider provider = new TestProvider(List.of("sea_backed"), List.of(), Map.of());
+    TestProvider provider = new TestProvider(List.of("zalava_backed"), List.of(), Map.of());
 
     assertThatThrownBy(
             () ->

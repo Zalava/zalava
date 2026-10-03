@@ -52,7 +52,7 @@ public final class FileSystemSkillActivationStore implements SkillActivationStor
       return activation;
     } catch (IOException exception) {
       throw new IllegalStateException(
-          "Unable to persist SEA skill activation: " + activation.name(), exception);
+          "Unable to persist Zalava skill activation: " + activation.name(), exception);
     } finally {
       try {
         Files.deleteIfExists(temporary);
@@ -87,7 +87,7 @@ public final class FileSystemSkillActivationStore implements SkillActivationStor
           .sorted(Comparator.comparing(SkillActivation::name))
           .toList();
     } catch (IOException exception) {
-      throw new IllegalStateException("Unable to list SEA skill activations", exception);
+      throw new IllegalStateException("Unable to list Zalava skill activations", exception);
     }
   }
 
@@ -103,13 +103,13 @@ public final class FileSystemSkillActivationStore implements SkillActivationStor
     try {
       return JSON.readValue(file.toFile(), SkillActivation.class);
     } catch (RuntimeException exception) {
-      throw new IllegalStateException("Unable to read SEA skill activation: " + file, exception);
+      throw new IllegalStateException("Unable to read Zalava skill activation: " + file, exception);
     }
   }
 
   private static String fileName(String name) {
     if (name == null || !KEBAB_CASE.matcher(name).matches()) {
-      throw new IllegalArgumentException("Invalid SEA skill name");
+      throw new IllegalArgumentException("Invalid Zalava skill name");
     }
     return name + ".json";
   }
@@ -118,7 +118,7 @@ public final class FileSystemSkillActivationStore implements SkillActivationStor
     try {
       return new Actor(new AccountId(UUID.fromString(activation.actorId())));
     } catch (IllegalArgumentException exception) {
-      throw new IllegalArgumentException("Invalid SEA skill activation owner", exception);
+      throw new IllegalArgumentException("Invalid Zalava skill activation owner", exception);
     }
   }
 }

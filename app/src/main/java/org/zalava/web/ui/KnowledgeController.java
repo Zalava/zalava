@@ -20,7 +20,7 @@ import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 
-/** Authenticated product read surface for SEA-owned knowledge metadata. */
+/** Authenticated product read surface for Zalava-owned knowledge metadata. */
 @Controller
 public final class KnowledgeController {
   private final KnowledgeLibrary library;

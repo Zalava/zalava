@@ -113,9 +113,10 @@ class ManagedServiceInstallPlanningTest {
                 new ManagedServiceLimits(1_000, 10, 1),
                 Set.of(),
                 Set.of(),
-                Set.of("/var/lib/sea/managed/app"),
+                Set.of("/var/lib/zalava/managed/app"),
                 Set.of()),
-            grant("home-module", Set.of(), Set.of(), Set.of("/var/lib/sea/managed/app"), Set.of()),
+            grant(
+                "home-module", Set.of(), Set.of(), Set.of("/var/lib/zalava/managed/app"), Set.of()),
             Set.of());
     assertThatThrownBy(() -> planning.plan(List.of(spoofed)))
         .isInstanceOf(ManagedServiceInstallPlanningException.class)
@@ -150,13 +151,13 @@ class ManagedServiceInstallPlanningTest {
                 new ManagedServiceLimits(1_000, 10, 1),
                 Set.of(5432),
                 Set.of("database-password"),
-                Set.of("/var/lib/sea/managed/db"),
+                Set.of("/var/lib/zalava/managed/db"),
                 Set.of()),
             grant(
                 "home-module",
                 Set.of(5432),
                 Set.of("database-password"),
-                Set.of("/var/lib/sea/managed/db"),
+                Set.of("/var/lib/zalava/managed/db"),
                 Set.of()),
             Set.of());
     var app =
@@ -168,13 +169,13 @@ class ManagedServiceInstallPlanningTest {
                 new ManagedServiceLimits(1_000, 10, 1),
                 Set.of(8080, 5432),
                 Set.of("database-password", "api-token"),
-                Set.of("/var/lib/sea/managed/app"),
+                Set.of("/var/lib/zalava/managed/app"),
                 Set.of("/dev/dri/renderD128")),
             grant(
                 "home-module",
                 Set.of(8080, 5432),
                 Set.of("database-password", "api-token"),
-                Set.of("/var/lib/sea/managed/app"),
+                Set.of("/var/lib/zalava/managed/app"),
                 Set.of("/dev/dri/renderD128")),
             Set.of("database"));
 
@@ -183,7 +184,7 @@ class ManagedServiceInstallPlanningTest {
     assertThat(aggregate.secretReferences())
         .containsExactlyInAnyOrder("api-token", "database-password");
     assertThat(aggregate.dataPaths())
-        .containsExactlyInAnyOrder("/var/lib/sea/managed/app", "/var/lib/sea/managed/db");
+        .containsExactlyInAnyOrder("/var/lib/zalava/managed/app", "/var/lib/zalava/managed/db");
     assertThat(aggregate.devices()).containsExactly("/dev/dri/renderD128");
     assertThat(aggregate.totalLimits().cpuMillis()).isEqualTo(2_000);
     assertThat(aggregate.totalLimits().memoryBytes()).isEqualTo(20);

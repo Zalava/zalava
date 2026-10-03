@@ -3,9 +3,9 @@ package org.zalava.knowledge.memory.domain;
 import java.util.Objects;
 
 /**
- * Storage-independent origin of a durable memory record. {@code source} names the SEA surface that
- * produced the record (for example {@code user}, {@code task}, {@code import} or {@code legacy});
- * {@code reference} optionally points at a run, task or import identity.
+ * Storage-independent origin of a durable memory record. {@code source} names the Zalava surface
+ * that produced the record (for example {@code user}, {@code task}, {@code import} or {@code
+ * legacy}); {@code reference} optionally points at a run, task or import identity.
  */
 public record MemoryProvenance(String source, String reference) {
 

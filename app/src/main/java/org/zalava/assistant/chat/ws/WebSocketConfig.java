@@ -13,7 +13,7 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 @Configuration
 @EnableWebSocket
 @ConditionalOnProperty(
-    name = "sea.chat.transport",
+    name = "zalava.chat.transport",
     havingValue = "spring-websocket",
     matchIfMissing = true)
 public class WebSocketConfig implements WebSocketConfigurer {
@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
   public WebSocketConfig(
       ChatWebSocketHandler handler,
       UiChatWebSocketHandler uiHandler,
-      @Value("${sea.chat.allowed-origins:}") String allowedOrigins) {
+      @Value("${zalava.chat.allowed-origins:}") String allowedOrigins) {
     this.handler = handler;
     this.uiHandler = uiHandler;
     this.allowedOrigins = parseOrigins(allowedOrigins);
@@ -49,11 +49,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
   @Bean
   @ConditionalOnProperty(
-      name = "sea.chat.attachment.bind-container",
+      name = "zalava.chat.attachment.bind-container",
       havingValue = "true",
       matchIfMissing = true)
   ServletServerContainerFactoryBean createWebSocketContainer(
-      @Value("${sea.chat.attachment.maximum-upload-bytes:5242880}") long maximumAttachmentBytes) {
+      @Value("${zalava.chat.attachment.maximum-upload-bytes:5242880}")
+          long maximumAttachmentBytes) {
     int bufferSize = messageBufferSize(maximumAttachmentBytes);
     ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
     container.setMaxTextMessageBufferSize(bufferSize);

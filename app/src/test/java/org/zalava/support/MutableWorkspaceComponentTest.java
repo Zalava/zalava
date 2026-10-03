@@ -20,5 +20,5 @@ import org.springframework.test.context.ContextConfiguration;
 @ActiveProfiles("test")
 @ResourceLock("mutable-component-workspace")
 @ContextConfiguration(initializers = MutableWorkspaceComponentTestInitializer.class)
-@Import(SeaComponentTestConfiguration.class)
+@Import(ZalavaComponentTestConfiguration.class)
 public @interface MutableWorkspaceComponentTest {}

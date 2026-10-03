@@ -65,11 +65,11 @@ class ChatWebSocketHandlerActorFlowsTest {
     assertThat(payload)
         .contains("channel-selector")
         .contains("chat-messages")
-        .contains("your SEA assistant")
+        .contains("your Zalava assistant")
         .contains("chat-input-area")
         .contains(conversation.value())
         .contains("chat-form")
-        .contains("Message SEA...")
+        .contains("Message Zalava...")
         .doesNotContain("read-only view");
     verify(legacy, never()).setWsSession(session);
     verify(legacy, never()).sendHtml(anyString());
@@ -110,7 +110,7 @@ class ChatWebSocketHandlerActorFlowsTest {
         .contains("chat-messages")
         .contains("chat-input-area")
         .contains("chat-form")
-        .contains("Message SEA...")
+        .contains("Message Zalava...")
         .doesNotContain("read-only view");
     verify(legacy, never()).sendHtml(anyString());
   }
@@ -133,7 +133,7 @@ class ChatWebSocketHandlerActorFlowsTest {
     assertThat(messages.getValue().getPayload())
         .contains("channel-selector")
         .contains(conversation.value())
-        .contains("Message SEA...")
+        .contains("Message Zalava...")
         .doesNotContain("read-only view");
     verify(legacy, never()).createWebConversation();
   }

@@ -11,7 +11,7 @@ final class OnboardingWorkspaceComponentTestInitializer
 
   @Override
   public void initialize(ConfigurableApplicationContext context) {
-    SeaComponentTestInitializer.initialize(context, false);
+    ZalavaComponentTestInitializer.initialize(context, false);
     Path workspace =
         Path.of(URI.create(context.getEnvironment().getRequiredProperty("agent.workspace")));
     TestPropertyValues.of(

@@ -23,7 +23,7 @@ import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.modules.catalog.install.application.port.out.EnabledModuleRegistry;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
-import org.zalava.modules.runtime.ExternalSeaModuleLoadingException;
+import org.zalava.modules.runtime.ExternalZalavaModuleLoadingException;
 import org.zalava.modules.runtime.application.port.in.ExternalModuleLoading;
 import org.zalava.modules.runtime.domain.RuntimeCompatibility;
 import org.zalava.modules.runtime.domain.RuntimeVersion;
@@ -33,7 +33,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
 
   private static final RuntimeVersion CURRENT_RUNTIME = RuntimeVersion.parse("1.0.0");
   private static final String RETIRED_PREVIEW_SERVICE_DESCRIPTOR =
-      "META-INF/services/org.zalava.sea.ZalavaModule";
+      "META-INF/services/org.zalava.zalava.ZalavaModule";
   private static final Set<String> FORBIDDEN_HOST_PACKAGES =
       Set.of(
           "api",
@@ -68,7 +68,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
 
   public synchronized List<ZalavaModule> loadModules() {
     if (loaded) {
-      throw new IllegalStateException("External SEA modules have already been loaded");
+      throw new IllegalStateException("External Zalava modules have already been loaded");
     }
     loaded = true;
     List<ModuleEnablement.EnabledModule> enabledModules = enabledModuleRegistry.enabledModules();
@@ -77,7 +77,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     for (ModuleEnablement.EnabledModule enabled : enabledModules) {
       try {
         loadedModules.addAll(loadModule(enabled, packageOwners));
-      } catch (ExternalSeaModuleLoadingException | ServiceConfigurationError exception) {
+      } catch (ExternalZalavaModuleLoadingException | ServiceConfigurationError exception) {
         System.getLogger(ExternalModuleClassLoader.class.getName())
             .log(
                 System.Logger.Level.WARNING,
@@ -111,11 +111,11 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
       close(classLoader);
       classLoaders.remove(classLoader);
       claimedPackages.forEach(packageName -> packageOwners.remove(packageName, enabled.moduleId()));
-      if (exception instanceof ExternalSeaModuleLoadingException loadingException) {
+      if (exception instanceof ExternalZalavaModuleLoadingException loadingException) {
         throw loadingException;
       }
-      throw new ExternalSeaModuleLoadingException(
-          "Unable to load external SEA module services", exception);
+      throw new ExternalZalavaModuleLoadingException(
+          "Unable to load external Zalava module services", exception);
     }
   }
 
@@ -145,7 +145,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     try {
       return artifact.toUri().toURL();
     } catch (IOException ex) {
-      throw new ExternalSeaModuleLoadingException("Invalid external module artifact path", ex);
+      throw new ExternalZalavaModuleLoadingException("Invalid external module artifact path", ex);
     }
   }
 
@@ -213,7 +213,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
           .forEach(packages::add);
       return packages;
     } catch (IOException exception) {
-      throw new ExternalSeaModuleLoadingException(
+      throw new ExternalZalavaModuleLoadingException(
           "Unable inspect external module artifact bundle for " + module.moduleId(), exception);
     }
   }
@@ -240,8 +240,9 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     return packageName.equals("org/zalava") || packageName.startsWith("org/zalava/");
   }
 
-  private static ExternalSeaModuleLoadingException loadingFailure(String moduleId, String message) {
-    return new ExternalSeaModuleLoadingException("External module " + moduleId + " " + message);
+  private static ExternalZalavaModuleLoadingException loadingFailure(
+      String moduleId, String message) {
+    return new ExternalZalavaModuleLoadingException("External module " + moduleId + " " + message);
   }
 
   public void validateLoadedModules(
@@ -289,18 +290,21 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
 
   private ModuleDescriptor requireModuleDescriptor(ZalavaModule module) {
     if (module == null) {
-      throw loadingFailure("External SEA module service must not be null");
+      throw loadingFailure("External Zalava module service must not be null");
     }
     ModuleDescriptor descriptor = module.descriptor();
     if (descriptor == null) {
-      throw loadingFailure("External SEA module descriptor must not be null");
+      throw loadingFailure("External Zalava module descriptor must not be null");
     }
-    requireText(descriptor.moduleId(), "External SEA module id");
-    requireText(descriptor.version(), "External SEA module " + descriptor.moduleId() + " version");
+    requireText(descriptor.moduleId(), "External Zalava module id");
     requireText(
-        descriptor.displayName(), "External SEA module " + descriptor.moduleId() + " display name");
+        descriptor.version(), "External Zalava module " + descriptor.moduleId() + " version");
     requireText(
-        descriptor.description(), "External SEA module " + descriptor.moduleId() + " description");
+        descriptor.displayName(),
+        "External Zalava module " + descriptor.moduleId() + " display name");
+    requireText(
+        descriptor.description(),
+        "External Zalava module " + descriptor.moduleId() + " description");
     return descriptor;
   }
 
@@ -450,7 +454,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
   }
 
   private void validateCompatibility(ModuleEnablement.EnabledModule enabled) {
-    String compatibility = enabled.seaRuntimeCompatibility();
+    String compatibility = enabled.zalavaRuntimeCompatibility();
     if (compatibility == null || compatibility.isBlank()) {
       return;
     }
@@ -461,14 +465,14 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
       throw loadingFailure(
           "External module "
               + enabled.moduleId()
-              + " seaRuntime compatibility is invalid: "
+              + " zalavaRuntime compatibility is invalid: "
               + ex.getMessage());
     }
     if (range.minimum().compareTo(CURRENT_RUNTIME) > 0) {
       throw loadingFailure(
           "External module "
               + enabled.moduleId()
-              + " requires SEA runtime "
+              + " requires Zalava runtime "
               + compatibility
               + " but current runtime is "
               + CURRENT_RUNTIME.value());
@@ -477,7 +481,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
       throw loadingFailure(
           "External module "
               + enabled.moduleId()
-              + " does not support SEA runtime "
+              + " does not support Zalava runtime "
               + CURRENT_RUNTIME.value()
               + " (requires "
               + compatibility
@@ -510,7 +514,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
         + "and register META-INF/services/org.zalava.api.ZalavaModule";
   }
 
-  private ExternalSeaModuleLoadingException loadingFailure(String message) {
-    return new ExternalSeaModuleLoadingException(message);
+  private ExternalZalavaModuleLoadingException loadingFailure(String message) {
+    return new ExternalZalavaModuleLoadingException(message);
   }
 }

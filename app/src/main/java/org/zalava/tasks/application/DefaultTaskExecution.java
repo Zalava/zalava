@@ -14,7 +14,7 @@ import org.zalava.tasks.domain.TaskReference;
 public class DefaultTaskExecution implements TaskExecution {
 
   private static final String TERMINAL_FAILURE_DETAIL =
-      "SEA could not complete this job after multiple attempts.";
+      "Zalava could not complete this job after multiple attempts.";
 
   private final TaskStore taskStore;
   private final TaskAgent taskAgent;
@@ -101,7 +101,7 @@ public class DefaultTaskExecution implements TaskExecution {
     List<TaskApprovalDecisions.PendingApproval> approvals =
         approvalDecisions.pendingFor(taskReference);
     if (approvals.isEmpty()) {
-      return "Waiting for approval of a side-effecting SEA tool call.";
+      return "Waiting for approval of a side-effecting Zalava tool call.";
     }
     String approvalPrompts =
         approvals.stream()
@@ -138,7 +138,7 @@ public class DefaultTaskExecution implements TaskExecution {
                         .strip())
             .collect(Collectors.joining(System.lineSeparator() + System.lineSeparator()));
     return """
-                SEA is waiting for your approval before continuing this job.
+                Zalava is waiting for your approval before continuing this job.
 
                 %s
                 """
@@ -165,7 +165,7 @@ public class DefaultTaskExecution implements TaskExecution {
 
                 Approval decisions since the previous attempt:
                 %s
-                Retry an allowed tool call with the same arguments so SEA can consume the approval.
+                Retry an allowed tool call with the same arguments so Zalava can consume the approval.
                 Do not execute a denied operation; adapt the task result accordingly.
                 """
                 .formatted(decisions);

@@ -24,8 +24,8 @@ import org.zalava.knowledge.skills.adapter.out.filesystem.FileSystemSkillActivat
 import org.zalava.knowledge.skills.adapter.out.filesystem.FileSystemSkillCatalog;
 import org.zalava.knowledge.skills.adapter.out.filesystem.FileSystemSkillContentSource;
 import org.zalava.knowledge.skills.application.DefaultSkillDiscovery;
-import org.zalava.knowledge.skills.application.SeaSkillActivations;
 import org.zalava.knowledge.skills.application.SkillActivationMetrics;
+import org.zalava.knowledge.skills.application.ZalavaSkillActivations;
 import org.zalava.knowledge.skills.domain.SkillActivation;
 import org.zalava.knowledge.skills.domain.SkillActivationDeniedException;
 import org.zalava.knowledge.skills.domain.SkillContentPolicy;
@@ -85,7 +85,7 @@ class SkillActivationAcceptanceTest {
         .contains("Untrusted selected skill instructions:")
         .contains("skill=alpha-skill@1.2.0")
         .contains("Follow the alpha procedure")
-        .doesNotContain("Untrusted selected SEA tool summaries:");
+        .doesNotContain("Untrusted selected Zalava tool summaries:");
     assertThat(skillMetric(context).charactersUsed())
         .isPositive()
         .isLessThanOrEqualTo(SKILL_SOURCE_BUDGET);
@@ -193,8 +193,8 @@ class SkillActivationAcceptanceTest {
     Actor actor = new Actor(AccountId.newId());
     DefaultSkillDiscovery discovery =
         new DefaultSkillDiscovery(new FileSystemSkillCatalog(skills), () -> List.of(), Set.of());
-    SeaSkillActivations activations =
-        new SeaSkillActivations(
+    ZalavaSkillActivations activations =
+        new ZalavaSkillActivations(
             discovery,
             new FileSystemSkillContentSource(skills),
             new FileSystemSkillActivationStore(workspace),
@@ -209,7 +209,10 @@ class SkillActivationAcceptanceTest {
   }
 
   private record Fixture(
-      ActorExecutionContext actors, Actor actor, SeaSkillActivations activations, Path workspace) {
+      ActorExecutionContext actors,
+      Actor actor,
+      ZalavaSkillActivations activations,
+      Path workspace) {
 
     SkillActivation activate(String name, String version, AccountRole role) {
       return activations.activate(actor, role, name, version);

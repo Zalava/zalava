@@ -7,15 +7,15 @@ import java.util.Objects;
 import org.springframework.ai.tool.toolsearch.ToolIndex;
 import org.springframework.ai.tool.toolsearch.ToolSearchRequest;
 import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolCallbackNames;
-import org.zalava.capabilities.discovery.adapter.out.springai.SeaToolReferences;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolReferences;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.identity.accounts.domain.AccountRole;
 
 /**
  * Optional policy-filtered Tool Search over an already bounded candidate set.
  *
- * <p>It reuses SEA's session-scoped {@link ToolIndex} boundary (which still owns the maintained
+ * <p>It reuses Zalava's session-scoped {@link ToolIndex} boundary (which still owns the maintained
  * 1–10 result limit) and re-applies {@link DynamicToolActivationPolicy} to every searched match, so
  * it can only narrow an authorized selection. When the index is disabled, the query/candidates are
  * empty, or the search fails, it returns no matches and the caller keeps its deterministic
@@ -64,11 +64,12 @@ public final class PolicyFilteredToolSearch {
     for (ToolDiscovery.ToolMatch candidate : candidates) {
       if (candidate != null) {
         byCallbackName.put(
-            SeaToolCallbackNames.forTool(candidate.providerId(), candidate.toolName()), candidate);
+            ZalavaToolCallbackNames.forTool(candidate.providerId(), candidate.toolName()),
+            candidate);
       }
     }
     try {
-      toolIndex.indexTools(sessionId, candidates.stream().map(SeaToolReferences::from).toList());
+      toolIndex.indexTools(sessionId, candidates.stream().map(ZalavaToolReferences::from).toList());
       ToolSearchResponse response =
           toolIndex.search(
               new ToolSearchRequest(

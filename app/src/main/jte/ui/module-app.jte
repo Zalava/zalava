@@ -10,11 +10,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${title}</title>
   @if(csrf != null)
-    <meta name="sea-csrf-parameter" content="${csrf.getParameterName()}">
-    <meta name="sea-csrf-token" content="${csrf.getToken()}">
+    <meta name="zalava-csrf-parameter" content="${csrf.getParameterName()}">
+    <meta name="zalava-csrf-token" content="${csrf.getToken()}">
   @endif
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="/sea-ui.css">
+    <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
 @template.ui.navigation(items = navigation.items(), activePage = "apps")
@@ -26,8 +26,8 @@
 @if(csrf != null)
 <script>
 (function () {
-  const parameter = document.querySelector('meta[name="sea-csrf-parameter"]').content;
-  const token = document.querySelector('meta[name="sea-csrf-token"]').content;
+  const parameter = document.querySelector('meta[name="zalava-csrf-parameter"]').content;
+  const token = document.querySelector('meta[name="zalava-csrf-token"]').content;
   // Populate before native form.submit(), which bypasses submit event listeners.
   document.querySelectorAll('main form').forEach(function (form) {
     if (form.method.toLowerCase() !== 'post' || new URL(form.action).origin !== location.origin) return;

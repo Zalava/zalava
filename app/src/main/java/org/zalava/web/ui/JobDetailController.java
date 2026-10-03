@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
@@ -37,7 +37,7 @@ public class JobDetailController {
 
   private final TaskQueries taskQueries;
   private final TaskCommands taskCommands;
-  private final SeaToolApprovalRequests approvalRequests;
+  private final ZalavaToolApprovalRequests approvalRequests;
   private final ActorTaskCommands actorTasks;
   private final AuthenticatedActorResolver actors;
   private final ProviderToolOperations providerOperations;
@@ -45,7 +45,7 @@ public class JobDetailController {
   public JobDetailController(
       TaskQueries taskQueries,
       TaskCommands taskCommands,
-      SeaToolApprovalRequests approvalRequests,
+      ZalavaToolApprovalRequests approvalRequests,
       ActorTaskCommands actorTasks,
       AuthenticatedActorResolver actors,
       ProviderToolOperations providerOperations) {
@@ -186,11 +186,11 @@ public class JobDetailController {
       }
       redirectAttributes.addFlashAttribute("approvalMessage", decision.message());
       return "redirect:/jobs/" + reference.path();
-    } catch (SeaToolApprovalRequests.NotFoundException ex) {
+    } catch (ZalavaToolApprovalRequests.NotFoundException ex) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Approval request not found", ex);
     } catch (TaskNotFoundException ex) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found", ex);
-    } catch (SeaToolApprovalRequests.AlreadyDecidedException | IllegalStateException ex) {
+    } catch (ZalavaToolApprovalRequests.AlreadyDecidedException | IllegalStateException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
     }
   }
@@ -208,11 +208,11 @@ public class JobDetailController {
       if (task.getStatus() != Task.Status.awaiting_human_input) {
         throw new IllegalStateException("Job is not waiting for an approval decision");
       }
-      SeaToolApprovalRequests.Entry approval =
+      ZalavaToolApprovalRequests.Entry approval =
           approvalRequests.get(actor, taskReference, requestId);
       if (actors.role(authentication) == AccountRole.MEMBER
           && !"MEMBER".equals(approval.attributes().get("accountRole"))) {
-        throw new SeaToolApprovalRequests.NotFoundException(requestId);
+        throw new ZalavaToolApprovalRequests.NotFoundException(requestId);
       }
       switch (decision) {
         case ALLOW_ONCE -> providerOperations.allowUnscoped(requestId);
@@ -224,12 +224,12 @@ public class JobDetailController {
       }
       redirectAttributes.addFlashAttribute("approvalMessage", decision.message());
       return "redirect:/jobs/" + taskReference.value();
-    } catch (SeaToolApprovalRequests.NotFoundException exception) {
+    } catch (ZalavaToolApprovalRequests.NotFoundException exception) {
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Approval request not found", exception);
     } catch (TaskNotFoundException exception) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found", exception);
-    } catch (SeaToolApprovalRequests.AlreadyDecidedException | IllegalStateException exception) {
+    } catch (ZalavaToolApprovalRequests.AlreadyDecidedException | IllegalStateException exception) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage(), exception);
     }
   }
@@ -258,7 +258,7 @@ public class JobDetailController {
   }
 
   private static JobDetailModel toModel(
-      Task task, String referencePath, List<SeaToolApprovalRequests.Entry> approvals) {
+      Task task, String referencePath, List<ZalavaToolApprovalRequests.Entry> approvals) {
     return new JobDetailModel(
         task.getName(),
         task.getGoalDescription(),
@@ -287,17 +287,19 @@ public class JobDetailController {
         new LifecycleEntry(statusLabel(task.getStatus()), null, statusGuidance(task.getStatus())));
   }
 
-  private static ApprovalEntry toApprovalEntry(SeaToolApprovalRequests.Entry request) {
+  private static ApprovalEntry toApprovalEntry(ZalavaToolApprovalRequests.Entry request) {
     return new ApprovalEntry(
         request.requestId(),
         request.providerId(),
         request.toolName(),
         request.argumentsJson(),
         request.policyTags(),
-        request.decision() == SeaToolApprovalRequests.Decision.PENDING
+        request.decision() == ZalavaToolApprovalRequests.Decision.PENDING
             ? "Pending approval"
-            : request.decision() == SeaToolApprovalRequests.Decision.DENIED ? "Denied" : "Allowed",
-        request.decision() == SeaToolApprovalRequests.Decision.PENDING);
+            : request.decision() == ZalavaToolApprovalRequests.Decision.DENIED
+                ? "Denied"
+                : "Allowed",
+        request.decision() == ZalavaToolApprovalRequests.Decision.PENDING);
   }
 
   private static List<SectionEntry> planEntries(Task task) {
@@ -365,12 +367,12 @@ public class JobDetailController {
 
   private static String statusGuidance(Task.Status status) {
     return switch (status) {
-      case todo -> "SEA has recorded this job and it is waiting to run.";
-      case in_progress -> "SEA is currently working on this job.";
-      case awaiting_human_input -> "SEA needs human input before this job can continue.";
-      case completed -> "SEA has completed this job.";
-      case cancelled -> "SEA cancelled this job.";
-      case failed -> "SEA could not complete this job after retrying it.";
+      case todo -> "Zalava has recorded this job and it is waiting to run.";
+      case in_progress -> "Zalava is currently working on this job.";
+      case awaiting_human_input -> "Zalava needs human input before this job can continue.";
+      case completed -> "Zalava has completed this job.";
+      case cancelled -> "Zalava cancelled this job.";
+      case failed -> "Zalava could not complete this job after retrying it.";
     };
   }
 

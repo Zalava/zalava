@@ -22,7 +22,7 @@ import org.zalava.modules.development.application.port.in.DevelopmentWorkspaceEx
 
 /** Development/test-only HTTP adapter for the authoritative module-development workflow. */
 @RestController
-@RequestMapping("/api/sea/development-requests")
+@RequestMapping("/api/zalava/development-requests")
 @Profile({"dev", "test"})
 public class DevelopmentRequestAdminController {
 
@@ -48,7 +48,7 @@ public class DevelopmentRequestAdminController {
       ModuleDevelopmentRequest created =
           developmentRequests.create(request.contract(), required(request.reason(), "reason"));
       return ResponseEntity.created(
-              URI.create("/api/sea/development-requests/" + created.id().value()))
+              URI.create("/api/zalava/development-requests/" + created.id().value()))
           .body(DevelopmentRequestResponse.from(created));
     } catch (IllegalArgumentException ex) {
       throw badRequest(ex);

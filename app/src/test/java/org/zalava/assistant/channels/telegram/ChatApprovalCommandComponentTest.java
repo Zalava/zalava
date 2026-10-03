@@ -27,8 +27,8 @@ import org.zalava.assistant.channels.ChannelRegistry;
 import org.zalava.assistant.channels.approval.ChannelApprovalCommands;
 import org.zalava.assistant.chat.ChatChannel;
 import org.zalava.assistant.chat.ChatTurnResult;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests;
-import org.zalava.capabilities.operation.adapter.out.approval.SeaToolApprovalAdapter;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
 import org.zalava.capabilities.operation.application.DefaultProviderToolOperations;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.tasks.capture.TaskCreationContext;
@@ -55,20 +55,20 @@ class ChatApprovalCommandComponentTest {
     assertThat(chat.send("add rice")).contains("Approval pending");
     assertThat(chat.providerCalls()).isEmpty();
 
-    assertThat(chat.send("/sea approve last"))
+    assertThat(chat.send("/zalava approve last"))
         .contains("Approval granted once")
         .contains("test-shopping/add_item")
         .contains("The approved tool has run.");
     assertThat(chat.providerCalls()).containsExactly("rice");
 
     assertThat(chat.send("add salt")).contains("Approval pending");
-    assertThat(chat.send("/sea deny last"))
+    assertThat(chat.send("/zalava deny last"))
         .contains("Approval denied")
         .contains("The tool was not run.");
     assertThat(chat.providerCalls()).containsExactly("rice");
 
     assertThat(chat.send("add pasta")).contains("Approval pending");
-    assertThat(chat.send("/sea always-allow-tool last"))
+    assertThat(chat.send("/zalava always-allow-tool last"))
         .contains("Tool approval policy saved")
         .contains("The approved tool has run.");
     assertThat(chat.providerCalls()).containsExactly("rice", "pasta");
@@ -88,12 +88,12 @@ class ChatApprovalCommandComponentTest {
     private static final long TELEGRAM_CHAT_ID = 42L;
 
     private final RecordingProvider provider = new RecordingProvider();
-    private final SeaToolApprovalRequests approvals = new SeaToolApprovalRequests();
+    private final ZalavaToolApprovalRequests approvals = new ZalavaToolApprovalRequests();
     private final ProviderToolOperations operations =
         new DefaultProviderToolOperations(
             providerId ->
                 "test-shopping".equals(providerId) ? Optional.of(provider) : Optional.empty(),
-            new SeaToolApprovalAdapter(approvals),
+            new ZalavaToolApprovalAdapter(approvals),
             List.of(),
             new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
     private final ChannelApprovalCommands approvalCommands =

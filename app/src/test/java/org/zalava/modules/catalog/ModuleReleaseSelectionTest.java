@@ -23,7 +23,7 @@ class ModuleReleaseSelectionTest {
     assertThat(module.artifact())
         .isEqualTo(
             new SourceModuleIndex.Artifact("org.zalava.modules", "zalava-module-time", "1.0.1"));
-    assertThat(module.compatibility().seaRuntime()).isEqualTo(">=1.0.0 <2.0.0");
+    assertThat(module.compatibility().zalavaRuntime()).isEqualTo(">=1.0.0 <2.0.0");
     assertThat(module.security().permissions()).containsExactly("time.read");
     assertThat(selected.artifactDigest()).isEqualTo("sha256:" + "a".repeat(64));
   }

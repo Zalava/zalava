@@ -1,6 +1,6 @@
 package org.zalava.web.onboarding.steps;
 
-import static org.zalava.SeaConfiguration.AGENT_MD;
+import static org.zalava.ZalavaConfiguration.AGENT_MD;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

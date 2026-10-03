@@ -21,7 +21,7 @@ class SourceModuleCatalogSearchTest {
     assertThat(result.module().artifact().groupId()).isEqualTo("org.zalava.modules");
     assertThat(result.module().artifact().artifactId()).isEqualTo("zalava-module-time");
     assertThat(result.catalogEntry().sha256())
-        .isEqualTo("c1b6523987aa570a03ca1c8be8391fcab72b6fcdabde308eaa7da97ed3587147");
+        .isEqualTo("7d8c5d23af820101ed8a6859d5ee7fd636cd460e1cf67d35a2f7fc5152721bfe");
     assertThat(result.repositories())
         .containsExactly(
             new SourceModuleCatalog.MavenRepository(
@@ -37,7 +37,7 @@ class SourceModuleCatalogSearchTest {
     assertThat(result.module().moduleId()).isEqualTo("zalava-module-shopping-list");
     assertThat(result.module().artifact().artifactId()).isEqualTo("zalava-module-shopping-list");
     assertThat(result.catalogEntry().sha256())
-        .isEqualTo("12a285d3fd7ea2e446ba5398d1bbf98597c74814347217eeb92aff5910a06210");
+        .isEqualTo("ebce1897383c79d8bc38be78c20a23bda1e7bfc269e993d69ae412ceeb476798");
   }
 
   @Test

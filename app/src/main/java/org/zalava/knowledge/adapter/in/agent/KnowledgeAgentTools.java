@@ -12,7 +12,7 @@ import org.zalava.knowledge.application.KnowledgeToolObservation;
 import org.zalava.knowledge.domain.KnowledgeEvidence;
 import tools.jackson.databind.ObjectMapper;
 
-/** Explicit document reads under SEA actor authorization, model boundary and redacted audit. */
+/** Explicit document reads under Zalava actor authorization, model boundary and redacted audit. */
 public final class KnowledgeAgentTools {
   private static final ObjectMapper JSON = new ObjectMapper();
   private final KnowledgeEvidenceQueries queries;

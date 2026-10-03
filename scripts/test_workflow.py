@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 
-WORKFLOW = Path(__file__).with_name('sea-workflow')
+WORKFLOW = Path(__file__).with_name('zalava-workflow')
 
 
 class WorkflowBoundaryTest(unittest.TestCase):

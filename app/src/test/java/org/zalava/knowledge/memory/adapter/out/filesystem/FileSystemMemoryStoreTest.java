@@ -20,7 +20,8 @@ class FileSystemMemoryStoreTest {
     var store = new FileSystemMemoryStore(workspace);
     var saved =
         store.remember(
-            new MemoryDraft(MemoryScope.PROJECT, "SEA uses providers.", Map.of("source", "test")));
+            new MemoryDraft(
+                MemoryScope.PROJECT, "Zalava uses providers.", Map.of("source", "test")));
 
     assertThat(new FileSystemMemoryStore(workspace).recent(10))
         .singleElement()
@@ -28,7 +29,7 @@ class FileSystemMemoryStoreTest {
             memory -> {
               assertThat(memory.id()).isEqualTo(saved.id());
               assertThat(memory.scope()).isEqualTo(MemoryScope.PROJECT);
-              assertThat(memory.text()).isEqualTo("SEA uses providers.");
+              assertThat(memory.text()).isEqualTo("Zalava uses providers.");
               assertThat(memory.metadata()).containsEntry("source", "test");
             });
   }

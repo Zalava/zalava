@@ -18,7 +18,7 @@ import org.zalava.assistant.chat.attachment.domain.ChatAttachmentNotFoundExcepti
 import org.zalava.identity.accounts.domain.Actor;
 
 /**
- * Accepts bounded attachments with an explicit retention intent. SEA owns the reference; the
+ * Accepts bounded attachments with an explicit retention intent. Zalava owns the reference; the
  * browser never supplies a path, owner or storage location.
  */
 public final class ChatAttachments {

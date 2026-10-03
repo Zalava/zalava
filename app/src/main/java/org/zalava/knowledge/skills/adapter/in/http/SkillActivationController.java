@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
-import org.zalava.knowledge.skills.application.SeaSkillActivations;
+import org.zalava.knowledge.skills.application.ZalavaSkillActivations;
 import org.zalava.knowledge.skills.application.port.in.SkillActivations;
 import org.zalava.knowledge.skills.domain.SkillActivation;
 import org.zalava.knowledge.skills.domain.SkillActivationDeniedException;
@@ -73,8 +73,8 @@ public final class SkillActivationController {
     return SkillActivationResponse.from(activations.deactivate(actors.actor(authentication), name));
   }
 
-  @ExceptionHandler(SeaSkillActivations.NotFoundException.class)
-  ResponseEntity<Map<String, String>> notFound(SeaSkillActivations.NotFoundException exception) {
+  @ExceptionHandler(ZalavaSkillActivations.NotFoundException.class)
+  ResponseEntity<Map<String, String>> notFound(ZalavaSkillActivations.NotFoundException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error(exception));
   }
 

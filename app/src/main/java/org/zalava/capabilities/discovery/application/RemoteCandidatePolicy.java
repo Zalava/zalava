@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.Set;
 import org.zalava.capabilities.discovery.RemoteModuleCandidate;
 
-/** SEA-owned policy gate applied to remote candidates before any ranking or classification. */
+/** Zalava-owned policy gate applied to remote candidates before any ranking or classification. */
 public final class RemoteCandidatePolicy {
 
   public static final Set<String> DEFAULT_BLOCKED_PERMISSIONS =

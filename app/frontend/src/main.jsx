@@ -11,7 +11,7 @@ import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
 import "./style.css";
 
-const SeaChatContext = createContext(null);
+const ZalavaChatContext = createContext(null);
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ACCEPT =
   ".txt,.text,.md,.markdown,.html,.htm,.pdf,.docx," +
@@ -64,7 +64,7 @@ function AttachmentErrorReporter({ onError }) {
   return null;
 }
 
-function SeaRuntime({ children }) {
+function ZalavaRuntime({ children }) {
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [conversationIds, setConversationIds] = useState([]);
@@ -168,7 +168,7 @@ function SeaRuntime({ children }) {
 
   const sendCommand = (command) => {
     if (socket.current?.readyState === WebSocket.OPEN) {
-      socket.current.send(JSON.stringify({ protocol: "sea.ui/v1", ...command }));
+      socket.current.send(JSON.stringify({ protocol: "zalava.ui/v1", ...command }));
       return true;
     }
     return false;
@@ -312,10 +312,10 @@ function SeaRuntime({ children }) {
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <SeaChatContext.Provider value={value}>
+      <ZalavaChatContext.Provider value={value}>
         <AttachmentErrorReporter onError={setUploadError} />
         {children}
-      </SeaChatContext.Provider>
+      </ZalavaChatContext.Provider>
     </AssistantRuntimeProvider>
   );
 }
@@ -337,7 +337,7 @@ function Chat() {
     decideApproval,
     selectConversation,
     createConversation,
-  } = useContext(SeaChatContext);
+  } = useContext(ZalavaChatContext);
   const aui = useAui();
   const historyIndex = useRef(-1);
   const preservedDraft = useRef("");
@@ -367,25 +367,25 @@ function Chat() {
   const failure = messages.findLast((message) => message.failure);
 
   return (
-    <main className="sea-chat" aria-label="Zalava conversation">
+    <main className="zalava-chat" aria-label="Zalava conversation">
       <header>
         <div>
           <p className="eyebrow">Default workspace</p>
           <h1>Chat</h1>
           <p>Ask Zalava a question or start work that will be tracked as a job.</p>
         </div>
-        <output className="sea-status" aria-live="polite">{status}</output>
+        <output className="zalava-status" aria-live="polite">{status}</output>
       </header>
       <nav className="conversations" aria-label="Conversations">
-        <select className="sea-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={pending || continuing || status !== "Connected"}>
+        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={pending || continuing || status !== "Connected"}>
           {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
         </select>
-        <button className="sea-button" type="button" onClick={createConversation} disabled={status !== "Connected" || pending || continuing}>New conversation</button>
+        <button className="zalava-button" type="button" onClick={createConversation} disabled={status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
-      <button className="sea-button sea-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
+      <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
       {approvals.length > 0 && <div className="permission-shortcut" role="status">
         <span>{approvals.length} pending permission{approvals.length === 1 ? "" : "s"}</span>
-        <button className="sea-button" type="button" onClick={() => { setInspectorOpen(true); setInspectorTab("Tools"); }}>Review permissions</button>
+        <button className="zalava-button" type="button" onClick={() => { setInspectorOpen(true); setInspectorTab("Tools"); }}>Review permissions</button>
       </div>}
       <div className={`chat-workspace ${inspectorOpen ? "inspector-open" : ""}`}>
       <div className="chat-primary">
@@ -394,8 +394,8 @@ function Chat() {
         <p>This history is read-only. Continue in a separate private web conversation to send a message.</p>
         {canContinue ? <>
           <label htmlFor="continuation-destination">Continue in</label>
-          <select id="continuation-destination" className="sea-field" disabled={continuing}><option value="web">Private web chat</option></select>
-          <button className="sea-button" type="button" onClick={continueConversation} disabled={continuing || status !== "Connected"}>{continuing ? "Continuing…" : "Continue conversation"}</button>
+          <select id="continuation-destination" className="zalava-field" disabled={continuing}><option value="web">Private web chat</option></select>
+          <button className="zalava-button" type="button" onClick={continueConversation} disabled={continuing || status !== "Connected"}>{continuing ? "Continuing…" : "Continue conversation"}</button>
         </> : <p>Continuation is unavailable for this channel identity or destination.</p>}
       </section>}
       {commandError && commandError !== failure?.content && <p role="alert">{commandError}</p>}
@@ -426,24 +426,24 @@ function Chat() {
             {({ attachment }) => (
               <AttachmentPrimitive.Root className="attachment-chip">
                 <AttachmentPrimitive.Name />
-                <AttachmentPrimitive.Remove className="sea-button sea-button--secondary" aria-label="Remove">Remove</AttachmentPrimitive.Remove>
+                <AttachmentPrimitive.Remove className="zalava-button zalava-button--secondary" aria-label="Remove">Remove</AttachmentPrimitive.Remove>
               </AttachmentPrimitive.Root>
             )}
           </ComposerPrimitive.Attachments>
           <div className="attachments" aria-label="Attachments">
             <ComposerPrimitive.Input
               id="message"
-              className="sea-field"
+              className="zalava-field"
               placeholder="Message Zalava"
               onKeyDown={recallPrompt}
               onChange={() => {
                 historyIndex.current = -1;
               }}
             />
-            <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="sea-button sea-button--secondary composer-attach">
+            <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="zalava-button zalava-button--secondary composer-attach">
               Attach files
             </ComposerPrimitive.AddAttachment>
-            <ComposerPrimitive.Send className="sea-button composer-send">Send</ComposerPrimitive.Send>
+            <ComposerPrimitive.Send className="zalava-button composer-send">Send</ComposerPrimitive.Send>
           </div>
         </ComposerPrimitive.AttachmentDropzone>
         <div className="attachments" aria-label="Knowledge import">
@@ -474,7 +474,7 @@ function Chat() {
       </div>
       <aside id="chat-inspector" className="chat-inspector" aria-label="Workspace inspector">
         <div role="tablist" aria-label="Workspace details">
-          {["Run", "Tools", "Context"].map((tab) => <button className="sea-button sea-button--secondary" type="button" key={tab} id={`inspector-tab-${tab}`} role="tab" tabIndex={inspectorTab === tab ? 0 : -1} aria-selected={inspectorTab === tab} onKeyDown={(event) => {
+          {["Run", "Tools", "Context"].map((tab) => <button className="zalava-button zalava-button--secondary" type="button" key={tab} id={`inspector-tab-${tab}`} role="tab" tabIndex={inspectorTab === tab ? 0 : -1} aria-selected={inspectorTab === tab} onKeyDown={(event) => {
             const tabs = ["Run", "Tools", "Context"];
             let next;
             if (event.key === "ArrowRight") next = tabs[(tabs.indexOf(tab) + 1) % tabs.length];
@@ -498,8 +498,8 @@ function Chat() {
             {approvals.length === 0 && <p>No pending permissions.</p>}
             {approvals.map(([requestId, approval]) => <section className="approval" key={requestId} aria-label="Pending permission">
               <strong>Permission needed</strong><p>Zalava requests approval for {approval.summary}.</p>
-              <button className="sea-button" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
-              <button className="sea-button sea-button--danger" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
+              <button className="zalava-button" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
+              <button className="zalava-button zalava-button--danger" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
               {approval.submitting && <p role="status">Submitting decision…</p>}
             </section>)}
           </>}
@@ -515,4 +515,4 @@ function Chat() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<SeaRuntime><Chat /></SeaRuntime>);
+createRoot(document.getElementById("root")).render(<ZalavaRuntime><Chat /></ZalavaRuntime>);

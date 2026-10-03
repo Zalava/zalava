@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Validates UI input before a transport dispatches it to SEA application ports. */
+/** Validates UI input before a transport dispatches it to Zalava application ports. */
 public final class UiCommandDecoder {
-  public static final String VERSION = "sea.ui/v1";
+  public static final String VERSION = "zalava.ui/v1";
   private static final int MAXIMUM_ATTACHMENTS = 5;
 
   private UiCommandDecoder() {}

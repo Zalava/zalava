@@ -38,16 +38,16 @@ class DefaultAgentTest {
   private final InMemoryAgentRunRecorder runRecorder = new InMemoryAgentRunRecorder();
   private final AgentContextAssembler contextAssembler = new DefaultAgentContextAssembler(10);
   private final Object taskTool = new Object();
-  private final Object seaCallback = new Object();
+  private final Object zalavaCallback = new Object();
   private final DefaultAgent agent =
       new DefaultAgent(chatClient, requestTools, runRecorder, contextAssembler);
 
   @Test
   void appliesCompleteRequestToolSetToConversationalPrompt() {
     when(requestTools.resolve("conversation-1", "question"))
-        .thenReturn(selection(List.of(taskTool, seaCallback)));
+        .thenReturn(selection(List.of(taskTool, zalavaCallback)));
     when(chatClient.prompt("question")).thenReturn(request);
-    when(request.tools(taskTool, seaCallback)).thenReturn(request);
+    when(request.tools(taskTool, zalavaCallback)).thenReturn(request);
     when(request.advisors(
             org.mockito.ArgumentMatchers
                 .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
@@ -57,7 +57,7 @@ class DefaultAgentTest {
 
     assertThat(agent.respondTo("conversation-1", "question")).isEqualTo("answer");
 
-    verify(request).tools(taskTool, seaCallback);
+    verify(request).tools(taskTool, zalavaCallback);
     verify(requestTools).resolve("conversation-1", "question");
     verify(request)
         .advisors(
@@ -93,9 +93,9 @@ class DefaultAgentTest {
   void appliesCompleteRequestToolSetToStructuredPrompt() {
     Result expected = new Result("done");
     when(requestTools.resolve("task-1", "structured"))
-        .thenReturn(selection(List.of(taskTool, seaCallback)));
+        .thenReturn(selection(List.of(taskTool, zalavaCallback)));
     when(chatClient.prompt("structured")).thenReturn(request);
-    when(request.tools(taskTool, seaCallback)).thenReturn(request);
+    when(request.tools(taskTool, zalavaCallback)).thenReturn(request);
     when(request.advisors(
             org.mockito.ArgumentMatchers
                 .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
@@ -105,7 +105,7 @@ class DefaultAgentTest {
 
     assertThat(agent.prompt("task-1", "structured", Result.class)).isEqualTo(expected);
 
-    verify(request).tools(taskTool, seaCallback);
+    verify(request).tools(taskTool, zalavaCallback);
     verify(requestTools).resolve("task-1", "structured");
     assertThat(runRecorder.recent())
         .singleElement()
@@ -176,7 +176,7 @@ class DefaultAgentTest {
   }
 
   @Test
-  void addsSelectedSeaToolSummariesToPromptContext() {
+  void addsSelectedZalavaToolSummariesToPromptContext() {
     AgentContextAssembler assembler = new DefaultAgentContextAssembler(300);
     DefaultAgent agentWithToolContext =
         new DefaultAgent(chatClient, requestTools, runRecorder, assembler);
@@ -186,15 +186,16 @@ class DefaultAgentTest {
             "addItem",
             "Add an item to the active shopping list",
             true,
-            List.of("sea_backed", "shopping-list"),
+            List.of("zalava_backed", "shopping-list"),
             java.util.Map.of("list", "active"));
     when(requestTools.resolve("conversation-1", "add apples"))
         .thenReturn(
             new AgentRequestTools.RequestToolSelection(
-                List.of(taskTool, seaCallback), List.of(summary)));
-    when(chatClient.prompt(org.mockito.ArgumentMatchers.contains("Selected SEA tool summaries:")))
+                List.of(taskTool, zalavaCallback), List.of(summary)));
+    when(chatClient.prompt(
+            org.mockito.ArgumentMatchers.contains("Selected Zalava tool summaries:")))
         .thenReturn(request);
-    when(request.tools(taskTool, seaCallback)).thenReturn(request);
+    when(request.tools(taskTool, zalavaCallback)).thenReturn(request);
     when(request.advisors(
             org.mockito.ArgumentMatchers
                 .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
@@ -226,7 +227,7 @@ class DefaultAgentTest {
             "addItem",
             "Add an item to the active shopping list",
             true,
-            List.of("sea_backed", "shopping-list"),
+            List.of("zalava_backed", "shopping-list"),
             java.util.Map.of("list", "active"));
     AgentRequestTools.ToolDefinitionSummary definition =
         new AgentRequestTools.ToolDefinitionSummary(
@@ -234,17 +235,18 @@ class DefaultAgentTest {
             "addItem",
             "Add an item to the active shopping list",
             true,
-            List.of("sea_backed", "shopping-list"),
+            List.of("zalava_backed", "shopping-list"),
             java.util.Map.of("list", "active"),
             java.util.Map.of("type", "object"),
             true);
     when(requestTools.resolve("conversation-1", "add apples"))
         .thenReturn(
             new AgentRequestTools.RequestToolSelection(
-                List.of(taskTool, seaCallback), List.of(summary), List.of(definition)));
-    when(chatClient.prompt(org.mockito.ArgumentMatchers.contains("Selected SEA tool definitions:")))
+                List.of(taskTool, zalavaCallback), List.of(summary), List.of(definition)));
+    when(chatClient.prompt(
+            org.mockito.ArgumentMatchers.contains("Selected Zalava tool definitions:")))
         .thenReturn(request);
-    when(request.tools(taskTool, seaCallback)).thenReturn(request);
+    when(request.tools(taskTool, zalavaCallback)).thenReturn(request);
     when(request.advisors(
             org.mockito.ArgumentMatchers
                 .<java.util.function.Consumer<ChatClient.AdvisorSpec>>any()))
@@ -274,7 +276,7 @@ class DefaultAgentTest {
                 new AgentMemory(
                     "memory-1",
                     AgentMemoryScope.PROJECT,
-                    "SEA uses draft pull requests.",
+                    "Zalava uses draft pull requests.",
                     Map.of("topic", "workflow"),
                     Instant.parse("2026-06-28T10:00:00Z"))));
     DefaultAgent agentWithMemoryContext =
@@ -319,7 +321,7 @@ class DefaultAgentTest {
   }
 
   @Test
-  void springAiToolSearchAdvisorCanUseSeaToolIndexBoundary() {
+  void springAiToolZalavarchAdvisorCanUseZalavaToolIndexBoundary() {
     ToolIndex toolIndex =
         new ToolIndex() {
           @Override

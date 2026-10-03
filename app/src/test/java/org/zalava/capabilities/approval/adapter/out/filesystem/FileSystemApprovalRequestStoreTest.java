@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.zalava.capabilities.approval.SeaToolApprovalRequests.Entry;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests.Entry;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -37,7 +37,7 @@ class FileSystemApprovalRequestStoreTest {
         "actor-1",
         Map.of(),
         Map.of("path", "/workspace"),
-        List.of("sea_backed"),
+        List.of("zalava_backed"),
         false,
         arguments,
         "{}",
@@ -81,10 +81,10 @@ class FileSystemApprovalRequestStoreTest {
 
     assertThatThrownBy(() -> store.save(entry("../../escape", "1")))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid SEA approval request id");
+        .hasMessageContaining("Invalid Zalava approval request id");
     assertThatThrownBy(() -> store.delete("not-a-uuid"))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid SEA approval request id");
+        .hasMessageContaining("Invalid Zalava approval request id");
   }
 
   @Test
@@ -97,6 +97,6 @@ class FileSystemApprovalRequestStoreTest {
 
     assertThatThrownBy(store::load)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Unable to read SEA tool approval request");
+        .hasMessageContaining("Unable to read Zalava tool approval request");
   }
 }

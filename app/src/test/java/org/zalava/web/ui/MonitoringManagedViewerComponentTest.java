@@ -9,14 +9,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.zalava.support.AuthenticatedSeaComponentTest;
+import org.zalava.support.AuthenticatedZalavaComponentTest;
 
 /**
  * Proves the Monitoring screen links the managed metrics viewer only when a viewer is actually
- * configured, mirroring the SEA Control navigation contract.
+ * configured, mirroring the Zalava Control navigation contract.
  */
-@AuthenticatedSeaComponentTest
-@TestPropertySource(properties = "sea.observability.mode=managed")
+@AuthenticatedZalavaComponentTest
+@TestPropertySource(properties = "zalava.observability.mode=managed")
 class MonitoringManagedViewerComponentTest {
 
   @Autowired private MockMvc mockMvc;

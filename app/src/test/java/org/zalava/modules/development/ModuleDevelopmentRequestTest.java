@@ -82,21 +82,21 @@ class ModuleDevelopmentRequestTest {
   }
 
   @Test
-  void seaOwnedApiVersionReplacesTheCallerSuppliedContractValue() {
-    DefaultDevelopmentRequestManagement seaOwnedRequests =
+  void zalavaOwnedApiVersionReplacesTheCallerSuppliedContractValue() {
+    DefaultDevelopmentRequestManagement zalavaOwnedRequests =
         new DefaultDevelopmentRequestManagement(
             new InMemoryStore(),
             Clock.fixed(Instant.parse("2026-07-25T12:00:00Z"), ZoneOffset.UTC),
             "1.0.1");
 
     ModuleDevelopmentRequest created =
-        seaOwnedRequests.create(contract("1.0.0"), "Initial request");
+        zalavaOwnedRequests.create(contract("1.0.0"), "Initial request");
 
-    assertThat(created.currentRevision().contract().targetSeaApiVersion()).isEqualTo("1.0.1");
+    assertThat(created.currentRevision().contract().targetZalavaApiVersion()).isEqualTo("1.0.1");
   }
 
   @Test
-  void rejectsANonConcreteSeaOwnedApiVersion() {
+  void rejectsANonConcreteZalavaOwnedApiVersion() {
     assertThatThrownBy(
             () ->
                 new DefaultDevelopmentRequestManagement(
@@ -130,7 +130,7 @@ class ModuleDevelopmentRequestTest {
         new ModuleDevelopmentContract.OperationalRequirements(
             1_000L, 10_000L, false, List.of(), false, false, "25"),
         new ModuleDevelopmentContract.DeliveryRequirements(
-            "sea-module",
+            "zalava-module",
             "example-*.jar",
             "1",
             false,

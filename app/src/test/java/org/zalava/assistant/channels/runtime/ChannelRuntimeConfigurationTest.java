@@ -18,7 +18,7 @@ import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 
 class ChannelRuntimeConfigurationTest {
   @Test
@@ -30,7 +30,7 @@ class ChannelRuntimeConfigurationTest {
         org.zalava.assistant.conversation.domain.ConversationReference.newReference();
     when(continuation.channelConversation(any(), any())).thenReturn(conversation);
     var chats = mock(ActorChatCommands.class);
-    var modules = mock(SeaRuntime.class);
+    var modules = mock(ZalavaRuntime.class);
     var configurations = mock(FileSystemModuleConfigurationStore.class);
     var module = mock(ZalavaModule.class);
     var channel = mock(ZalavaChannel.class);

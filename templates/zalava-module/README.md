@@ -12,7 +12,7 @@ change, override `moduleApiVersion` and `moduleApiRepositoryUrl` with a local
 Maven repository.
 
 When Zalava creates a development workspace, it is authoritative for the SPI
-coordinate: read `.sea-request/sdk/module-api.coordinates` and pass that
+coordinate: read `.zalava-request/sdk/module-api.coordinates` and pass that
 version as `-PmoduleApiVersion=...`. Do not guess or copy a version from a
 different module; Zalava owns the compatibility contract and must tell each module
 which released module API it targets.
@@ -59,8 +59,8 @@ this requirement into the new repository's contributor/agent instructions.
 
 Services are deterministic module/runtime contracts, not agent tools. Declare
 provided and required services under `services` in `module-metadata.yaml`, and
-return matching `SeaServiceFactory` and `SeaServiceRequirement` values from
-`SeaModule`. A content-extractor module provides
+return matching `ZalavaServiceFactory` and `ZalavaServiceRequirement` values from
+`ZalavaModule`. A content-extractor module provides
 `ContentExtractor.CONTRACT`; its extractor receives only one bounded source
 stream and must return `ContentExtractionResult.forRequest(...)` or
 `ContentExtractionFailure.forRequest(...)`. Do not expose paths, database
@@ -70,7 +70,7 @@ handles, Spring objects, or storage mutation through a service.
 
 A migrated module is complete only when it can be installed through Zalava. Before
 calling a release installable, prove: a matching `LICENSE` and source-license
-metadata; a published `vX.Y.Z` JAR whose `SeaModule` descriptor reports
+metadata; a published `vX.Y.Z` JAR whose `ZalavaModule` descriptor reports
 `X.Y.Z`; a module-owned immutable `releases/index.yaml` entry; a locator entry
 in `cordin/zalava-module-index`; and a Zalava UI proof of selection, approval,
 checksum verification, enablement, host-owned restart, and provider discovery.

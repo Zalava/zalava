@@ -6,7 +6,7 @@ import org.zalava.api.extensions.managed.ManagedServiceDesiredState;
 import org.zalava.api.extensions.managed.ManagedServiceResourceGrant;
 
 /**
- * Durable SEA-owned reconciliation state; intent and engine observation do not overwrite each
+ * Durable Zalava-owned reconciliation state; intent and engine observation do not overwrite each
  * other.
  */
 public record ManagedServiceRecord(

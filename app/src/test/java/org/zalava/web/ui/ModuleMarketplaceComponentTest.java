@@ -58,11 +58,11 @@ class ModuleMarketplaceComponentTest {
 
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.bootstrap-login", () -> "modules-admin");
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.bootstrap-login", () -> "modules-admin");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add(
-        "sea.module-configuration.root",
+        "zalava.module-configuration.root",
         () -> WORKSPACE.resolve("module-configuration").toString());
     org.zalava.support.PostgreSqlTestDatabase.register(registry);
     registry.add("agent.modules.local-artifact-roots", () -> WORKSPACE.toString());

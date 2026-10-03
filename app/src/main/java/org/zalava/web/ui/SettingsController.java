@@ -1,6 +1,6 @@
 package org.zalava.web.ui;
 
-import static org.zalava.SeaConfiguration.AGENT_MD;
+import static org.zalava.ZalavaConfiguration.AGENT_MD;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -29,14 +29,14 @@ import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.identity.channels.application.port.in.ChannelLinkChallenges;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 
 @Controller
 public class SettingsController {
 
   private final Resource workspace;
   private final Environment environment;
-  private final SeaRuntime seaRuntime;
+  private final ZalavaRuntime zalavaRuntime;
   private final FileSystemModuleConfigurationStore moduleConfigurationStore;
   private final TelegramConfiguration telegramConfiguration;
   private final ChannelIdentityLinks channelIdentityLinks;
@@ -46,7 +46,7 @@ public class SettingsController {
   public SettingsController(
       @Value("${agent.workspace}") Resource workspace,
       Environment environment,
-      SeaRuntime seaRuntime,
+      ZalavaRuntime zalavaRuntime,
       FileSystemModuleConfigurationStore moduleConfigurationStore,
       TelegramConfiguration telegramConfiguration,
       ChannelIdentityLinks channelIdentityLinks,
@@ -54,7 +54,7 @@ public class SettingsController {
       AuthenticatedActorResolver actors) {
     this.workspace = workspace;
     this.environment = environment;
-    this.seaRuntime = seaRuntime;
+    this.zalavaRuntime = zalavaRuntime;
     this.moduleConfigurationStore = moduleConfigurationStore;
     this.telegramConfiguration = telegramConfiguration;
     this.channelIdentityLinks = channelIdentityLinks;
@@ -73,7 +73,7 @@ public class SettingsController {
           new TelegramConfigurationUpdate(enabled, tokenReplacement, allowedUsername));
       redirectAttributes.addFlashAttribute(
           "settingsMessage",
-          "Telegram channel configuration saved. Restart SEA to apply the change.");
+          "Telegram channel configuration saved. Restart Zalava to apply the change.");
     } catch (IllegalArgumentException ex) {
       redirectAttributes.addFlashAttribute("settingsError", ex.getMessage());
     } catch (IOException ex) {
@@ -183,7 +183,7 @@ public class SettingsController {
   }
 
   private List<ModuleConfigurationHealth> configurationHealth() {
-    return seaRuntime.modules().stream()
+    return zalavaRuntime.modules().stream()
         .filter(
             module ->
                 module.configuration().jsonSchema().get("properties")

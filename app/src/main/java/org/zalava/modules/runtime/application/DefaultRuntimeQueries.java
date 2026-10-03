@@ -6,7 +6,7 @@ import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaServiceContract;
-import org.zalava.modules.runtime.LoadedSeaProvider;
+import org.zalava.modules.runtime.LoadedZalavaProvider;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 import org.zalava.modules.runtime.application.port.out.RuntimeModuleRegistry;
 
@@ -14,7 +14,7 @@ import org.zalava.modules.runtime.application.port.out.RuntimeModuleRegistry;
 public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseable {
 
   private final List<ZalavaModule> modules;
-  private final List<LoadedSeaProvider> loadedProviders;
+  private final List<LoadedZalavaProvider> loadedProviders;
   private final ModuleServiceRuntime services;
 
   public DefaultRuntimeQueries(
@@ -38,7 +38,7 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
                                       .stream()
                                       .map(
                                           provider ->
-                                              new LoadedSeaProvider(
+                                              new LoadedZalavaProvider(
                                                   module.descriptor(),
                                                   factory.descriptor(),
                                                   provider))))
@@ -55,12 +55,12 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
   }
 
   @Override
-  public List<LoadedSeaProvider> loadedProviders() {
+  public List<LoadedZalavaProvider> loadedProviders() {
     return loadedProviders;
   }
 
   @Override
-  public <T> java.util.Optional<LoadedSeaService<T>> findService(
+  public <T> java.util.Optional<LoadedZalavaService<T>> findService(
       ZalavaServiceContract<T> contract) {
     return services.findService(contract);
   }
@@ -83,7 +83,7 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
     }
     if (!failures.isEmpty()) {
       IllegalStateException failure =
-          new IllegalStateException("Unable to close one or more SEA providers or services");
+          new IllegalStateException("Unable to close one or more Zalava providers or services");
       failures.forEach(failure::addSuppressed);
       throw failure;
     }

@@ -23,9 +23,9 @@ import org.zalava.knowledge.domain.KnowledgeSource;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
-import org.zalava.support.SecureSeaComponentTest;
+import org.zalava.support.SecureZalavaComponentTest;
 
-@SecureSeaComponentTest
+@SecureZalavaComponentTest
 class KnowledgeControllerComponentTest {
   private static final String MEMBER_LOGIN = "knowledge-member";
   private static final String SOURCE_HASH = "f".repeat(64);

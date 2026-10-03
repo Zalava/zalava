@@ -3,11 +3,12 @@ package org.zalava.web.ui.protocol;
 import java.util.List;
 
 /**
- * A user intent accepted by the SEA UI boundary.
+ * A user intent accepted by the Zalava UI boundary.
  *
  * <p>Commands deliberately contain neither an actor nor an authorization decision. The transport
  * resolves the authenticated actor and the application layer remains the authority for ownership,
- * persistence, and policy. Attachment content is bounded transport input; SEA issues the reference.
+ * persistence, and policy. Attachment content is bounded transport input; Zalava issues the
+ * reference.
  */
 public sealed interface UiCommand
     permits UiCommand.SendChat,
@@ -35,7 +36,7 @@ public sealed interface UiCommand
   record ContinueConversation(String protocolVersion, String conversationId, String destination)
       implements UiCommand {}
 
-  /** A bounded user intent; SEA resolves the actor, task, request and policy server-side. */
+  /** A bounded user intent; Zalava resolves the actor, task, request and policy server-side. */
   record DecideApproval(String protocolVersion, String jobId, String requestId, Decision decision)
       implements UiCommand {
     public enum Decision {

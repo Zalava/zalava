@@ -32,7 +32,7 @@ public final class DefaultDevelopmentRequestManagement implements DevelopmentReq
   @Override
   public synchronized ModuleDevelopmentRequest create(
       ModuleDevelopmentContract contract, String reason) {
-    contract = seaOwnedContract(contract);
+    contract = zalavaOwnedContract(contract);
     ModuleDevelopmentContract.requireConcreteModuleVersion(contract);
     return requests.save(
         new ModuleDevelopmentRequest(
@@ -51,7 +51,7 @@ public final class DefaultDevelopmentRequestManagement implements DevelopmentReq
   @Override
   public synchronized ModuleDevelopmentRequest revise(
       DevelopmentRequestId id, ModuleDevelopmentContract contract, String reason) {
-    contract = seaOwnedContract(contract);
+    contract = zalavaOwnedContract(contract);
     ModuleDevelopmentContract.requireConcreteModuleVersion(contract);
     return requests.save(requests.get(id).revise(contract, reason, clock.instant()));
   }
@@ -67,7 +67,7 @@ public final class DefaultDevelopmentRequestManagement implements DevelopmentReq
     return transition(id, DevelopmentRequestStatus.CANCELLED);
   }
 
-  private ModuleDevelopmentContract seaOwnedContract(ModuleDevelopmentContract contract) {
+  private ModuleDevelopmentContract zalavaOwnedContract(ModuleDevelopmentContract contract) {
     if (moduleApiVersion == null) return contract;
     return new ModuleDevelopmentContract(
         contract.module(),

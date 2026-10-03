@@ -96,9 +96,9 @@ class ModuleManagedServiceEngineTest {
     verify(engine).remove(SERVICE_ID);
   }
 
-  private Optional<RuntimeQueries.LoadedSeaService<ManagedServiceEngine>> loaded() {
+  private Optional<RuntimeQueries.LoadedZalavaService<ManagedServiceEngine>> loaded() {
     return Optional.of(
-        new RuntimeQueries.LoadedSeaService<>(
+        new RuntimeQueries.LoadedZalavaService<>(
             new ZalavaServiceDescriptor(
                 ManagedServiceEngine.CONTRACT.serviceId(),
                 "zalava-module-docker",
@@ -127,7 +127,7 @@ class ModuleManagedServiceEngineTest {
         "1",
         ManagedServiceLifecycle.RUNNING,
         Set.of(),
-        Set.of("/var/lib/sea/managed/home"),
+        Set.of("/var/lib/zalava/managed/home"),
         Set.of(8123),
         Set.of(),
         new ManagedServiceLimits(1_000, 2_000, 10),
@@ -139,7 +139,7 @@ class ModuleManagedServiceEngineTest {
     return new ManagedServiceResourceGrant(
         "home-module",
         Set.of(),
-        Set.of("/var/lib/sea/managed/home"),
+        Set.of("/var/lib/zalava/managed/home"),
         Set.of(8123),
         Set.of(),
         new ManagedServiceLimits(1_000, 2_000, 10),

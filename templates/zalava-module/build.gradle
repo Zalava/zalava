@@ -116,8 +116,8 @@ tasks.register('validateModuleMetadata') {
         if (!(artifact instanceof Map) || artifact.version != module.version) {
             throw new GradleException('module-metadata.yaml artifact.version must match the module version')
         }
-        if (!(module.compatibility instanceof Map) || !(module.compatibility.seaRuntime instanceof String)) {
-            throw new GradleException('module-metadata.yaml compatibility.seaRuntime is required')
+        if (!(module.compatibility instanceof Map) || !(module.compatibility.zalavaRuntime instanceof String)) {
+            throw new GradleException('module-metadata.yaml compatibility.zalavaRuntime is required')
         }
         if (!(module.configurationSchema instanceof Map)) {
             throw new GradleException('module-metadata.yaml configurationSchema is required')

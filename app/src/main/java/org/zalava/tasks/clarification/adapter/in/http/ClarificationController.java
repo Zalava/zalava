@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.tasks.clarification.ClarificationText;
-import org.zalava.tasks.clarification.SeaClarifications;
+import org.zalava.tasks.clarification.ZalavaClarifications;
 import org.zalava.tasks.clarification.application.port.in.ClarificationResponses;
 import org.zalava.tasks.clarification.domain.ClarificationRequest;
 
@@ -80,21 +80,21 @@ public final class ClarificationController {
     return ClarificationResponse.from(responses.cancel(actors.actor(authentication), requestId));
   }
 
-  @ExceptionHandler(SeaClarifications.NotFoundException.class)
-  ResponseEntity<Map<String, String>> notFound(SeaClarifications.NotFoundException exception) {
+  @ExceptionHandler(ZalavaClarifications.NotFoundException.class)
+  ResponseEntity<Map<String, String>> notFound(ZalavaClarifications.NotFoundException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(Map.of("error", exception.getMessage()));
   }
 
-  @ExceptionHandler(SeaClarifications.AlreadyAnsweredException.class)
+  @ExceptionHandler(ZalavaClarifications.AlreadyAnsweredException.class)
   ResponseEntity<Map<String, String>> alreadyAnswered(
-      SeaClarifications.AlreadyAnsweredException exception) {
+      ZalavaClarifications.AlreadyAnsweredException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", exception.getMessage()));
   }
 
-  @ExceptionHandler(SeaClarifications.StaleClarificationException.class)
+  @ExceptionHandler(ZalavaClarifications.StaleClarificationException.class)
   ResponseEntity<Map<String, String>> stale(
-      SeaClarifications.StaleClarificationException exception) {
+      ZalavaClarifications.StaleClarificationException exception) {
     HttpStatus status =
         exception.status() == ClarificationRequest.Status.EXPIRED
             ? HttpStatus.GONE

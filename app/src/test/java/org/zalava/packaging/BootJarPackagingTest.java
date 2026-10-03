@@ -13,10 +13,10 @@ class BootJarPackagingTest {
 
   @Test
   void bootJarContainsExecutableApplicationMetadata() throws IOException {
-    Path jar = Path.of(System.getProperty("sea.test.boot-jar"));
-    String version = System.getProperty("sea.test.version");
+    Path jar = Path.of(System.getProperty("zalava.test.boot-jar"));
+    String version = System.getProperty("zalava.test.version");
 
-    assertThat(jar).exists().hasFileName("sea-" + version + ".jar");
+    assertThat(jar).exists().hasFileName("zalava-" + version + ".jar");
     assertThat(Files.size(jar)).isPositive();
 
     try (JarFile bootJar = new JarFile(jar.toFile())) {
@@ -24,9 +24,21 @@ class BootJarPackagingTest {
 
       assertThat(attributes.getValue("Main-Class"))
           .isEqualTo("org.springframework.boot.loader.launch.JarLauncher");
-      assertThat(attributes.getValue("Start-Class")).isEqualTo("org.zalava.SeaApplication");
-      assertThat(bootJar.getEntry("BOOT-INF/classes/org/zalava/SeaApplication.class")).isNotNull();
+      assertThat(attributes.getValue("Start-Class")).isEqualTo("org.zalava.ZalavaApplication");
+      assertThat(bootJar.getEntry("BOOT-INF/classes/org/zalava/ZalavaApplication.class"))
+          .isNotNull();
       assertThat(bootJar.getEntry("BOOT-INF/lib/module-api-" + version + ".jar")).isNotNull();
+      var ownedEntries =
+          bootJar.stream()
+              .map(java.util.jar.JarEntry::getName)
+              .filter(name -> name.startsWith("BOOT-INF/classes/"))
+              .toList();
+      assertThat(ownedEntries).noneMatch(name -> name.matches(".*(?:Sea[A-Z]|/sea/|/sea[-_.]).*"));
+      assertThat(ownedEntries)
+          .contains(
+              "BOOT-INF/classes/static/zalava-ui.css",
+              "BOOT-INF/classes/static/zalava-chat/assets/zalava-chat.js",
+              "BOOT-INF/classes/development-workspace/examples/minimal-module/src/java/org/zalava/fixture/ExternalFixtureZalavaProvider.java");
     }
   }
 }

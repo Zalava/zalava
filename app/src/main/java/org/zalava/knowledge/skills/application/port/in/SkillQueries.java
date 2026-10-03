@@ -21,7 +21,7 @@ public interface SkillQueries {
   /**
    * Resolves the highest-version descriptor for a name without applying actor visibility.
    *
-   * <p>This is a SEA-owned authorization input for activation policy, which needs to distinguish
+   * <p>This is a Zalava-owned authorization input for activation policy, which needs to distinguish
    * "hidden from this actor" from "unknown". It must never be exposed directly to an actor.
    */
   Optional<SkillDescriptor> describe(String name);

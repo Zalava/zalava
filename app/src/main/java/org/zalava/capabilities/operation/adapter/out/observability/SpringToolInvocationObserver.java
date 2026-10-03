@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
-import org.zalava.modules.runtime.SeaToolInvocationAuditEvent;
+import org.zalava.modules.runtime.ZalavaToolInvocationAuditEvent;
 import org.zalava.platform.observability.application.port.out.OperationalMetrics;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -32,7 +32,7 @@ public final class SpringToolInvocationObserver implements ToolInvocationObserve
   public void observe(ToolInvocationObservation observation) {
     try {
       eventPublisher.publishEvent(
-          new SeaToolInvocationAuditEvent(
+          new ZalavaToolInvocationAuditEvent(
               observation.providerId(),
               observation.toolName(),
               observation.actorId(),

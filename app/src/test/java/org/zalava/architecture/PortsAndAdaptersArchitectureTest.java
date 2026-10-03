@@ -84,7 +84,7 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule runtime_and_agent_collaboration_must_use_ports =
       noClasses()
           .that()
-          .haveFullyQualifiedName("org.zalava.modules.runtime.ManagedSeaRuntime")
+          .haveFullyQualifiedName("org.zalava.modules.runtime.ManagedZalavaRuntime")
           .or()
           .haveFullyQualifiedName("org.zalava.assistant.agent.AgentRequestTools")
           .should()

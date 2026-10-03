@@ -80,8 +80,8 @@ public class SourceModuleIndexLoader {
         build(map(value.get("build"), path + ".build"), path + ".build"),
         new SourceModuleIndex.Compatibility(
             text(
-                map(value.get("compatibility"), path + ".compatibility").get("seaRuntime"),
-                path + ".compatibility.seaRuntime")),
+                map(value.get("compatibility"), path + ".compatibility").get("zalavaRuntime"),
+                path + ".compatibility.zalavaRuntime")),
         map(value.get("configurationSchema"), path + ".configurationSchema"),
         factories(value.get("factories"), path + ".factories"),
         operations(value.get("operations"), path + ".operations"),

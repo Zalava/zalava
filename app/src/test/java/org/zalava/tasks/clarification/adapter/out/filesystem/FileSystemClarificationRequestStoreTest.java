@@ -57,10 +57,10 @@ class FileSystemClarificationRequestStoreTest {
 
     assertThatThrownBy(() -> store.save(request("../../escape", "2026-09-16T10:00:00Z")))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid SEA clarification request id");
+        .hasMessageContaining("Invalid Zalava clarification request id");
     assertThatThrownBy(() -> store.delete("not-a-uuid"))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid SEA clarification request id");
+        .hasMessageContaining("Invalid Zalava clarification request id");
   }
 
   @Test
@@ -73,7 +73,7 @@ class FileSystemClarificationRequestStoreTest {
 
     assertThatThrownBy(store::load)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Unable to read SEA clarification request");
+        .hasMessageContaining("Unable to read Zalava clarification request");
   }
 
   static ClarificationRequest request(String requestId, String createdAt) {

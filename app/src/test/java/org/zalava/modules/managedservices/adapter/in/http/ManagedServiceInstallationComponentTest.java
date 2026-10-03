@@ -94,14 +94,14 @@ class ManagedServiceInstallationComponentTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     PostgreSqlTestDatabase.register(registry);
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
-    registry.add("sea.accounts.bootstrap-login", () -> "managed-install-admin");
+    registry.add("zalava.accounts.bootstrap-login", () -> "managed-install-admin");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
   }
@@ -111,14 +111,14 @@ class ManagedServiceInstallationComponentTest {
     String requestId = plan("database", "app");
 
     mockMvc
-        .perform(get("/api/sea/managed-service-installations/" + requestId))
+        .perform(get("/api/zalava/managed-service-installations/" + requestId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("pending"))
         .andExpect(jsonPath("$.aggregate.totalProcessLimit").value(2))
         .andExpect(jsonPath("$.aggregate.dataPaths.length()").value(2));
 
     mockMvc
-        .perform(post("/api/sea/managed-service-installations/" + requestId + "/allow"))
+        .perform(post("/api/zalava/managed-service-installations/" + requestId + "/allow"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("succeeded"));
 
@@ -139,12 +139,12 @@ class ManagedServiceInstallationComponentTest {
     String requestId = plan("database");
 
     mockMvc
-        .perform(post("/api/sea/managed-service-installations/" + requestId + "/deny"))
+        .perform(post("/api/zalava/managed-service-installations/" + requestId + "/deny"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("denied"));
 
     mockMvc
-        .perform(post("/api/sea/managed-service-installations/" + requestId + "/allow"))
+        .perform(post("/api/zalava/managed-service-installations/" + requestId + "/allow"))
         .andExpect(status().isConflict());
 
     assertThat(states.find("database")).isEmpty();
@@ -155,14 +155,14 @@ class ManagedServiceInstallationComponentTest {
   void cycleAndDuplicatePlanningAreRejectedAsBadRequest() throws Exception {
     mockMvc
         .perform(
-            post("/api/sea/managed-service-installations")
+            post("/api/zalava/managed-service-installations")
                 .contentType("application/json")
                 .content(cycleJson()))
         .andExpect(status().isBadRequest());
 
     mockMvc
         .perform(
-            post("/api/sea/managed-service-installations")
+            post("/api/zalava/managed-service-installations")
                 .contentType("application/json")
                 .content(duplicateJson()))
         .andExpect(status().isBadRequest());
@@ -174,15 +174,15 @@ class ManagedServiceInstallationComponentTest {
   void conflictAndNotFoundOutcomesAreExposed() throws Exception {
     String requestId = plan("database");
     mockMvc
-        .perform(post("/api/sea/managed-service-installations/" + requestId + "/allow"))
+        .perform(post("/api/zalava/managed-service-installations/" + requestId + "/allow"))
         .andExpect(status().isOk());
 
     mockMvc
-        .perform(post("/api/sea/managed-service-installations/" + requestId + "/allow"))
+        .perform(post("/api/zalava/managed-service-installations/" + requestId + "/allow"))
         .andExpect(status().isOk());
 
     mockMvc
-        .perform(get("/api/sea/managed-service-installations/missing-request"))
+        .perform(get("/api/zalava/managed-service-installations/missing-request"))
         .andExpect(status().isNotFound());
   }
 
@@ -197,7 +197,7 @@ class ManagedServiceInstallationComponentTest {
     String response =
         mockMvc
             .perform(
-                post("/api/sea/managed-service-installations")
+                post("/api/zalava/managed-service-installations")
                     .contentType("application/json")
                     .content("{\"requests\":[" + services + "]}"))
             .andExpect(status().isCreated())
@@ -222,10 +222,10 @@ class ManagedServiceInstallationComponentTest {
         + serviceId
         + "@sha256:"
         + "a".repeat(64)
-        + "\",\"revision\":\"1\",\"lifecycle\":\"RUNNING\",\"secretReferences\":[],\"dataPaths\":[\"/var/lib/sea/managed/"
+        + "\",\"revision\":\"1\",\"lifecycle\":\"RUNNING\",\"secretReferences\":[],\"dataPaths\":[\"/var/lib/zalava/managed/"
         + serviceId
         + "\"],\"ports\":[],\"devices\":[],\"limits\":{\"cpuMillis\":1000,\"memoryBytes\":10,\"processLimit\":1},\"readinessDeadline\":\"PT30S\",\"restartLimit\":3},"
-        + "\"grant\":{\"moduleId\":\"home-module\",\"secretReferences\":[],\"dataPaths\":[\"/var/lib/sea/managed/"
+        + "\"grant\":{\"moduleId\":\"home-module\",\"secretReferences\":[],\"dataPaths\":[\"/var/lib/zalava/managed/"
         + serviceId
         + "\"],\"ports\":[],\"devices\":[],\"limits\":{\"cpuMillis\":1000,\"memoryBytes\":10,\"processLimit\":1},\"maximumReadinessDeadline\":\"PT30S\",\"maximumRestartLimit\":3}}";
   }
@@ -248,7 +248,7 @@ class ManagedServiceInstallationComponentTest {
 
   private static Path createWorkspace() {
     try {
-      return Files.createTempDirectory("sea-managed-install-test");
+      return Files.createTempDirectory("zalava-managed-install-test");
     } catch (java.io.IOException ex) {
       throw new IllegalStateException(ex);
     }

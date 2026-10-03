@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Modules</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="/sea-ui.css">
+    <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
 @template.ui.navigation(items = navigation.items(), activePage = "modules")
@@ -35,16 +35,16 @@
       <article class="message is-danger" role="alert"><div class="message-body">${marketplaceError}</div></article>
     @endif
 
-    <section class="box module-list mb-5" aria-labelledby="sea-restart-heading">
-      <h2 id="sea-restart-heading" class="title is-5 mb-1">Load installed modules</h2>
-      <p class="has-text-grey is-size-7 mb-3" data-sea-restart-status="${model.restart().phase()}">${model.restart().message()}</p>
+    <section class="box module-list mb-5" aria-labelledby="zalava-restart-heading">
+      <h2 id="zalava-restart-heading" class="title is-5 mb-1">Load installed modules</h2>
+      <p class="has-text-grey is-size-7 mb-3" data-zalava-restart-status="${model.restart().phase()}">${model.restart().message()}</p>
       @if(model.restart().available())
         <form method="post" action="/modules/restart">
           <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
           @if(model.restart().requested())
-            <button class="button is-warning" type="submit" data-action="restart-sea" disabled>Restart SEA to load installed modules</button>
+            <button class="button is-warning" type="submit" data-action="restart-zalava" disabled>Restart Zalava to load installed modules</button>
           @else
-            <button class="button is-warning" type="submit" data-action="restart-sea">Restart SEA to load installed modules</button>
+            <button class="button is-warning" type="submit" data-action="restart-zalava">Restart Zalava to load installed modules</button>
           @endif
         </form>
       @else

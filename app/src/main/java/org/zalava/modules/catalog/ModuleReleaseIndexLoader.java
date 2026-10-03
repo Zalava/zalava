@@ -70,7 +70,7 @@ public final class ModuleReleaseIndexLoader {
             httpsUri(source.get("repository"), path + ".source.repository"),
             text(source.get("license"), path + ".source.license")),
         new ModuleReleaseIndex.Compatibility(
-            text(compatibility.get("seaRuntime"), path + ".compatibility.seaRuntime")),
+            text(compatibility.get("zalavaRuntime"), path + ".compatibility.zalavaRuntime")),
         new ModuleReleaseIndex.Security(
             strings(security.get("permissions"), path + ".security.permissions")));
   }

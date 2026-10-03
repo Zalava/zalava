@@ -30,7 +30,7 @@ class MetricsControlControllerTest {
         (ModelAndView)
             new MetricsControlController(new ObservabilitySettings("disabled", "")).metrics();
 
-    assertThat(view.getViewName()).isEqualTo("sea/control/metrics");
+    assertThat(view.getViewName()).isEqualTo("zalava/control/metrics");
     assertThat(view.getModel()).containsEntry("metricsEnabled", false);
   }
 
@@ -42,7 +42,7 @@ class MetricsControlControllerTest {
                     new ObservabilitySettings("external", "http://metrics.example"))
                 .metrics();
 
-    assertThat(view.getViewName()).isEqualTo("sea/control/metrics");
+    assertThat(view.getViewName()).isEqualTo("zalava/control/metrics");
   }
 
   @Test
@@ -53,7 +53,7 @@ class MetricsControlControllerTest {
                     new ObservabilitySettings("external", "https://metrics example"))
                 .metrics();
 
-    assertThat(view.getViewName()).isEqualTo("sea/control/metrics");
+    assertThat(view.getViewName()).isEqualTo("zalava/control/metrics");
   }
 
   private static ResponseEntity<?> redirect(String mode, String externalUrl) {

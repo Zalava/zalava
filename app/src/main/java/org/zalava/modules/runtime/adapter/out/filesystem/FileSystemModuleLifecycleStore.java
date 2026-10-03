@@ -70,7 +70,7 @@ public final class FileSystemModuleLifecycleStore
       Files.createDirectories(file.getParent());
       Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
       try (OutputStream output = Files.newOutputStream(temporary)) {
-        values.store(output, "SEA module lifecycle");
+        values.store(output, "Zalava module lifecycle");
       }
       Files.move(
           temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);

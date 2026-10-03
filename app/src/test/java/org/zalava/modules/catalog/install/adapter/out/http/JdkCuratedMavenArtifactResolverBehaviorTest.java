@@ -21,7 +21,7 @@ import org.zalava.modules.catalog.install.application.port.out.CuratedMavenArtif
 class JdkCuratedMavenArtifactResolverBehaviorTest {
 
   private static final SourceModuleIndex.Artifact ARTIFACT =
-      new SourceModuleIndex.Artifact("ai.sea.modules", "zalava-module-fixture", "1.0.0");
+      new SourceModuleIndex.Artifact("ai.zalava.modules", "zalava-module-fixture", "1.0.0");
 
   @TempDir Path workspace;
 
@@ -126,7 +126,7 @@ class JdkCuratedMavenArtifactResolverBehaviorTest {
                     new Request(
                         "curated",
                         URI.create("https://repo.example"),
-                        new SourceModuleIndex.Artifact("ai..sea", "fixture", "1.0.0"))))
+                        new SourceModuleIndex.Artifact("ai..zalava", "fixture", "1.0.0"))))
         .isInstanceOf(SourceModuleInstallationException.class);
     assertThatThrownBy(
             () ->
@@ -134,7 +134,7 @@ class JdkCuratedMavenArtifactResolverBehaviorTest {
                     new Request(
                         "curated",
                         URI.create("https://repo.example"),
-                        new SourceModuleIndex.Artifact("ai.sea", "bad id", "1.0.0"))))
+                        new SourceModuleIndex.Artifact("ai.zalava", "bad id", "1.0.0"))))
         .isInstanceOf(SourceModuleInstallationException.class);
     assertThatThrownBy(
             () ->
@@ -142,7 +142,7 @@ class JdkCuratedMavenArtifactResolverBehaviorTest {
                     new Request(
                         "curated",
                         URI.create("https://repo.example"),
-                        new SourceModuleIndex.Artifact("ai.sea", "fixture", ".."))))
+                        new SourceModuleIndex.Artifact("ai.zalava", "fixture", ".."))))
         .isInstanceOf(SourceModuleInstallationException.class);
   }
 

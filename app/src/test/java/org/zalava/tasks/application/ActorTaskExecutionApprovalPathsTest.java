@@ -103,7 +103,7 @@ class ActorTaskExecutionApprovalPathsTest {
     execution.execute(token());
 
     assertThat(store.get(owner, reference).getAgentFeedback())
-        .contains("Waiting for approval of a side-effecting SEA tool call.");
+        .contains("Waiting for approval of a side-effecting Zalava tool call.");
   }
 
   @Test

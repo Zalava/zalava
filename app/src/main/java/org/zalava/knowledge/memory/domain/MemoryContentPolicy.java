@@ -4,7 +4,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * SEA-owned content-safety policy for durable memory promotion.
+ * Zalava-owned content-safety policy for durable memory promotion.
  *
  * <p>It rejects transient execution traces and obviously sensitive content before anything becomes
  * reviewable durable memory. It is a deterministic boundary: a proposing model cannot bypass it,

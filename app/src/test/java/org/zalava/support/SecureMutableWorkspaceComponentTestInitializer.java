@@ -11,7 +11,7 @@ final class SecureMutableWorkspaceComponentTestInitializer
 
   @Override
   public void initialize(ConfigurableApplicationContext context) {
-    SeaComponentTestInitializer.initialize(context, true);
+    ZalavaComponentTestInitializer.initialize(context, true);
     Path workspace =
         Path.of(URI.create(context.getEnvironment().getRequiredProperty("agent.workspace")));
     TestPropertyValues.of(

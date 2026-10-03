@@ -9,7 +9,7 @@ mavenRepositories:
 entries:
   - moduleId: zalava-module-shopping-list
     path: zalava-module-shopping-list.yaml
-    sha256: 12a285d3fd7ea2e446ba5398d1bbf98597c74814347217eeb92aff5910a06210
+    sha256: ebce1897383c79d8bc38be78c20a23bda1e7bfc269e993d69ae412ceeb476798
   - moduleId: zalava-module-time
     path: zalava-module-time.yaml
-    sha256: c1b6523987aa570a03ca1c8be8391fcab72b6fcdabde308eaa7da97ed3587147
+    sha256: 7d8c5d23af820101ed8a6859d5ee7fd636cd460e1cf67d35a2f7fc5152721bfe

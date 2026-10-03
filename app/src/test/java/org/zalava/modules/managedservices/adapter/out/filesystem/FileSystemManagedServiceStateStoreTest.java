@@ -44,7 +44,7 @@ class FileSystemManagedServiceStateStoreTest {
             "1",
             ManagedServiceLifecycle.RUNNING,
             Set.of(),
-            Set.of("/var/lib/sea/managed/home"),
+            Set.of("/var/lib/zalava/managed/home"),
             Set.of(),
             Set.of(),
             new ManagedServiceLimits(1000, 10, 1),
@@ -54,7 +54,7 @@ class FileSystemManagedServiceStateStoreTest {
         new ManagedServiceResourceGrant(
             "home-module",
             Set.of(),
-            Set.of("/var/lib/sea/managed/home"),
+            Set.of("/var/lib/zalava/managed/home"),
             Set.of(),
             Set.of(),
             new ManagedServiceLimits(1000, 10, 1),

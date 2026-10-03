@@ -23,7 +23,7 @@ public final class JacksonToolArgumentDecoder implements ToolArgumentDecoder {
       if (!(decoded instanceof Map<?, ?>)) {
         throw new ProviderToolOperationException(
             ProviderToolOperationException.Code.VALIDATION,
-            "SEA provider tool arguments must be a JSON object");
+            "Zalava provider tool arguments must be a JSON object");
       }
       return org.zalava.api.JsonArguments.immutable(
           JSON.convertValue(decoded, new TypeReference<Map<String, Object>>() {}));
@@ -32,7 +32,7 @@ public final class JacksonToolArgumentDecoder implements ToolArgumentDecoder {
     } catch (Exception ex) {
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.VALIDATION,
-          "SEA provider tool arguments must be valid JSON",
+          "Zalava provider tool arguments must be valid JSON",
           ex);
     }
   }

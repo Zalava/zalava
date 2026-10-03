@@ -3,7 +3,7 @@ package org.zalava.assistant.agent;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-/** Carries the SEA-owned channel identity while a conversational model invokes tools. */
+/** Carries the Zalava-owned channel identity while a conversational model invokes tools. */
 public final class ConversationChannelContext {
   private static final ThreadLocal<String> CURRENT = new ThreadLocal<>();
 

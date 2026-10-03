@@ -55,26 +55,26 @@ import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
-import org.zalava.modules.runtime.SeaRuntime;
+import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.support.PostgreSqlTestDatabase;
-import org.zalava.support.RestartableSeaApplicationContext;
+import org.zalava.support.RestartableZalavaApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Opt-in real {@code sea-ocr-worker} acceptance lane.
+ * Opt-in real {@code zalava-ocr-worker} acceptance lane.
  *
- * <p>Installs the indexed {@code zalava-module-tika} bundle into a disposable SEA workspace, points
- * its service factory at a real {@code sea-ocr-worker} container on a loopback port, restarts, and
- * proves real worker-backed scanned extraction through SEA's owned source lifecycle, including
- * citation identity, sharing, revocation and confirmed deletion. It then drives real worker
- * unavailable/empty/limit outcomes plus a deterministic transport timeout, asserting that every
- * failure records a typed category, never promotes its candidate and retains the previous active
- * derivation. Finally it proves worker-disable fallback to the ordinary Tika path without replacing
- * prior evidence.
+ * <p>Installs the indexed {@code zalava-module-tika} bundle into a disposable Zalava workspace,
+ * points its service factory at a real {@code zalava-ocr-worker} container on a loopback port,
+ * restarts, and proves real worker-backed scanned extraction through Zalava's owned source
+ * lifecycle, including citation identity, sharing, revocation and confirmed deletion. It then
+ * drives real worker unavailable/empty/limit outcomes plus a deterministic transport timeout,
+ * asserting that every failure records a typed category, never promotes its candidate and retains
+ * the previous active derivation. Finally it proves worker-disable fallback to the ordinary Tika
+ * path without replacing prior evidence.
  *
- * <p>This lane never touches the live SEA container, never rebuilds the released worker or module,
- * and never adds an OCR engine to SEA. It is excluded from {@code :app:check}.
+ * <p>This lane never touches the live Zalava container, never rebuilds the released worker or
+ * module, and never adds an OCR engine to Zalava. It is excluded from {@code :app:check}.
  */
 @Tag("ocr-worker")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -107,20 +107,20 @@ class OcrWorkerAcceptanceTest {
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    registry.add("sea.module-configuration.root", () -> WORKSPACE.toString());
-    registry.add("sea.accounts.security-enabled", () -> "false");
-    registry.add("sea.accounts.bootstrap-login", () -> BOOTSTRAP_LOGIN);
-    registry.add("sea.accounts.bootstrap-password", () -> "OcrAcceptancePassword-123");
+    registry.add("zalava.module-configuration.root", () -> WORKSPACE.toString());
+    registry.add("zalava.accounts.security-enabled", () -> "false");
+    registry.add("zalava.accounts.bootstrap-login", () -> BOOTSTRAP_LOGIN);
+    registry.add("zalava.accounts.bootstrap-password", () -> "OcrAcceptancePassword-123");
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
-    registry.add("sea.catalog.github.token", () -> credential("github-token"));
+    registry.add("zalava.catalog.github.token", () -> credential("github-token"));
     registry.add(
-        "sea.catalog.github-packages.username", () -> credential("github-packages-username"));
-    registry.add("sea.catalog.github-packages.token", () -> credential("github-packages-token"));
+        "zalava.catalog.github-packages.username", () -> credential("github-packages-username"));
+    registry.add("zalava.catalog.github-packages.token", () -> credential("github-packages-token"));
     PostgreSqlTestDatabase.register(registry);
   }
 
@@ -149,7 +149,7 @@ class OcrWorkerAcceptanceTest {
   void installsAndEnablesIndexedTikaAndConfiguresTheRealWorker() throws Exception {
     refreshAndSelect();
     String requestId = prepare();
-    assertThat(post("/sea/control/module-release-installations/" + requestId + "/allow"))
+    assertThat(post("/zalava/control/module-release-installations/" + requestId + "/allow"))
         .contains("Module enabled");
     assertThat(latestRequestStatus()).isEqualTo("SUCCEEDED");
 
@@ -169,7 +169,7 @@ class OcrWorkerAcceptanceTest {
   @Test
   @Order(2)
   void restartsLoadsTheExtractorAndProvesRealScannedExtractionAndLifecycle() throws Exception {
-    restart(Map.of("sea.knowledge.maximum-text-characters", "1000000"));
+    restart(Map.of("zalava.knowledge.maximum-text-characters", "1000000"));
     assertThat(extractorLoaded()).isTrue();
 
     KnowledgeSource source =
@@ -182,7 +182,7 @@ class OcrWorkerAcceptanceTest {
     assertThat(active.processorId()).isEqualTo(MODULE_ID);
     assertThat(extractionText(source.id(), 1))
         .as("the real worker must OCR the scanned raster that digital Tika cannot read")
-        .contains("SEA OCR ACCEPTANCE")
+        .contains("Zalava OCR ACCEPTANCE")
         .contains("HOUSEHOLD INVOICE 89 EUROS");
     assertThat(lifecycle().requireOwned(owner(), source.id()).processingState())
         .isEqualTo(SourceProcessingState.READY);
@@ -199,7 +199,7 @@ class OcrWorkerAcceptanceTest {
   void deterministicTransportTimeoutRetainsThePriorDerivation() throws Exception {
     try (DelayedWorker delayed = new DelayedWorker()) {
       configurations.saveCandidate(snapshot(workerConfiguration(delayed.url(), "eng")), Map.of());
-      restart(Map.of("sea.knowledge.maximum-text-characters", "1000000"));
+      restart(Map.of("zalava.knowledge.maximum-text-characters", "1000000"));
 
       extract(retentionSource);
 
@@ -216,7 +216,7 @@ class OcrWorkerAcceptanceTest {
   @Order(4)
   void realWorkerOutputLimitRetainsThePriorDerivation() throws Exception {
     configurations.saveCandidate(snapshot(workerConfiguration(workerUrl, "eng")), Map.of());
-    restart(Map.of("sea.knowledge.maximum-text-characters", "10"));
+    restart(Map.of("zalava.knowledge.maximum-text-characters", "10"));
 
     extract(retentionSource);
 
@@ -248,7 +248,7 @@ class OcrWorkerAcceptanceTest {
     if (worker != null) worker.stop();
 
     configurations.saveCandidate(snapshot(workerConfiguration(unavailableUrl, "eng")), Map.of());
-    restart(Map.of("sea.knowledge.maximum-text-characters", "1000000"));
+    restart(Map.of("zalava.knowledge.maximum-text-characters", "1000000"));
 
     extract(retentionSource);
 
@@ -270,7 +270,7 @@ class OcrWorkerAcceptanceTest {
             Map.of("services", Map.of("ocrLanguages", "eng")),
             Map.of()),
         Map.of());
-    restart(Map.of("sea.knowledge.maximum-text-characters", "1000000"));
+    restart(Map.of("zalava.knowledge.maximum-text-characters", "1000000"));
     assertThat(extractorLoaded()).isTrue();
 
     extract(retentionSource);
@@ -313,7 +313,7 @@ class OcrWorkerAcceptanceTest {
               assertThat(active.version()).isEqualTo(version);
               assertThat(active.state()).isEqualTo(DerivationState.ACTIVE);
             });
-    assertThat(extractionText(sourceId, version)).contains("SEA OCR ACCEPTANCE");
+    assertThat(extractionText(sourceId, version)).contains("Zalava OCR ACCEPTANCE");
   }
 
   private KnowledgeSource register(String name, String contentType, byte[] bytes) {
@@ -389,8 +389,8 @@ class OcrWorkerAcceptanceTest {
     return restarted.getBean(KnowledgeEvidenceQueries.class);
   }
 
-  private SeaRuntime runtime() {
-    return restarted.getBean(SeaRuntime.class);
+  private ZalavaRuntime runtime() {
+    return restarted.getBean(ZalavaRuntime.class);
   }
 
   private ModuleConfigurationSnapshot snapshot(Map<String, Object> serviceConfiguration) {
@@ -409,9 +409,9 @@ class OcrWorkerAcceptanceTest {
   private void restart(Map<String, String> extra) {
     if (restarted != null) restarted.close();
     Map<String, String> properties = new LinkedHashMap<>();
-    properties.put("sea.module-configuration.root", WORKSPACE.toString());
+    properties.put("zalava.module-configuration.root", WORKSPACE.toString());
     properties.putAll(extra);
-    restarted = RestartableSeaApplicationContext.start(WORKSPACE, properties);
+    restarted = RestartableZalavaApplicationContext.start(WORKSPACE, properties);
   }
 
   private static byte[] fixture(String name) {
@@ -424,15 +424,16 @@ class OcrWorkerAcceptanceTest {
   }
 
   private static String workerImage() {
-    return System.getProperty("sea.ocr-worker.image", "sea-ocr-worker:ci");
+    return System.getProperty("zalava.ocr-worker.image", "zalava-ocr-worker:ci");
   }
 
   private static String credential(String suffix) {
-    String property = System.getProperty("sea.indexed-install." + suffix);
+    String property = System.getProperty("zalava.indexed-install." + suffix);
     if (property == null || property.isBlank()) {
       property =
           System.getenv(
-              "SEA_INDEXED_INSTALL_" + suffix.replace('-', '_').toUpperCase(java.util.Locale.ROOT));
+              "ZALAVA_INDEXED_INSTALL_"
+                  + suffix.replace('-', '_').toUpperCase(java.util.Locale.ROOT));
     }
     return property == null ? "" : property.strip();
   }
@@ -440,19 +441,19 @@ class OcrWorkerAcceptanceTest {
   private static void requireCredentials() {
     assertThat(credential("github-token")).as("ZALAVA_INDEXED_INSTALL_PUBLISH_TOKEN").isNotBlank();
     assertThat(credential("github-packages-username"))
-        .as("SEA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME")
+        .as("ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_USERNAME")
         .isNotBlank();
     assertThat(credential("github-packages-token"))
-        .as("SEA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN")
+        .as("ZALAVA_INDEXED_INSTALL_GITHUB_PACKAGES_TOKEN")
         .isNotBlank();
   }
 
   private void refreshAndSelect() throws Exception {
-    assertThat(post("/sea/control/module-release-installations/catalog/refresh"))
+    assertThat(post("/zalava/control/module-release-installations/catalog/refresh"))
         .contains("Refresh catalog");
     assertThat(
             post(
-                "/sea/control/module-release-installations/catalog/select",
+                "/zalava/control/module-release-installations/catalog/select",
                 Map.of("moduleId", MODULE_ID)))
         .contains(MODULE_ID);
   }
@@ -460,7 +461,7 @@ class OcrWorkerAcceptanceTest {
   private String prepare() throws Exception {
     String response =
         post(
-            "/sea/control/module-release-installations",
+            "/zalava/control/module-release-installations",
             Map.of("moduleId", MODULE_ID, "version", VERSION));
     assertThat(response).contains(MODULE_ID);
     return latestRequestId();
@@ -523,7 +524,7 @@ class OcrWorkerAcceptanceTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-ocr-acceptance-");
+      Path workspace = Files.createTempDirectory("zalava-ocr-acceptance-");
       Files.writeString(workspace.resolve("AGENT.md"), "OCR worker acceptance workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable real-worker workspace.");
       return workspace;

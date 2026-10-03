@@ -43,7 +43,7 @@ import org.zalava.knowledge.domain.KnowledgeEvidence;
 import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.memory.application.port.in.MemoryQueries;
-import org.zalava.support.RestartableSeaApplicationContext;
+import org.zalava.support.RestartableZalavaApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -51,7 +51,7 @@ import tools.jackson.databind.ObjectMapper;
  * Full-context, scripted-model acceptance for the already-implemented knowledge enrichment.
  *
  * <p>One synthetic household corpus (reusing the KNOW-SEM-01 retrieval fixture) is served through a
- * real PostgreSQL-backed SEA application context. Every outcome is compared between the explicit
+ * real PostgreSQL-backed Zalava application context. Every outcome is compared between the explicit
  * {@link KnowledgeAgentTools} path and the automatic {@link KnowledgeContextEnrichment} path,
  * driven through the real {@link DefaultAgentContextAssembler} with a scripted {@link AgentModel}
  * so the prompt and persisted run evidence are deterministic. It is excluded from {@code
@@ -67,7 +67,7 @@ class KnowledgeContextEnrichmentAcceptanceTest {
   private static final Map<String, String> DATABASE_OVERRIDE =
       Map.of(
           "spring.datasource.url",
-          "jdbc:tc:postgresql:18.4-alpine:///sea_ctx_accept_"
+          "jdbc:tc:postgresql:18.4-alpine:///zalava_ctx_accept_"
               + UUID.randomUUID().toString().replace("-", "")
               + "?TC_DAEMON=true",
           "agent.model-boundary.secret-values",
@@ -84,9 +84,9 @@ class KnowledgeContextEnrichmentAcceptanceTest {
   private final Map<String, DocumentSpec> documentByLabel = new LinkedHashMap<>();
 
   @BeforeAll
-  void startSeaAndSeedCorpus() throws Exception {
+  void startZalavaAndSeedCorpus() throws Exception {
     Path workspace = createWorkspace();
-    context = RestartableSeaApplicationContext.start(workspace, DATABASE_OVERRIDE);
+    context = RestartableZalavaApplicationContext.start(workspace, DATABASE_OVERRIDE);
     actors = context.getBean(ActorExecutionContext.class);
     boundary = context.getBean(ModelBoundary.class);
     evidence = context.getBean(KnowledgeEvidenceQueries.class);
@@ -456,7 +456,7 @@ class KnowledgeContextEnrichmentAcceptanceTest {
 
   private static Path createWorkspace() {
     try {
-      Path workspace = Files.createTempDirectory("sea-ctx-accept-");
+      Path workspace = Files.createTempDirectory("zalava-ctx-accept-");
       Files.writeString(workspace.resolve("AGENT.md"), "Context acceptance workspace.");
       Files.writeString(workspace.resolve("INFO.md"), "Disposable context acceptance workspace.");
       return workspace;
