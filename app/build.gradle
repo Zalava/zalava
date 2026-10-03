@@ -181,6 +181,7 @@ tasks.named('test') {
         excludeTags 'leyden-image'
         excludeTags 'indexed-install'
         excludeTags 'module-compat'
+        excludeTags 'released-module-distributable'
         excludeTags 'ocr-worker'
         excludeTags 'retrieval-measurement'
         excludeTags 'context-measurement'
@@ -208,9 +209,23 @@ tasks.register('architectureTest', Test) {
     useJUnitPlatform()
 }
 
+tasks.register('releasedModuleAcceptanceTest', Test) {
+    group = 'verification'
+    description = 'Runs released official JARs through a packaged host, PostgreSQL and browser journeys.'
+    dependsOn tasks.named('testClasses'), tasks.named('bootJar')
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    maxParallelForks = 1
+    useJUnitPlatform { includeTags 'released-module-distributable' }
+    systemProperty 'sea.test.boot-jar', tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
+    reports.html.required = true
+    reports.junitXml.required = true
+}
+
 tasks.named('check') {
     dependsOn tasks.named('architectureTest')
     dependsOn tasks.named('browserAcceptanceTest')
+    dependsOn tasks.named('releasedModuleAcceptanceTest')
 }
 
 tasks.register('browserAcceptanceTest', Test) {

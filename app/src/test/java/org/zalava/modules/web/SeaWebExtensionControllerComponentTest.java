@@ -29,6 +29,8 @@ import org.zalava.api.extensions.web.*;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.springframework.context.annotation.Import(
+    org.zalava.support.AuthenticatedMockMvcTestConfiguration.class)
 class SeaWebExtensionControllerComponentTest {
 
   private static final Path WORKSPACE = createWorkspace();
@@ -37,6 +39,9 @@ class SeaWebExtensionControllerComponentTest {
 
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {
+    registry.add("sea.accounts.security-enabled", () -> "true");
+    registry.add("sea.accounts.bootstrap-login", () -> "module-web-test");
+    registry.add("sea.accounts.bootstrap-password", () -> "ModuleWebTestPassword-123");
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.browser.brave.api-key", () -> "test-key");
     registry.add("agent.tools.playwright.enabled", () -> "true");
@@ -76,6 +81,25 @@ class SeaWebExtensionControllerComponentTest {
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("POST item=eggs")))
         .andExpect(content().string(containsString("checked=true")));
+  }
+
+  @Test
+  void suppliesHostCsrfTokenForNativeModuleFormsAndRejectsInvalidSubmissions() throws Exception {
+    mockMvc
+        .perform(get("/apps/test-web-module/shopping-list"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("name=\"sea-csrf-token\"")))
+        .andExpect(content().string(containsString("name=\"sea-csrf-parameter\"")))
+        .andExpect(content().string(containsString("form.appendChild(field)")));
+    mockMvc
+        .perform(
+            post("/apps/test-web-module/shopping-list/items/eggs/bought")
+                .param("checked", "true")
+                .with(
+                    org.springframework.security.test.web.servlet.request
+                        .SecurityMockMvcRequestPostProcessors.csrf()
+                        .useInvalidToken()))
+        .andExpect(status().isForbidden());
   }
 
   @Test

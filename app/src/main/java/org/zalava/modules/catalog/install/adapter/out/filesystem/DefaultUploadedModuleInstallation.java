@@ -109,7 +109,8 @@ public final class DefaultUploadedModuleInstallation implements UploadedModuleIn
 
   private static boolean isBundle(Path artifact) {
     try (java.util.jar.JarFile jar = new java.util.jar.JarFile(artifact.toFile())) {
-      return jar.getJarEntry("META-INF/zalava-module-bundle.yaml") != null;
+      return jar.getJarEntry("META-INF/zalava-module-bundle.yaml") != null
+          || jar.getJarEntry("META-INF/sea-module-bundle.yaml") != null;
     } catch (IOException exception) {
       throw new SourceModuleInstallationException(
           "Uploaded module JAR must be a readable JAR", exception);

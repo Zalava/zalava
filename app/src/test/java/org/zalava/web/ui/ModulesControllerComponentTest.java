@@ -203,6 +203,51 @@ class ModulesControllerComponentTest {
         .andExpect(flash().attribute("marketplaceMessage", containsString("installed")));
   }
 
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"channel", "docker"})
+  void acceptsReleasedMetadataShapesThroughTheUploadEndpoint(String shape) throws Exception {
+    byte[] original = uploadedJar();
+    String metadata;
+    try (var jar = new java.util.jar.JarInputStream(new java.io.ByteArrayInputStream(original))) {
+      jar.getNextJarEntry();
+      metadata = new String(jar.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+    }
+    metadata = metadata.replace("uploaded-fixture", shape + "-metadata-fixture");
+    if (shape.equals("channel")) {
+      metadata =
+          metadata.replaceFirst("(?s)factories:.*?operations:", "factories: []\n    operations:");
+    } else {
+      metadata =
+          metadata.replaceFirst(
+              "(?s)operations:.*?security:",
+              "operations: [listContainers, stopContainer]\n    security:");
+    }
+    var bytes = new java.io.ByteArrayOutputStream();
+    try (var jar = new java.util.jar.JarOutputStream(bytes)) {
+      jar.putNextEntry(new java.util.jar.JarEntry("module-metadata.yaml"));
+      jar.write(metadata.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      jar.closeEntry();
+    }
+    mockMvc
+        .perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart(
+                    "/modules/upload-installations")
+                .file(
+                    new org.springframework.mock.web.MockMultipartFile(
+                        "moduleJar",
+                        "released-shape.jar",
+                        "application/java-archive",
+                        bytes.toByteArray()))
+                .with(
+                    org.springframework.security.test.web.servlet.request
+                        .SecurityMockMvcRequestPostProcessors.csrf()))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(flash().attribute("marketplaceMessage", containsString("installed")));
+    assertThat(
+            Files.readString(WORKSPACE.resolve("source-module-installation/enabled-modules.json")))
+        .contains(shape + "-metadata-fixture");
+  }
+
   @Test
   void rejectsInvalidUploadedModuleJarWithoutLeavingStagedArtifact() throws Exception {
     mockMvc

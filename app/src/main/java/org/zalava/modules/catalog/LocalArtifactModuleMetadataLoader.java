@@ -102,7 +102,7 @@ public final class LocalArtifactModuleMetadataLoader {
 
   private List<SourceModuleIndex.Factory> factories(Object value, String path) {
     List<SourceModuleIndex.Factory> factories = new ArrayList<>();
-    for (Object item : list(value, path, true)) {
+    for (Object item : list(value, path, false)) {
       Map<String, Object> factory = map(item, path + "[]");
       factories.add(
           new SourceModuleIndex.Factory(
@@ -115,6 +115,14 @@ public final class LocalArtifactModuleMetadataLoader {
   private List<SourceModuleIndex.Operation> operations(Object value, String path) {
     List<SourceModuleIndex.Operation> operations = new ArrayList<>();
     for (Object item : list(value, path, false)) {
+      if (item instanceof String) {
+        // Released module metadata may list names for catalog search. Runtime descriptors
+        // remain authoritative; never infer a read-only operation from name-only metadata.
+        String name = text(item, path + "[]");
+        operations.add(new SourceModuleIndex.Operation(name, name, true, Map.of()));
+        continue;
+      }
+
       Map<String, Object> operation = map(item, path + "[]");
       String name = text(operation.get("name"), path + "[].name");
       Object description = operation.get("description");
