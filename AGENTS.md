@@ -59,3 +59,11 @@ ready-for-review PR. Use `gh stack` for dependent PRs. The repository-explicit
 repositories, with a separately persisted plan and explicit changed-file allowlist.
 Never merge autonomously; publish only immutable versions from verified merged
 default-branch commits and successful publication workflows.
+
+## Private plan ownership (user directive, 2026-10-03)
+
+Keep every dated roadmap/execution plan and private acceptance record only in
+`cordin/zalava-dev` (`/home/cordin/Projects/sea-projects/sea`). Never create or copy
+`docs/plans/` in this public product repository. Public contributor, architecture,
+API, and product documentation stays here. Publication must take an explicit
+private-plan path and must not stage that plan in the product PR.

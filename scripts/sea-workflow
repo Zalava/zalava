@@ -24,6 +24,7 @@ def main():
     verify.add_argument("tasks", nargs="*")
     publish = commands.add_parser("publish")
     publish.add_argument("--plan", required=True, type=Path)
+    publish.add_argument("--maintainer-repository", required=True, type=Path)
     publish.add_argument("--body-file", required=True, type=Path)
     publish.add_argument("--title", required=True)
     publish.add_argument("--file", action="append", required=True)
@@ -47,7 +48,16 @@ def main():
             parser.error("stack-start did not check out the requested branch")
         return
     if args.command == "publish":
-        args.plan.resolve(strict=True)
+        maintainer = args.maintainer_repository.resolve(strict=True)
+        if maintainer == repo:
+            parser.error("execution plans belong only in private zalava-dev, outside the public repository")
+        if Path(run(maintainer, "git", "rev-parse", "--show-toplevel", capture=True)).resolve() != maintainer:
+            parser.error("--maintainer-repository must identify the private repository root")
+        plan = args.plan.resolve(strict=True)
+        if not plan.is_relative_to(maintainer / "docs" / "plans"):
+            parser.error("plan must belong to private zalava-dev docs/plans")
+        if (repo / "docs" / "plans").exists() and any(path.is_file() for path in (repo / "docs" / "plans").rglob("*")):
+            parser.error("public execution plans are forbidden; keep them only in private zalava-dev")
         args.body_file.resolve(strict=True)
         branch = run(repo, "git", "branch", "--show-current", capture=True)
         if not branch.startswith("step-"):
