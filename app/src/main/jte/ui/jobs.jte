@@ -3,6 +3,7 @@
 
 @param JobsModel model
 @param org.zalava.web.ui.navigation.NavigationModel navigation
+@param org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot evidence
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -70,6 +71,7 @@
             </div>
         @endif
     </div>
+@template.ui.jobEvidence(evidence = evidence)
 </main>
 </body>
 </html>

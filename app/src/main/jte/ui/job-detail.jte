@@ -105,6 +105,7 @@
                         </div>
                     @else
                         <div class="job-detail-result">${model.agentFeedback()}</div>
+
                     @endif
                 </section>
 
@@ -183,9 +184,17 @@
                 <section id="artifacts" class="box job-detail-card mb-5">
                     <p class="heading mb-2">Artifacts</p>
                     <h2 class="title is-4">Produced files and results</h2>
+                @if(model.agentFeedback() != null && !model.agentFeedback().isBlank() && !model.referencePath().contains("/"))
+                    <p>Saved job report</p>
+                    <a class="button is-link is-light mb-3" href="/jobs/${model.referencePath()}/artifacts/report">Download saved report</a>
+                @endif
                     @if(model.artifactEntries().isEmpty())
                         <div class="notification is-light">
-                            No artifacts are linked to this job yet.
+                            @if(model.agentFeedback() != null && !model.agentFeedback().isBlank() && !model.referencePath().contains("/"))
+                        No additional artifacts have been linked to this job yet.
+                    @else
+                        No artifacts are linked to this job yet.
+                    @endif
                         </div>
                     @else
                         <div class="content">

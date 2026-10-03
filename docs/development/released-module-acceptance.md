@@ -15,9 +15,10 @@ Coverage inventory:
 
 | Entry point | Observable assertion |
 | --- | --- |
-| Login and account administration | Initial-password rotation; MEMBER denied module/admin access; anonymous upload redirected to login |
+| Login and account administration | Initial-password rotation; MEMBER denied module/admin access; anonymous upload without CSRF denied (403); anonymous protected-page request redirected to login |
 | Modules upload | Malformed JAR rejected; all twelve pinned release artifacts installed through browser forms |
 | Runtime restart | Every installed release must appear in the actual runtime registry; missing modules fail even when other journeys succeed |
+| Jobs and Dashboard | Owned persisted report downloads exact saved content; real PostgreSQL scheduled work and report survive every packaged-host restart; a different account sees neither and cannot download the report |
 | Filesystem configuration | Browser save/start; tool reads a disposable fixture; saved root survives restarts |
 | Time tool | Successful UTC call and unsuccessful invalid-zone operation result |
 | Shopping tool approvals | Explicit deny leaves no item; explicit allow persists the item |

@@ -961,3 +961,7 @@ body {
         border-radius: var(--sea-radius-md);
     }
 }
+
+.job-evidence { display: grid; gap: var(--sea-space-4, 1rem); margin-top: 1.5rem; }
+.job-evidence .job-copy { min-width: 0; overflow-wrap: anywhere; }
+@media (min-width: 1025px) { .job-evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
