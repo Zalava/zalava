@@ -9,6 +9,7 @@ html {
 }
 
 body {
+    margin: 0;
     min-width: 320px;
     min-height: 100vh;
     color: var(--sea-ink);
@@ -936,6 +937,7 @@ body {
     }
 
     .sea-navbar {
+        box-sizing: border-box;
         position: fixed;
         inset: 0 auto 0 0;
         z-index: var(--sea-layer-raised);

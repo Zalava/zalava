@@ -13,6 +13,7 @@ public sealed interface UiCommand
     permits UiCommand.SendChat,
         UiCommand.SelectConversation,
         UiCommand.CreateConversation,
+        UiCommand.ContinueConversation,
         UiCommand.DecideApproval,
         UiCommand.PutAttachment,
         UiCommand.DeleteAttachment {
@@ -30,6 +31,9 @@ public sealed interface UiCommand
   record SelectConversation(String protocolVersion, String conversationId) implements UiCommand {}
 
   record CreateConversation(String protocolVersion) implements UiCommand {}
+
+  record ContinueConversation(String protocolVersion, String conversationId, String destination)
+      implements UiCommand {}
 
   /** A bounded user intent; SEA resolves the actor, task, request and policy server-side. */
   record DecideApproval(String protocolVersion, String jobId, String requestId, Decision decision)

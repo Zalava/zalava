@@ -28,6 +28,7 @@ public final class UiCommandDecoder {
       case "chat.select", "channelChanged" -> selectConversation(payload, acceptedVersion);
       case "chat.create", "createConversation" ->
           Optional.of(new UiCommand.CreateConversation(acceptedVersion));
+      case "chat.continue" -> continueConversation(payload, acceptedVersion);
       case "approval.decide" -> decideApproval(payload, acceptedVersion);
       case "attachment.put" -> putAttachment(payload, acceptedVersion);
       case "attachment.delete" -> deleteAttachment(payload, acceptedVersion);
@@ -49,6 +50,14 @@ public final class UiCommandDecoder {
     String conversationId = string(payload.get("conversationId"));
     if (blank(conversationId)) return Optional.empty();
     return Optional.of(new UiCommand.SelectConversation(version, conversationId.trim()));
+  }
+
+  private static Optional<UiCommand> continueConversation(Map<String, ?> payload, String version) {
+    String reference = string(payload.get("conversationId"));
+    String destination = string(payload.get("destination"));
+    if (blank(reference) || blank(destination)) return Optional.empty();
+    return Optional.of(
+        new UiCommand.ContinueConversation(version, reference.trim(), destination.trim()));
   }
 
   private static Optional<UiCommand> decideApproval(Map<String, ?> payload, String version) {

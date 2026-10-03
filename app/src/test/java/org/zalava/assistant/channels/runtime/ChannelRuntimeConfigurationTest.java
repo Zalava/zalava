@@ -24,6 +24,11 @@ class ChannelRuntimeConfigurationTest {
   @Test
   void activeModuleStartsWithScopedConfigurationAndDeliversTheAuthenticatedChatReply() {
     var identities = mock(ChannelIdentityLinks.class);
+    var continuation =
+        mock(org.zalava.assistant.conversation.application.port.in.ConversationContinuation.class);
+    var conversation =
+        org.zalava.assistant.conversation.domain.ConversationReference.newReference();
+    when(continuation.channelConversation(any(), any())).thenReturn(conversation);
     var chats = mock(ActorChatCommands.class);
     var modules = mock(SeaRuntime.class);
     var configurations = mock(FileSystemModuleConfigurationStore.class);
@@ -51,7 +56,7 @@ class ChannelRuntimeConfigurationTest {
         .thenAnswer(call -> new ActorChatTurn("reply", List.of()));
     var runtime =
         new ChannelRuntimeConfiguration()
-            .channelRuntime(identities, chats, modules, configurations);
+            .channelRuntime(identities, chats, modules, configurations, continuation);
     verify(channel)
         .start(
             argThat(

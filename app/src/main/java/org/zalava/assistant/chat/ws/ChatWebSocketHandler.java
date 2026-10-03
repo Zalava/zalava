@@ -45,9 +45,21 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
   private final ActorWebSocketSessions sessions;
   private final ActorChatCommands actorCommands;
   private final ActorChatQueries actorQueries;
+  private final org.zalava.assistant.conversation.application.port.in.ConversationContinuation
+      continuation;
 
   public ChatWebSocketHandler(ChatChannel chatChannel, ObjectMapper objectMapper) {
     this(chatChannel, objectMapper, null, null, null, null);
+  }
+
+  public ChatWebSocketHandler(
+      ChatChannel chatChannel,
+      ObjectMapper objectMapper,
+      AuthenticatedActorResolver actors,
+      ActorWebSocketSessions sessions,
+      ActorChatCommands actorCommands,
+      ActorChatQueries actorQueries) {
+    this(chatChannel, objectMapper, actors, sessions, actorCommands, actorQueries, null);
   }
 
   @Autowired
@@ -57,7 +69,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
       AuthenticatedActorResolver actors,
       ActorWebSocketSessions sessions,
       ActorChatCommands actorCommands,
-      ActorChatQueries actorQueries) {
+      ActorChatQueries actorQueries,
+      org.zalava.assistant.conversation.application.port.in.ConversationContinuation continuation) {
+    this.continuation = continuation;
     this.chatChannel = chatChannel;
     this.objectMapper = objectMapper;
     this.actors = actors;
@@ -113,6 +127,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         case UiCommand.SendChat send ->
             handleUserMessage(
                 session, Map.of("conversationId", send.conversationId(), "message", send.text()));
+        case UiCommand.ContinueConversation ignored -> {
+          // Explicit continuation is available through the product JSON adapter.
+        }
         case UiCommand.DecideApproval ignored -> {
           // Approval decisions are intentionally available only on the authenticated SEA UI
           // adapter.
@@ -225,6 +242,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
       WebSocketSession session, Actor actor, String conversationId, String userMessage)
       throws Exception {
     StringBuilder streamed = new StringBuilder();
+    if (continuation != null)
+      continuation.requireWeb(actor, new ConversationReference(conversationId));
     actorCommands.streamChat(
         actor,
         reference(conversationId),

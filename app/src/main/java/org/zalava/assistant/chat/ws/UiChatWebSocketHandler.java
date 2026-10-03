@@ -47,6 +47,8 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   private final UiExecutionStateQueries executionStates;
   private final UiApprovalDecisions approvalDecisions;
   private final ChatAttachments attachments;
+  private final org.zalava.assistant.conversation.application.port.in.ConversationContinuation
+      continuation;
 
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
@@ -66,7 +68,6 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
     this(objectMapper, actors, commands, queries, executionStates, approvalDecisions, null);
   }
 
-  @Autowired
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
       AuthenticatedActorResolver actors,
@@ -75,6 +76,28 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
       UiExecutionStateQueries executionStates,
       UiApprovalDecisions approvalDecisions,
       ChatAttachments attachments) {
+    this(
+        objectMapper,
+        actors,
+        commands,
+        queries,
+        executionStates,
+        approvalDecisions,
+        attachments,
+        null);
+  }
+
+  @Autowired
+  public UiChatWebSocketHandler(
+      ObjectMapper objectMapper,
+      AuthenticatedActorResolver actors,
+      ActorChatCommands commands,
+      ActorChatQueries queries,
+      UiExecutionStateQueries executionStates,
+      UiApprovalDecisions approvalDecisions,
+      ChatAttachments attachments,
+      org.zalava.assistant.conversation.application.port.in.ConversationContinuation continuation) {
+    this.continuation = continuation;
     this.objectMapper = objectMapper;
     this.actors = actors;
     this.commands = commands;
@@ -117,6 +140,16 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         }
         case UiCommand.SelectConversation select ->
             sendSnapshot(session, new ConversationReference(select.conversationId()));
+        case UiCommand.ContinueConversation commandContinue -> {
+          if (continuation == null) throw new IllegalStateException("Continuation is unavailable");
+          var target =
+              continuation.continueOnWeb(
+                  actor,
+                  new ConversationReference(commandContinue.conversationId()),
+                  commandContinue.destination());
+          sendConversationList(session, actor);
+          sendSnapshot(session, target);
+        }
         case UiCommand.SendChat send -> streamChat(session, actor, send);
         case UiCommand.DecideApproval decide -> decideApproval(session, decide);
         case UiCommand.PutAttachment put -> putAttachment(session, actor, put);
@@ -170,6 +203,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
 
   private void streamChat(WebSocketSession session, Actor actor, UiCommand.SendChat command) {
     ConversationReference conversation = new ConversationReference(command.conversationId());
+    if (continuation != null) continuation.requireWeb(actor, conversation);
     StringBuilder text = new StringBuilder();
     String message = withAttachmentManifest(actor, command);
     commands.streamChat(
@@ -291,7 +325,13 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
             .toList();
     send(
         session,
-        new UiEvent.ConversationSnapshot(UiCommandDecoder.VERSION, conversation.value(), messages));
+        new UiEvent.ConversationSnapshot(
+            UiCommandDecoder.VERSION,
+            conversation.value(),
+            messages,
+            continuation == null ? "web" : continuation.origin(actor, conversation).channelId(),
+            continuation == null || continuation.origin(actor, conversation).webChat(),
+            continuation != null && continuation.canContinue(actor, conversation)));
   }
 
   private Actor actor(WebSocketSession session) {

@@ -120,17 +120,28 @@ class BrowserUiInteractAcceptanceTest {
 
         page.getByText("Execution completed").waitFor();
         page.getByText("Completed report").waitFor();
+        page.getByRole(
+                com.microsoft.playwright.options.AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Review permissions"))
+            .click();
         page.getByText("Permission needed").waitFor();
-
         page.reload();
         page.getByText("Connected").waitFor();
+        page.getByText("Completed report").waitFor();
+        page.getByRole(
+                com.microsoft.playwright.options.AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Review permissions"))
+            .click();
         page.getByText("Permission needed").waitFor();
-        assertThat(page.locator("body").innerText())
-            .contains("Completed report", "Awaiting report");
-
+        assertThat(page.locator("body").innerText()).contains("browser-interact-provider/write");
         page.getByRole(
                 com.microsoft.playwright.options.AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Deny"))
+            .click();
+        page.getByText("No pending permissions.").waitFor();
+        page.getByRole(
+                com.microsoft.playwright.options.AriaRole.TAB,
+                new Page.GetByRoleOptions().setName("Run"))
             .click();
         page.getByText("Execution todo").waitFor();
 

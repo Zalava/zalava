@@ -21,7 +21,8 @@ public class ChannelRuntimeConfiguration {
       ChannelIdentityLinks identities,
       ActorChatCommands chats,
       SeaRuntime modules,
-      FileSystemModuleConfigurationStore configurations) {
+      FileSystemModuleConfigurationStore configurations,
+      org.zalava.assistant.conversation.application.port.in.ConversationContinuation continuation) {
     AtomicReference<DefaultChannelRuntime> runtime = new AtomicReference<>();
     DefaultChannelRuntime created =
         new DefaultChannelRuntime(
@@ -38,7 +39,8 @@ public class ChannelRuntimeConfiguration {
                             turn.text(),
                             interaction.interaction().correlationId()));
               }
-            });
+            },
+            continuation::channelConversation);
     runtime.set(created);
     modules
         .activeModules()

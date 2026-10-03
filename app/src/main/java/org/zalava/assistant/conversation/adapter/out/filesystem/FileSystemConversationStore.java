@@ -18,7 +18,10 @@ import org.zalava.platform.storage.private_state.ActorScopedPaths;
 import org.zalava.platform.storage.yaml.YamlDocument;
 import org.zalava.platform.storage.yaml.YamlParser;
 
-public final class FileSystemConversationStore implements ConversationStore, ActorConversations {
+public final class FileSystemConversationStore
+    implements ConversationStore,
+        ActorConversations,
+        org.zalava.assistant.conversation.application.port.out.ConversationOriginStore {
   private final Path conversationsDirectory;
   private final ActorScopedPaths actorPaths;
 
@@ -142,12 +145,15 @@ public final class FileSystemConversationStore implements ConversationStore, Act
                   .frontmatter()
                   .getOrDefault("createdAt", Instant.now().toString())
               : Instant.now().toString();
+      Map<String, String> frontmatter = new LinkedHashMap<>();
+      if (Files.exists(file))
+        frontmatter.putAll(YamlParser.parse(Files.readString(file)).frontmatter());
+      frontmatter.put("createdAt", createdAt);
+      frontmatter.put("updatedAt", Instant.now().toString());
       Files.writeString(
           file,
           YamlParser.serialize(
-              new YamlDocument(
-                  Map.of("createdAt", createdAt, "updatedAt", Instant.now().toString()),
-                  ConversationYamlSerializer.serialize(messages))),
+              new YamlDocument(frontmatter, ConversationYamlSerializer.serialize(messages))),
           StandardOpenOption.CREATE,
           StandardOpenOption.TRUNCATE_EXISTING);
     } catch (IOException exception) {
@@ -161,6 +167,47 @@ public final class FileSystemConversationStore implements ConversationStore, Act
       Files.deleteIfExists(actorFile(actor, reference));
     } catch (IOException exception) {
       throw new RuntimeException("Failed to delete actor conversation", exception);
+    }
+  }
+
+  @Override
+  public java.util.Optional<org.zalava.assistant.conversation.domain.ConversationOrigin> origin(
+      Actor actor, ConversationReference reference) {
+    Path file = actorFile(actor, reference);
+    if (!Files.exists(file)) return java.util.Optional.empty();
+    try {
+      Map<String, String> metadata = YamlParser.parse(Files.readString(file)).frontmatter();
+      if (!metadata.containsKey("channelId")) return java.util.Optional.empty();
+      return java.util.Optional.of(
+          new org.zalava.assistant.conversation.domain.ConversationOrigin(
+              metadata.get("channelId"), metadata.getOrDefault("channelSubject", ""),
+              metadata.getOrDefault("channelDestination", ""),
+                  "true".equals(metadata.get("privateDestination"))));
+    } catch (IOException exception) {
+      throw new IllegalStateException("Unable to read conversation origin", exception);
+    }
+  }
+
+  @Override
+  public void saveOrigin(
+      Actor actor,
+      ConversationReference reference,
+      org.zalava.assistant.conversation.domain.ConversationOrigin origin) {
+    Path file = actorFile(actor, reference);
+    if (!Files.exists(file)) throw new IllegalArgumentException("Conversation is unavailable");
+    try {
+      YamlDocument document = YamlParser.parse(Files.readString(file));
+      Map<String, String> metadata = new LinkedHashMap<>(document.frontmatter());
+      metadata.put("channelId", origin.channelId());
+      metadata.put("channelSubject", origin.subject());
+      metadata.put("channelDestination", origin.deliveryHandle());
+      metadata.put("privateDestination", Boolean.toString(origin.privateDestination()));
+      Files.writeString(
+          file,
+          YamlParser.serialize(new YamlDocument(metadata, document.body())),
+          StandardOpenOption.TRUNCATE_EXISTING);
+    } catch (IOException exception) {
+      throw new IllegalStateException("Unable to save conversation origin", exception);
     }
   }
 
