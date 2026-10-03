@@ -59,7 +59,7 @@ Required final gate: `GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:te
 - Chat has Run/Tools/Context details sourced from account-owned state, a pending-permission shortcut, server-acknowledged decisions, responsive disclosure, and conversation-scoped stream filtering.
 - Existing assistant-ui/Spring/YAML/identity ports were reused; no dependency was introduced.
 - Focused domain/channel tests passed; the real-browser continuation journey passed. Full-context websocket acceptance verifies foreign-owner/revoked-link denial and implicit-send rejection. Browser acceptance uses local fixtures and isolated PostgreSQL/workspace data; it does not claim a live Telegram journey.
-- The initial full host gate passed ordinary tests, architecture, coverage, and all twelve released-module acceptance cases; one browser journey required updating for the new inspector. Final gate pending after that correction.
+- The initial full host gate passed ordinary tests, architecture, coverage, and all twelve released-module acceptance cases; one browser journey required updating for the new inspector. Final gate passed after that correction.
 - Diagnostics: `/tmp/zalava-ui-chat-focused.log`, `/tmp/zalava-ui-chat-browser.log`, `/tmp/zalava-ui-chat-full-gate.log`, `app/build/browser-acceptance/chat-tool-trace.zip`.
 
 ## Material development corrections
@@ -67,3 +67,9 @@ Required final gate: `GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:te
 Full-context acceptance exposed multiple bean aliases for the persisted conversation store; the new composition bean now explicitly qualifies both actor and store ports. Existing browser acceptance exposed duplicate failure announcements and the changed approval-control location; feedback was deduplicated and approval acceptance follows the explicit inspector route. Empty Telegram settings activate the legacy starter; the new fixture uses the established `false` settings to prevent external polling.
 
 The complete browser lane also exposed a CDN-dependent sidebar width (241px instead of the reviewed 240px when Bulma's reset is absent). The host now owns its sidebar `box-sizing`, and browser acceptance checks the same width after explicitly blocking the external stylesheet. No assertion tolerance or coverage floor was relaxed.
+
+## Delivery result
+
+Public implementation: https://github.com/Zalava/zalava/pull/20, ready for review, explicitly based on architecture host PR #19. Final publication gate `GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:test :module-api-test:check :app:check` passed in `/tmp/zalava-released-host`, including all 18 browser tests and the real-distributable released-module lane. The host's 90% line / 74% branch coverage floors remain unchanged. Staged diff reviewed; `git diff --cached --check` passed. Final log: `/tmp/zalava-ui-chat-publication-final.log`.
+
+Verification ran through approved host execution because managed-sandbox builds cannot provide the required networking/process environment. Browser/channel/model/database acceptance used disposable fixtures. The existing local installation and data were untouched. The blocked-CDN regression also required owning the existing body margin reset locally.
