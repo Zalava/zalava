@@ -26,12 +26,17 @@ public class JobsController {
   private final TaskQueries taskQueries;
   private final ActorTaskCommands actorTasks;
   private final AuthenticatedActorResolver actors;
+  private final org.zalava.tasks.application.port.in.ActorJobEvidenceQueries evidenceQueries;
 
   public JobsController(
-      TaskQueries taskQueries, ActorTaskCommands actorTasks, AuthenticatedActorResolver actors) {
+      TaskQueries taskQueries,
+      ActorTaskCommands actorTasks,
+      AuthenticatedActorResolver actors,
+      org.zalava.tasks.application.port.in.ActorJobEvidenceQueries evidenceQueries) {
     this.taskQueries = taskQueries;
     this.actorTasks = actorTasks;
     this.actors = actors;
+    this.evidenceQueries = evidenceQueries;
   }
 
   @GetMapping("/jobs")
@@ -42,6 +47,13 @@ public class JobsController {
             .actorIfAuthenticated(authentication)
             .map(this::buildActorModel)
             .orElseGet(this::buildModel));
+    model.addAttribute(
+        "evidence",
+        actors
+            .actorIfAuthenticated(authentication)
+            .map(evidenceQueries::snapshot)
+            .orElseGet(
+                org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot::empty));
     return "ui/jobs";
   }
 

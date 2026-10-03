@@ -81,8 +81,13 @@ class ReleasedModuleDistributableAcceptanceTest {
                   .post(
                       baseUrl + "/modules/upload-installations",
                       RequestOptions.create().setMaxRedirects(0));
-          assertThat(rejected.status()).isEqualTo(302);
-          assertThat(URI.create(rejected.headers().get("location")).getPath().split(";", 2)[0])
+          assertThat(rejected.status()).isEqualTo(403);
+          APIResponse protectedPage =
+              anonymous
+                  .request()
+                  .get(baseUrl + "/modules", RequestOptions.create().setMaxRedirects(0));
+          assertThat(protectedPage.status()).isEqualTo(302);
+          assertThat(URI.create(protectedPage.headers().get("location")).getPath().split(";", 2)[0])
               .isEqualTo("/login");
         }
         page.navigate(baseUrl + "/sea/accounts");
@@ -111,10 +116,13 @@ class ReleasedModuleDistributableAcceptanceTest {
           page.getByText("Uploaded " + release.moduleId() + " " + release.version() + " installed")
               .waitFor();
         }
+        var jobEvidence = seedJobEvidence(postgres, workspace);
+        assertJobEvidence(page, admin, browser, jobEvidence);
         stop();
         start(postgres, workspace, "dev");
         admin.clearCookies();
         signIn(page, LOGIN, PASSWORD, false);
+        assertJobEvidence(page, admin, browser, jobEvidence);
         JsonNode modules = JSON.readTree(admin.request().get(baseUrl + "/api/sea/modules").text());
         Path root = Files.createDirectories(workspace.resolve("filesystem-fixture"));
         Files.writeString(root.resolve("evidence.txt"), "Configured released filesystem");
@@ -188,6 +196,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         start(postgres, workspace, "local-control");
         admin.clearCookies();
         signIn(page, LOGIN, PASSWORD, false);
+        assertJobEvidence(page, admin, browser, jobEvidence);
         page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true)).waitFor();
         assertThat(admin.request().get(baseUrl + "/api/sea/modules").status()).isEqualTo(404);
@@ -203,6 +212,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         start(postgres, workspace, "local-control");
         admin.clearCookies();
         signIn(page, LOGIN, PASSWORD, false);
+        assertJobEvidence(page, admin, browser, jobEvidence);
         page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
         assertThat(page.content()).doesNotContain("SDK acceptance milk", "Denied milk");
         assertThat(Files.size(workspace.resolve("shopping-list.sqlite"))).isPositive();
@@ -233,6 +243,88 @@ class ReleasedModuleDistributableAcceptanceTest {
       }
     }
   }
+
+  private JobEvidenceFixture seedJobEvidence(PostgreSQLContainer postgres, Path workspace)
+      throws Exception {
+    var dataSource =
+        new org.springframework.jdbc.datasource.DriverManagerDataSource(
+            postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+    java.util.UUID accountId;
+    try (var connection = dataSource.getConnection();
+        var statement =
+            connection.prepareStatement("SELECT id FROM sea_account WHERE login_name = ?")) {
+      statement.setString(1, LOGIN);
+      try (var row = statement.executeQuery()) {
+        assertThat(row.next()).isTrue();
+        accountId = row.getObject(1, java.util.UUID.class);
+      }
+    }
+    var actor =
+        new org.zalava.identity.accounts.domain.Actor(
+            new org.zalava.identity.accounts.domain.AccountId(accountId));
+    var store = new org.zalava.tasks.adapter.out.filesystem.ActorFileSystemTaskStore(workspace);
+    var report = org.zalava.tasks.domain.ActorTaskReference.newReference();
+    var future = org.zalava.tasks.domain.ActorTaskReference.newReference();
+    String output = "# Packaged job report\nPersisted across real host process restarts.";
+    store.save(
+        actor,
+        report,
+        org.zalava.tasks.domain.Task.newTask("Packaged saved report", "Restart fixture")
+            .withStatus(org.zalava.tasks.domain.Task.Status.completed)
+            .withFeedback(output));
+    store.save(
+        actor,
+        future,
+        org.zalava.tasks.domain.Task.newTask("Packaged future job", "Restart fixture"));
+    var due = java.time.Instant.parse("2050-01-02T12:00:00Z");
+    try (var storage = new org.jobrunr.storage.sql.postgres.PostgresStorageProvider(dataSource)) {
+      storage.setJobMapper(
+          new org.jobrunr.jobs.mappers.JobMapper(
+              org.jobrunr.utils.mapper.JsonMapperFactory.createJsonMapper()));
+      var scheduler = new org.jobrunr.scheduling.JobScheduler(storage);
+      String token =
+          new org.zalava.tasks.domain.ActorTaskExecutionReference(actor, future).encode();
+      scheduler.<org.zalava.tasks.adapter.in.jobrunr.TaskHandler>schedule(
+          due, handler -> handler.executeTask(token, org.jobrunr.jobs.context.JobContext.Null));
+    }
+    return new JobEvidenceFixture(report.value(), future.value(), due, output);
+  }
+
+  private void assertJobEvidence(
+      Page page, BrowserContext admin, Browser browser, JobEvidenceFixture fixture) {
+    page.navigate(baseUrl + "/jobs");
+    page.locator("[aria-labelledby='saved-reports-title']")
+        .getByText(
+            "Packaged saved report",
+            new com.microsoft.playwright.Locator.GetByTextOptions().setExact(true))
+        .waitFor();
+    page.locator("[aria-labelledby='upcoming-jobs-title']")
+        .getByText(
+            "Packaged future job",
+            new com.microsoft.playwright.Locator.GetByTextOptions().setExact(true))
+        .waitFor();
+    assertThat(page.locator("time[datetime='" + fixture.due() + "']").count()).isEqualTo(1);
+    var download = admin.request().get(baseUrl + "/jobs/" + fixture.report() + "/artifacts/report");
+    assertThat(download.status()).isEqualTo(200);
+    assertThat(download.text()).isEqualTo(fixture.output());
+    assertThat(download.headers().get("content-disposition")).contains("attachment");
+    try (BrowserContext member = browser.newContext()) {
+      var other = member.newPage();
+      signIn(other, "released-member", PASSWORD, false);
+      other.navigate(baseUrl + "/jobs");
+      assertThat(other.locator("body").innerText())
+          .doesNotContain("Packaged saved report", "Packaged future job");
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/jobs/" + fixture.report() + "/artifacts/report")
+                  .status())
+          .isEqualTo(404);
+    }
+  }
+
+  private record JobEvidenceFixture(
+      String report, String future, java.time.Instant due, String output) {}
 
   private List<Release> downloadReleases() throws Exception {
     Properties pins = new Properties();

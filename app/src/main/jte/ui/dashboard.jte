@@ -5,6 +5,7 @@
 
 @param DashboardModel model
 @param org.zalava.web.ui.navigation.NavigationModel navigation
+@param org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot evidence
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -142,6 +143,7 @@
             @endif
         </section>
     </div>
+@template.ui.jobEvidence(evidence = evidence)
 </main>
 
 </body>

@@ -116,7 +116,9 @@ public class AccountConfiguration {
       throws Exception {
     return http.authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/login", "/sea-control.css", "/css/**", "/actuator/health")
+                auth.requestMatchers(AccountConfiguration::isErrorDispatch)
+                    .permitAll()
+                    .requestMatchers("/login", "/sea-control.css", "/css/**", "/actuator/health")
                     .permitAll()
                     .requestMatchers("/sea/control/**")
                     .hasRole("ADMIN")
@@ -169,6 +171,16 @@ public class AccountConfiguration {
         .addFilterAfter(
             new PasswordChangeRequiredFilter(accounts), AccountAuthorityRefreshFilter.class)
         .build();
+  }
+
+  private static boolean isErrorDispatch(jakarta.servlet.http.HttpServletRequest request) {
+    try {
+      return request.getDispatcherType() == jakarta.servlet.DispatcherType.ERROR;
+    } catch (UnsupportedOperationException syntheticPrivilegeRequest) {
+      // Spring's URI-only privilege evaluator supplies a synthetic FilterInvocation request.
+      // This is a route-authority query, not an internal servlet error dispatch.
+      return false;
+    }
   }
 
   @Bean

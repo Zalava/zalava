@@ -31,16 +31,19 @@ public class DashboardController {
   private final SeaToolApprovalRequests approvalRequests;
   private final ActorTaskCommands actorTasks;
   private final AuthenticatedActorResolver actors;
+  private final org.zalava.tasks.application.port.in.ActorJobEvidenceQueries evidenceQueries;
 
   public DashboardController(
       TaskQueries taskQueries,
       SeaToolApprovalRequests approvalRequests,
       ActorTaskCommands actorTasks,
-      AuthenticatedActorResolver actors) {
+      AuthenticatedActorResolver actors,
+      org.zalava.tasks.application.port.in.ActorJobEvidenceQueries evidenceQueries) {
     this.taskQueries = taskQueries;
     this.approvalRequests = approvalRequests;
     this.actorTasks = actorTasks;
     this.actors = actors;
+    this.evidenceQueries = evidenceQueries;
   }
 
   @GetMapping("/dashboard")
@@ -51,6 +54,13 @@ public class DashboardController {
             .actorIfAuthenticated(authentication)
             .map(this::buildActorModel)
             .orElseGet(this::buildModel));
+    model.addAttribute(
+        "evidence",
+        actors
+            .actorIfAuthenticated(authentication)
+            .map(evidenceQueries::snapshot)
+            .orElseGet(
+                org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot::empty));
     return "ui/dashboard";
   }
 

@@ -2,7 +2,6 @@ package org.zalava.tasks.application;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.tasks.application.port.in.ActorTaskCommands;
@@ -34,7 +33,7 @@ public final class ActorTaskUseCases implements ActorTaskCommands {
   public ActorTaskReference schedule(
       Actor actor, LocalDateTime executionTime, String name, String description) {
     ActorTaskReference reference = ActorTaskReference.newReference();
-    Instant createdAt = executionTime.atZone(ZoneId.systemDefault()).toInstant();
+    Instant createdAt = Instant.now();
     tasks.save(actor, reference, Task.newTask(name, createdAt, description));
     scheduler.schedule(executionTime, new ActorTaskExecutionReference(actor, reference).encode());
     return reference;
