@@ -105,7 +105,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
           ServiceLoader.load(ZalavaModule.class, classLoader).stream()
               .map(ServiceLoader.Provider::get)
               .toList();
-      validateLoadedModules(List.of(enabled), modules);
+      validateLoadedModules(List.of(enabled), modules, false);
       return modules;
     } catch (ServiceConfigurationError | RuntimeException exception) {
       close(classLoader);
@@ -246,6 +246,13 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
 
   public void validateLoadedModules(
       List<ModuleEnablement.EnabledModule> enabledModules, List<ZalavaModule> loaded) {
+    validateLoadedModules(enabledModules, loaded, true);
+  }
+
+  private void validateLoadedModules(
+      List<ModuleEnablement.EnabledModule> enabledModules,
+      List<ZalavaModule> loaded,
+      boolean createProviders) {
     List<String> expected =
         enabledModules.stream().map(ModuleEnablement.EnabledModule::moduleId).sorted().toList();
     List<String> actual = new ArrayList<>();
@@ -270,7 +277,7 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
                 + " but enabled version is "
                 + enabled.version());
       }
-      validateProviderContracts(module, moduleDescriptor);
+      validateProviderContracts(module, moduleDescriptor, createProviders);
       actual.add(moduleDescriptor.moduleId());
     }
     actual.sort(String::compareTo);
@@ -297,7 +304,8 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
     return descriptor;
   }
 
-  private void validateProviderContracts(ZalavaModule module, ModuleDescriptor moduleDescriptor) {
+  private void validateProviderContracts(
+      ZalavaModule module, ModuleDescriptor moduleDescriptor, boolean createProviders) {
     List<ProviderFactory> factories = module.providerFactories();
     if (factories == null) {
       throw loadingFailure(
@@ -333,7 +341,9 @@ public final class ExternalModuleClassLoader implements ExternalModuleLoading {
       requireText(
           factoryDescriptor.description(),
           "External provider factory " + factoryDescriptor.factoryId() + " description");
-      validateProviders(moduleDescriptor, factory, factoryDescriptor);
+      // Discovery must leave stopped modules configurable without allocating providers.
+      // Runtime activation validates and owns their configured provider instances.
+      if (createProviders) validateProviders(moduleDescriptor, factory, factoryDescriptor);
     }
   }
 

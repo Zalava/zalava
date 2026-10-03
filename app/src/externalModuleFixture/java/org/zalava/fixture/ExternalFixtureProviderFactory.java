@@ -20,6 +20,9 @@ final class ExternalFixtureProviderFactory implements ProviderFactory {
 
   @Override
   public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
+    if (Boolean.TRUE.equals(context.configuration().get("rejectCreation"))) {
+      throw new IllegalStateException("Fixture provider creation rejected");
+    }
     return List.of(new ExternalFixtureZalavaProvider());
   }
 }

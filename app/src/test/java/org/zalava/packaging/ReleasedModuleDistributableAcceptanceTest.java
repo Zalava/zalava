@@ -1,0 +1,406 @@
+package org.zalava.packaging;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.microsoft.playwright.APIResponse;
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.FilePayload;
+import com.microsoft.playwright.options.RequestOptions;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
+/** Real released JARs, a packaged host process, real PostgreSQL and browser entry points. */
+@Tag("released-module-distributable")
+class ReleasedModuleDistributableAcceptanceTest {
+  private static final ObjectMapper JSON = new ObjectMapper();
+  private static final String LOGIN = "released-module-admin";
+  private static final String INITIAL_PASSWORD = "DisposableSdkPassword-123";
+  private static final String PASSWORD = INITIAL_PASSWORD + "-changed";
+  private final Path diagnostics =
+      Path.of("build/reports/released-module-acceptance", UUID.randomUUID().toString())
+          .toAbsolutePath();
+  private final HttpClient http =
+      HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
+  private Process process;
+  private String baseUrl;
+  private int generation;
+
+  @Test
+  @Timeout(value = 10, unit = TimeUnit.MINUTES)
+  void uploadsReleasedFleetAndPreservesAuthorizedEffectsAcrossPackagedHostRestarts()
+      throws Exception {
+    Files.createDirectories(diagnostics);
+    Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
+    Files.writeString(workspace.resolve("AGENT.md"), "Disposable released-module acceptance.");
+    List<Release> releases = downloadReleases();
+    try (PostgreSQLContainer postgres =
+            new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
+                .withDatabaseName("zalava_acceptance")
+                .withUsername("zalava_acceptance")
+                .withPassword(UUID.randomUUID().toString());
+        Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext admin = browser.newContext()) {
+      postgres.start();
+      Page page = admin.newPage();
+      try {
+        start(postgres, workspace, "dev");
+        signIn(page, LOGIN, INITIAL_PASSWORD, true);
+        try (BrowserContext anonymous = browser.newContext()) {
+          APIResponse rejected =
+              anonymous
+                  .request()
+                  .post(
+                      baseUrl + "/modules/upload-installations",
+                      RequestOptions.create().setMaxRedirects(0));
+          assertThat(rejected.status()).isEqualTo(302);
+          assertThat(URI.create(rejected.headers().get("location")).getPath().split(";", 2)[0])
+              .isEqualTo("/login");
+        }
+        page.navigate(baseUrl + "/sea/accounts");
+        page.locator("form[action='/sea/accounts/create'] input[name=loginName]")
+            .fill("released-member");
+        page.locator("form[action='/sea/accounts/create'] input[name=temporaryPassword]")
+            .fill(INITIAL_PASSWORD);
+        page.locator("form[action='/sea/accounts/create'] select[name=role]")
+            .selectOption("MEMBER");
+        page.locator("form[action='/sea/accounts/create'] button[type=submit]").click();
+        try (BrowserContext member = browser.newContext()) {
+          signIn(member.newPage(), "released-member", INITIAL_PASSWORD, true);
+          assertThat(member.request().get(baseUrl + "/modules").status()).isEqualTo(403);
+          assertThat(member.request().get(baseUrl + "/api/sea/modules").status()).isEqualTo(403);
+        }
+        page.navigate(baseUrl + "/modules");
+        page.locator("input[name=moduleJar]")
+            .setInputFiles(
+                new FilePayload("invalid.jar", "application/java-archive", new byte[] {1}));
+        page.locator("[data-action=upload-module]").click();
+        page.getByRole(AriaRole.ALERT).waitFor();
+        for (Release release : releases) {
+          page.navigate(baseUrl + "/modules");
+          page.locator("input[name=moduleJar]").setInputFiles(release.path());
+          page.locator("[data-action=upload-module]").click();
+          page.getByText("Uploaded " + release.moduleId() + " " + release.version() + " installed")
+              .waitFor();
+        }
+        stop();
+        start(postgres, workspace, "dev");
+        admin.clearCookies();
+        signIn(page, LOGIN, PASSWORD, false);
+        JsonNode modules = JSON.readTree(admin.request().get(baseUrl + "/api/sea/modules").text());
+        Path root = Files.createDirectories(workspace.resolve("filesystem-fixture"));
+        Files.writeString(root.resolve("evidence.txt"), "Configured released filesystem");
+        page.navigate(baseUrl + "/modules/zalava-module-filesystem");
+        page.locator("textarea[name='configuration.filesystem-root.roots']")
+            .fill(
+                JSON.writeValueAsString(
+                    List.of(
+                        Map.of(
+                            "id",
+                            "acceptance",
+                            "displayName",
+                            "Acceptance fixture",
+                            "path",
+                            root.toString(),
+                            "writable",
+                            false))));
+        page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Save configuration").setExact(true))
+            .click();
+        startModule(page, "zalava-module-filesystem");
+        APIResponse file =
+            invoke(
+                admin, page, "filesystem-acceptance", "readFile", Map.of("path", "evidence.txt"));
+        assertThat(file.status()).isEqualTo(200);
+        assertThat(file.text()).contains("Configured released filesystem");
+        startModule(page, "zalava-module-time");
+        startModule(page, "zalava-module-shopping-list");
+        APIResponse time = invoke(admin, page, "jdk-time", "current_time", Map.of("zoneId", "UTC"));
+        assertThat(time.status()).isEqualTo(200);
+        assertThat(JSON.readTree(time.text()).path("success").booleanValue()).isTrue();
+        assertThat(time.text()).contains("UTC");
+        APIResponse invalidTime =
+            invoke(admin, page, "jdk-time", "current_time", Map.of("zoneId", "Invalid/Zone"));
+        assertThat(invalidTime.status()).isEqualTo(200);
+        assertThat(JSON.readTree(invalidTime.text()).path("success").booleanValue()).isFalse();
+        assertThat(invalidTime.text()).contains("error");
+
+        APIResponse denied =
+            invoke(
+                admin, page, "shopping-list-household", "add_item", Map.of("name", "Denied milk"));
+        assertThat(denied.status()).isEqualTo(202);
+        String deniedId = JSON.readTree(denied.text()).path("requestId").stringValue();
+        assertThat(
+                post(admin, page, "/api/sea/permission-requests/" + deniedId + "/deny", Map.of())
+                    .status())
+            .isEqualTo(200);
+        page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+        assertThat(page.content()).doesNotContain("Denied milk");
+        APIResponse pending =
+            invoke(
+                admin,
+                page,
+                "shopping-list-household",
+                "add_item",
+                Map.of("name", "SDK acceptance milk"));
+        assertThat(pending.status()).isEqualTo(202);
+        String requestId = JSON.readTree(pending.text()).path("requestId").stringValue();
+        assertThat(
+                post(admin, page, "/api/sea/permission-requests/" + requestId + "/allow", Map.of())
+                    .status())
+            .isEqualTo(200);
+        page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+        page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true)).waitFor();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("shopping-before-restart.png")));
+
+        stop();
+        start(postgres, workspace, "local-control");
+        admin.clearCookies();
+        signIn(page, LOGIN, PASSWORD, false);
+        page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+        page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true)).waitFor();
+        assertThat(admin.request().get(baseUrl + "/api/sea/modules").status()).isEqualTo(404);
+        page.locator("form:has(input[name=name][value='SDK acceptance milk']) input[type=checkbox]")
+            .check();
+        page.waitForURL(baseUrl + "/apps/zalava-module-shopping-list/shopping-list/items/bought");
+        assertThat(page.locator("main").textContent()).contains("Bought SDK acceptance milk");
+        page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true))
+            .waitFor(
+                new com.microsoft.playwright.Locator.WaitForOptions()
+                    .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN));
+        stop();
+        start(postgres, workspace, "local-control");
+        admin.clearCookies();
+        signIn(page, LOGIN, PASSWORD, false);
+        page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+        assertThat(page.content()).doesNotContain("SDK acceptance milk", "Denied milk");
+        assertThat(Files.size(workspace.resolve("shopping-list.sqlite"))).isPositive();
+        page.navigate(baseUrl + "/modules/zalava-module-filesystem");
+        assertThat(
+                page.locator("textarea[name='configuration.filesystem-root.roots']").inputValue())
+            .contains(root.toString());
+        // Keep the complete fleet assertion after independent journeys so release defects
+        // do not conceal other failures. Missing/incompatible artifacts still fail this lane.
+        for (Release release : releases) {
+          assertThat(modules.toString())
+              .as("released module loaded after restart: %s", release.moduleId())
+              .contains(release.moduleId());
+        }
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("shopping-after-restart.png")));
+      } catch (Throwable failure) {
+        try {
+          page.screenshot(new Page.ScreenshotOptions().setPath(diagnostics.resolve("failure.png")));
+          Files.writeString(diagnostics.resolve("failure.html"), page.content());
+        } catch (RuntimeException ignored) {
+          // Process logs remain available when the page is already closed.
+        }
+        throw failure;
+      } finally {
+        stop();
+      }
+    }
+  }
+
+  private List<Release> downloadReleases() throws Exception {
+    Properties pins = new Properties();
+    try (var input = getClass().getResourceAsStream("/released-modules.properties")) {
+      assertThat(input).as("immutable released-module pins").isNotNull();
+      pins.load(input);
+    }
+    assertThat(pins).hasSize(12);
+    List<Release> result = new ArrayList<>();
+    for (String name : pins.stringPropertyNames().stream().sorted().toList()) {
+      String[] pin = pins.getProperty(name).split(",");
+      String moduleId = "zalava-module-" + name;
+      String asset = moduleId + "-" + pin[0] + ".jar";
+      URI uri =
+          URI.create(
+              "https://github.com/Zalava/"
+                  + moduleId
+                  + "/releases/download/v"
+                  + pin[0]
+                  + "/"
+                  + asset);
+      HttpResponse<byte[]> response = download(uri);
+      assertThat(response.statusCode()).as("released artifact %s", uri).isEqualTo(200);
+      String digest =
+          HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(response.body()));
+      assertThat(digest).as("immutable digest %s", moduleId).isEqualTo(pin[1]);
+      Path path = diagnostics.resolve(asset);
+      Files.write(path, response.body());
+      result.add(new Release(moduleId, pin[0], path));
+    }
+    return result;
+  }
+
+  private HttpResponse<byte[]> download(URI uri) throws Exception {
+    HttpRequest request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET().build();
+    for (int attempt = 1; ; attempt++) {
+      HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      if (attempt == 3 || !List.of(502, 503, 504).contains(response.statusCode())) {
+        return response;
+      }
+      Files.writeString(
+          diagnostics.resolve("download-retries.log"),
+          uri + " attempt=" + attempt + " status=" + response.statusCode() + "\n",
+          java.nio.file.StandardOpenOption.CREATE,
+          java.nio.file.StandardOpenOption.APPEND);
+      Thread.sleep(1000L * attempt);
+    }
+  }
+
+  private void start(PostgreSQLContainer postgres, Path workspace, String profile)
+      throws Exception {
+    int port;
+    try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+      port = socket.getLocalPort();
+    }
+    baseUrl = "http://127.0.0.1:" + port;
+    Path jar = Path.of(System.getProperty("sea.test.boot-jar")).toAbsolutePath();
+    assertThat(jar).exists();
+    Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
+    process =
+        new ProcessBuilder(
+                Path.of(System.getProperty("java.home"), "bin/java").toString(),
+                "-Xmx768m",
+                "-Dsea.module.shopping-list.sqlite.path="
+                    + workspace.resolve("shopping-list.sqlite"),
+                "-jar",
+                jar.toString(),
+                "--spring.profiles.active=" + profile,
+                "--server.address=127.0.0.1",
+                "--server.port=" + port,
+                "--management.server.port=0",
+                "--spring.datasource.url=" + postgres.getJdbcUrl(),
+                "--spring.datasource.username=" + postgres.getUsername(),
+                "--spring.datasource.password=" + postgres.getPassword(),
+                "--agent.workspace=" + workspace.toUri(),
+                "--sea.module-configuration.root=" + workspace.resolve("configuration"),
+                "--sea.accounts.security-enabled=true",
+                "--sea.accounts.bootstrap-login=" + LOGIN,
+                "--sea.accounts.bootstrap-password=" + INITIAL_PASSWORD,
+                "--agent.onboarding.completed=true",
+                "--spring.ai.model.chat=unknown",
+                "--agent.channels.telegram.token=false",
+                "--agent.channels.telegram.username=false",
+                "--jobrunr.background-job-server.enabled=false",
+                "--jobrunr.dashboard.enabled=false")
+            .directory(workspace.toFile())
+            .redirectErrorStream(true)
+            .redirectOutput(log.toFile())
+            .start();
+    long deadline = System.nanoTime() + Duration.ofSeconds(120).toNanos();
+    while (System.nanoTime() < deadline) {
+      assertThat(process.isAlive()).as("packaged host startup; diagnostics: %s", log).isTrue();
+      try {
+        if (http.send(
+                    HttpRequest.newBuilder(URI.create(baseUrl + "/login"))
+                        .timeout(Duration.ofSeconds(2))
+                        .GET()
+                        .build(),
+                    HttpResponse.BodyHandlers.discarding())
+                .statusCode()
+            == 200) return;
+      } catch (java.io.IOException ignored) {
+        // The packaged server has not bound its random loopback port yet.
+      }
+      Thread.sleep(250);
+    }
+    throw new AssertionError("Packaged host startup timed out; diagnostics: " + log);
+  }
+
+  private void stop() throws Exception {
+    if (process != null) {
+      process.destroy();
+      if (!process.waitFor(20, TimeUnit.SECONDS)) {
+        process.destroyForcibly();
+        assertThat(process.waitFor(10, TimeUnit.SECONDS)).isTrue();
+      }
+      process = null;
+    }
+  }
+
+  private void signIn(Page page, String login, String password, boolean temporary) {
+    page.navigate(baseUrl + "/login");
+    page.locator("input[name=username]").fill(login);
+    page.locator("input[name=password]").fill(password);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+    if (temporary) {
+      page.locator("input[name=currentPassword]").waitFor();
+      page.locator("input[name=currentPassword]").fill(password);
+      page.locator("input[name=replacementPassword]").fill(password + "-changed");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
+          .click();
+    }
+    page.waitForURL(url -> !url.endsWith("/login") && !url.endsWith("/account/password"));
+  }
+
+  private void startModule(Page page, String moduleId) {
+    page.navigate(baseUrl + "/modules/" + moduleId);
+    var start = page.locator("form[action='/modules/" + moduleId + "/start'] button");
+    if (start.count() > 0) start.click();
+  }
+
+  private APIResponse invoke(
+      BrowserContext context,
+      Page page,
+      String provider,
+      String tool,
+      Map<String, Object> arguments) {
+    return post(
+        context,
+        page,
+        "/api/sea/providers/" + provider + "/tools/" + tool + "/invoke",
+        Map.of("actorId", LOGIN, "confirmed", false, "arguments", arguments));
+  }
+
+  private APIResponse post(
+      BrowserContext context, Page page, String path, Map<String, Object> body) {
+    page.navigate(baseUrl + "/modules");
+    String csrf =
+        context.cookies(baseUrl).stream()
+            .filter(cookie -> cookie.name.equals("XSRF-TOKEN"))
+            .findFirst()
+            .orElseThrow()
+            .value;
+    return context
+        .request()
+        .post(
+            baseUrl + path, RequestOptions.create().setHeader("X-XSRF-TOKEN", csrf).setData(body));
+  }
+
+  private record Release(String moduleId, String version, Path path) {}
+}

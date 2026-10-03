@@ -37,6 +37,31 @@ class ExternalSeaModuleLoaderTest {
   @TempDir Path workspace;
 
   @Test
+  void discoversInstalledDescriptorsWithoutCreatingUnconfiguredProviders() throws Exception {
+    Path artifact = installFixtureJar();
+    FileSystemModuleEnablement registry = enableFixture(artifact);
+    ProviderFactoryContext context =
+        new ProviderFactoryContext(
+            Map.of(
+                "modules",
+                Map.of(
+                    "sea-external-module-fixture",
+                    Map.of(
+                        "factories",
+                        Map.of("external-fixture-factory", Map.of("rejectCreation", true))))));
+    try (ExternalSeaModuleLoader loader = new ExternalSeaModuleLoader(registry, context)) {
+      List<ZalavaModule> modules = loader.loadModules();
+      assertThat(modules).hasSize(1);
+      assertThatThrownBy(() -> loader.validateLoadedModules(registry.enabledModules(), modules))
+          .isInstanceOf(ExternalSeaModuleLoadingException.class)
+          .hasMessageContaining("Fixture provider creation rejected");
+      assertThatThrownBy(() -> new DefaultSeaRuntime(new StaticSeaModuleRegistry(modules), context))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessageContaining("Fixture provider creation rejected");
+    }
+  }
+
+  @Test
   void loadsEnabledServiceModuleAndProviderFromExternalJar() throws Exception {
     Path artifact = installFixtureJar();
     FileSystemModuleEnablement registry = enableFixture(artifact);

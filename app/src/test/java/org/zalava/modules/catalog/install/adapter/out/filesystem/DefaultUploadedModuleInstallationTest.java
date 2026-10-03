@@ -71,6 +71,18 @@ class DefaultUploadedModuleInstallationTest {
     assertThat(request.module().moduleId()).isEqualTo("zalava-module-example");
   }
 
+  @Test
+  void detectsTheManifestNameUsedByReleasedBundles() throws Exception {
+    ModuleReleaseInstallRequest request =
+        create(
+            jar(
+                Map.of(
+                    "module-metadata.yaml", METADATA.getBytes(),
+                    "META-INF/sea-module-bundle.yaml",
+                        "module:\n  path: module.jar\n".getBytes())));
+    assertThat(request.artifactBundle()).isTrue();
+  }
+
   private ModuleReleaseInstallRequest create(Path jar) throws IOException {
     var installation =
         new DefaultUploadedModuleInstallation(

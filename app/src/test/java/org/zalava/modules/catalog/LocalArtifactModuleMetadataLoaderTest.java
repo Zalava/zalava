@@ -42,6 +42,51 @@ class LocalArtifactModuleMetadataLoaderTest {
   }
 
   @Test
+  void acceptsChannelModuleWithoutProviderFactories() throws Exception {
+    String metadata =
+        validMetadata()
+            .replaceFirst(
+                "(?s)factories:\\s*- factoryId: local-factory\\s*providerType: filesystem-root",
+                "factories: []");
+    Path jar = temporaryDirectory.resolve("channel.jar");
+    try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(jar))) {
+      output.putNextEntry(new JarEntry("module-metadata.yaml"));
+      output.write(metadata.getBytes(StandardCharsets.UTF_8));
+      output.closeEntry();
+    }
+    assertThat(loader.loadJar(jar).modules().getFirst().factories()).isEmpty();
+    assertThatThrownBy(() -> loader.load(metadata.replace("factories: []", "factories: {}")))
+        .isInstanceOf(SourceModuleIndexValidationException.class)
+        .hasMessage("modules[0].factories must be a list");
+  }
+
+  @Test
+  void acceptsReleasedOperationNamesAsConservativeSearchMetadata() {
+    String metadata =
+        validMetadata()
+            .replaceFirst(
+                "(?s)operations:.*?security:",
+                "operations: [listContainers, stopContainer]\n    security:");
+    assertThat(loader.load(metadata).modules().getFirst().operations())
+        .extracting(SourceModuleIndex.Operation::name)
+        .containsExactly("listContainers", "stopContainer");
+    assertThat(loader.load(metadata).modules().getFirst().operations())
+        .allSatisfy(
+            operation -> {
+              assertThat(operation.sideEffecting()).isTrue();
+              assertThat(operation.inputSchema()).isEmpty();
+            });
+    assertThatThrownBy(
+            () -> loader.load(metadata.replace("[listContainers, stopContainer]", "[42]")))
+        .isInstanceOf(SourceModuleIndexValidationException.class)
+        .hasMessageContaining("operations[] must be an object");
+    assertThatThrownBy(
+            () -> loader.load(metadata.replace("[listContainers, stopContainer]", "[' ']")))
+        .isInstanceOf(SourceModuleIndexValidationException.class)
+        .hasMessageContaining("operations[] must be a non-blank string");
+  }
+
+  @Test
   void loadsMetadataEmbeddedInUploadedJar() throws Exception {
     Path jar = temporaryDirectory.resolve("module.jar");
     try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(jar))) {

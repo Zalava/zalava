@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
@@ -44,7 +45,8 @@ public final class SeaWebExtensionController {
   public Object dispatch(
       @PathVariable String moduleId,
       @PathVariable String pageId,
-      HttpServletRequest servletRequest) {
+      HttpServletRequest servletRequest,
+      CsrfToken csrf) {
     String path = extensionPath(servletRequest, moduleId, pageId);
     RouteInvocation invocation =
         routes
@@ -80,6 +82,7 @@ public final class SeaWebExtensionController {
     view.setStatus(HttpStatus.valueOf(response.status()));
     view.addObject("title", invocation.page().title());
     view.addObject("content", response.body());
+    view.addObject("csrf", csrf);
     return view;
   }
 
