@@ -30,10 +30,19 @@ public sealed interface UiEvent
   }
 
   record ConversationSnapshot(
-      String protocolVersion, String conversationId, List<ConversationMessage> messages)
+      String protocolVersion,
+      String conversationId,
+      List<ConversationMessage> messages,
+      String channelId,
+      boolean canSend,
+      boolean canContinue)
       implements UiEvent {
     public ConversationSnapshot {
       messages = List.copyOf(messages);
+    }
+
+    public ConversationSnapshot(String version, String id, List<ConversationMessage> messages) {
+      this(version, id, messages, "web", true, false);
     }
   }
 

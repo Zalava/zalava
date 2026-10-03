@@ -228,6 +228,11 @@ class BrowserNavigationAcceptanceTest {
       assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
           .isEqualTo(true);
       assertThat(page.locator("a[aria-current='page']").innerText()).isEqualTo("Dashboard");
+      page.route("**/bulma.min.css", route -> route.abort());
+      page.reload();
+      page.locator(".sea-navbar").waitFor();
+      assertThat(page.locator(".sea-navbar").boundingBox().width).isEqualTo(240);
+      assertThat(page.locator("main").boundingBox().x).isEqualTo(240);
     }
   }
 

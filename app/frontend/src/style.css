@@ -172,3 +172,21 @@ h1, p { margin: var(--sea-space-1) 0; }
   .attachments > :first-child { flex-basis: 100%; }
   .attachments .sea-button, .approval .sea-button { flex: 1 1 auto; }
 }
+
+.sea-chat { width: min(100%, 82rem); }
+.chat-workspace { display: grid; gap: var(--sea-space-4); min-width: 0; }
+.chat-primary { display: grid; gap: var(--sea-space-3); min-width: 0; }
+.chat-inspector { display: none; min-width: 0; padding: var(--sea-space-4); border: 1px solid var(--sea-color-border); border-radius: var(--sea-radius-lg); background: var(--sea-color-surface); }
+.inspector-open .chat-inspector { display: block; }
+.chat-inspector [role="tablist"] { display: flex; flex-wrap: wrap; gap: var(--sea-space-2); }
+.chat-inspector [aria-selected="true"] { color: var(--sea-color-surface); background: var(--sea-color-primary); }
+.chat-inspector .execution, .chat-inspector .approval { margin-top: var(--sea-space-3); }
+.channel-history { padding: var(--sea-space-4); border: 1px solid var(--sea-color-border); border-radius: var(--sea-radius-lg); background: var(--sea-color-primary-soft); }
+.channel-history .sea-field { margin: var(--sea-space-2); }
+.messages pre, .message { overflow-wrap: anywhere; }
+.messages pre { white-space: pre-wrap; }
+@media (min-width: 1024px) {
+  .chat-workspace { grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem); align-items: start; }
+  .chat-inspector { display: block; }
+  .inspector-toggle { display: none; }
+}

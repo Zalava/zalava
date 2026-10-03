@@ -8,6 +8,20 @@ import org.junit.jupiter.api.Test;
 
 class UiCommandDecoderTest {
   @Test
+  void decodesExplicitContinuationWithoutAcceptingMissingDestination() {
+    assertThat(
+            UiCommandDecoder.decode(
+                Map.of("type", "chat.continue", "conversationId", "source", "destination", "web")))
+        .contains(new UiCommand.ContinueConversation(UiCommandDecoder.VERSION, "source", "web"));
+    assertThat(UiCommandDecoder.decode(Map.of("type", "chat.continue", "conversationId", "source")))
+        .isEmpty();
+    assertThat(
+            UiCommandDecoder.decode(
+                Map.of("type", "chat.continue", "conversationId", "", "destination", "web")))
+        .isEmpty();
+  }
+
+  @Test
   void decodesVersionedChatIntentWithoutClientSuppliedAuthority() {
     var command =
         UiCommandDecoder.decode(

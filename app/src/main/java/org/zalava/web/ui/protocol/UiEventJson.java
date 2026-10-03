@@ -19,6 +19,9 @@ public final class UiEventJson {
         json.put("type", "conversation.snapshot");
         json.put("conversationId", snapshot.conversationId());
         json.put("messages", snapshot.messages());
+        json.put("channelId", snapshot.channelId());
+        json.put("canSend", snapshot.canSend());
+        json.put("canContinue", snapshot.canContinue());
       }
       case UiEvent.ChatDelta delta -> {
         json.put("type", "chat.delta");

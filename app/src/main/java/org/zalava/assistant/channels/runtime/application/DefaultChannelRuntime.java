@@ -23,6 +23,9 @@ import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 public final class DefaultChannelRuntime implements ChannelRuntime {
   private final ChannelIdentityLinks identities;
   private final ChannelInteractionDispatcher dispatcher;
+  private final org.zalava.assistant.channels.runtime.application.port.out
+          .ChannelConversationRouting
+      routing;
   private final Map<String, ZalavaChannel> channels = new ConcurrentHashMap<>();
   private final Map<ConversationKey, ConversationReference> conversations =
       new ConcurrentHashMap<>();
@@ -30,6 +33,15 @@ public final class DefaultChannelRuntime implements ChannelRuntime {
 
   public DefaultChannelRuntime(
       ChannelIdentityLinks identities, ChannelInteractionDispatcher dispatcher) {
+    this(identities, dispatcher, null);
+  }
+
+  public DefaultChannelRuntime(
+      ChannelIdentityLinks identities,
+      ChannelInteractionDispatcher dispatcher,
+      org.zalava.assistant.channels.runtime.application.port.out.ChannelConversationRouting
+          routing) {
+    this.routing = routing;
     this.identities = Objects.requireNonNull(identities, "identities must not be null");
     this.dispatcher = Objects.requireNonNull(dispatcher, "dispatcher must not be null");
   }
@@ -61,21 +73,29 @@ public final class DefaultChannelRuntime implements ChannelRuntime {
       received.remove(key);
       return new ChannelIngressResult.Denied(ChannelIngressResult.Reason.IDENTITY_DENIED);
     }
-    ConversationReference conversation =
-        conversations.computeIfAbsent(
-            new ConversationKey(
-                actor,
-                interaction.destination().channelId(),
-                interaction.destination().deliveryHandle()),
-            ignored -> ConversationReference.newReference());
-    var resolved = new ResolvedChannelInteraction(actor, conversation, interaction);
     try {
+      ConversationReference conversation =
+          routing == null
+              ? conversations.computeIfAbsent(
+                  new ConversationKey(
+                      actor,
+                      interaction.destination().channelId(),
+                      interaction.destination().deliveryHandle()),
+                  ignored -> ConversationReference.newReference())
+              : routing.resolve(
+                  actor,
+                  new org.zalava.assistant.conversation.domain.ConversationOrigin(
+                      interaction.identity().channelId(),
+                      interaction.identity().subject(),
+                      interaction.destination().deliveryHandle(),
+                      interaction.destination().privacy() == ChannelPrivacy.PRIVATE));
+      var resolved = new ResolvedChannelInteraction(actor, conversation, interaction);
       dispatcher.dispatch(resolved);
+      return new ChannelIngressResult.Accepted(resolved);
     } catch (RuntimeException exception) {
       received.remove(key);
       throw exception;
     }
-    return new ChannelIngressResult.Accepted(resolved);
   }
 
   @Override

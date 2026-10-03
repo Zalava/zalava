@@ -428,6 +428,22 @@ public class SeaConfiguration {
   }
 
   @Bean
+  public org.zalava.assistant.conversation.application.port.in.ConversationContinuation
+      conversationContinuation(
+          @org.springframework.beans.factory.annotation.Qualifier("actorConversations")
+              ActorConversations actorConversations,
+          @org.springframework.beans.factory.annotation.Qualifier("conversationStore")
+              ConversationStore store,
+          org.zalava.identity.channels.application.port.in.ChannelIdentityLinks links,
+          AccountStore accounts) {
+    return new org.zalava.assistant.conversation.application.DefaultConversationContinuation(
+        actorConversations,
+        (org.zalava.assistant.conversation.application.port.out.ConversationOriginStore) store,
+        links,
+        accounts);
+  }
+
+  @Bean
   public ChatMemoryRepository chatMemoryRepository(
       ConversationRepository conversationRepository, ActorConversations actorConversations) {
     return new SpringAiChatMemoryRepository(conversationRepository, actorConversations);

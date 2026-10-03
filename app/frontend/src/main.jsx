@@ -73,6 +73,12 @@ function SeaRuntime({ children }) {
   const [imports, setImports] = useState([]);
   const [uploadError, setUploadError] = useState(null);
   const [status, setStatus] = useState("Connecting");
+  const [origin, setOrigin] = useState("web");
+  const [canSend, setCanSend] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
+  const [continuing, setContinuing] = useState(false);
+  const [commandError, setCommandError] = useState(null);
+  const selectedConversation = useRef(null);
   const socket = useRef(null);
   const pendingAttachments = useRef(new Map());
   const sendCommandRef = useRef(() => false);
@@ -89,9 +95,16 @@ function SeaRuntime({ children }) {
       if (event.type === "conversation.list") {
         setConversationIds(event.conversationIds);
       } else if (event.type === "conversation.snapshot") {
+        selectedConversation.current = event.conversationId;
         setConversationId(event.conversationId);
+        setOrigin(event.channelId ?? "web");
+        setCanSend(event.canSend === true);
+        setCanContinue(event.canContinue === true);
+        setContinuing(false);
+        setCommandError(null);
         setMessages(event.messages.map((message) => ({ role: message.role, content: message.text })));
       } else if (event.type === "chat.delta") {
+        if (event.conversationId !== selectedConversation.current) return;
         setMessages((current) => {
           const last = current.at(-1);
           if (last?.role === "assistant" && last.streaming) {
@@ -100,11 +113,14 @@ function SeaRuntime({ children }) {
           return [...current, { role: "assistant", content: event.text, streaming: true }];
         });
       } else if (event.type === "chat.completed") {
+        if (event.conversationId !== selectedConversation.current) return;
         setMessages((current) => [
           ...current.filter((message) => !message.streaming),
           { role: "assistant", content: event.text, jobIds: event.jobIds },
         ]);
       } else if (event.type === "job.updated") {
+        setApprovals((current) => Object.fromEntries(Object.entries(current).map(([id, entry]) =>
+          [id, entry.jobId === event.jobId && entry.submitting ? { ...entry, pending: false, submitting: false } : entry])));
         setJobs((current) => ({ ...current, [event.jobId]: { status: event.status, summary: event.summary } }));
       } else if (event.type === "permission.requested") {
         setApprovals((current) => ({
@@ -135,9 +151,13 @@ function SeaRuntime({ children }) {
       } else if (event.type === "attachment.removed") {
         setImports((current) => current.filter((entry) => entry.attachmentId !== event.attachmentId));
       } else if (event.type === "failure") {
+        setContinuing(false);
+        if (event.operation !== "chat.send") setCommandError(event.message);
+        setApprovals((current) => Object.fromEntries(Object.entries(current).map(([id, entry]) =>
+          [id, { ...entry, submitting: false }])));
         pendingAttachments.current.forEach((pending) => pending.reject(new Error(event.message)));
         pendingAttachments.current.clear();
-        setMessages((current) => [
+        if (event.operation === "chat.send") setMessages((current) => [
           ...current.filter((message) => !message.streaming),
           { role: "assistant", content: event.message, failure: true },
         ]);
@@ -236,7 +256,7 @@ function SeaRuntime({ children }) {
 
   const onNew = async (message) => {
     const text = messageText(message);
-    if (!text.trim() || socket.current?.readyState !== WebSocket.OPEN || !conversationId) return;
+    if (!text.trim() || socket.current?.readyState !== WebSocket.OPEN || !conversationId || !canSend || continuing) return;
     const attachments = message.attachments ?? [];
     const attachmentIds = attachments
       .map((attachment) => attachment.content?.find((part) => part.type === "file")?.data ?? attachment.id)
@@ -253,7 +273,7 @@ function SeaRuntime({ children }) {
   const runtime = useExternalStoreRuntime({
     messages,
     isRunning: messages.at(-1)?.streaming === true,
-    isSendDisabled: status !== "Connected" || !conversationId,
+    isSendDisabled: status !== "Connected" || !conversationId || !canSend || continuing,
     convertMessage: (message) => ({
       role: message.role,
       content: [{ type: "text", text: message.content }],
@@ -265,6 +285,7 @@ function SeaRuntime({ children }) {
   const value = useMemo(
     () => ({
       messages,
+      origin, canSend, canContinue, continuing, commandError,
       status,
       conversationId,
       conversationIds,
@@ -274,16 +295,19 @@ function SeaRuntime({ children }) {
       uploadError,
       importFiles,
       decideApproval: (jobId, requestId, decision) => {
-        setApprovals((current) => ({
-          ...current,
-          [requestId]: { ...current[requestId], pending: false },
-        }));
-        sendCommand({ type: "approval.decide", jobId, requestId, decision });
+        if (sendCommand({ type: "approval.decide", jobId, requestId, decision })) {
+          setApprovals((current) => ({ ...current, [requestId]: { ...current[requestId], submitting: true } }));
+        } else setCommandError("Zalava is not connected");
+      },
+      continueConversation: () => {
+        setCommandError(null);
+        if (sendCommand({ type: "chat.continue", conversationId, destination: "web" })) setContinuing(true);
+        else setCommandError("Zalava is not connected");
       },
       selectConversation: (id) => sendCommand({ type: "chat.select", conversationId: id }),
       createConversation: () => sendCommand({ type: "chat.create" }),
     }),
-    [messages, status, conversationId, conversationIds, jobs, approvals, imports, uploadError],
+    [messages, status, conversationId, conversationIds, jobs, approvals, imports, uploadError, origin, canSend, canContinue, continuing, commandError],
   );
 
   return (
@@ -297,7 +321,10 @@ function SeaRuntime({ children }) {
 }
 
 function Chat() {
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState("Run");
   const {
+    origin, canSend, canContinue, continuing, commandError, continueConversation,
     messages,
     status,
     conversationId,
@@ -350,11 +377,28 @@ function Chat() {
         <output className="sea-status" aria-live="polite">{status}</output>
       </header>
       <nav className="conversations" aria-label="Conversations">
-        <select className="sea-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation">
+        <select className="sea-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={pending || continuing || status !== "Connected"}>
           {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
         </select>
-        <button className="sea-button" type="button" onClick={createConversation} disabled={status !== "Connected"}>New conversation</button>
+        <button className="sea-button" type="button" onClick={createConversation} disabled={status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
+      <button className="sea-button sea-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
+      {approvals.length > 0 && <div className="permission-shortcut" role="status">
+        <span>{approvals.length} pending permission{approvals.length === 1 ? "" : "s"}</span>
+        <button className="sea-button" type="button" onClick={() => { setInspectorOpen(true); setInspectorTab("Tools"); }}>Review permissions</button>
+      </div>}
+      <div className={`chat-workspace ${inspectorOpen ? "inspector-open" : ""}`}>
+      <div className="chat-primary">
+      {origin !== "web" && <section className="channel-history" aria-label="Channel conversation">
+        <h2>{origin} history</h2>
+        <p>This history is read-only. Continue in a separate private web conversation to send a message.</p>
+        {canContinue ? <>
+          <label htmlFor="continuation-destination">Continue in</label>
+          <select id="continuation-destination" className="sea-field" disabled={continuing}><option value="web">Private web chat</option></select>
+          <button className="sea-button" type="button" onClick={continueConversation} disabled={continuing || status !== "Connected"}>{continuing ? "Continuing…" : "Continue conversation"}</button>
+        </> : <p>Continuation is unavailable for this channel identity or destination.</p>}
+      </section>}
+      {commandError && commandError !== failure?.content && <p role="alert">{commandError}</p>}
       <section className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
         {messages.map((message, index) => (
           <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
@@ -373,25 +417,9 @@ function Chat() {
         ))}
       </section>
 
-      {Object.entries(jobs).map(([jobId, job]) => (
-        <section className="execution" key={jobId} aria-label={`Execution ${jobId}`}>
-          <strong>Execution {job.status.replaceAll("_", " ")}</strong>
-          <p>{job.summary}</p>
-          <a href={`/jobs/${jobId}`}>View job evidence</a>
-        </section>
-      ))}
-
-      {approvals.map(([requestId, approval]) => (
-        <section className="approval" key={requestId} aria-label="Pending permission">
-          <strong>Permission needed</strong>
-          <p>Zalava requests approval for {approval.summary}.</p>
-          <button className="sea-button" type="button" onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
-          <button className="sea-button sea-button--danger" type="button" onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
-        </section>
-      ))}
       {pending && <p role="status">Zalava is responding…</p>}
       {failure && <p role="alert">{failure.content}</p>}
-      <ComposerPrimitive.Root data-testid="composer" className="composer">
+      {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
         <label htmlFor="message">Message Zalava</label>
         <ComposerPrimitive.AttachmentDropzone data-testid="attachment-dropzone" className="composer-dropzone">
           <ComposerPrimitive.Attachments>
@@ -442,7 +470,47 @@ function Chat() {
           </ul>
         )}
         {uploadError && <p role="alert">{uploadError}</p>}
-      </ComposerPrimitive.Root>
+      </ComposerPrimitive.Root>}
+      </div>
+      <aside id="chat-inspector" className="chat-inspector" aria-label="Workspace inspector">
+        <div role="tablist" aria-label="Workspace details">
+          {["Run", "Tools", "Context"].map((tab) => <button className="sea-button sea-button--secondary" type="button" key={tab} id={`inspector-tab-${tab}`} role="tab" tabIndex={inspectorTab === tab ? 0 : -1} aria-selected={inspectorTab === tab} onKeyDown={(event) => {
+            const tabs = ["Run", "Tools", "Context"];
+            let next;
+            if (event.key === "ArrowRight") next = tabs[(tabs.indexOf(tab) + 1) % tabs.length];
+            else if (event.key === "ArrowLeft") next = tabs[(tabs.indexOf(tab) + tabs.length - 1) % tabs.length];
+            else if (event.key === "Home") next = tabs[0];
+            else if (event.key === "End") next = tabs.at(-1);
+            if (next) { event.preventDefault(); setInspectorTab(next); document.getElementById(`inspector-tab-${next}`).focus(); }
+          }} aria-controls="inspector-panel" onClick={() => setInspectorTab(tab)}>{tab}</button>)}
+        </div>
+        <div id="inspector-panel" role="tabpanel" aria-labelledby={`inspector-tab-${inspectorTab}`}>
+          {inspectorTab === "Run" && <>
+            <h2>Recent work for your account</h2>
+            <p>Jobs may belong to other conversations.</p>
+            {Object.keys(jobs).length === 0 && <p>No recent jobs.</p>}
+            {Object.entries(jobs).map(([jobId, job]) => <section className="execution" key={jobId} aria-label={`Execution ${jobId}`}>
+              <strong>Execution {job.status.replaceAll("_", " ")}</strong><p>{job.summary}</p><a href={`/jobs/${jobId}`}>View job evidence</a>
+            </section>)}
+          </>}
+          {inspectorTab === "Tools" && <>
+            <h2>Pending permissions</h2>
+            {approvals.length === 0 && <p>No pending permissions.</p>}
+            {approvals.map(([requestId, approval]) => <section className="approval" key={requestId} aria-label="Pending permission">
+              <strong>Permission needed</strong><p>Zalava requests approval for {approval.summary}.</p>
+              <button className="sea-button" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
+              <button className="sea-button sea-button--danger" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
+              {approval.submitting && <p role="status">Submitting decision…</p>}
+            </section>)}
+          </>}
+          {inspectorTab === "Context" && <>
+            <h2>Available knowledge sources</h2><p>These sources are available to your account. This list does not show what the model used.</p>
+            {imports.length === 0 ? <p>No sources imported in this session.</p> : <ul>{imports.map((entry) => <li key={entry.sourceId}><a href={`/knowledge/${entry.sourceId}`}>{entry.name}</a></li>)}</ul>}
+            <p>Composer attachments apply to the next message. Knowledge imports remain available separately.</p>
+          </>}
+        </div>
+      </aside>
+      </div>
     </main>
   );
 }

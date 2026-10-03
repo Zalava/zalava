@@ -29,6 +29,37 @@ import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 
 class DefaultChannelRuntimeTest {
   @Test
+  void failedPersistentRoutingCanRetryWithoutDispatchingAnUnownedReference() {
+    var calls = new java.util.concurrent.atomic.AtomicInteger();
+    var dispatched =
+        new ArrayList<org.zalava.assistant.channels.runtime.domain.ResolvedChannelInteraction>();
+    var persisted = org.zalava.assistant.conversation.domain.ConversationReference.newReference();
+    var runtime =
+        new DefaultChannelRuntime(
+            links(ACTOR),
+            dispatched::add,
+            (actor, origin) -> {
+              assertThat(actor).isEqualTo(ACTOR);
+              assertThat(origin.channelId()).isEqualTo("fixture");
+              if (calls.getAndIncrement() == 0)
+                throw new IllegalStateException("Storage unavailable");
+              return persisted;
+            });
+    runtime.register(new FixtureChannel("fixture", fullCapabilities()));
+    var input =
+        interaction("routing-retry", ChannelInteractionKind.CONVERSATION, "fixture", "private");
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> runtime.receive(input))
+        .hasMessage("Storage unavailable");
+    assertThat(dispatched).isEmpty();
+    assertThat(runtime.receive(input)).isInstanceOf(ChannelIngressResult.Accepted.class);
+    assertThat(dispatched)
+        .singleElement()
+        .satisfies(result -> assertThat(result.conversation()).isEqualTo(persisted));
+    assertThat(calls.get()).isEqualTo(2);
+    runtime.close();
+  }
+
+  @Test
   void failedDispatchCanRetryAndCloseRemovesEveryTransport() {
     var calls = new java.util.concurrent.atomic.AtomicInteger();
     DefaultChannelRuntime runtime =
