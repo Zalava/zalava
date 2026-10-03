@@ -590,6 +590,14 @@ public class SeaConfiguration {
   }
 
   @Bean
+  public org.zalava.tasks.application.port.in.ActorJobEvidenceQueries actorJobEvidenceQueries(
+      org.zalava.tasks.application.port.out.ActorTaskStore actorTaskStore,
+      org.zalava.tasks.application.port.out.ActorTaskSchedules schedules) {
+    return new org.zalava.tasks.application.DefaultActorJobEvidenceQueries(
+        actorTaskStore, schedules);
+  }
+
+  @Bean
   public ActorTaskCommands actorTaskCommands(
       ActorTaskStore actorTaskStore, TaskScheduler taskScheduler) {
     return new ActorTaskUseCases(actorTaskStore, taskScheduler);

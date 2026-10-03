@@ -78,6 +78,12 @@ class BrowserJobsAcceptanceTest {
     registry.add("jobrunr.dashboard.enabled", () -> "false");
   }
 
+  @org.springframework.beans.factory.annotation.Autowired
+  private org.zalava.tasks.application.port.in.ActorTaskCommands actorTasks;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  private org.jobrunr.storage.StorageProvider storageProvider;
+
   @BeforeEach
   void clearApprovals() {
     approvals.clear();
@@ -112,7 +118,7 @@ class BrowserJobsAcceptanceTest {
       Page otherPage = otherContext.newPage();
       signIn(otherPage, OTHER_LOGIN);
       assertThat(otherPage.navigate(baseUrl() + "/jobs/" + ownerReference.value()).status())
-          .isEqualTo(403);
+          .isEqualTo(404);
 
       ownerPage.getByText("Owner approval job").click();
       ownerPage
@@ -127,6 +133,115 @@ class BrowserJobsAcceptanceTest {
       assertThat(
               ownerPage.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON).allInnerTexts())
           .doesNotContain("Deny and continue");
+    }
+  }
+
+  @Test
+  void readsSavedReportsAndRealScheduleChangesWithoutCrossAccountLeakage() throws Exception {
+    String login = "browser-job-evidence-" + UUID.randomUUID();
+    AccountConfiguration.createAccount(accounts, login);
+    Account owner = account(login);
+    Actor actor = new Actor(owner.id());
+    var report = ActorTaskReference.newReference();
+    String output = "# Browser saved report\nActual persisted output.";
+    tasks.save(
+        actor, report, task("Saved browser report", Task.Status.completed).withFeedback(output));
+    var due = java.time.LocalDateTime.of(2050, 1, 2, 12, 0);
+    var upcoming = actorTasks.schedule(actor, due, "Future browser job", "Scheduled fixture");
+    var actual =
+        new org.zalava.tasks.adapter.out.jobrunr.JobRunrActorTaskSchedules(storageProvider)
+            .list(actor).stream()
+                .filter(schedule -> schedule.reference().equals(upcoming))
+                .findFirst()
+                .orElseThrow();
+    var other = account(OTHER_LOGIN);
+    tasks.save(
+        new Actor(other.id()),
+        ActorTaskReference.newReference(),
+        task("Foreign browser report", Task.Status.completed).withFeedback("Other account output"));
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Path diagnostics =
+          Files.createDirectories(Path.of("build", "browser-acceptance", "job-evidence"));
+      context
+          .tracing()
+          .start(
+              new com.microsoft.playwright.Tracing.StartOptions()
+                  .setScreenshots(true)
+                  .setSnapshots(true)
+                  .setSources(true));
+      Page page = context.newPage();
+      try {
+        signIn(page, login);
+        page.navigate(baseUrl() + "/jobs");
+        var reports = page.locator("[aria-labelledby='saved-reports-title']");
+        reports.getByText("Saved browser report").waitFor();
+        assertThat(page.locator("body").innerText())
+            .doesNotContain("Foreign browser report", "Other account output");
+        var download =
+            page.waitForDownload(
+                () ->
+                    reports
+                        .getByRole(
+                            com.microsoft.playwright.options.AriaRole.LINK,
+                            new com.microsoft.playwright.Locator.GetByRoleOptions()
+                                .setName("Download saved report"))
+                        .click());
+        assertThat(download.suggestedFilename()).isEqualTo("job-report-" + report.value() + ".md");
+        assertThat(Files.readString(download.path())).isEqualTo(output);
+        reports
+            .getByRole(
+                com.microsoft.playwright.options.AriaRole.LINK,
+                new com.microsoft.playwright.Locator.GetByRoleOptions()
+                    .setName("Saved browser report"))
+            .focus();
+        page.keyboard().press("Enter");
+        page.waitForURL(baseUrl() + "/jobs/" + report.value());
+        assertThat(page.locator("#artifacts").innerText()).contains("Saved job report");
+        page.navigate(baseUrl() + "/dashboard");
+        page.locator("[aria-labelledby='upcoming-jobs-title']")
+            .getByText("Future browser job")
+            .waitFor();
+        var changed = java.time.Instant.parse("2050-01-03T14:00:00Z");
+        var job = storageProvider.getJobById(actual.scheduleId());
+        job.scheduleAt(changed, "Browser fixture change");
+        storageProvider.save(job);
+        page.reload();
+        page.locator("time[datetime='" + changed + "']").waitFor();
+        for (int width : new int[] {375, 768, 1440}) {
+          page.setViewportSize(width, 900);
+          assertThat(page.locator("[aria-labelledby='saved-reports-title']").isVisible()).isTrue();
+          assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+              .isEqualTo(true);
+        }
+        var cancelled = storageProvider.getJobById(actual.scheduleId());
+        cancelled.delete("Browser fixture cancellation");
+        storageProvider.save(cancelled);
+        page.reload();
+        page.getByText("No upcoming scheduled jobs.").waitFor();
+        try (BrowserContext foreign = browser.newContext()) {
+          Page otherPage = foreign.newPage();
+          signIn(otherPage, OTHER_LOGIN);
+          assertThat(
+                  foreign
+                      .request()
+                      .get(baseUrl() + "/jobs/" + report.value() + "/artifacts/report")
+                      .status())
+              .isEqualTo(404);
+        }
+      } catch (Throwable failure) {
+        page.screenshot(new Page.ScreenshotOptions().setPath(diagnostics.resolve("failure.png")));
+        Files.writeString(diagnostics.resolve("failure.html"), page.content());
+        throw failure;
+      } finally {
+        context
+            .tracing()
+            .stop(
+                new com.microsoft.playwright.Tracing.StopOptions()
+                    .setPath(diagnostics.resolve("job-evidence-trace.zip")));
+      }
     }
   }
 
