@@ -5,9 +5,9 @@ import java.util.Objects;
 import org.zalava.api.ZalavaServiceContract;
 
 /**
- * SEA-owned typed service contract for one speech synthesis provider supplied by a module.
+ * Zalava-owned typed service contract for one speech synthesis provider supplied by a module.
  *
- * <p>SEA owns provider selection and scoping; a synthesis provider streams only bounded audio
+ * <p>Zalava owns provider selection and scoping; a synthesis provider streams only bounded audio
  * declared in its capabilities and releases every resource on session close. Contract version 1.
  */
 public interface SpeechSynthesis {

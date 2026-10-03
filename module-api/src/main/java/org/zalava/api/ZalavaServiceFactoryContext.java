@@ -47,7 +47,7 @@ public final class ZalavaServiceFactoryContext {
   }
 
   /**
-   * Returns the authority SEA bound to this module's factory scope for managed-service requests.
+   * Returns the authority Zalava bound to this module's factory scope for managed-service requests.
    * Modules cannot supply an owner identifier for this authority.
    */
   public ManagedServiceAuthority managedServiceAuthority() {

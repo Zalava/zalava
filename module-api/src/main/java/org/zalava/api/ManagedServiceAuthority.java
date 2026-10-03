@@ -2,7 +2,7 @@ package org.zalava.api;
 
 import java.util.Objects;
 
-/** Authority SEA binds to the module factory scope that requests a managed service. */
+/** Authority Zalava binds to the module factory scope that requests a managed service. */
 public final class ManagedServiceAuthority {
 
   private final String moduleId;

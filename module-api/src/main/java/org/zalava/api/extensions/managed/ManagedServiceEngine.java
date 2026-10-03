@@ -4,25 +4,25 @@ import java.util.List;
 import org.zalava.api.ZalavaServiceContract;
 
 /**
- * SEA-owned typed service contract for one OCI engine implementation provided by a module.
+ * Zalava-owned typed service contract for one OCI engine implementation provided by a module.
  *
- * <p>SEA owns the engine endpoint and socket authority; a module engine receives only digest-pinned
- * desired state that has already been validated against an administrator-approved grant.
- * Implementations must operate only on resources they created under their own ownership namespace
- * and must never attach to, restart, or inherit foreign host resources.
+ * <p>Zalava owns the engine endpoint and socket authority; a module engine receives only
+ * digest-pinned desired state that has already been validated against an administrator-approved
+ * grant. Implementations must operate only on resources they created under their own ownership
+ * namespace and must never attach to, restart, or inherit foreign host resources.
  *
  * <p>Contract version 2 extends version 1 with {@link #remove(String)}: promoting a new digest
  * candidate or rolling back requires replacing the resource under the deterministic service-id
  * name, which is impossible without a removal primitive. The service id stays stable so existing v1
- * registrations resolve the same contract instance; SEA treats the contract as v2 from this release
- * on and every engine module must implement the full surface.
+ * registrations resolve the same contract instance; Zalava treats the contract as v2 from this
+ * release on and every engine module must implement the full surface.
  */
 public interface ManagedServiceEngine {
 
   ZalavaServiceContract<ManagedServiceEngine> CONTRACT =
       new ZalavaServiceContract<>("managed-service-engine", "2", ManagedServiceEngine.class);
 
-  /** Observes the current engine state of one SEA-owned managed service without mutating it. */
+  /** Observes the current engine state of one Zalava-owned managed service without mutating it. */
   Observation inspect(String serviceId);
 
   /**
@@ -54,8 +54,8 @@ public interface ManagedServiceEngine {
 
   /**
    * One deterministic create request: the reconciled service identity, its validated desired state,
-   * the approved grant it was validated against, and the SEA-owned data identity stamped on every
-   * created resource.
+   * the approved grant it was validated against, and the Zalava-owned data identity stamped on
+   * every created resource.
    */
   record Request(
       String serviceId,

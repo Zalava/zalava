@@ -17,7 +17,7 @@ import org.zalava.api.ZalavaToolDescriptor;
 /**
  * Creates a module's providers through its {@link ProviderFactory} declarations and exercises their
  * tool contract at the stable {@code module-api} boundary. Per-factory configuration and secrets
- * are scoped exactly as SEA scopes them, and created providers are closed in reverse order.
+ * are scoped exactly as Zalava scopes them, and created providers are closed in reverse order.
  */
 public final class ProviderFixture implements AutoCloseable {
   private final Map<String, ZalavaProvider> providers;

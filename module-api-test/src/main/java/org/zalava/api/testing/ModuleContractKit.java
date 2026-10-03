@@ -9,11 +9,12 @@ import org.zalava.api.extensions.channels.ChannelInteractionReceiver;
 
 /**
  * Entry point for exercising an external module at the stable {@code module-api} boundary without a
- * SEA instance. It complements {@link ExternalModuleTestHarness}, which owns artifact isolation and
- * service discovery, with helpers that instantiate providers and services from the loaded module.
+ * Zalava instance. It complements {@link ExternalModuleTestHarness}, which owns artifact isolation
+ * and service discovery, with helpers that instantiate providers and services from the loaded
+ * module.
  *
  * <p>The kit asserts only module-owned behavior for a supplied scope. Host-owned resolution,
- * validation, permissions, approvals, persistence and transport stay covered by SEA's own tests.
+ * validation, permissions, approvals, persistence and transport stay covered by Zalava's own tests.
  */
 public final class ModuleContractKit implements AutoCloseable {
   private final ExternalModuleTestHarness harness;

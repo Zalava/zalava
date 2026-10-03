@@ -33,7 +33,7 @@ public interface ZalavaModule {
   }
 
   /**
-   * Managed OCI services this module declares for SEA to install under administrator-approved
+   * Managed OCI services this module declares for Zalava to install under administrator-approved
    * resource grants. Added as a default method so modules compiled against earlier {@code
    * module-api} releases remain loadable and simply declare no managed services.
    */

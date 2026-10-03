@@ -59,7 +59,7 @@ class ManagedServiceEngineContractTest {
         "1",
         ManagedServiceLifecycle.RUNNING,
         Set.of(),
-        Set.of("/var/lib/sea/managed/home"),
+        Set.of("/var/lib/zalava/managed/home"),
         Set.of(8123),
         Set.of(),
         new ManagedServiceLimits(1_000, 2_000, 10),
@@ -71,7 +71,7 @@ class ManagedServiceEngineContractTest {
     return new ManagedServiceResourceGrant(
         "home-module",
         Set.of(),
-        Set.of("/var/lib/sea/managed/home"),
+        Set.of("/var/lib/zalava/managed/home"),
         Set.of(8123),
         Set.of(),
         new ManagedServiceLimits(1_000, 2_000, 10),

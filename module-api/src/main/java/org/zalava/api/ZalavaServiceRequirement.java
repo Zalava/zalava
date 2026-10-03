@@ -1,6 +1,6 @@
 package org.zalava.api;
 
-/** A module's explicit dependency on one SEA-owned service contract. */
+/** A module's explicit dependency on one Zalava-owned service contract. */
 public record ZalavaServiceRequirement(
     String serviceId, String versionRange, RequirementMode mode) {
 

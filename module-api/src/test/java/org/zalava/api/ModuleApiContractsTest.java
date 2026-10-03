@@ -280,11 +280,11 @@ class ModuleApiContractsTest {
                     "POST",
                     "/",
                     Map.of(),
-                    Map.of("name", List.of("sea")),
+                    Map.of("name", List.of("zalava")),
                     Map.of("id", "1"),
                     Map.of("actor", "a"))
                 .firstFormParameter("name"))
-        .contains("sea");
+        .contains("zalava");
     assertThat(new ZalavaWebRequest("GET", "/", null, null, null, null).queryParameters())
         .isEmpty();
     assertThatThrownBy(
@@ -339,7 +339,7 @@ class ModuleApiContractsTest {
     ZalavaVerificationStep step =
         ZalavaVerificationStep.toolInvocation(
             "Run", "provider", "tool", true, true, Map.of("input", "value"));
-    assertThat(step.path()).isEqualTo("/api/sea/providers/provider/tools/tool/invoke");
+    assertThat(step.path()).isEqualTo("/api/zalava/providers/provider/tools/tool/invoke");
     assertThat(step.method()).isEqualTo("POST");
     assertThat(
             new ZalavaVerificationDescriptor("tools", "provider", List.of("tool"), List.of(step))

@@ -15,7 +15,7 @@ import org.zalava.api.ZalavaServiceRequirement;
 
 /**
  * Creates a module's typed services through its {@link ZalavaServiceFactory} declarations with the
- * same scoped configuration, secrets, requirements and already-created services SEA supplies.
+ * same scoped configuration, secrets, requirements and already-created services Zalava supplies.
  * Factory and service close in reverse order. Dependency graph resolution itself is host-owned and
  * is not reimplemented here.
  */

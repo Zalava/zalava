@@ -4,9 +4,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * One SEA-managed OCI service a module declares. SEA aggregates declarations, derives the
+ * One Zalava-managed OCI service a module declares. Zalava aggregates declarations, derives the
  * administrator-approved resource grant, and installs only what the administrator approves. The
- * declaration is digest-pinned and validated by SEA's existing managed-service contracts.
+ * declaration is digest-pinned and validated by Zalava's existing managed-service contracts.
  */
 public record ManagedServiceDeclaration(
     String serviceId, ManagedServiceDesiredState desiredState, Set<String> dependsOn) {
