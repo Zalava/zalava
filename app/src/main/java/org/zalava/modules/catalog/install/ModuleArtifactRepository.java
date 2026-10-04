@@ -34,6 +34,13 @@ public sealed interface ModuleArtifactRepository
       if (!"github.com".equalsIgnoreCase(repositoryUri.getHost())) {
         throw new IllegalArgumentException("GitHub release repository must use github.com");
       }
+      if (!repositoryUri.getPath().matches("/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
+          || repositoryUri.getRawQuery() != null
+          || repositoryUri.getRawFragment() != null
+          || repositoryUri.getPort() != -1) {
+        throw new IllegalArgumentException(
+            "GitHub release repository must name one source repository");
+      }
       if (releaseTag == null || !RELEASE_TAG.matcher(releaseTag).matches()) {
         throw new IllegalArgumentException("GitHub release tag is invalid");
       }

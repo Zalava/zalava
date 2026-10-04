@@ -2,6 +2,7 @@ package org.zalava.modules.catalog.install.application.port.out;
 
 import java.net.URI;
 import org.zalava.modules.catalog.SourceModuleIndex;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 
 public interface CuratedMavenArtifactResolver {
 
@@ -9,7 +10,16 @@ public interface CuratedMavenArtifactResolver {
 
   void discard(ResolvedArtifact artifact);
 
-  record Request(String repositoryId, URI repositoryUrl, SourceModuleIndex.Artifact artifact) {}
+  record Request(
+      String repositoryId,
+      URI repositoryUrl,
+      SourceModuleIndex.Artifact artifact,
+      ModuleArtifactRepository repository,
+      String expectedDigest) {
+    public Request(String repositoryId, URI repositoryUrl, SourceModuleIndex.Artifact artifact) {
+      this(repositoryId, repositoryUrl, artifact, null, null);
+    }
+  }
 
   record ResolvedArtifact(String path, String sha256Digest) {}
 }

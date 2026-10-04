@@ -34,6 +34,11 @@ user data, local configuration, generated browser output, or build products.
 
 ## Verification and delivery
 
+Use imports and simple class names in Java code instead of fully qualified class
+references in declarations or expressions. Keep a qualified reference only when
+an actual name collision makes importing both types impossible. Apply this rule
+to production code, tests, and templates; formatting alone does not enforce it.
+
 The host's source ownership groups are documented in `docs/development/architecture.md`.
 Do not reintroduce peer packages for small technical helpers or build projects
 solely to represent contexts. Keep public SDK contracts distinct from host adapters.

@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.zalava.modules.catalog.SourceModuleIndex;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 import org.zalava.modules.catalog.install.SourceModuleInstallationException;
 import org.zalava.modules.catalog.install.application.port.out.CuratedMavenArtifactResolver;
 
@@ -61,6 +62,32 @@ public final class JdkCuratedMavenArtifactResolver implements CuratedMavenArtifa
 
   @Override
   public ResolvedArtifact resolve(Request request) {
+    if (request != null
+        && request.repository() instanceof ModuleArtifactRepository.GitHubReleaseAsset github) {
+      if (request.expectedDigest() == null
+          || !request.expectedDigest().matches("sha256:[0-9a-f]{64}"))
+        throw new SourceModuleInstallationException(
+            "Release asset requires an index-pinned SHA-256");
+      URI uri =
+          URI.create(
+              github.repositoryUri()
+                  + "/releases/download/"
+                  + github.releaseTag()
+                  + "/"
+                  + github.assetName());
+      Path temporary = temporaryFile();
+      try {
+        // Public release assets never receive Maven repository credentials.
+        String digest = download(uri, temporary, null);
+        if (!digest.equals(request.expectedDigest()))
+          throw new SourceModuleInstallationException(
+              "Release asset digest does not match release index");
+        return new ResolvedArtifact(temporary.toString(), digest);
+      } catch (RuntimeException exception) {
+        delete(temporary);
+        throw exception;
+      }
+    }
     URI artifactUri = artifactUri(request);
     String expectedDigest = checksum(checksumUri(artifactUri), request.repositoryId());
     Path temporary = temporaryFile();
@@ -197,7 +224,7 @@ public final class JdkCuratedMavenArtifactResolver implements CuratedMavenArtifa
 
   private HttpRequest.Builder request(URI uri, Duration timeout, String repositoryId) {
     HttpRequest.Builder request = HttpRequest.newBuilder(uri).timeout(timeout);
-    Credentials credential = credentials.get(repositoryId);
+    Credentials credential = repositoryId == null ? null : credentials.get(repositoryId);
     if (credential != null) request.header("Authorization", credential.basicAuthorization());
     return request;
   }
