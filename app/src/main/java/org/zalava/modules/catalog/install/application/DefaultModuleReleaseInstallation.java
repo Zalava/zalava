@@ -6,14 +6,18 @@ import java.util.List;
 import java.util.UUID;
 import org.zalava.modules.catalog.ModuleReleaseInstallRequest;
 import org.zalava.modules.catalog.ModuleReleaseSelection;
+import org.zalava.modules.catalog.SourceModuleIndex;
 import org.zalava.modules.catalog.application.port.in.CatalogQueries;
 import org.zalava.modules.catalog.application.port.out.ModuleReleaseIndexRetrieval;
+import org.zalava.modules.catalog.install.BinaryModuleInstallRequest;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 import org.zalava.modules.catalog.install.ModuleReleaseBinaryInstallRequestFactory;
 import org.zalava.modules.catalog.install.SourceModuleInstallationException;
 import org.zalava.modules.catalog.install.application.port.in.BinaryModuleInstallation;
 import org.zalava.modules.catalog.install.application.port.in.ModuleReleaseInstallation;
 import org.zalava.modules.catalog.install.application.port.out.CuratedMavenArtifactResolver;
 import org.zalava.modules.catalog.install.application.port.out.ModuleReleaseInstallRequestStore;
+import org.zalava.modules.development.CandidateEvaluation;
 import org.zalava.modules.development.DevelopmentRequestId;
 import org.zalava.modules.development.application.DevelopmentCandidateValidationGateway;
 
@@ -96,9 +100,7 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
               command.repositoryId(),
               evidence == null ? null : evidence.developmentRequestId(),
               evidence == null ? 0 : evidence.candidateAttemptNumber(),
-              evidence == null
-                  ? org.zalava.modules.development.CandidateEvaluation.Decision.ACCEPTED
-                  : evidence.decision(),
+              evidence == null ? CandidateEvaluation.Decision.ACCEPTED : evidence.decision(),
               ModuleReleaseInstallRequest.Status.PENDING,
               null,
               "Awaiting approval"));
@@ -125,7 +127,7 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
     requirePending(request);
     try {
       installation.install(
-          new org.zalava.modules.catalog.install.BinaryModuleInstallRequest(
+          new BinaryModuleInstallRequest(
               request.module(),
               request.artifactPath(),
               request.artifactDigest(),
@@ -134,8 +136,7 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
               request.runtimeArtifacts().stream()
                   .map(
                       runtime ->
-                          new org.zalava.modules.catalog.install.BinaryModuleInstallRequest
-                              .RuntimeArtifact(
+                          new BinaryModuleInstallRequest.RuntimeArtifact(
                               runtime.artifact(), runtime.artifactPath(), runtime.artifactDigest()))
                   .toList()));
       return save(request, ModuleReleaseInstallRequest.Status.SUCCEEDED, "Module enabled");
@@ -184,9 +185,9 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
 
   private CuratedMavenArtifactResolver.ResolvedArtifact resolve(
       Request command,
-      org.zalava.modules.catalog.SourceModuleIndex.Artifact artifact,
+      SourceModuleIndex.Artifact artifact,
       List<CuratedMavenArtifactResolver.ResolvedArtifact> resolved,
-      org.zalava.modules.catalog.install.ModuleArtifactRepository repository,
+      ModuleArtifactRepository repository,
       String expectedDigest) {
     CuratedMavenArtifactResolver.ResolvedArtifact result =
         artifacts.resolve(
@@ -207,7 +208,7 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
     CuratedMavenArtifactResolver.ResolvedArtifact artifact =
         resolve(
             command,
-            new org.zalava.modules.catalog.SourceModuleIndex.Artifact(
+            new SourceModuleIndex.Artifact(
                 runtime.artifact().groupId(),
                 runtime.artifact().artifactId(),
                 runtime.artifact().version()),
@@ -219,7 +220,7 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
           "Resolved runtime artifact digest does not match release index");
     }
     return new ModuleReleaseInstallRequest.RuntimeArtifact(
-        new org.zalava.modules.catalog.SourceModuleIndex.Artifact(
+        new SourceModuleIndex.Artifact(
             runtime.artifact().groupId(),
             runtime.artifact().artifactId(),
             runtime.artifact().version()),

@@ -2,6 +2,7 @@ package org.zalava.modules.catalog;
 
 import java.util.List;
 import java.util.Map;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 import org.zalava.modules.catalog.install.SourceModuleInstallationException;
 
 /** Selects immutable release metadata before a separate approval-gated installation step. */
@@ -68,7 +69,7 @@ public final class ModuleReleaseSelection {
       String artifactDigest,
       boolean artifactBundle,
       List<RuntimeArtifact> runtimeArtifacts,
-      org.zalava.modules.catalog.install.ModuleArtifactRepository repository) {
+      ModuleArtifactRepository repository) {
     public SelectedRelease {
       runtimeArtifacts = List.copyOf(runtimeArtifacts);
     }

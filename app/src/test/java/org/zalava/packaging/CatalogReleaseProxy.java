@@ -4,11 +4,14 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import java.net.URI;
 import java.net.http.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
+import java.util.concurrent.TimeUnit;
 
 /** Disposable HTTPS fixture serving an actual released module artifact. */
 final class CatalogReleaseProxy implements AutoCloseable {
@@ -52,7 +55,7 @@ final class CatalogReleaseProxy implements AutoCloseable {
             .redirectErrorStream(true)
             .redirectOutput(diagnostics.resolve("catalog-proxy-keytool.log").toFile())
             .start();
-    if (!keytool.waitFor(30, java.util.concurrent.TimeUnit.SECONDS)) {
+    if (!keytool.waitFor(30, TimeUnit.SECONDS)) {
       keytool.destroyForcibly();
       throw new IllegalStateException("Timed out creating disposable proxy CA");
     }
@@ -63,7 +66,7 @@ final class CatalogReleaseProxy implements AutoCloseable {
             wireMockConfig()
                 .dynamicPort()
                 .enableBrowserProxying(true)
-                .notifier(new com.github.tomakehurst.wiremock.common.ConsoleNotifier(false))
+                .notifier(new ConsoleNotifier(false))
                 .caKeystorePath(caKeyStore.toString())
                 .caKeystorePassword("fixture")
                 .caKeystoreType("PKCS12"));
@@ -97,7 +100,7 @@ final class CatalogReleaseProxy implements AutoCloseable {
               "Missing proxy test CA: "
                   + ca.statusCode()
                   + " "
-                  + new String(body.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+                  + new String(body.readAllBytes(), StandardCharsets.UTF_8));
         }
       }
       KeyStore store = KeyStore.getInstance("PKCS12");

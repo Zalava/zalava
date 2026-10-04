@@ -2,6 +2,7 @@ package org.zalava.modules.catalog;
 
 import java.net.URI;
 import java.util.List;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 
 public record ModuleReleaseIndex(int schemaVersion, String moduleId, List<Release> releases) {
 
@@ -49,7 +50,7 @@ public record ModuleReleaseIndex(int schemaVersion, String moduleId, List<Releas
       String artifactId,
       String version,
       String sha256,
-      org.zalava.modules.catalog.install.ModuleArtifactRepository repository) {
+      ModuleArtifactRepository repository) {
     public Artifact(String groupId, String artifactId, String version, String sha256) {
       this(groupId, artifactId, version, sha256, null);
     }

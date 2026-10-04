@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -123,7 +124,7 @@ public class SourceModuleInstallationConfiguration {
       return new JdkCuratedMavenArtifactResolver(workspace.getFilePath());
     return new JdkCuratedMavenArtifactResolver(
         workspace.getFilePath(),
-        java.util.Map.of(
+        Map.of(
             "github-packages",
             new JdkCuratedMavenArtifactResolver.Credentials(
                 githubPackagesUsername, githubPackagesToken)));

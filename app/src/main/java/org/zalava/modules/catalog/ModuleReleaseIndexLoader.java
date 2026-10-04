@@ -129,7 +129,7 @@ public final class ModuleReleaseIndexLoader {
         repository(value, path, artifactId, artifactVersion));
   }
 
-  private static org.zalava.modules.catalog.install.ModuleArtifactRepository repository(
+  private static ModuleArtifactRepository repository(
       Map<String, Object> value, String path, String artifactId, String version) {
     if (value.get("type") == null) return null;
     if (!"github-release-assets".equals(text(value.get("type"), path + ".type")))
@@ -139,7 +139,7 @@ public final class ModuleReleaseIndexLoader {
     if (!tag.equals("v" + version) || !asset.equals(artifactId + "-" + version + ".jar"))
       throw invalid(path, "release tag and asset must match immutable artifact coordinates");
     try {
-      return new org.zalava.modules.catalog.install.ModuleArtifactRepository.GitHubReleaseAsset(
+      return new ModuleArtifactRepository.GitHubReleaseAsset(
           artifactId, httpsUri(value.get("repositoryUri"), path + ".repositoryUri"), tag, asset);
     } catch (IllegalArgumentException exception) {
       throw invalid(path, exception.getMessage());

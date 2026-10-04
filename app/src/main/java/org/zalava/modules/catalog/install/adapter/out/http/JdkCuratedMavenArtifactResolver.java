@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.zalava.modules.catalog.SourceModuleIndex;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 import org.zalava.modules.catalog.install.SourceModuleInstallationException;
 import org.zalava.modules.catalog.install.application.port.out.CuratedMavenArtifactResolver;
 
@@ -62,9 +63,7 @@ public final class JdkCuratedMavenArtifactResolver implements CuratedMavenArtifa
   @Override
   public ResolvedArtifact resolve(Request request) {
     if (request != null
-        && request.repository()
-            instanceof
-            org.zalava.modules.catalog.install.ModuleArtifactRepository.GitHubReleaseAsset github) {
+        && request.repository() instanceof ModuleArtifactRepository.GitHubReleaseAsset github) {
       if (request.expectedDigest() == null
           || !request.expectedDigest().matches("sha256:[0-9a-f]{64}"))
         throw new SourceModuleInstallationException(
