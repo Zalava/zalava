@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.support.AuthenticatedZalavaComponentTest;
@@ -16,6 +17,7 @@ import org.zalava.support.AuthenticatedZalavaComponentTest;
  * configured, mirroring the Zalava Control navigation contract.
  */
 @AuthenticatedZalavaComponentTest
+@Import(MonitoringControllerComponentTest.MonitoringEvidenceConfiguration.class)
 @TestPropertySource(properties = "zalava.observability.mode=managed")
 class MonitoringManagedViewerComponentTest {
 
@@ -26,6 +28,7 @@ class MonitoringManagedViewerComponentTest {
     mockMvc
         .perform(get("/monitoring"))
         .andExpect(status().isOk())
+        .andExpect(content().string(containsString("data-empty=\"live-jobs\"")))
         .andExpect(content().string(containsString("data-metrics-viewer")))
         .andExpect(content().string(containsString("href=\"http://127.0.0.1:3000\"")));
   }
