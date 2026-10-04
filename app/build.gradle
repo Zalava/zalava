@@ -79,6 +79,7 @@ dependencies {
     runtimeOnly 'io.netty:netty-resolver-dns-native-macos'
 
     testImplementation 'org.awaitility:awaitility'
+    testImplementation 'org.wiremock:wiremock-standalone:3.13.1'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'

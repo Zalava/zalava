@@ -14,10 +14,12 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
+import org.zalava.modules.catalog.install.ModuleArtifactRepository;
 
 public final class ModuleReleaseIndexLoader {
 
-  private static final Pattern VERSION = Pattern.compile("[0-9]+\\.[0-9]+\\.[0-9]+");
+  private static final Pattern VERSION =
+      Pattern.compile("[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*)?");
   private static final Pattern SHA_256 = Pattern.compile("[0-9a-f]{64}");
   private static final Pattern COORDINATE_SEGMENT =
       Pattern.compile("[A-Za-z0-9][A-Za-z0-9_.-]{0,127}");
@@ -38,6 +40,10 @@ public final class ModuleReleaseIndexLoader {
     for (int index = 0; index < values.size(); index++) {
       String path = "releases[" + index + "]";
       ModuleReleaseIndex.Release release = release(map(values.get(index), path), path);
+      if (release.artifact().repository() instanceof ModuleArtifactRepository.GitHubReleaseAsset
+          && !release.artifact().artifactId().equals(moduleId)) {
+        throw invalid(path + ".artifact.artifactId", "must match module id");
+      }
       if (!versions.add(release.version())) {
         throw invalid(path + ".version", "must be unique");
       }
@@ -58,6 +64,13 @@ public final class ModuleReleaseIndexLoader {
         runtimeArtifacts(value.get("runtimeArtifacts"), path, artifact);
     boolean artifactBundle = bool(value.get("artifactBundle"), path + ".artifactBundle", false);
     Map<String, Object> source = map(value.get("source"), path + ".source");
+    if (artifact.repository() instanceof ModuleArtifactRepository.GitHubReleaseAsset github
+        && !github
+            .repositoryUri()
+            .toString()
+            .concat(".git")
+            .equals(text(source.get("repository"), path + ".source.repository")))
+      throw invalid(path + ".source.repository", "must match the artifact repository");
     Map<String, Object> compatibility = map(value.get("compatibility"), path + ".compatibility");
     Map<String, Object> security = map(value.get("security"), path + ".security");
     return new ModuleReleaseIndex.Release(
@@ -68,7 +81,8 @@ public final class ModuleReleaseIndexLoader {
         artifactBundle,
         new ModuleReleaseIndex.Source(
             httpsUri(source.get("repository"), path + ".source.repository"),
-            text(source.get("license"), path + ".source.license")),
+            text(source.get("license"), path + ".source.license"),
+            sourceRevision(source, path, artifact.repository() != null)),
         new ModuleReleaseIndex.Compatibility(
             text(compatibility.get("zalavaRuntime"), path + ".compatibility.zalavaRuntime")),
         new ModuleReleaseIndex.Security(
@@ -108,7 +122,36 @@ public final class ModuleReleaseIndexLoader {
       throw invalid(path + ".version", "must match release version");
     }
     return new ModuleReleaseIndex.Artifact(
-        groupId, artifactId, artifactVersion, sha256(value.get("sha256"), path + ".sha256"));
+        groupId,
+        artifactId,
+        artifactVersion,
+        sha256(value.get("sha256"), path + ".sha256"),
+        repository(value, path, artifactId, artifactVersion));
+  }
+
+  private static ModuleArtifactRepository repository(
+      Map<String, Object> value, String path, String artifactId, String version) {
+    if (value.get("type") == null) return null;
+    if (!"github-release-assets".equals(text(value.get("type"), path + ".type")))
+      throw invalid(path + ".type", "must be github-release-assets");
+    String tag = text(value.get("releaseTag"), path + ".releaseTag");
+    String asset = text(value.get("assetName"), path + ".assetName");
+    if (!tag.equals("v" + version) || !asset.equals(artifactId + "-" + version + ".jar"))
+      throw invalid(path, "release tag and asset must match immutable artifact coordinates");
+    try {
+      return new ModuleArtifactRepository.GitHubReleaseAsset(
+          artifactId, httpsUri(value.get("repositoryUri"), path + ".repositoryUri"), tag, asset);
+    } catch (IllegalArgumentException exception) {
+      throw invalid(path, exception.getMessage());
+    }
+  }
+
+  private static String sourceRevision(Map<String, Object> source, String path, boolean required) {
+    if (source.get("revision") == null && !required) return null;
+    String revision = text(source.get("revision"), path + ".source.revision");
+    if (!revision.matches("[0-9a-f]{40}"))
+      throw invalid(path + ".source.revision", "must be a full immutable source commit");
+    return revision;
   }
 
   private static String coordinate(Object value, String path) {

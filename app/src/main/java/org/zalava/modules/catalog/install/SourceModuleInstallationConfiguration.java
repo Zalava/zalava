@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -123,7 +124,7 @@ public class SourceModuleInstallationConfiguration {
       return new JdkCuratedMavenArtifactResolver(workspace.getFilePath());
     return new JdkCuratedMavenArtifactResolver(
         workspace.getFilePath(),
-        java.util.Map.of(
+        Map.of(
             "github-packages",
             new JdkCuratedMavenArtifactResolver.Credentials(
                 githubPackagesUsername, githubPackagesToken)));
@@ -184,7 +185,7 @@ public class SourceModuleInstallationConfiguration {
   @Bean
   ModuleLocatorReleaseLocator moduleLocatorReleaseLocator(
       @Value(
-              "${zalava.catalog.module-locator.url:https://raw.githubusercontent.com/cordin/zalava-catalog/main/catalog.yaml}")
+              "${zalava.catalog.module-locator.url:https://raw.githubusercontent.com/Zalava/zalava-catalog/main/catalog.yaml}")
           String catalogUrl,
       @Value("${zalava.catalog.github.token:}") String githubToken) {
     return new JdkModuleLocatorReleaseLocator(URI.create(catalogUrl), githubToken);

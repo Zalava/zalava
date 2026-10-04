@@ -6,11 +6,14 @@ import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.RequestOptions;
+import com.microsoft.playwright.options.WaitForSelectorState;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -19,8 +22,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -28,11 +33,24 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.jobrunr.jobs.context.JobContext;
+import org.jobrunr.jobs.mappers.JobMapper;
+import org.jobrunr.scheduling.JobScheduler;
+import org.jobrunr.storage.sql.postgres.PostgresStorageProvider;
+import org.jobrunr.utils.mapper.JsonMapperFactory;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.zalava.identity.accounts.domain.AccountId;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
+import org.zalava.tasks.adapter.out.filesystem.ActorFileSystemTaskStore;
+import org.zalava.tasks.domain.ActorTaskExecutionReference;
+import org.zalava.tasks.domain.ActorTaskReference;
+import org.zalava.tasks.domain.Task;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -49,6 +67,7 @@ class ReleasedModuleDistributableAcceptanceTest {
   private final HttpClient http =
       HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
   private Process process;
+  private CatalogReleaseProxy catalogProxy;
   private String baseUrl;
   private int generation;
 
@@ -60,7 +79,15 @@ class ReleasedModuleDistributableAcceptanceTest {
     Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
     Files.writeString(workspace.resolve("AGENT.md"), "Disposable released-module acceptance.");
     List<Release> releases = downloadReleases();
-    try (PostgreSQLContainer postgres =
+    try (CatalogReleaseProxy proxy =
+            new CatalogReleaseProxy(
+                diagnostics,
+                releases.stream()
+                    .filter(release -> release.moduleId().equals("zalava-module-time"))
+                    .findFirst()
+                    .orElseThrow()
+                    .path());
+        PostgreSQLContainer postgres =
             new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
                 .withDatabaseName("zalava_acceptance")
                 .withUsername("zalava_acceptance")
@@ -69,6 +96,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext admin = browser.newContext()) {
+      catalogProxy = proxy;
       postgres.start();
       Page page = admin.newPage();
       try {
@@ -99,9 +127,20 @@ class ReleasedModuleDistributableAcceptanceTest {
             .selectOption("MEMBER");
         page.locator("form[action='/zalava/accounts/create'] button[type=submit]").click();
         try (BrowserContext member = browser.newContext()) {
-          signIn(member.newPage(), "released-member", INITIAL_PASSWORD, true);
+          Page memberPage = member.newPage();
+          signIn(memberPage, "released-member", INITIAL_PASSWORD, true);
           assertThat(member.request().get(baseUrl + "/modules").status()).isEqualTo(403);
           assertThat(member.request().get(baseUrl + "/api/zalava/modules").status()).isEqualTo(403);
+          assertThat(post(member, memberPage, "/modules/catalog/refresh", Map.of()).status())
+              .isEqualTo(403);
+          assertThat(
+                  post(
+                          member,
+                          memberPage,
+                          "/modules/installation-requests",
+                          Map.of("moduleId", "zalava-module-time", "version", "0.1.0-alpha.4"))
+                      .status())
+              .isEqualTo(403);
         }
         page.navigate(baseUrl + "/modules");
         page.locator("input[name=moduleJar]")
@@ -109,7 +148,15 @@ class ReleasedModuleDistributableAcceptanceTest {
                 new FilePayload("invalid.jar", "application/java-archive", new byte[] {1}));
         page.locator("[data-action=upload-module]").click();
         page.getByRole(AriaRole.ALERT).waitFor();
+        installFromCatalog(
+            page,
+            admin,
+            releases.stream()
+                .filter(release -> release.moduleId().equals("zalava-module-time"))
+                .findFirst()
+                .orElseThrow());
         for (Release release : releases) {
+          if (release.moduleId().equals("zalava-module-time")) continue;
           page.navigate(baseUrl + "/modules");
           page.locator("input[name=moduleJar]").setInputFiles(release.path());
           page.locator("[data-action=upload-module]").click();
@@ -210,9 +257,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.waitForURL(baseUrl + "/apps/zalava-module-shopping-list/shopping-list/items/bought");
         assertThat(page.locator("main").textContent()).contains("Bought SDK acceptance milk");
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true))
-            .waitFor(
-                new com.microsoft.playwright.Locator.WaitForOptions()
-                    .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN));
+            .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.HIDDEN));
         stop();
         start(postgres, workspace, "local-control");
         admin.clearCookies();
@@ -252,45 +297,36 @@ class ReleasedModuleDistributableAcceptanceTest {
   private JobEvidenceFixture seedJobEvidence(PostgreSQLContainer postgres, Path workspace)
       throws Exception {
     var dataSource =
-        new org.springframework.jdbc.datasource.DriverManagerDataSource(
+        new DriverManagerDataSource(
             postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-    java.util.UUID accountId;
+    UUID accountId;
     try (var connection = dataSource.getConnection();
         var statement =
             connection.prepareStatement("SELECT id FROM zalava_account WHERE login_name = ?")) {
       statement.setString(1, LOGIN);
       try (var row = statement.executeQuery()) {
         assertThat(row.next()).isTrue();
-        accountId = row.getObject(1, java.util.UUID.class);
+        accountId = row.getObject(1, UUID.class);
       }
     }
-    var actor =
-        new org.zalava.identity.accounts.domain.Actor(
-            new org.zalava.identity.accounts.domain.AccountId(accountId));
-    var store = new org.zalava.tasks.adapter.out.filesystem.ActorFileSystemTaskStore(workspace);
-    var report = org.zalava.tasks.domain.ActorTaskReference.newReference();
-    var future = org.zalava.tasks.domain.ActorTaskReference.newReference();
+    var actor = new Actor(new AccountId(accountId));
+    var store = new ActorFileSystemTaskStore(workspace);
+    var report = ActorTaskReference.newReference();
+    var future = ActorTaskReference.newReference();
     String output = "# Packaged job report\nPersisted across real host process restarts.";
     store.save(
         actor,
         report,
-        org.zalava.tasks.domain.Task.newTask("Packaged saved report", "Restart fixture")
-            .withStatus(org.zalava.tasks.domain.Task.Status.completed)
+        Task.newTask("Packaged saved report", "Restart fixture")
+            .withStatus(Task.Status.completed)
             .withFeedback(output));
-    store.save(
-        actor,
-        future,
-        org.zalava.tasks.domain.Task.newTask("Packaged future job", "Restart fixture"));
-    var due = java.time.Instant.parse("2050-01-02T12:00:00Z");
-    try (var storage = new org.jobrunr.storage.sql.postgres.PostgresStorageProvider(dataSource)) {
-      storage.setJobMapper(
-          new org.jobrunr.jobs.mappers.JobMapper(
-              org.jobrunr.utils.mapper.JsonMapperFactory.createJsonMapper()));
-      var scheduler = new org.jobrunr.scheduling.JobScheduler(storage);
-      String token =
-          new org.zalava.tasks.domain.ActorTaskExecutionReference(actor, future).encode();
-      scheduler.<org.zalava.tasks.adapter.in.jobrunr.TaskHandler>schedule(
-          due, handler -> handler.executeTask(token, org.jobrunr.jobs.context.JobContext.Null));
+    store.save(actor, future, Task.newTask("Packaged future job", "Restart fixture"));
+    var due = Instant.parse("2050-01-02T12:00:00Z");
+    try (var storage = new PostgresStorageProvider(dataSource)) {
+      storage.setJobMapper(new JobMapper(JsonMapperFactory.createJsonMapper()));
+      var scheduler = new JobScheduler(storage);
+      String token = new ActorTaskExecutionReference(actor, future).encode();
+      scheduler.<TaskHandler>schedule(due, handler -> handler.executeTask(token, JobContext.Null));
     }
     return new JobEvidenceFixture(report.value(), future.value(), due, output);
   }
@@ -299,14 +335,10 @@ class ReleasedModuleDistributableAcceptanceTest {
       Page page, BrowserContext admin, Browser browser, JobEvidenceFixture fixture) {
     page.navigate(baseUrl + "/jobs");
     page.locator("[aria-labelledby='saved-reports-title']")
-        .getByText(
-            "Packaged saved report",
-            new com.microsoft.playwright.Locator.GetByTextOptions().setExact(true))
+        .getByText("Packaged saved report", new Locator.GetByTextOptions().setExact(true))
         .waitFor();
     page.locator("[aria-labelledby='upcoming-jobs-title']")
-        .getByText(
-            "Packaged future job",
-            new com.microsoft.playwright.Locator.GetByTextOptions().setExact(true))
+        .getByText("Packaged future job", new Locator.GetByTextOptions().setExact(true))
         .waitFor();
     assertThat(page.locator("time[datetime='" + fixture.due() + "']").count()).isEqualTo(1);
     var download = admin.request().get(baseUrl + "/jobs/" + fixture.report() + "/artifacts/report");
@@ -328,8 +360,7 @@ class ReleasedModuleDistributableAcceptanceTest {
     }
   }
 
-  private record JobEvidenceFixture(
-      String report, String future, java.time.Instant due, String output) {}
+  private record JobEvidenceFixture(String report, String future, Instant due, String output) {}
 
   private List<Release> downloadReleases() throws Exception {
     Properties pins = new Properties();
@@ -373,8 +404,8 @@ class ReleasedModuleDistributableAcceptanceTest {
       Files.writeString(
           diagnostics.resolve("download-retries.log"),
           uri + " attempt=" + attempt + " status=" + response.statusCode() + "\n",
-          java.nio.file.StandardOpenOption.CREATE,
-          java.nio.file.StandardOpenOption.APPEND);
+          StandardOpenOption.CREATE,
+          StandardOpenOption.APPEND);
       Thread.sleep(1000L * attempt);
     }
   }
@@ -393,6 +424,10 @@ class ReleasedModuleDistributableAcceptanceTest {
         new ProcessBuilder(
                 Path.of(System.getProperty("java.home"), "bin/java").toString(),
                 "-Xmx768m",
+                "-Dhttps.proxyHost=127.0.0.1",
+                "-Dhttps.proxyPort=" + catalogProxy.port(),
+                "-Djavax.net.ssl.trustStore=" + catalogProxy.trustStore(),
+                "-Djavax.net.ssl.trustStorePassword=fixture",
                 "-Dzalava.module.shopping-list.sqlite.path="
                     + workspace.resolve("shopping-list.sqlite"),
                 "-jar",
@@ -431,7 +466,7 @@ class ReleasedModuleDistributableAcceptanceTest {
                     HttpResponse.BodyHandlers.discarding())
                 .statusCode()
             == 200) return;
-      } catch (java.io.IOException ignored) {
+      } catch (IOException ignored) {
         // The packaged server has not bound its random loopback port yet.
       }
       Thread.sleep(250);
@@ -463,6 +498,74 @@ class ReleasedModuleDistributableAcceptanceTest {
           .click();
     }
     page.waitForURL(url -> !url.endsWith("/login") && !url.endsWith("/account/password"));
+  }
+
+  private void installFromCatalog(Page page, BrowserContext admin, Release release)
+      throws Exception {
+    catalogProxy.invalidMetadata();
+    page.navigate(baseUrl + "/modules");
+    page.locator("[data-action=refresh-catalog]").click();
+    page.getByRole(AriaRole.ALERT).waitFor();
+    assertThat(page.locator("[data-installation-request]").count()).isZero();
+    catalogProxy.restoreMetadata();
+    page.navigate(baseUrl + "/modules");
+    page.locator("[data-action=refresh-catalog]").click();
+    assertThat(page.locator("main").textContent()).contains("Catalog refreshed: 1 module(s)");
+    page.navigate(baseUrl + "/modules/" + release.moduleId());
+    page.locator("[data-release-version]").selectOption(release.version());
+    catalogProxy.corruptArtifact();
+    page.locator("[data-action=request-installation]").click();
+    page.getByRole(AriaRole.ALERT).waitFor();
+    page.navigate(baseUrl + "/modules");
+    assertThat(page.locator("[data-installation-request]").count()).isZero();
+    catalogProxy.artifact(release.path());
+    prepareCatalogRelease(page, release);
+    page.locator("[data-installation-request] [data-action=deny]").click();
+    assertThat(page.locator("[data-request-status]").textContent()).containsIgnoringCase("denied");
+    prepareCatalogRelease(page, release);
+    page.locator("[data-installation-request] [data-action=allow]").click();
+    page.locator("[data-request-status]")
+        .filter(new Locator.FilterOptions().setHasText("SUCCEEDED"))
+        .waitFor();
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("catalog-installation.png")));
+  }
+
+  private void prepareCatalogRelease(Page page, Release release) {
+    page.navigate(baseUrl + "/zalava/control");
+    waitForControlSwap(
+        page,
+        "/catalog/refresh",
+        () ->
+            page.locator("#module-release-installations button[hx-post$='/catalog/refresh']")
+                .click());
+    if (!page.locator("#release-module-id").inputValue().equals(release.moduleId())) {
+      waitForControlSwap(
+          page,
+          "/catalog/select",
+          () -> page.locator("#release-module-id").selectOption(release.moduleId()));
+    }
+    page.locator("#release-version").selectOption(release.version());
+    page.locator("#module-release-installations button[type=submit]").click();
+    page.locator("#module-release-installations button[hx-post$='/allow']").waitFor();
+    page.navigate(baseUrl + "/modules");
+    page.locator("[data-installation-request] [data-action=allow]").waitFor();
+  }
+
+  private void waitForControlSwap(Page page, String path, Runnable action) {
+    page.evaluate(
+        """
+        () => {
+          delete document.documentElement.dataset.controlSettled;
+          document.addEventListener('htmx:afterSettle', () => {
+            document.documentElement.dataset.controlSettled = 'true';
+          }, {once: true});
+        }
+        """);
+    var response = page.waitForResponse(candidate -> candidate.url().endsWith(path), action);
+    assertThat(response.status()).isEqualTo(200);
+    response.finished();
+    page.waitForFunction("() => document.documentElement.dataset.controlSettled === 'true'");
   }
 
   private void startModule(Page page, String moduleId) {
