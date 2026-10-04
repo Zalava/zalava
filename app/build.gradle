@@ -166,6 +166,23 @@ tasks.named('bootBuildImage') {
     }
 }
 
+def installPlaywrightChromium = tasks.register('installPlaywrightChromium', JavaExec) {
+    group = 'verification'
+    description = 'Installs the Chromium binaries used by browser acceptance.'
+    classpath = configurations.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install'
+    if (providers.gradleProperty('playwright.install-deps').getOrElse('false').toBoolean()) {
+        args '--with-deps'
+    }
+    args 'chromium'
+}
+
+tasks.withType(Test).configureEach {
+    // Java's first-use installer otherwise downloads Firefox and WebKit too.
+    environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
+}
+
 tasks.named('test') {
     def configuredForks = providers.gradleProperty('zalava.test.max-parallel-forks').getOrElse('2')
     maxParallelForks = configuredForks.toInteger()
@@ -214,6 +231,7 @@ tasks.register('releasedModuleAcceptanceTest', Test) {
     group = 'verification'
     description = 'Runs released official JARs through a packaged host, PostgreSQL and browser journeys.'
     dependsOn tasks.named('testClasses'), tasks.named('bootJar')
+    dependsOn installPlaywrightChromium
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     maxParallelForks = 1
@@ -233,6 +251,7 @@ tasks.register('browserAcceptanceTest', Test) {
     group = 'verification'
     description = 'Runs the isolated Playwright browser acceptance journey.'
     dependsOn tasks.named('testClasses')
+    dependsOn installPlaywrightChromium
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath

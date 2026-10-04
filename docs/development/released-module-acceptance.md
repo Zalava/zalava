@@ -6,6 +6,15 @@ PostgreSQL and Chromium. `app:check` requires this lane. Docker, Chromium and
 anonymous network access to the pinned GitHub release assets are prerequisites;
 missing prerequisites and exhausted gateway retries fail the lane.
 
+Browser acceptance uses Chromium only. The Gradle browser tasks install its
+binaries with the CLI from the resolved Playwright Java dependency and reuse the
+normal Playwright browser cache. Test processes disable automatic browser
+downloads, so Firefox and WebKit are not installed for these journeys. To also
+install Chromium's native Linux dependencies, run
+`./gradlew :app:installPlaywrightChromium -Pplaywright.install-deps=true` (requires
+permission to install system packages). CI uses this option in its normal gate
+and checks that its fresh browser cache contains no Firefox or WebKit downloads.
+
 The immutable version/digest inventory is `app/src/test/resources/released-modules.properties`.
 The test downloads real public artifacts, checks each SHA-256, installs through
 the administrator's Modules upload form, and restarts the distributable. It never
