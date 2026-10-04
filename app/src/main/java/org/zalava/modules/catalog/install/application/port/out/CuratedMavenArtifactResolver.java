@@ -9,7 +9,16 @@ public interface CuratedMavenArtifactResolver {
 
   void discard(ResolvedArtifact artifact);
 
-  record Request(String repositoryId, URI repositoryUrl, SourceModuleIndex.Artifact artifact) {}
+  record Request(
+      String repositoryId,
+      URI repositoryUrl,
+      SourceModuleIndex.Artifact artifact,
+      org.zalava.modules.catalog.install.ModuleArtifactRepository repository,
+      String expectedDigest) {
+    public Request(String repositoryId, URI repositoryUrl, SourceModuleIndex.Artifact artifact) {
+      this(repositoryId, repositoryUrl, artifact, null, null);
+    }
+  }
 
   record ResolvedArtifact(String path, String sha256Digest) {}
 }

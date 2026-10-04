@@ -184,7 +184,7 @@ public class SourceModuleInstallationConfiguration {
   @Bean
   ModuleLocatorReleaseLocator moduleLocatorReleaseLocator(
       @Value(
-              "${zalava.catalog.module-locator.url:https://raw.githubusercontent.com/cordin/zalava-catalog/main/catalog.yaml}")
+              "${zalava.catalog.module-locator.url:https://raw.githubusercontent.com/Zalava/zalava-catalog/main/catalog.yaml}")
           String catalogUrl,
       @Value("${zalava.catalog.github.token:}") String githubToken) {
     return new JdkModuleLocatorReleaseLocator(URI.create(catalogUrl), githubToken);

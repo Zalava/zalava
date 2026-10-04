@@ -44,9 +44,22 @@ public record ModuleReleaseIndex(int schemaVersion, String moduleId, List<Releas
     }
   }
 
-  public record Artifact(String groupId, String artifactId, String version, String sha256) {}
+  public record Artifact(
+      String groupId,
+      String artifactId,
+      String version,
+      String sha256,
+      org.zalava.modules.catalog.install.ModuleArtifactRepository repository) {
+    public Artifact(String groupId, String artifactId, String version, String sha256) {
+      this(groupId, artifactId, version, sha256, null);
+    }
+  }
 
-  public record Source(URI repository, String license) {}
+  public record Source(URI repository, String license, String revision) {
+    public Source(URI repository, String license) {
+      this(repository, license, null);
+    }
+  }
 
   public record Compatibility(String zalavaRuntime) {}
 

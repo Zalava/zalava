@@ -49,6 +49,7 @@ class ReleasedModuleDistributableAcceptanceTest {
   private final HttpClient http =
       HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
   private Process process;
+  private CatalogReleaseProxy catalogProxy;
   private String baseUrl;
   private int generation;
 
@@ -60,7 +61,15 @@ class ReleasedModuleDistributableAcceptanceTest {
     Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
     Files.writeString(workspace.resolve("AGENT.md"), "Disposable released-module acceptance.");
     List<Release> releases = downloadReleases();
-    try (PostgreSQLContainer postgres =
+    try (CatalogReleaseProxy proxy =
+            new CatalogReleaseProxy(
+                diagnostics,
+                releases.stream()
+                    .filter(release -> release.moduleId().equals("zalava-module-time"))
+                    .findFirst()
+                    .orElseThrow()
+                    .path());
+        PostgreSQLContainer postgres =
             new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
                 .withDatabaseName("zalava_acceptance")
                 .withUsername("zalava_acceptance")
@@ -69,6 +78,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext admin = browser.newContext()) {
+      catalogProxy = proxy;
       postgres.start();
       Page page = admin.newPage();
       try {
@@ -99,9 +109,20 @@ class ReleasedModuleDistributableAcceptanceTest {
             .selectOption("MEMBER");
         page.locator("form[action='/zalava/accounts/create'] button[type=submit]").click();
         try (BrowserContext member = browser.newContext()) {
-          signIn(member.newPage(), "released-member", INITIAL_PASSWORD, true);
+          Page memberPage = member.newPage();
+          signIn(memberPage, "released-member", INITIAL_PASSWORD, true);
           assertThat(member.request().get(baseUrl + "/modules").status()).isEqualTo(403);
           assertThat(member.request().get(baseUrl + "/api/zalava/modules").status()).isEqualTo(403);
+          assertThat(post(member, memberPage, "/modules/catalog/refresh", Map.of()).status())
+              .isEqualTo(403);
+          assertThat(
+                  post(
+                          member,
+                          memberPage,
+                          "/modules/installation-requests",
+                          Map.of("moduleId", "zalava-module-time", "version", "0.1.0-alpha.4"))
+                      .status())
+              .isEqualTo(403);
         }
         page.navigate(baseUrl + "/modules");
         page.locator("input[name=moduleJar]")
@@ -109,7 +130,15 @@ class ReleasedModuleDistributableAcceptanceTest {
                 new FilePayload("invalid.jar", "application/java-archive", new byte[] {1}));
         page.locator("[data-action=upload-module]").click();
         page.getByRole(AriaRole.ALERT).waitFor();
+        installFromCatalog(
+            page,
+            admin,
+            releases.stream()
+                .filter(release -> release.moduleId().equals("zalava-module-time"))
+                .findFirst()
+                .orElseThrow());
         for (Release release : releases) {
+          if (release.moduleId().equals("zalava-module-time")) continue;
           page.navigate(baseUrl + "/modules");
           page.locator("input[name=moduleJar]").setInputFiles(release.path());
           page.locator("[data-action=upload-module]").click();
@@ -393,6 +422,10 @@ class ReleasedModuleDistributableAcceptanceTest {
         new ProcessBuilder(
                 Path.of(System.getProperty("java.home"), "bin/java").toString(),
                 "-Xmx768m",
+                "-Dhttps.proxyHost=127.0.0.1",
+                "-Dhttps.proxyPort=" + catalogProxy.port(),
+                "-Djavax.net.ssl.trustStore=" + catalogProxy.trustStore(),
+                "-Djavax.net.ssl.trustStorePassword=fixture",
                 "-Dzalava.module.shopping-list.sqlite.path="
                     + workspace.resolve("shopping-list.sqlite"),
                 "-jar",
@@ -463,6 +496,74 @@ class ReleasedModuleDistributableAcceptanceTest {
           .click();
     }
     page.waitForURL(url -> !url.endsWith("/login") && !url.endsWith("/account/password"));
+  }
+
+  private void installFromCatalog(Page page, BrowserContext admin, Release release)
+      throws Exception {
+    catalogProxy.invalidMetadata();
+    page.navigate(baseUrl + "/modules");
+    page.locator("[data-action=refresh-catalog]").click();
+    page.getByRole(AriaRole.ALERT).waitFor();
+    assertThat(page.locator("[data-installation-request]").count()).isZero();
+    catalogProxy.restoreMetadata();
+    page.navigate(baseUrl + "/modules");
+    page.locator("[data-action=refresh-catalog]").click();
+    assertThat(page.locator("main").textContent()).contains("Catalog refreshed: 1 module(s)");
+    page.navigate(baseUrl + "/modules/" + release.moduleId());
+    page.locator("[data-release-version]").selectOption(release.version());
+    catalogProxy.corruptArtifact();
+    page.locator("[data-action=request-installation]").click();
+    page.getByRole(AriaRole.ALERT).waitFor();
+    page.navigate(baseUrl + "/modules");
+    assertThat(page.locator("[data-installation-request]").count()).isZero();
+    catalogProxy.artifact(release.path());
+    prepareCatalogRelease(page, release);
+    page.locator("[data-installation-request] [data-action=deny]").click();
+    assertThat(page.locator("[data-request-status]").textContent()).containsIgnoringCase("denied");
+    prepareCatalogRelease(page, release);
+    page.locator("[data-installation-request] [data-action=allow]").click();
+    page.locator("[data-request-status]")
+        .filter(new com.microsoft.playwright.Locator.FilterOptions().setHasText("SUCCEEDED"))
+        .waitFor();
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("catalog-installation.png")));
+  }
+
+  private void prepareCatalogRelease(Page page, Release release) {
+    page.navigate(baseUrl + "/zalava/control");
+    waitForControlSwap(
+        page,
+        "/catalog/refresh",
+        () ->
+            page.locator("#module-release-installations button[hx-post$='/catalog/refresh']")
+                .click());
+    if (!page.locator("#release-module-id").inputValue().equals(release.moduleId())) {
+      waitForControlSwap(
+          page,
+          "/catalog/select",
+          () -> page.locator("#release-module-id").selectOption(release.moduleId()));
+    }
+    page.locator("#release-version").selectOption(release.version());
+    page.locator("#module-release-installations button[type=submit]").click();
+    page.locator("#module-release-installations button[hx-post$='/allow']").waitFor();
+    page.navigate(baseUrl + "/modules");
+    page.locator("[data-installation-request] [data-action=allow]").waitFor();
+  }
+
+  private void waitForControlSwap(Page page, String path, Runnable action) {
+    page.evaluate(
+        """
+        () => {
+          delete document.documentElement.dataset.controlSettled;
+          document.addEventListener('htmx:afterSettle', () => {
+            document.documentElement.dataset.controlSettled = 'true';
+          }, {once: true});
+        }
+        """);
+    var response = page.waitForResponse(candidate -> candidate.url().endsWith(path), action);
+    assertThat(response.status()).isEqualTo(200);
+    response.finished();
+    page.waitForFunction("() => document.documentElement.dataset.controlSettled === 'true'");
   }
 
   private void startModule(Page page, String moduleId) {

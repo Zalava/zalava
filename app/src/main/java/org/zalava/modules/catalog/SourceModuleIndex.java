@@ -34,7 +34,11 @@ public record SourceModuleIndex(int schemaVersion, List<Module> modules) {
 
   public record Artifact(String groupId, String artifactId, String version) {}
 
-  public record Source(URI repository, String license) {}
+  public record Source(URI repository, String license, String revision) {
+    public Source(URI repository, String license) {
+      this(repository, license, null);
+    }
+  }
 
   public record Build(List<String> command, List<String> verificationCommand) {
 

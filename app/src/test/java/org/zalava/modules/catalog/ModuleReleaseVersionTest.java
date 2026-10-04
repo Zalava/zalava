@@ -5,6 +5,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 class ModuleReleaseVersionTest {
+  @Test
+  void ordersAlphaReleasesBeforeStableAndIgnoresBuildMetadata() {
+    assertThat(ModuleReleaseVersion.compare("0.1.0-alpha.10", "0.1.0-alpha.4")).isPositive();
+    assertThat(ModuleReleaseVersion.compare("0.1.0", "0.1.0-alpha.10")).isPositive();
+    assertThat(ModuleReleaseVersion.compare("0.1.0-alpha.10", "0.1.0")).isNegative();
+    assertThat(ModuleReleaseVersion.compare("0.1.0+build.2", "0.1.0+build.1")).isZero();
+    assertThat(ModuleReleaseVersion.compare("0.1.0-alpha", "0.1.0-alpha.1")).isNegative();
+    assertThat(ModuleReleaseVersion.compare("0.1.0-1", "0.1.0-alpha")).isNegative();
+    assertThat(ModuleReleaseVersion.compare("0.1.0-alpha", "0.1.0-1")).isPositive();
+    assertThat(ModuleReleaseVersion.compare("99999999999999999999.0.0", "1.0.0")).isPositive();
+  }
 
   @Test
   void comparesNumericSegmentsNumericallyNotLexically() {

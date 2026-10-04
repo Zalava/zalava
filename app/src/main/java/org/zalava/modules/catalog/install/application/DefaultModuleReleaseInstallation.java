@@ -60,7 +60,12 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
     List<CuratedMavenArtifactResolver.ResolvedArtifact> resolved = new ArrayList<>();
     try {
       CuratedMavenArtifactResolver.ResolvedArtifact artifact =
-          resolve(command, release.module().artifact(), resolved);
+          resolve(
+              command,
+              release.module().artifact(),
+              resolved,
+              release.repository(),
+              release.artifactDigest());
       List<ModuleReleaseInstallRequest.RuntimeArtifact> runtimeArtifacts =
           release.artifactBundle()
               ? List.of()
@@ -180,11 +185,17 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
   private CuratedMavenArtifactResolver.ResolvedArtifact resolve(
       Request command,
       org.zalava.modules.catalog.SourceModuleIndex.Artifact artifact,
-      List<CuratedMavenArtifactResolver.ResolvedArtifact> resolved) {
+      List<CuratedMavenArtifactResolver.ResolvedArtifact> resolved,
+      org.zalava.modules.catalog.install.ModuleArtifactRepository repository,
+      String expectedDigest) {
     CuratedMavenArtifactResolver.ResolvedArtifact result =
         artifacts.resolve(
             new CuratedMavenArtifactResolver.Request(
-                command.repositoryId(), command.repositoryUrl(), artifact));
+                command.repositoryId(),
+                command.repositoryUrl(),
+                artifact,
+                repository,
+                expectedDigest));
     resolved.add(result);
     return result;
   }
@@ -200,7 +211,9 @@ public final class DefaultModuleReleaseInstallation implements ModuleReleaseInst
                 runtime.artifact().groupId(),
                 runtime.artifact().artifactId(),
                 runtime.artifact().version()),
-            resolved);
+            resolved,
+            runtime.artifact().repository(),
+            runtime.sha256Digest());
     if (!runtime.sha256Digest().equals(artifact.sha256Digest())) {
       throw new SourceModuleInstallationException(
           "Resolved runtime artifact digest does not match release index");

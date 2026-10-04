@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "zalava-module-time",
+  "releases": [
+    {
+      "version": "0.1.0-alpha.4",
+      "releaseTag": "v0.1.0-alpha.4",
+      "artifact": {
+        "groupId": "org.zalava.modules",
+        "artifactId": "zalava-module-time",
+        "version": "0.1.0-alpha.4",
+        "sha256": "146220463d725824c50eba1bba9003a29f0432cefbc9a28e0f759730a22a005f",
+        "type": "github-release-assets",
+        "repositoryUri": "https://github.com/Zalava/zalava-module-time",
+        "releaseTag": "v0.1.0-alpha.4",
+        "assetName": "zalava-module-time-0.1.0-alpha.4.jar"
+      },
+      "artifactBundle": false,
+      "source": {
+        "repository": "https://github.com/Zalava/zalava-module-time.git",
+        "revision": "d35aa8a8c7e662b6e890f3833c94c7bf0d527d0f",
+        "license": "Apache-2.0"
+      },
+      "compatibility": {
+        "zalavaRuntime": ">=1.0.0 <2.0.0"
+      },
+      "security": {
+        "permissions": []
+      }
+    }
+  ]
+}

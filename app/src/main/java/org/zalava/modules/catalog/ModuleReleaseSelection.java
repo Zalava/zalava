@@ -31,7 +31,8 @@ public final class ModuleReleaseSelection {
         release.artifactBundle(),
         release.runtimeArtifacts().stream()
             .map(artifact -> new RuntimeArtifact(artifact, "sha256:" + artifact.sha256()))
-            .toList());
+            .toList(),
+        release.artifact().repository());
   }
 
   private static SourceModuleIndex.Module module(
@@ -46,7 +47,8 @@ public final class ModuleReleaseSelection {
             release.artifact().groupId(),
             release.artifact().artifactId(),
             release.artifact().version()),
-        new SourceModuleIndex.Source(release.source().repository(), release.source().license()),
+        new SourceModuleIndex.Source(
+            release.source().repository(), release.source().license(), release.source().revision()),
         new SourceModuleIndex.Build(List.of(), List.of()),
         new SourceModuleIndex.Compatibility(release.compatibility().zalavaRuntime()),
         Map.of(),
@@ -65,9 +67,18 @@ public final class ModuleReleaseSelection {
       SourceModuleIndex.Module module,
       String artifactDigest,
       boolean artifactBundle,
-      List<RuntimeArtifact> runtimeArtifacts) {
+      List<RuntimeArtifact> runtimeArtifacts,
+      org.zalava.modules.catalog.install.ModuleArtifactRepository repository) {
     public SelectedRelease {
       runtimeArtifacts = List.copyOf(runtimeArtifacts);
+    }
+
+    public SelectedRelease(
+        SourceModuleIndex.Module module,
+        String artifactDigest,
+        boolean artifactBundle,
+        List<RuntimeArtifact> runtimeArtifacts) {
+      this(module, artifactDigest, artifactBundle, runtimeArtifacts, null);
     }
 
     public SelectedRelease(SourceModuleIndex.Module module, String artifactDigest) {
