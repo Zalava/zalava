@@ -410,6 +410,70 @@ class ReleasedModuleDistributableAcceptanceTest {
     }
   }
 
+  private ProcessBuilder hostProcessBuilder(String... command) {
+    List<String> arguments = new ArrayList<>(List.of(command));
+    if (catalogProxy == null) {
+      arguments.removeIf(
+          argument ->
+              argument.startsWith("-Dhttps.proxy")
+                  || argument.startsWith("-Djavax.net.ssl.trustStore"));
+    }
+    return new ProcessBuilder(arguments);
+  }
+
+  @Test
+  @Timeout(value = 10, unit = TimeUnit.MINUTES)
+  void discoversPublicDefaultsAndInstallsReleasedModuleAcrossRestart() throws Exception {
+    Files.createDirectories(diagnostics);
+    Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
+    Files.writeString(workspace.resolve("AGENT.md"), "Disposable public catalog acceptance.");
+    try (PostgreSQLContainer postgres =
+            new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
+                .withDatabaseName("zalava_public_catalog")
+                .withUsername("zalava_public_catalog")
+                .withPassword(UUID.randomUUID().toString());
+        Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext admin = browser.newContext()) {
+      postgres.start();
+      Page page = admin.newPage();
+      try {
+        start(postgres, workspace, "dev");
+        signIn(page, LOGIN, INITIAL_PASSWORD, true);
+        page.navigate(baseUrl + "/modules");
+        page.locator("[data-action=refresh-catalog]").click();
+        assertThat(page.locator("main").textContent()).contains("Catalog refreshed:");
+        page.navigate(baseUrl + "/modules/zalava-module-time");
+        String version = page.locator("[data-release-version]").inputValue();
+        assertThat(version).isNotBlank();
+        Files.writeString(diagnostics.resolve("public-release-version.txt"), version);
+        page.locator("[data-action=request-installation]").click();
+        page.locator("[data-request-status]")
+            .filter(new Locator.FilterOptions().setHasText("SUCCEEDED"))
+            .waitFor();
+        startModule(page, "zalava-module-time");
+        assertThat(page.locator("main").textContent()).contains("zalava-module-time");
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(diagnostics.resolve("public-installation.png")));
+        stop();
+        admin.clearCookies();
+        start(postgres, workspace, "dev");
+        signIn(page, LOGIN, PASSWORD, false);
+        page.navigate(baseUrl + "/modules/zalava-module-time");
+        assertThat(page.locator("main").textContent()).contains("zalava-module-time", version);
+        startModule(page, "zalava-module-time");
+        APIResponse time = invoke(admin, page, "jdk-time", "current_time", Map.of("zoneId", "UTC"));
+        assertThat(time.status()).isEqualTo(200);
+        assertThat(time.text()).contains("UTC");
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(diagnostics.resolve("public-restart.png")));
+      } finally {
+        stop();
+      }
+    }
+  }
+
   private void start(PostgreSQLContainer postgres, Path workspace, String profile)
       throws Exception {
     int port;
@@ -421,12 +485,13 @@ class ReleasedModuleDistributableAcceptanceTest {
     assertThat(jar).exists();
     Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
     process =
-        new ProcessBuilder(
+        hostProcessBuilder(
                 Path.of(System.getProperty("java.home"), "bin/java").toString(),
                 "-Xmx768m",
                 "-Dhttps.proxyHost=127.0.0.1",
-                "-Dhttps.proxyPort=" + catalogProxy.port(),
-                "-Djavax.net.ssl.trustStore=" + catalogProxy.trustStore(),
+                "-Dhttps.proxyPort=" + (catalogProxy == null ? 0 : catalogProxy.port()),
+                "-Djavax.net.ssl.trustStore="
+                    + (catalogProxy == null ? "" : catalogProxy.trustStore()),
                 "-Djavax.net.ssl.trustStorePassword=fixture",
                 "-Dzalava.module.shopping-list.sqlite.path="
                     + workspace.resolve("shopping-list.sqlite"),
