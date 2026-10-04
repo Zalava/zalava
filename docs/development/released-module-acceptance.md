@@ -1,6 +1,6 @@
 # Released module acceptance
 
-`GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :app:releasedModuleAcceptanceTest`
+`./gradlew :app:releasedModuleAcceptanceTest`
 runs the packaged host as a separate `java -jar` process against disposable
 PostgreSQL and Chromium. `app:check` requires this lane. Docker, Chromium and
 anonymous network access to the pinned GitHub release assets are prerequisites;

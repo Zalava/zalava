@@ -34,11 +34,14 @@ user data, local configuration, generated browser output, or build products.
 
 ## Verification and delivery
 
+Use `./gradlew` with Gradle's default user home (`~/.gradle`), respecting an
+explicit `GRADLE_USER_HOME`. Do not force a temporary or per-checkout user home.
+
 The host's source ownership groups are documented in `docs/development/architecture.md`.
 Do not reintroduce peer packages for small technical helpers or build projects
 solely to represent contexts. Keep public SDK contracts distinct from host adapters.
 
-Before review, run `GRADLE_USER_HOME=/tmp/gradle-home ./gradlew :module-api:test
+Before review, run `./gradlew :module-api:test
 :module-api-test:check :app:check`. `check` includes formatting, architecture,
 browser acceptance and JaCoCo coverage verification: host minimum 90% line / 74%
 branch, API/kit minimum 90% line / 70% branch. Do not lower thresholds or exclude

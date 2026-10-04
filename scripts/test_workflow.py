@@ -1,5 +1,6 @@
-import subprocess
+import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,33 @@ WORKFLOW = Path(__file__).with_name('zalava-workflow')
 
 
 class WorkflowBoundaryTest(unittest.TestCase):
+    def test_verify_preserves_gradle_defaults_and_explicit_environment(self):
+        subprocess.run(['git', 'init', '-q', self.repo], check=True)
+        wrapper = self.repo / 'gradlew'
+        wrapper.write_text('#!/usr/bin/env python3\n'
+                           'import json, os, sys\n'
+                           'from pathlib import Path\n'
+                           'Path("invocation.json").write_text(json.dumps({\n'
+                           '"home": os.environ.get("GRADLE_USER_HOME"),\n'
+                           '"java": os.environ.get("JAVA_HOME"),\n'
+                           '"args": sys.argv[1:]}))\n')
+        wrapper.chmod(0o755)
+        for gradle_home in (None, str(self.repo / 'shared-gradle-home')):
+            with self.subTest(gradle_home=gradle_home):
+                environment = dict(os.environ)
+                environment.pop('GRADLE_USER_HOME', None)
+                environment['JAVA_HOME'] = '/example/java-25'
+                if gradle_home is not None:
+                    environment['GRADLE_USER_HOME'] = gradle_home
+                result = subprocess.run([str(WORKFLOW), '--repository', str(self.repo),
+                                         'verify', 'check'], env=environment,
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                invocation = json.loads((self.repo / 'invocation.json').read_text())
+                self.assertEqual(invocation, {'home': gradle_home,
+                                             'java': '/example/java-25',
+                                             'args': ['check']})
+
     def test_stack_start_checks_out_registered_branch(self):
         subprocess.run(['git', 'add', '.'], cwd=self.repo, check=True)
         subprocess.run(['git', '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
