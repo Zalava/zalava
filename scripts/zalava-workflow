@@ -2,7 +2,6 @@
 """Repository-explicit verification and gh-stack publication for Zalava repositories."""
 
 import argparse
-import os
 from pathlib import Path
 import subprocess
 import sys
@@ -86,14 +85,13 @@ def main():
         if not raw:
             parser.error("no changes to publish")
         run(repo, "git", "diff", "--check")
-    environment = dict(os.environ, GRADLE_USER_HOME="/tmp/gradle-home")
     if args.command == "publish" and args.verify_command:
-        subprocess.run(["bash", "-lc", args.verify_command], cwd=repo, env=environment, check=True)
+        subprocess.run(["bash", "-lc", args.verify_command], cwd=repo, check=True)
     else:
         tasks = args.tasks if args.command == "verify" else []
         if not tasks:
             tasks = [":module-api:test", ":app:check"] if (repo / "app").is_dir() else ["check"]
-        subprocess.run(["./gradlew", *tasks], cwd=repo, env=environment, check=True)
+        subprocess.run(["./gradlew", *tasks], cwd=repo, check=True)
     if args.command == "verify":
         return
     run(repo, "git", "add", "-A", "--", *args.file)
