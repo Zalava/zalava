@@ -8,6 +8,8 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-chromium
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -15,10 +17,14 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Install Chromium and native browser dependencies
-        run: npx --yes playwright@1.61.0 install --with-deps chromium
       - name: Verify host, API and contract kit
-        run: ./gradlew :module-api:test :module-api-test:check :app:check
+        run: ./gradlew :module-api:test :module-api-test:check :app:check -Pplaywright.install-deps=true
+      - name: Reject unused browser downloads
+        run: |
+          if compgen -G "$PLAYWRIGHT_BROWSERS_PATH/firefox-*" > /dev/null || compgen -G "$PLAYWRIGHT_BROWSERS_PATH/webkit-*" > /dev/null; then
+            echo "::error::Chromium acceptance downloaded unused Firefox or WebKit browsers"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
