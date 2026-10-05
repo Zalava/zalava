@@ -9,6 +9,7 @@ on:
       - ci/playwright/Dockerfile
       - ci/playwright/verify-in-image.sh
       - build.gradle
+      - app/build.gradle
       - .github/workflows/ci-image.yml
 permissions:
   contents: read
