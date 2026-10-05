@@ -5,6 +5,7 @@ on:
     branches: [main]
 permissions:
   contents: read
+  packages: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -13,23 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Verify host, API and contract kit
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-chromium
-        run: ./gradlew :module-api:test :module-api-test:check :app:check -Pplaywright.install-deps=true --profile
-      - name: Reject unused browser downloads
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-chromium
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull pinned build/test image
         run: |
-          if compgen -G "$PLAYWRIGHT_BROWSERS_PATH/firefox-*" > /dev/null || compgen -G "$PLAYWRIGHT_BROWSERS_PATH/webkit-*" > /dev/null || compgen -G "$PLAYWRIGHT_BROWSERS_PATH/chromium-*" > /dev/null; then
-            echo "::error::Headless acceptance downloaded an unused browser"
-            exit 1
-          fi
+          image=$(cat ci/playwright/image.txt)
+          [[ "$image" =~ ^ghcr\.io/zalava/ci-playwright@sha256:[a-f0-9]{64}$ ]]
+          time docker pull "$image"
+      - name: Verify host, API and contract kit
+        run: time bash ci/playwright/verify-in-image.sh "$(cat ci/playwright/image.txt)"
       - name: Record acceptance artifact pins
         if: always()
         run: |
