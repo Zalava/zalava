@@ -168,14 +168,14 @@ tasks.named('bootBuildImage') {
 
 def installPlaywrightChromium = tasks.register('installPlaywrightChromium', JavaExec) {
     group = 'verification'
-    description = 'Installs the Chromium binaries used by browser acceptance.'
+    description = 'Installs the Chromium headless shell used by browser acceptance.'
     classpath = configurations.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     args 'install'
     if (providers.gradleProperty('playwright.install-deps').getOrElse('false').toBoolean()) {
         args '--with-deps'
     }
-    args 'chromium'
+    args '--only-shell', 'chromium'
 }
 
 tasks.withType(Test).configureEach {
@@ -239,6 +239,7 @@ tasks.register('releasedModuleAcceptanceTest', Test) {
     systemProperty 'zalava.test.boot-jar', tasks.named('bootJar').flatMap { it.archiveFile }.get().asFile
     reports.html.required = true
     reports.junitXml.required = true
+    outputs.cacheIf { false }
 }
 
 tasks.named('check') {
@@ -262,6 +263,7 @@ tasks.register('browserAcceptanceTest', Test) {
     useJUnitPlatform()
     reports.html.required = true
     reports.junitXml.required = true
+    outputs.cacheIf { false }
 }
 
 tasks.register('postgresqlIntegrationTest', Test) {

@@ -5,6 +5,9 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -18,15 +21,20 @@ jobs:
       - name: Verify host, API and contract kit
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-chromium
-        run: ./gradlew :module-api:test :module-api-test:check :app:check -Pplaywright.install-deps=true
+        run: ./gradlew :module-api:test :module-api-test:check :app:check -Pplaywright.install-deps=true --profile
       - name: Reject unused browser downloads
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-chromium
         run: |
-          if compgen -G "$PLAYWRIGHT_BROWSERS_PATH/firefox-*" > /dev/null || compgen -G "$PLAYWRIGHT_BROWSERS_PATH/webkit-*" > /dev/null; then
-            echo "::error::Chromium acceptance downloaded unused Firefox or WebKit browsers"
+          if compgen -G "$PLAYWRIGHT_BROWSERS_PATH/firefox-*" > /dev/null || compgen -G "$PLAYWRIGHT_BROWSERS_PATH/webkit-*" > /dev/null || compgen -G "$PLAYWRIGHT_BROWSERS_PATH/chromium-*" > /dev/null; then
+            echo "::error::Headless acceptance downloaded an unused browser"
             exit 1
           fi
+      - name: Record acceptance artifact pins
+        if: always()
+        run: |
+          mkdir -p app/build/reports
+          cp app/src/test/resources/released-modules.properties app/build/reports/released-modules.properties
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -35,3 +43,4 @@ jobs:
             **/build/reports/
             **/build/test-results/
             app/build/browser-acceptance/
+            ${{ job.status == 'success' && '!app/build/reports/released-module-acceptance/**/*.jar' || '' }}
