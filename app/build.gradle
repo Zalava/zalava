@@ -171,6 +171,29 @@ def installPlaywrightChromium = tasks.register('installPlaywrightChromium', Java
     description = 'Installs the Chromium headless shell used by browser acceptance.'
     classpath = configurations.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
+    def imageVersion = providers.environmentVariable('ZALAVA_CI_PLAYWRIGHT_VERSION')
+    def browserCache = providers.environmentVariable('PLAYWRIGHT_BROWSERS_PATH')
+    def playwrightArtifacts = configurations.runtimeClasspath.incoming.artifacts.resolvedArtifacts
+    def installerLogger = logger
+    onlyIf('Chromium is not already supplied by a compatible CI image') {
+        if (imageVersion.isPresent()) {
+            def matchingJar = "playwright-${imageVersion.get()}.jar"
+            if (!playwrightArtifacts.get().any { it.file.name == matchingJar }) {
+                def message = "CI image Playwright ${imageVersion.get()} does not match the resolved project dependency; rebuild and update the image pin"
+                installerLogger.error(message)
+                throw new GradleException(message)
+            }
+            if (!browserCache.isPresent() || !new File(browserCache.get()).listFiles()?.any {
+                it.isDirectory() && it.name.startsWith('chromium_headless_shell-')
+            }) {
+                def message = 'CI image is missing its preinstalled Chromium headless shell'
+                installerLogger.error(message)
+                throw new GradleException(message)
+            }
+            return false
+        }
+        return true
+    }
     args 'install'
     if (providers.gradleProperty('playwright.install-deps').getOrElse('false').toBoolean()) {
         args '--with-deps'
