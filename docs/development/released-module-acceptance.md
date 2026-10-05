@@ -6,14 +6,15 @@ PostgreSQL and Chromium. `app:check` requires this lane. Docker, Chromium and
 anonymous network access to the pinned GitHub release assets are prerequisites;
 missing prerequisites and exhausted gateway retries fail the lane.
 
-Browser acceptance uses Chromium only. The Gradle browser tasks install its
-binaries with the CLI from the resolved Playwright Java dependency and reuse the
+Browser acceptance uses the Chromium headless shell only. The Gradle browser
+tasks install its binaries with the CLI from the resolved Playwright Java dependency and reuse the
 normal Playwright browser cache. Test processes disable automatic browser
 downloads, so Firefox and WebKit are not installed for these journeys. To also
 install Chromium's native Linux dependencies, run
 `./gradlew :app:installPlaywrightChromium -Pplaywright.install-deps=true` (requires
 permission to install system packages). CI uses this option in its normal gate
-and checks that its fresh browser cache contains no Firefox or WebKit downloads.
+and checks that its fresh browser cache contains no full Chrome, Firefox or
+WebKit downloads.
 
 The immutable version/digest inventory is `app/src/test/resources/released-modules.properties`.
 The test downloads real public artifacts, checks each SHA-256, installs through
@@ -55,3 +56,11 @@ isolated test certificate for GitHub locator/index endpoints. Host URL and
 hostname validation remain enabled. Artifact bytes come from the real pinned
 public release. This verifies packaged-host discovery through deterministic
 metadata fixtures; it does not establish availability of public-default indexes.
+
+CI enables Gradle task-output caching for unchanged compilation and verification
+inputs. Browser and real-distributable acceptance tasks do not reuse cached test
+results. Gradle profile reports are retained with verification diagnostics.
+Successful-run acceptance archives exclude duplicate module JARs and retain the
+release version/SHA-256 inventory alongside logs, screenshots, traces and
+persisted fixture state, and can be rehydrated from those immutable releases.
+Failed or cancelled runs retain the complete archive, including module binaries.
