@@ -332,6 +332,8 @@ class BrowserNavigationAcceptanceTest {
             page.locator(".zalava-navigation-close").waitFor();
             assertThat(page.locator(".zalava-navbar a[aria-current='page']").isVisible()).isTrue();
             page.keyboard().press("Escape");
+            page.locator(".navbar-menu")
+                .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.HIDDEN));
           }
           capture(
               page,
