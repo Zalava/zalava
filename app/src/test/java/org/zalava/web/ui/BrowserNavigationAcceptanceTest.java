@@ -314,7 +314,10 @@ class BrowserNavigationAcceptanceTest {
                         .isVisible())
                 .isTrue();
             assertThat(page.locator(".composer-send").isDisabled()).isTrue();
-            assertThat(page.locator(".conversations").boundingBox().y).isLessThan(450);
+            var notice = page.locator(".provider-notice").boundingBox();
+            assertThat(page.locator(".conversations").boundingBox().y)
+                .as("Conversation toolbar follows model setup without unused vertical space")
+                .isCloseTo(notice.y + notice.height + 16, Offset.offset(1.0));
             if (width > 1024) {
               assertThat(page.locator(".chat-inspector").boundingBox().height).isGreaterThan(350);
               assertThat(page.locator(".chat-inspector").boundingBox().y)

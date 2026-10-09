@@ -46,6 +46,14 @@ The host's source ownership groups are documented in `docs/development/architect
 Do not reintroduce peer packages for small technical helpers or build projects
 solely to represent contexts. Keep public SDK contracts distinct from host adapters.
 
+Before pushing, run the same verification entry point as `.github/workflows/verify.yml`
+locally in the pinned CI image:
+`CI=true GITHUB_ACTIONS=true bash ci/playwright/verify-in-image.sh "$(cat ci/playwright/image.txt)" --rerun-tasks --no-build-cache`.
+This executes the complete gate with CI's Java/Node/browser/native dependencies;
+a host-only run or cached test results do not satisfy this pre-push requirement.
+Use the normal Gradle home. Report image authentication/runtime blockers before
+pushing; do not substitute a different environment and claim CI equivalence.
+
 Before review, run `./gradlew :module-api:test
 :module-api-test:check :app:check`. `check` includes formatting, architecture,
 browser acceptance and JaCoCo coverage verification: host minimum 90% line / 74%
