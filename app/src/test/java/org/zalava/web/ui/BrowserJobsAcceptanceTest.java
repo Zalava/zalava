@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -75,7 +76,8 @@ class BrowserJobsAcceptanceTest {
     registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
-    registry.add("spring.ai.model.chat", () -> "none");
+    registry.add("spring.ai.model.chat", () -> "openai");
+    registry.add("spring.ai.openai.api-key", () -> "local-scripted-model");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
   }
@@ -340,6 +342,7 @@ class BrowserJobsAcceptanceTest {
   @TestConfiguration(proxyBeanMethods = false)
   static class ModelConfiguration {
     @Bean
+    @Primary
     ChatModel browserJobsChatModel() {
       return mock(ChatModel.class);
     }

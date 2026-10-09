@@ -1,14 +1,9 @@
 package org.zalava.web.ui;
 
-import static org.zalava.ZalavaConfiguration.AGENT_MD;
-
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -21,11 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.SupportedProvider;
-import org.zalava.assistant.channels.application.port.in.TelegramConfiguration;
-import org.zalava.assistant.channels.application.port.in.TelegramConfigurationStatus;
-import org.zalava.assistant.channels.application.port.in.TelegramConfigurationUpdate;
+import org.zalava.api.ModuleConfigurationStatus;
+import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
-import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.identity.channels.application.port.in.ChannelLinkChallenges;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
@@ -38,8 +31,7 @@ public class SettingsController {
   private final Environment environment;
   private final ZalavaRuntime zalavaRuntime;
   private final FileSystemModuleConfigurationStore moduleConfigurationStore;
-  private final TelegramConfiguration telegramConfiguration;
-  private final ChannelIdentityLinks channelIdentityLinks;
+  private final WorkspaceInstructions instructions;
   private final ChannelLinkChallenges channelLinkChallenges;
   private final AuthenticatedActorResolver actors;
 
@@ -48,43 +40,27 @@ public class SettingsController {
       Environment environment,
       ZalavaRuntime zalavaRuntime,
       FileSystemModuleConfigurationStore moduleConfigurationStore,
-      TelegramConfiguration telegramConfiguration,
-      ChannelIdentityLinks channelIdentityLinks,
+      WorkspaceInstructions instructions,
       ChannelLinkChallenges channelLinkChallenges,
       AuthenticatedActorResolver actors) {
     this.workspace = workspace;
     this.environment = environment;
     this.zalavaRuntime = zalavaRuntime;
     this.moduleConfigurationStore = moduleConfigurationStore;
-    this.telegramConfiguration = telegramConfiguration;
-    this.channelIdentityLinks = channelIdentityLinks;
+    this.instructions = instructions;
     this.channelLinkChallenges = channelLinkChallenges;
     this.actors = actors;
   }
 
-  @PostMapping("/settings/channels/telegram")
-  public String updateTelegram(
-      @RequestParam(defaultValue = "false") boolean enabled,
-      @RequestParam(required = false) String tokenReplacement,
-      @RequestParam(required = false) String allowedUsername,
-      RedirectAttributes redirectAttributes) {
-    try {
-      telegramConfiguration.update(
-          new TelegramConfigurationUpdate(enabled, tokenReplacement, allowedUsername));
-      redirectAttributes.addFlashAttribute(
-          "settingsMessage",
-          "Telegram channel configuration saved. Restart Zalava to apply the change.");
-    } catch (IllegalArgumentException ex) {
-      redirectAttributes.addFlashAttribute("settingsError", ex.getMessage());
-    } catch (IOException ex) {
-      throw new IllegalStateException("Unable to update Telegram channel configuration", ex);
-    }
-    return "redirect:/settings";
-  }
-
   @GetMapping("/settings")
-  public String settings(Model model, CsrfToken csrf, Authentication authentication) {
-    model.addAttribute("model", buildModel(actors.actor(authentication)));
+  public String settings(
+      Model model, CsrfToken csrf, @RequestParam(defaultValue = "assistant") String section) {
+    model.addAttribute("model", buildModel());
+    model.addAttribute(
+        "section",
+        List.of("assistant", "provider", "modules", "channels", "permissions").contains(section)
+            ? section
+            : "assistant");
     model.addAttribute("csrf", csrf);
     if (!model.containsAttribute("channelLinkCode")) {
       model.addAttribute("channelLinkCode", null);
@@ -99,6 +75,9 @@ public class SettingsController {
       Authentication authentication,
       RedirectAttributes redirectAttributes) {
     try {
+      if (!availableChannels().contains(channel))
+        throw new IllegalArgumentException(
+            "This channel is not available. Install and configure its module first.");
       var issued =
           channelLinkChallenges.issue(
               actors.actor(authentication), channel, ChannelOperationScope.of("chat:send"));
@@ -107,53 +86,49 @@ public class SettingsController {
     } catch (IllegalArgumentException exception) {
       redirectAttributes.addFlashAttribute("settingsError", exception.getMessage());
     }
-    return "redirect:/settings";
+    return "redirect:/settings?section=channels";
   }
 
   @PostMapping("/settings/instructions")
   public String updateInstructions(
       @RequestParam String instructions, RedirectAttributes redirectAttributes) {
-    String normalized = instructions.strip();
-    if (normalized.isEmpty()) {
-      redirectAttributes.addFlashAttribute(
-          "settingsError", "Workspace instructions cannot be empty.");
-      return "redirect:/settings";
-    }
-
     try {
-      Files.writeString(
-          workspace.createRelative(AGENT_MD).getFilePath(),
-          normalized + System.lineSeparator(),
-          StandardCharsets.UTF_8,
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING,
-          StandardOpenOption.WRITE);
-    } catch (IOException ex) {
-      throw new IllegalStateException("Unable to update workspace instructions", ex);
+      this.instructions.save(instructions);
+      redirectAttributes.addFlashAttribute("settingsMessage", "Workspace instructions updated.");
+    } catch (IllegalArgumentException exception) {
+      redirectAttributes.addFlashAttribute("settingsError", exception.getMessage());
     }
-
-    redirectAttributes.addFlashAttribute("settingsMessage", "Workspace instructions updated.");
     return "redirect:/settings";
   }
 
-  private SettingsModel buildModel(org.zalava.identity.accounts.domain.Actor actor) {
+  @PostMapping("/settings/instructions/reset")
+  public String resetInstructions(RedirectAttributes redirectAttributes) {
+    instructions.reset();
+    redirectAttributes.addFlashAttribute(
+        "settingsMessage", "Default workspace instructions restored.");
+    return "redirect:/settings";
+  }
+
+  private SettingsModel buildModel() {
     String providerId = environment.getProperty("spring.ai.model.chat", "unknown");
     String providerLabel =
-        SupportedProvider.from(providerId).map(SupportedProvider::label).orElse(providerId);
+        SupportedProvider.from(providerId).map(SupportedProvider::label).orElse("Not configured");
     return new SettingsModel(
         workspacePath(),
         providerLabel,
-        readInstructions(),
+        instructions.current(),
+        instructions.customized(),
         configurationHealth(),
-        telegramStatus());
+        availableChannels());
   }
 
-  private TelegramConfigurationStatus telegramStatus() {
-    try {
-      return telegramConfiguration.status();
-    } catch (IOException ex) {
-      return new TelegramConfigurationStatus(false, false, null);
-    }
+  private List<String> availableChannels() {
+    return zalavaRuntime.activeModules().stream()
+        .flatMap(module -> module.channels().stream())
+        .map(channel -> channel.descriptor().channelId())
+        .distinct()
+        .sorted()
+        .toList();
   }
 
   private String workspacePath() {
@@ -164,30 +139,12 @@ public class SettingsController {
     }
   }
 
-  private String readInstructions() {
-    String privateInstructions = readFile(AGENT_MD);
-    if (privateInstructions != null) {
-      return privateInstructions;
-    }
-    String defaultInstructions = readFile("AGENT.md");
-    return defaultInstructions == null ? "" : defaultInstructions;
-  }
-
-  private String readFile(String name) {
-    try {
-      Path path = workspace.createRelative(name).getFilePath();
-      return Files.exists(path) ? Files.readString(path, StandardCharsets.UTF_8) : null;
-    } catch (IOException ex) {
-      return null;
-    }
-  }
-
   private List<ModuleConfigurationHealth> configurationHealth() {
     return zalavaRuntime.modules().stream()
         .filter(
             module ->
                 module.configuration().jsonSchema().get("properties")
-                        instanceof java.util.Map<?, ?> properties
+                        instanceof Map<?, ?> properties
                     && !properties.isEmpty())
         .map(
             module ->
@@ -199,7 +156,7 @@ public class SettingsController {
         .toList();
   }
 
-  private static String configurationLabel(org.zalava.api.ModuleConfigurationStatus status) {
+  private static String configurationLabel(ModuleConfigurationStatus status) {
     return switch (status) {
       case ACTIVE -> "Active";
       case RESTART_REQUIRED -> "Changes pending";
@@ -213,8 +170,9 @@ public class SettingsController {
       String workspacePath,
       String providerLabel,
       String instructions,
+      boolean instructionsCustomized,
       List<ModuleConfigurationHealth> moduleConfigurationHealth,
-      TelegramConfigurationStatus telegram) {}
+      List<String> availableChannels) {}
 
   public record ModuleConfigurationHealth(String moduleId, String status) {}
 }

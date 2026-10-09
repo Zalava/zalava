@@ -6,14 +6,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.zalava.assistant.chat.api.ChatProviderReadiness;
 import org.zalava.assistant.chat.application.UiExecutionStateQueries;
 import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
@@ -34,6 +38,36 @@ class UiChatWebSocketHandlerTest {
   private final WebSocketSession session = mock(WebSocketSession.class);
   private final Actor actor = new Actor(AccountId.newId());
   private final ConversationReference conversation = ConversationReference.newReference();
+
+  @Test
+  void unconfiguredModelRejectsCraftedSendBeforeExecutingOrPersistingChat() throws Exception {
+    when(session.getPrincipal()).thenReturn((Principal) () -> "member");
+    when(session.isOpen()).thenReturn(true);
+    when(actors.actorForLogin("member")).thenReturn(actor);
+    var readiness =
+        new ChatProviderReadiness(
+            new MockEnvironment().withProperty("spring.ai.model.chat", "unknown"));
+    var handler =
+        new UiChatWebSocketHandler(
+            json, actors, commands, queries, null, null, null, null, readiness);
+    handler.handleTextMessage(
+        session,
+        new TextMessage(
+            json.writeValueAsString(
+                Map.of(
+                    "protocol",
+                    "zalava.ui/v1",
+                    "type",
+                    "chat.send",
+                    "conversationId",
+                    conversation.value(),
+                    "message",
+                    "Hello"))));
+    var sent = ArgumentCaptor.forClass(TextMessage.class);
+    verify(session).sendMessage(sent.capture());
+    assertThat(sent.getValue().getPayload()).contains("Model not configured");
+    verifyNoInteractions(commands, queries);
+  }
 
   @Test
   void bootstrapsHistoryAndStreamsTypedEventsForTheAuthenticatedActor() throws Exception {

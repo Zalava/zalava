@@ -20,10 +20,13 @@ import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.port.out.AgentModel;
 import org.zalava.assistant.agent.application.port.out.StructuredOutputSchemaException;
 import org.zalava.assistant.agent.application.port.out.StructuredRunEvidence;
+import org.zalava.tasks.application.BoundedTaskAgentLoop.ToolFailure;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.Task;
 import tools.jackson.core.JacksonException;
@@ -32,9 +35,16 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public final class SpringAiAgentModel implements AgentModel {
   private final ChatClient chatClient;
+  private final WorkspaceAgentPrompt systemPrompt;
 
   public SpringAiAgentModel(ChatClient chatClient) {
+    this(chatClient, null);
+  }
+
+  @Autowired
+  public SpringAiAgentModel(ChatClient chatClient, WorkspaceAgentPrompt systemPrompt) {
     this.chatClient = chatClient;
+    this.systemPrompt = systemPrompt;
   }
 
   @Override
@@ -114,8 +124,7 @@ public final class SpringAiAgentModel implements AgentModel {
                   response);
       return new TaskAgent.Result(Task.Status.in_progress, toolFeedback(toolResult));
     } catch (RuntimeException failure) {
-      throw new org.zalava.tasks.application.BoundedTaskAgentLoop.ToolFailure(
-          "tool execution failed: " + failure.getClass().getSimpleName());
+      throw new ToolFailure("tool execution failed: " + failure.getClass().getSimpleName());
     }
   }
 
@@ -161,8 +170,14 @@ public final class SpringAiAgentModel implements AgentModel {
 
   private ChatClient.ChatClientRequestSpec request(
       String conversationId, String prompt, List<Object> tools) {
-    return chatClient
-        .prompt(prompt)
+    var request = chatClient.prompt(prompt);
+    if (systemPrompt != null) {
+      request.system(
+          p ->
+              p.text(systemPrompt.text())
+                  .param(AgentEnvironment.ENVIRONMENT_INFO_KEY, AgentEnvironment.info()));
+    }
+    return request
         .tools(callbacks(tools).toArray())
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId));
   }

@@ -61,7 +61,8 @@ class BrowserFileAcceptanceTest {
     registry.add("zalava.accounts.bootstrap-password", () -> PASSWORD);
     registry.add("agent.channels.telegram.token", () -> "false");
     registry.add("agent.channels.telegram.username", () -> "false");
-    registry.add("spring.ai.model.chat", () -> "unknown");
+    registry.add("spring.ai.model.chat", () -> "openai");
+    registry.add("spring.ai.openai.api-key", () -> "local-scripted-model");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
     registry.add("zalava.chat.attachment.bind-container", () -> "true");

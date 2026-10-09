@@ -1,13 +1,14 @@
+@import org.zalava.web.ui.navigation.NavigationModel
 @import org.zalava.knowledge.application.KnowledgeLibrary.SourceDetail
 @param SourceDetail model
-@param org.zalava.web.ui.navigation.NavigationModel navigation
+@param NavigationModel navigation
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Knowledge Source</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+  <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
   <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>

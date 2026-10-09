@@ -10,9 +10,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.Account;
 
 public class PasswordChangeRequiredFilter extends OncePerRequestFilter {
-  private static final Set<String> ALLOWED = Set.of("/account/password", "/logout", "/login");
+  private static final Set<String> ALLOWED =
+      Set.of("/account/password", "/logout", "/login", "/zalava-ui.css");
   private final AccountLifecycle accounts;
 
   public PasswordChangeRequiredFilter(AccountLifecycle accounts) {
@@ -29,7 +31,7 @@ public class PasswordChangeRequiredFilter extends OncePerRequestFilter {
         && !ALLOWED.contains(request.getRequestURI())
         && accounts
             .findByLoginName(auth.getName())
-            .map(org.zalava.identity.accounts.domain.Account::passwordChangeRequired)
+            .map(Account::passwordChangeRequired)
             .orElse(false)) {
       response.sendRedirect("/account/password");
       return;

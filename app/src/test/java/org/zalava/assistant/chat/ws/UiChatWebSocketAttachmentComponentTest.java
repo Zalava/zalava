@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
@@ -34,6 +35,7 @@ import tools.jackson.databind.ObjectMapper;
  * cannot see.
  */
 @SecureZalavaComponentTest
+@TestPropertySource(properties = {"zalava.test.chat-provider=openai"})
 @ResourceLock("secure-component-runtime")
 class UiChatWebSocketAttachmentComponentTest {
   private static final AtomicInteger LOGINS = new AtomicInteger();

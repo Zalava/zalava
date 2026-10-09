@@ -1,9 +1,11 @@
+@import org.zalava.web.ui.navigation.NavigationModel
+@import org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot
 @import org.zalava.web.ui.JobsController.JobGroup
 @import org.zalava.web.ui.JobsController.JobsModel
 
 @param JobsModel model
-@param org.zalava.web.ui.navigation.NavigationModel navigation
-@param org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot evidence
+@param NavigationModel navigation
+@param Snapshot evidence
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -11,7 +13,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Jobs</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>

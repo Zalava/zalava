@@ -1,5 +1,6 @@
+@import java.util.List
 @import org.zalava.web.ui.navigation.NavItem
-@param java.util.List<NavItem> items
+@param List<NavItem> items
 @param String activePage
 
 <nav class="navbar zalava-navbar" role="navigation" aria-label="Zalava navigation">
@@ -23,9 +24,9 @@
             <div class="navbar-start">
                 @for(NavItem item : items)
                     @if(item.id().equals(activePage))
-                    <a class="navbar-item is-active" aria-current="page" href="${item.href()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
+                    <a class="navbar-item is-active" aria-current="page" href="${item.href()}" title="${item.label()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
                     @else
-                    <a class="navbar-item" href="${item.href()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
+                    <a class="navbar-item" href="${item.href()}" title="${item.label()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
                     @endif
                 @endfor
             </div>

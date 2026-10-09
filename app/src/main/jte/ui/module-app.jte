@@ -1,7 +1,9 @@
+@import org.springframework.security.web.csrf.CsrfToken
+@import org.zalava.web.ui.navigation.NavigationModel
 @param String title
 @param String content
-@param org.springframework.security.web.csrf.CsrfToken csrf = null
-@param org.zalava.web.ui.navigation.NavigationModel navigation
+@param CsrfToken csrf = null
+@param NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -13,7 +15,7 @@
     <meta name="zalava-csrf-parameter" content="${csrf.getParameterName()}">
     <meta name="zalava-csrf-token" content="${csrf.getToken()}">
   @endif
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>

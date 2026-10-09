@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.platform.configuration.application.port.in.ConfigurationCommands;
 import org.zalava.web.onboarding.OnboardingProvider;
 
@@ -47,7 +48,7 @@ public class S4_AgentMdStep implements OnboardingProvider {
     if (agentContent == null) {
       agentContent = readFile(AGENT_MD);
       if (agentContent == null) agentContent = readFile("AGENT.md");
-      if (agentContent == null) agentContent = "";
+      if (agentContent == null) agentContent = new WorkspaceInstructions(agentWorkspace).defaults();
     }
     model.put("agentContent", agentContent);
   }

@@ -131,7 +131,7 @@ h1, p { margin: var(--zalava-space-1) 0; }
 .zalava-button:hover, .composer button:hover, .attachment-chip button:hover { background: var(--zalava-color-primary-strong); }
 .zalava-button:active, .composer button:active, .attachment-chip button:active { transform: translateY(1px); }
 .zalava-button:disabled, .composer button:disabled, .attachment-chip button:disabled { cursor: not-allowed; opacity: .55; transform: none; }
-.zalava-button--secondary, .composer-attach, .attachment-chip button { color: var(--zalava-color-primary); background: var(--zalava-color-primary-soft); }
+.zalava-button--secondary, .composer .composer-attach, .attachment-chip button { color: var(--zalava-color-primary); background: var(--zalava-color-primary-soft); }
 .zalava-button--danger { color: var(--zalava-color-danger); background: var(--zalava-color-danger-soft); }
 
 .messages { display: grid; align-content: start; gap: var(--zalava-space-3); overflow-y: auto; }
@@ -190,3 +190,22 @@ h1, p { margin: var(--zalava-space-1) 0; }
   .chat-inspector { display: block; }
   .inspector-toggle { display: none; }
 }
+
+/* Keep the conversation toolbar at the top and composer at the bottom. */
+.zalava-chat { display: flex; flex-direction: column; width: 100%; max-width: 100rem; height: 100dvh; min-height: 0; gap: 1rem; padding: 1.5rem; }
+.zalava-chat > header, .zalava-chat > .conversations { flex: 0 0 auto; }
+.zalava-chat h1 { font-size: 2rem; font-weight: 750; line-height: 1.2; }
+.chat-workspace { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+.chat-primary { display: flex; flex-direction: column; min-height: 0; }
+.chat-primary .messages { flex: 1 1 auto; min-height: 8rem; padding: .5rem; }
+.chat-primary .composer { flex: 0 0 auto; }
+.chat-inspector { overflow-y: auto; height: 100%; }
+.chat-empty { align-self: center; justify-self: center; max-width: 32rem; padding: 2rem 1rem; color: var(--zalava-color-text-muted); text-align: center; }
+.chat-empty h2 { color: var(--zalava-color-text); font-size: 1.35rem; font-weight: 700; }
+.provider-notice { flex: 0 0 auto; padding: 1rem; border: 1px solid #e8d5aa; border-radius: .75rem; background: var(--zalava-color-warning-soft); color: var(--zalava-color-text); }
+.provider-notice .zalava-button { margin-top: .5rem; }
+.knowledge-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.attachments:has(.knowledge-file-input) { position: relative; }
+.attachments:has(.knowledge-file-input:focus-visible) label { box-shadow: var(--zalava-focus-ring); }
+@media (max-width: 1024px) { .zalava-chat { height: auto; min-height: calc(100dvh - 7rem); padding: 1rem; } .chat-workspace { flex: 1; } .chat-primary .messages { min-height: 15rem; max-height: 55dvh; } .chat-inspector { height: auto; } }
+@media (max-width: 640px) { .zalava-chat { padding: .75rem; } .composer { padding: .75rem; } .conversations select { width: 100%; min-width: 0; } .attachments { gap: .5rem; } .attachments .zalava-button { padding-inline: .75rem; } }

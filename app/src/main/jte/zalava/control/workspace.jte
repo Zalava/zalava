@@ -17,8 +17,9 @@
 
 <section class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-4">
                     <div>
-        <p class="text-primary fw-bold text-uppercase small mb-1">Runtime</p>
-        <h1 class="mb-0">Zalava provider status</h1>
+        <p class="text-primary fw-bold text-uppercase small mb-1">Administrator workspace</p>
+        <h1 class="mb-2">Advanced settings</h1>
+        <p class="text-body-secondary mb-0">Manage modules, providers and runtime permissions.</p>
     </div>
     <div class="text-body-secondary small">Refreshed ${model.refreshedAt()}</div>
 </section>

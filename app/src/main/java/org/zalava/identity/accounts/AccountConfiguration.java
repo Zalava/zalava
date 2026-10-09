@@ -1,5 +1,7 @@
 package org.zalava.identity.accounts;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
@@ -121,7 +123,12 @@ public class AccountConfiguration {
             auth ->
                 auth.requestMatchers(AccountConfiguration::isErrorDispatch)
                     .permitAll()
-                    .requestMatchers("/login", "/zalava-control.css", "/css/**", "/actuator/health")
+                    .requestMatchers(
+                        "/login",
+                        "/zalava-ui.css",
+                        "/zalava-control.css",
+                        "/css/**",
+                        "/actuator/health")
                     .permitAll()
                     .requestMatchers("/zalava/control/**")
                     .hasRole("ADMIN")
@@ -159,13 +166,7 @@ public class AccountConfiguration {
                 form.loginPage("/login")
                     .successHandler(
                         (request, response, authentication) -> {
-                          boolean admin =
-                              authentication.getAuthorities().stream()
-                                  .anyMatch(
-                                      authority -> authority.getAuthority().equals("ROLE_ADMIN"));
-                          response.sendRedirect(
-                              request.getContextPath()
-                                  + (admin ? "/zalava/control" : "/dashboard"));
+                          response.sendRedirect(request.getContextPath() + "/chat");
                         })
                     .permitAll())
         .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
@@ -177,9 +178,9 @@ public class AccountConfiguration {
         .build();
   }
 
-  private static boolean isErrorDispatch(jakarta.servlet.http.HttpServletRequest request) {
+  private static boolean isErrorDispatch(HttpServletRequest request) {
     try {
-      return request.getDispatcherType() == jakarta.servlet.DispatcherType.ERROR;
+      return request.getDispatcherType() == DispatcherType.ERROR;
     } catch (UnsupportedOperationException syntheticPrivilegeRequest) {
       // Spring's URI-only privilege evaluator supplies a synthetic FilterInvocation request.
       // This is a route-authority query, not an internal servlet error dispatch.

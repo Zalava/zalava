@@ -1,3 +1,4 @@
+@import org.zalava.web.onboarding.steps.S5StarterModulesStep.StarterModule
 @import java.util.List
 @import java.util.Map
 @import org.zalava.SupportedProvider
@@ -23,7 +24,7 @@
 @param String chatModelPropertyKey
 @param String providerApiPropertyKey
 @param String agentContent
-@param List<org.zalava.web.onboarding.steps.S5StarterModulesStep.StarterModule> starterModules
+@param List<StarterModule> starterModules
 @param String selectedStarterModuleId
 @param Boolean selectedStarterConfigured
 
@@ -32,7 +33,7 @@
     <title>Zalava Setup</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
     <style>
     .brand-lockup {
         border-left: 3px solid var(--bulma-primary);

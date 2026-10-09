@@ -46,6 +46,14 @@ The host's source ownership groups are documented in `docs/development/architect
 Do not reintroduce peer packages for small technical helpers or build projects
 solely to represent contexts. Keep public SDK contracts distinct from host adapters.
 
+Before pushing, run the same verification entry point as `.github/workflows/verify.yml`
+locally in the pinned CI image:
+`CI=true GITHUB_ACTIONS=true bash ci/playwright/verify-in-image.sh "$(cat ci/playwright/image.txt)" --rerun-tasks --no-build-cache`.
+This executes the complete gate with CI's Java/Node/browser/native dependencies;
+a host-only run or cached test results do not satisfy this pre-push requirement.
+Use the normal Gradle home. Report image authentication/runtime blockers before
+pushing; do not substitute a different environment and claim CI equivalence.
+
 Before review, run `./gradlew :module-api:test
 :module-api-test:check :app:check`. `check` includes formatting, architecture,
 browser acceptance and JaCoCo coverage verification: host minimum 90% line / 74%
@@ -60,6 +68,19 @@ the released contract kit; configuration, permissions, validation/failure,
 cleanup and observable outcomes. Kit acceptance is not real-host acceptance.
 Core owns install/restart/security/persistence/browser journeys against released
 module artifacts. Missing prerequisites are reported, never counted as passing.
+
+For every UI implementation or fix (user directive, 2026-10-09), open the
+changed screens against the implemented host/artifact in an isolated browser,
+capture representative desktop/tablet/phone viewport screenshots and visually
+inspect them against the approved design. Verify layout, readable controls,
+containment, empty/error/pending states and relevant interactions. Reuse the
+Playwright host lane with disposable accounts/data; add focused regressions for
+reproduced layout defects. Automated assertions alone do not establish visual
+conformance. Record revision, viewports, screens inspected, outcomes and remaining
+gaps in the private plan and PR; keep screenshots/traces outside Git. Complete
+these checks before user retest. Keep the user-visible acceptance tab user-driven;
+automated visual checks use a separate browser. Missing prerequisites are explicit
+blockers. This requirement applies in new sessions and to module UI fixes.
 
 Use an explicit step branch, scoped evidence, tests, staged-diff review and a
 ready-for-review PR. Use `gh stack` for dependent PRs. The repository-explicit

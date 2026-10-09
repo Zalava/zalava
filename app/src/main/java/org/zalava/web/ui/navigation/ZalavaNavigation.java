@@ -23,7 +23,8 @@ public final class ZalavaNavigation {
           new NavItem("monitoring", "Monitoring", "/monitoring"),
           new NavItem("apps", "Apps", "/apps"),
           new NavItem("modules", "Modules", "/modules"),
-          new NavItem("settings", "Settings", "/settings"));
+          new NavItem("settings", "Settings", "/settings"),
+          new NavItem("advanced", "Advanced settings", "/zalava/control"));
 
   private final WebInvocationPrivilegeEvaluator privilegeEvaluator;
 

@@ -32,7 +32,8 @@ public final class ZalavaComponentTestInitializer
             "agent.onboarding.completed=true",
             "agent.channels.telegram.token=false",
             "agent.channels.telegram.username=false",
-            "spring.ai.model.chat=unknown",
+            "spring.ai.model.chat="
+                + context.getEnvironment().getProperty("zalava.test.chat-provider", "unknown"),
             "spring.ai.openai.api-key=component-test-not-a-real-key",
             "spring.datasource.url=" + PostgreSqlTestDatabase.newJdbcUrl(),
             "jobrunr.background-job-server.enabled=false",
