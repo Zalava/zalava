@@ -537,9 +537,9 @@ class ModulesControllerComponentTest {
         .hasValue("replacement-secret");
 
     mockMvc
-        .perform(get("/settings"))
+        .perform(get("/settings").param("section", "modules"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("Configuration health")))
+        .andExpect(content().string(containsString("Module configuration")))
         .andExpect(
             content()
                 .string(containsString("data-configuration-health-link=\"configured-search\"")))

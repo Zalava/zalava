@@ -1,7 +1,9 @@
 package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -22,10 +24,19 @@ import org.zalava.support.ComponentTestAccounts;
 class NavigationComponentTest {
 
   private static final List<String> ADMIN_LINKS =
-      List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/apps", "/modules", "/settings");
+      List.of(
+          "/dashboard",
+          "/chat",
+          "/jobs",
+          "/knowledge",
+          "/apps",
+          "/modules",
+          "/settings",
+          "/zalava/control");
   private static final List<String> MEMBER_LINKS =
       List.of("/dashboard", "/chat", "/jobs", "/knowledge");
-  private static final List<String> MEMBER_HIDDEN_LINKS = List.of("/apps", "/modules", "/settings");
+  private static final List<String> MEMBER_HIDDEN_LINKS =
+      List.of("/apps", "/modules", "/settings", "/zalava/control");
 
   private static final Map<String, String> PAGES =
       Map.of(
@@ -35,11 +46,32 @@ class NavigationComponentTest {
           "/knowledge", "knowledge",
           "/apps", "apps",
           "/modules", "modules",
-          "/settings", "settings");
+          "/settings", "settings",
+          "/zalava/control", "advanced");
 
   @Autowired private MockMvc mockMvc;
 
   @Autowired private ComponentTestAccounts accounts;
+
+  @Test
+  void membersCannotSaveOrResetWorkspaceInstructionsOrUseAdvancedActions() throws Exception {
+    var member = accounts.newActivated(AccountRole.MEMBER);
+    for (String path :
+        List.of(
+            "/settings/instructions",
+            "/settings/instructions/reset",
+            "/settings/channel-links",
+            "/zalava/control/module-release-installations/catalog/refresh")) {
+      mockMvc
+          .perform(
+              post(path)
+                  .with(accounts.authenticatedAs(member))
+                  .with(csrf())
+                  .param("instructions", "Rejected instructions")
+                  .param("channel", "telegram"))
+          .andExpect(status().isForbidden());
+    }
+  }
 
   @Test
   void administratorSeesEveryProductPageOnEveryPage() throws Exception {

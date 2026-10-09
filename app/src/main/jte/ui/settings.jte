@@ -1,179 +1,56 @@
+@import java.time.Instant
+@import org.zalava.web.ui.navigation.NavigationModel
 @import org.zalava.web.ui.SettingsController.SettingsModel
 @import org.springframework.security.web.csrf.CsrfToken
-
+@import java.util.List
 @param SettingsModel model
+@param String section
 @param String settingsMessage
 @param String settingsError
 @param String channelLinkCode
-@param java.time.Instant channelLinkExpiresAt
+@param Instant channelLinkExpiresAt
 @param CsrfToken csrf
-@param org.zalava.web.ui.navigation.NavigationModel navigation
-
-<!doctype html>
-<html lang="en" data-theme="light">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
- <title>Zalava Settings</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="/zalava-ui.css">
-</head>
-<body>
+@param NavigationModel navigation
+<!doctype html><html lang="en" data-theme="light"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zalava Settings</title>
+<link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-ui.css">
+</head><body>
 @template.ui.navigation(items = navigation.items(), activePage = "settings")
-
-<main class="section">
-    <div class="container">
-        <header class="settings-heading mb-6">
-            <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
-            <h1 class="title is-2 mb-3">Settings</h1>
-            <p class="subtitle is-5 has-text-grey">
-                Workspace instructions and the safe defaults currently applied by Zalava.
-            </p>
-        </header>
-
-        @if(settingsMessage != null)
-            <article class="message is-success" role="status">
-                <div class="message-body">${settingsMessage}</div>
-            </article>
-        @endif
-        @if(settingsError != null)
-            <article class="message is-danger" role="alert">
-                <div class="message-body">${settingsError}</div>
-            </article>
-        @endif
-
-        <div class="columns is-variable is-5">
-            <div class="column is-two-thirds">
-                <section class="box settings-card">
-                    <p class="heading mb-1">Assistant</p>
-                    <h2 class="title is-4 mb-2">Workspace instructions</h2>
-                    <p class="has-text-grey mb-4">
-                        These instructions guide assistant behavior for this workspace.
-                    </p>
-
-        <form method="post" action="/settings/instructions">
-            <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-                        <div class="field">
-                            <label class="label" for="instructions">Instructions</label>
-                            <div class="control">
-                                <textarea id="instructions" class="textarea settings-editor"
-                                          name="instructions" required>${model.instructions()}</textarea>
-                            </div>
-                        </div>
-                        <div class="field mt-4">
-                            <div class="control">
-                                <button class="button is-primary" type="submit">Save instructions</button>
-                            </div>
-                        </div>
-                    </form>
-                </section>
-            </div>
-            <div class="column">
-                <section class="box settings-card" aria-labelledby="module-configuration-heading">
-                    <p class="heading mb-1">Modules</p>
-                    <h2 id="module-configuration-heading" class="title is-5 mb-2">Configuration health</h2>
-                    @if(model.moduleConfigurationHealth().isEmpty())
-                        <p class="has-text-grey is-size-7">No loaded modules currently declare configuration.</p>
-                    @else
-                        @for(var module : model.moduleConfigurationHealth())
-                            <p class="mb-3">
-                                <a href="/modules/${module.moduleId()}/configuration" data-configuration-health-link="${module.moduleId()}">${module.moduleId()}</a><br>
-                                <span class="tag is-light">${module.status()}</span>
-                            </p>
-                        @endfor
-                    @endif
-                </section>
-            </div>
-
-            <div class="column">
-    <section class="box settings-card mb-5" aria-labelledby="channel-links-heading">
-      <p class="heading mb-1">Channels</p>
-      <h2 id="channel-links-heading" class="title is-5 mb-2">Channel links</h2>
-      <p class="has-text-grey is-size-7 mb-4">Create a one-time code in your authenticated account, then send it through the channel you want to link. A username is never used as authority.</p>
-      @if(channelLinkCode != null)
-        <article class="message is-success" role="status"><div class="message-body">Link code: <code>${channelLinkCode}</code><br>Expires: ${channelLinkExpiresAt.toString()}</div></article>
-      @endif
-      <form method="post" action="/settings/channel-links">
-        <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-        <div class="field"><label class="label" for="channel-link-channel">Channel</label><div class="control"><input id="channel-link-channel" class="input" name="channel" value="telegram" required></div></div>
-        <button class="button is-primary" type="submit">Create link code</button>
-      </form>
-    </section>
-    <section class="box settings-card mb-5" aria-labelledby="telegram-heading">
-                    <p class="heading mb-1">Channels</p>
-                    <h2 id="telegram-heading" class="title is-5 mb-2">Telegram</h2>
-                    @if(model.telegram().enabled())
-                        <p class="has-text-grey is-size-7 mb-4">Enabled for &#64;${model.telegram().allowedUsername()}. A token is configured but never shown.</p>
-                    @else
-                        <p class="has-text-grey is-size-7 mb-4">Disabled. Enable it to receive messages through your Telegram bot.</p>
-                    @endif
-        <form method="post" action="/settings/channels/telegram">
-            <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-                        <div class="field">
-                            <label class="checkbox" for="telegram-enabled">
-                                <input id="telegram-enabled" type="checkbox" name="enabled" value="true" checked="${model.telegram().enabled()}">
-                                Enable Telegram
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="label" for="telegram-token">Bot token</label>
-                            <div class="control">
-                                <input id="telegram-token" class="input" type="password" name="tokenReplacement" placeholder="${model.telegram().tokenConfigured() ? "Leave blank to keep the current token" : "Paste the Telegram bot token"}" autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label class="label" for="telegram-username">Allowed Telegram username</label>
-                            <div class="control">
-                                <input id="telegram-username" class="input" type="text" name="allowedUsername" value="${model.telegram().allowedUsername() == null ? "" : model.telegram().allowedUsername()}" placeholder="&#64;your_username" autocomplete="off" autocapitalize="none" spellcheck="false">
-                            </div>
-                            <p class="help">Only this username may use the bot. Enter it with or without &#64;.</p>
-                        </div>
-                        <button class="button is-primary" type="submit">Save Telegram settings</button>
-                        <p class="help mt-2">Changes take effect after Zalava restarts.</p>
-                    </form>
-                </section>
-
-                <section class="box settings-card mb-5">
-                    <p class="heading mb-1">Workspace</p>
-                    <h2 class="title is-5 mb-4">Runtime configuration</h2>
-                    <dl class="settings-details">
-                        <div>
-                            <dt>Location</dt>
-                            <dd>${model.workspacePath()}</dd>
-                        </div>
-                        <div>
-                            <dt>Chat provider</dt>
-                            <dd>${model.providerLabel()}</dd>
-                        </div>
-                    </dl>
-                    <a class="button is-light is-fullwidth mt-4" href="/onboarding/provider">
-                        Open provider setup
-                    </a>
-                    <p class="help mt-2">Provider changes take effect after setup and restart.</p>
-                </section>
-
-                <section class="box settings-card">
-                    <p class="heading mb-1">Safe defaults</p>
-                    <h2 class="title is-5 mb-4">Permissions and interface</h2>
-                    <div class="settings-default">
-                        <div>
-                            <p class="has-text-weight-semibold">Side-effecting tool calls</p>
-                            <p class="has-text-grey is-size-7">Require your approval before execution.</p>
-                        </div>
-                        <span class="tag is-success is-light">Protected</span>
-                    </div>
-                    <div class="settings-default">
-                        <div>
-                            <p class="has-text-weight-semibold">Interface theme</p>
-                            <p class="has-text-grey is-size-7">Pinned for consistent product readability.</p>
-                        </div>
-                        <span class="tag is-light">Light</span>
-                    </div>
-                </section>
-            </div>
-        </div>
-    </div>
-</main>
-
-</body>
-</html>
+<main class="section"><div class="container">
+<header class="settings-heading mb-5"><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
+<h1 class="title is-2 mb-3">Settings</h1><p class="subtitle is-5 has-text-grey">Shape your assistant and configure your workspace.</p></header>
+@if(settingsMessage != null)<article class="message is-success" role="status"><div class="message-body">${settingsMessage}</div></article>@endif
+@if(settingsError != null)<article class="message is-danger" role="alert"><div class="message-body">${settingsError}</div></article>@endif
+<div class="settings-layout">
+<nav class="settings-sections" aria-label="Settings sections">
+@for(String key : List.of("assistant", "provider", "modules", "channels", "permissions"))
+<a href="/settings?section=${key}" aria-current="${section.equals(key) ? "page" : null}">${switch(key) { case "assistant" -> "Assistant"; case "provider" -> "Provider & workspace"; case "modules" -> "Modules"; case "channels" -> "Channel links"; default -> "Permissions & interface"; }}</a>
+@endfor
+</nav><div class="settings-content">
+@if(section.equals("assistant"))
+<section class="box settings-card" aria-labelledby="instructions-heading">
+<div class="settings-actions mb-3"><h2 id="instructions-heading" class="title is-4 mb-0">Workspace instructions</h2><span class="tag is-light">${model.instructionsCustomized() ? "Customized" : "Default"}</span></div>
+<p class="has-text-grey mb-4">Guide how Zalava communicates, uses tools and carries out work. Changes apply to subsequent requests. System permissions and approvals always apply.</p>
+<form method="post" action="/settings/instructions" id="instructions-form"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
+<div class="field"><label class="label" for="instructions">Instructions</label><textarea id="instructions" class="textarea settings-editor" name="instructions" required>${model.instructions()}</textarea></div></form>
+<div class="settings-actions mt-4"><button class="button is-primary" type="submit" form="instructions-form">Save instructions</button>
+<form method="post" action="/settings/instructions/reset"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><button class="button is-light" type="submit">Reset to defaults</button></form></div>
+<p class="help mt-3">Reset replaces your saved instructions with Zalava's recommended defaults.</p></section>
+@elseif(section.equals("provider"))
+<section class="box settings-card"><h2 class="title is-4">Provider & workspace</h2><dl class="settings-details"><div><dt>Location</dt><dd>${model.workspacePath()}</dd></div><div><dt>Chat provider</dt><dd>${model.providerLabel()}</dd></div></dl>
+<a class="button is-primary mt-4" href="/onboarding/provider">Open provider setup</a><p class="help mt-2">Provider changes take effect after setup and restart.</p></section>
+@elseif(section.equals("modules"))
+<section class="box settings-card" aria-labelledby="module-configuration-heading"><h2 id="module-configuration-heading" class="title is-4">Module configuration</h2><p class="has-text-grey mb-4">Each installed module owns its settings, including channel credentials.</p>
+@if(model.moduleConfigurationHealth().isEmpty())<p>No loaded modules currently declare configuration.</p><a class="button is-light mt-4" href="/modules">Browse modules</a>
+@else @for(var module : model.moduleConfigurationHealth())<div class="settings-default"><a href="/modules/${module.moduleId()}/configuration" data-configuration-health-link="${module.moduleId()}">${module.moduleId()}</a><span class="tag is-light">${module.status()}</span></div>@endfor @endif
+</section>
+@elseif(section.equals("channels"))
+<section class="box settings-card" aria-labelledby="channel-links-heading"><h2 id="channel-links-heading" class="title is-4">Channel links</h2><p class="has-text-grey mb-4">Create a one-time code for your account, then send it through the channel you want to link. A username is never used as authority. Configure the channel in its module settings.</p>
+@if(channelLinkCode != null)<article class="message is-success" role="status"><div class="message-body">Link code: <code>${channelLinkCode}</code><br>Expires: ${channelLinkExpiresAt.toString()}</div></article>@endif
+@if(model.availableChannels().isEmpty())<p>No active channel modules are available. Install and configure a channel module first.</p><a class="button is-light mt-4" href="/modules">Open modules</a>
+@else<form method="post" action="/settings/channel-links"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><div class="field"><label class="label" for="channel-link-channel">Channel</label><div class="select"><select id="channel-link-channel" name="channel" required>@for(String channel : model.availableChannels())<option value="${channel}">${channel}</option>@endfor</select></div></div><button class="button is-primary" type="submit">Create link code</button></form>@endif
+</section>
+@else
+<section class="box settings-card"><h2 class="title is-4">Permissions & interface</h2><div class="settings-default"><div><p class="has-text-weight-semibold">Side-effecting tool calls</p><p class="has-text-grey">Require your approval before execution.</p></div><span class="tag is-success is-light">Protected</span></div><div class="settings-default"><div><p class="has-text-weight-semibold">Interface theme</p><p class="has-text-grey">Pinned for consistent product readability.</p></div><span class="tag is-light">Light</span></div><a class="button is-light mt-4" href="/zalava/control">Open advanced settings</a></section>
+@endif
+</div></div></div></main></body></html>

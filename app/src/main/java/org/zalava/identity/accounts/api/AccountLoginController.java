@@ -1,7 +1,6 @@
 package org.zalava.identity.accounts.api;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,7 +20,13 @@ public class AccountLoginController {
   }
 
   @GetMapping("/login")
-  String login(Model model, CsrfToken csrf) {
+  String login(
+      Model model,
+      CsrfToken csrf,
+      @RequestParam(required = false) String error,
+      @RequestParam(required = false) String logout) {
+    model.addAttribute("error", error != null);
+    model.addAttribute("loggedOut", logout != null);
     model.addAttribute("csrf", csrf);
     return "accounts/login";
   }
@@ -43,9 +48,7 @@ public class AccountLoginController {
     try {
       var account = accounts.findByLoginName(authentication.getName()).orElseThrow();
       accounts.changePassword(account.id(), currentPassword, replacementPassword);
-      return authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))
-          ? "redirect:/zalava/control"
-          : "redirect:/dashboard";
+      return "redirect:/chat";
     } catch (RuntimeException exception) {
       model.addAttribute("error", "Password could not be changed");
       model.addAttribute("csrf", csrf);

@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
+import org.springframework.core.io.UrlResource;
+import org.zalava.platform.configuration.application.port.in.ConfigurationCommands;
 
 class S4_AgentMdStepTest {
 
@@ -22,9 +25,7 @@ class S4_AgentMdStepTest {
     Path workspace = Files.createDirectories(root.resolve("ws-" + System.nanoTime()));
     // Production configures agent.workspace as a directory URI with a trailing slash
     // (file:./workspace/), so S4 resolves relative files against the directory itself.
-    return new StepContext(
-        new S4_AgentMdStep(new org.springframework.core.io.UrlResource(workspace.toUri() + "/")),
-        workspace);
+    return new StepContext(new S4_AgentMdStep(new UrlResource(workspace.toUri() + "/")), workspace);
   }
 
   @Test
@@ -48,7 +49,7 @@ class S4_AgentMdStepTest {
   }
 
   @Test
-  void prepareModelFallsBackToTheSharedAgentFileAndThenToEmpty() throws IOException {
+  void prepareModelFallsBackToTheSharedAgentFileAndThenToProductDefaults() throws IOException {
     StepContext shared = newStep();
     Files.writeString(shared.workspace().resolve("AGENT.md"), "Shared instructions.");
     Map<String, Object> model = new HashMap<>();
@@ -58,7 +59,8 @@ class S4_AgentMdStepTest {
     StepContext empty = newStep();
     Map<String, Object> emptyModel = new HashMap<>();
     empty.step().prepareModel(new HashMap<>(), emptyModel);
-    assertThat(emptyModel.get("agentContent")).isEqualTo("");
+    assertThat(emptyModel.get("agentContent").toString())
+        .startsWith("You are Zalava, the assistant for this workspace.");
   }
 
   @Test
@@ -101,12 +103,7 @@ class S4_AgentMdStepTest {
     Map<String, Object> session = new HashMap<>();
     session.put(S4_AgentMdStep.SESSION_AGENT_CONTENT, "Saved instructions.");
 
-    context
-        .step()
-        .saveConfiguration(
-            session,
-            org.mockito.Mockito.mock(
-                org.zalava.platform.configuration.application.port.in.ConfigurationCommands.class));
+    context.step().saveConfiguration(session, Mockito.mock(ConfigurationCommands.class));
 
     assertThat(context.workspace().resolve("AGENT.private.md"))
         .exists()
@@ -117,12 +114,7 @@ class S4_AgentMdStepTest {
   void saveConfigurationWithoutContentWritesNothing() throws Exception {
     StepContext context = newStep();
 
-    context
-        .step()
-        .saveConfiguration(
-            new HashMap<>(),
-            org.mockito.Mockito.mock(
-                org.zalava.platform.configuration.application.port.in.ConfigurationCommands.class));
+    context.step().saveConfiguration(new HashMap<>(), Mockito.mock(ConfigurationCommands.class));
 
     assertThat(context.workspace().resolve("AGENT.private.md")).doesNotExist();
   }
@@ -139,11 +131,7 @@ class S4_AgentMdStepTest {
             () ->
                 context
                     .step()
-                    .saveConfiguration(
-                        session,
-                        org.mockito.Mockito.mock(
-                            org.zalava.platform.configuration.application.port.in
-                                .ConfigurationCommands.class)))
+                    .saveConfiguration(session, Mockito.mock(ConfigurationCommands.class)))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Failed to write AGENT.private.md");
   }

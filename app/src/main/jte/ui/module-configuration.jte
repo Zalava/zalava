@@ -1,3 +1,4 @@
+@import org.zalava.web.ui.navigation.NavigationModel
 @import org.zalava.web.ui.ModulesController.ModuleConfigurationModel
 @import org.zalava.web.ui.ModuleConfigurationForm.Field
 @import org.springframework.security.web.csrf.CsrfToken
@@ -6,7 +7,7 @@
 @param String configurationMessage
 @param String configurationError
 @param CsrfToken csrf
-@param org.zalava.web.ui.navigation.NavigationModel navigation
+@param NavigationModel navigation
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -14,7 +15,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Configure ${model.displayName()} · Zalava</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>

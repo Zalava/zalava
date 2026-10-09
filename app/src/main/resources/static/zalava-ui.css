@@ -965,3 +965,50 @@ body {
 .job-evidence { display: grid; gap: var(--zalava-space-4, 1rem); margin-top: 1.5rem; }
 .job-evidence .job-copy { min-width: 0; overflow-wrap: anywhere; }
 @media (min-width: 1025px) { .job-evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Account entry uses the same local palette and spacing without external assets. */
+.zalava-auth { padding: 0; font-family: var(--zalava-font-sans, system-ui, sans-serif); }
+.auth-layout { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 28rem); align-items: center; gap: clamp(2rem, 6vw, 7rem); max-width: 72rem; min-height: 100dvh; margin: auto; padding: clamp(1.25rem, 5vw, 4rem); }
+.auth-brand { display: inline-flex; gap: .75rem; align-items: center; color: var(--zalava-ink); font-size: 1.35rem; font-weight: 800; text-decoration: none; }
+.auth-brand .zalava-brand-mark { background: var(--zalava-primary, #1959a6); }
+.auth-eyebrow { margin-top: 3rem; color: var(--zalava-primary, #1959a6); font-size: .75rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+.auth-introduction h1 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.15; margin: 1rem 0; letter-spacing: -.03em; }
+.auth-introduction > p:last-child { max-width: 30rem; color: var(--zalava-muted, #59647a); font-size: 1.1rem; line-height: 1.6; }
+.auth-card { min-width: 0; padding: clamp(1.25rem, 3vw, 2.5rem); border: 1px solid var(--zalava-border); border-radius: 1.25rem; background: white; box-shadow: var(--zalava-shadow-md, 0 12px 30px #17203312); }
+.auth-card h2 { margin: 0 0 .5rem; font-size: 1.75rem; }
+.auth-card p { color: #59647a; line-height: 1.5; }
+.auth-card form { display: grid; gap: .65rem; margin-top: 1.5rem; }
+.auth-card label { font-weight: 650; margin-top: .35rem; }
+.auth-card input { box-sizing: border-box; min-width: 0; width: 100%; min-height: 2.9rem; border: 1px solid var(--zalava-border); border-radius: .6rem; padding: .65rem .8rem; background: white; color: var(--zalava-ink); font: inherit; }
+.auth-card button { min-height: 2.9rem; margin-top: .75rem; border: 0; border-radius: .6rem; padding: .65rem 1rem; background: var(--zalava-primary, #1959a6); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+.auth-card button.auth-secondary { margin-top: 0; background: #e8f0ff; color: #1959a6; }
+.auth-card .auth-help { font-size: .85rem; }
+.auth-card .auth-alert, .auth-card .auth-notice { padding: .8rem; border-radius: .6rem; color: #b42318; background: #ffebe9; }
+.auth-card .auth-notice { color: #18794e; background: #dcf6e8; }
+@media (max-width: 768px) { .auth-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-content: center; max-width: 32rem; } .auth-eyebrow { margin-top: 1.25rem; } .auth-introduction h1 { font-size: 2rem; } }
+/* Settings sections keep each form in a readable, contained content column. */
+.settings-layout { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.settings-sections { display: grid; gap: .4rem; }
+.settings-sections a { display: block; padding: .8rem 1rem; border-radius: .65rem; color: var(--zalava-ink); }
+.settings-sections a[aria-current="page"] { background: var(--zalava-primary-soft, #e8f0ff); color: var(--zalava-primary, #1959a6); font-weight: 700; }
+.settings-content, .settings-card { min-width: 0; }
+.settings-content .settings-card { width: 100%; }
+.settings-content .settings-editor { min-height: 26rem; resize: vertical; }
+.settings-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.settings-actions form { margin: 0; }
+.settings-card .button { max-width: 100%; height: auto; white-space: normal; min-height: 2.75rem; }
+.settings-card dd, .settings-card code { overflow-wrap: anywhere; }
+@media (max-width: 768px) { .settings-layout { grid-template-columns: minmax(0, 1fr); } .settings-sections { display: flex; flex-wrap: wrap; gap: .25rem; } .settings-sections a { padding: .65rem .75rem; } .settings-content .settings-editor { min-height: 22rem; } }
+
+/* Product navigation and controls use Zalava tokens across CSS frameworks. */
+.zalava-brand-mark { background: var(--zalava-primary); }
+.zalava-navbar .navbar-item.is-active { color: var(--zalava-primary); background: var(--zalava-primary-soft); font-weight: 700; }
+.zalava-navbar .navbar-burger { color: var(--zalava-primary); }
+.button.is-primary { color: white; }
+.has-text-primary { color: var(--zalava-primary) !important; }
+.zalava-advanced .navbar > .container { width: 100%; max-width: none; }
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .zalava-navbar .navbar-brand { margin-inline: 0; }
+    .zalava-navbar .navbar-brand .navbar-item { width: auto; padding: .65rem .9rem; }
+}

@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.assistant.chat.ChatChannel;
 import org.zalava.assistant.chat.ChatTurnResult;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
@@ -53,6 +54,7 @@ class ChatControllerComponentTest {
   @Autowired private ChatMemoryRepository chatMemoryRepository;
 
   @Autowired private CapturingChatModel chatModel;
+  @Autowired private WorkspaceInstructions instructions;
 
   @Autowired private ZalavaRuntime zalavaRuntime;
 
@@ -65,6 +67,26 @@ class ChatControllerComponentTest {
     registry.add("spring.ai.model.chat", () -> "unknown");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
+  }
+
+  @Test
+  void subsequentModelRequestsUseSavedInstructionsAndResetDefaults() throws Exception {
+    Path privateFile = WORKSPACE.resolve("AGENT.private.md");
+    String previous = Files.exists(privateFile) ? Files.readString(privateFile) : null;
+    try {
+      instructions.save("Speak clearly with a custom workspace rule.");
+      chatChannel.chat("instructions-first", "hello");
+      assertThat(chatModel.lastPrompt().getSystemMessage().getText())
+          .contains("Speak clearly with a custom workspace rule.");
+      instructions.reset();
+      chatChannel.chat("instructions-reset", "hello");
+      assertThat(chatModel.lastPrompt().getSystemMessage().getText())
+          .contains(instructions.defaults())
+          .doesNotContain("Speak clearly with a custom workspace rule.");
+    } finally {
+      if (previous == null) Files.deleteIfExists(privateFile);
+      else Files.writeString(privateFile, previous);
+    }
   }
 
   @Test

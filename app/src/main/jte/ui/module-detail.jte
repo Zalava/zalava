@@ -1,3 +1,5 @@
+@import org.zalava.web.ui.navigation.NavigationModel
+@import org.springframework.security.web.csrf.CsrfToken
 @import org.zalava.web.ui.ModulesController.ModuleDetailModel
 @import org.zalava.web.ui.ModulesController.ProviderEntry
 @import org.zalava.web.ui.ModulesController.ManagedServiceEntry
@@ -5,8 +7,8 @@
 @import org.zalava.web.ui.ModulesController.ToolEntry
 @import org.zalava.web.ui.ModulesController.CatalogReleaseEntry
 @param ModuleDetailModel model
-@param org.zalava.web.ui.navigation.NavigationModel navigation
-@param org.springframework.security.web.csrf.CsrfToken csrf
+@param NavigationModel navigation
+@param CsrfToken csrf
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -14,7 +16,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>${model.displayName()} · Zalava Modules</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>

@@ -11,6 +11,9 @@ import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
 import "./style.css";
 
+const providerConfigured = document.getElementById("root").dataset.providerConfigured === "true";
+const providerSetupAllowed = document.getElementById("root").dataset.providerSetupAllowed === "true";
+
 const ZalavaChatContext = createContext(null);
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ACCEPT =
@@ -256,7 +259,7 @@ function ZalavaRuntime({ children }) {
 
   const onNew = async (message) => {
     const text = messageText(message);
-    if (!text.trim() || socket.current?.readyState !== WebSocket.OPEN || !conversationId || !canSend || continuing) return;
+    if (!providerConfigured || !text.trim() || socket.current?.readyState !== WebSocket.OPEN || !conversationId || !canSend || continuing) return;
     const attachments = message.attachments ?? [];
     const attachmentIds = attachments
       .map((attachment) => attachment.content?.find((part) => part.type === "file")?.data ?? attachment.id)
@@ -273,7 +276,7 @@ function ZalavaRuntime({ children }) {
   const runtime = useExternalStoreRuntime({
     messages,
     isRunning: messages.at(-1)?.streaming === true,
-    isSendDisabled: status !== "Connected" || !conversationId || !canSend || continuing,
+    isSendDisabled: !providerConfigured || status !== "Connected" || !conversationId || !canSend || continuing,
     convertMessage: (message) => ({
       role: message.role,
       content: [{ type: "text", text: message.content }],
@@ -374,8 +377,13 @@ function Chat() {
           <h1>Chat</h1>
           <p>Ask Zalava a question or start work that will be tracked as a job.</p>
         </div>
-        <output className="zalava-status" aria-live="polite">{status}</output>
+        <output className="zalava-status" aria-label="Chat connection" aria-live="polite">{status}</output>
       </header>
+      {!providerConfigured && <section className="provider-notice" aria-label="Model setup" role="status">
+        <strong>Model not configured</strong>
+        <p>The chat connection is available, but Zalava needs a model before it can respond.</p>
+        {providerSetupAllowed ? <a className="zalava-button" href="/onboarding/provider">Set up a provider</a> : <p>Ask your workspace administrator to configure a provider.</p>}
+      </section>}
       <nav className="conversations" aria-label="Conversations">
         <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={pending || continuing || status !== "Connected"}>
           {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
@@ -400,6 +408,7 @@ function Chat() {
       </section>}
       {commandError && commandError !== failure?.content && <p role="alert">{commandError}</p>}
       <section className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
+        {messages.length === 0 && <div className="chat-empty"><h2>What would you like to work on?</h2><p>{providerConfigured ? "Ask a question, explore your knowledge or start a task. Work and permissions will appear in workspace details." : "Set up a model to start your first conversation. Your workspace is ready for you to explore."}</p></div>}
         {messages.map((message, index) => (
           <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
             <strong>{message.role === "user" ? "You" : "Zalava"}</strong>
@@ -447,9 +456,10 @@ function Chat() {
           </div>
         </ComposerPrimitive.AttachmentDropzone>
         <div className="attachments" aria-label="Knowledge import">
-          <label htmlFor="knowledge-import-file">Import to knowledge</label>
+          <label className="zalava-button zalava-button--secondary" htmlFor="knowledge-import-file">Import to knowledge</label>
           <input
             id="knowledge-import-file"
+            className="knowledge-file-input"
             type="file"
             multiple
             aria-label="Import files to knowledge"

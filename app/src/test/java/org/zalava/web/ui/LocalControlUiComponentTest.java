@@ -26,7 +26,7 @@ class LocalControlUiComponentTest {
     mockMvc
         .perform(get("/zalava/control"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("Zalava provider status")))
+        .andExpect(content().string(containsString("Advanced settings")))
         .andExpect(content().string(not(containsString("href=\"/zalava/control/metrics\""))))
         .andExpect(content().string(containsString("External module development")))
         .andExpect(content().string(containsString("Refresh catalog")))

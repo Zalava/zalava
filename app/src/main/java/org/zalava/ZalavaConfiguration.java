@@ -34,6 +34,8 @@ import org.zalava.api.ZalavaModule;
 import org.zalava.assistant.agent.Agent;
 import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.DefaultAgent;
+import org.zalava.assistant.agent.WorkspaceInstructions;
+import org.zalava.assistant.agent.adapter.out.springai.WorkspaceAgentPrompt;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.DefaultAgentContextAssembler;
 import org.zalava.assistant.agent.application.DefaultAgentExecution;
@@ -876,22 +878,9 @@ public class ZalavaConfiguration {
   @Bean
   @DependsOn({"mcpHeaderCustomizer"})
   public ChatClient chatClient(
-      ChatClient.Builder chatClientBuilder,
-      ChatMemory chatMemory,
-      @Value("${agent.workspace:Unknown}") Resource workspace)
-      throws IOException {
+      ChatClient.Builder chatClientBuilder, ChatMemory chatMemory, WorkspaceAgentPrompt prompt) {
 
-    Resource privateAgentMd = workspace.createRelative(AGENT_MD);
-    String agentInstructions =
-        privateAgentMd.exists()
-            ? privateAgentMd.getContentAsString(StandardCharsets.UTF_8)
-            : readWorkspaceFile(workspace, "AGENT.md", BUILD_TRAINING_AGENT_PROMPT);
-    String agentPrompt =
-        agentInstructions
-            + System.lineSeparator()
-            + readWorkspaceFile(workspace, "INFO.md", BUILD_TRAINING_ENVIRONMENT_INFO)
-            + System.lineSeparator()
-            + PROVIDER_TOOL_GROUNDING_PROMPT;
+    String agentPrompt = prompt.text();
 
     chatClientBuilder
         .defaultAdvisors(new SimpleLoggerAdvisor())
@@ -901,6 +890,23 @@ public class ZalavaConfiguration {
                     .param(AgentEnvironment.ENVIRONMENT_INFO_KEY, AgentEnvironment.info()))
         .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
     return chatClientBuilder.build();
+  }
+
+  @Bean
+  public WorkspaceAgentPrompt agentSystemPrompt(
+      WorkspaceInstructions instructions, @Value("${agent.workspace}") Resource workspace) {
+    return new WorkspaceAgentPrompt(
+        () -> {
+          try {
+            return instructions.current()
+                + System.lineSeparator()
+                + readWorkspaceFile(workspace, "INFO.md", BUILD_TRAINING_ENVIRONMENT_INFO)
+                + System.lineSeparator()
+                + PROVIDER_TOOL_GROUNDING_PROMPT;
+          } catch (IOException exception) {
+            throw new IllegalStateException("Unable to read agent environment", exception);
+          }
+        });
   }
 
   private static Path skillsDir(Resource workspace) throws IOException {

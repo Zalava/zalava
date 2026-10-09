@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.zalava.assistant.chat.api.ChatProviderReadiness;
 import org.zalava.assistant.chat.application.UiExecutionStateQueries;
 import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
@@ -20,6 +21,7 @@ import org.zalava.assistant.chat.application.port.in.ActorChatStreamListener;
 import org.zalava.assistant.chat.attachment.application.ChatAttachments;
 import org.zalava.assistant.chat.attachment.domain.ChatAttachmentIntent;
 import org.zalava.assistant.chat.domain.ChatMessage;
+import org.zalava.assistant.conversation.application.port.in.ConversationContinuation;
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
@@ -47,8 +49,8 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   private final UiExecutionStateQueries executionStates;
   private final UiApprovalDecisions approvalDecisions;
   private final ChatAttachments attachments;
-  private final org.zalava.assistant.conversation.application.port.in.ConversationContinuation
-      continuation;
+  private final ConversationContinuation continuation;
+  private final ChatProviderReadiness readiness;
 
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
@@ -87,6 +89,27 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         null);
   }
 
+  public UiChatWebSocketHandler(
+      ObjectMapper objectMapper,
+      AuthenticatedActorResolver actors,
+      ActorChatCommands commands,
+      ActorChatQueries queries,
+      UiExecutionStateQueries executionStates,
+      UiApprovalDecisions approvalDecisions,
+      ChatAttachments attachments,
+      ConversationContinuation continuation) {
+    this(
+        objectMapper,
+        actors,
+        commands,
+        queries,
+        executionStates,
+        approvalDecisions,
+        attachments,
+        continuation,
+        null);
+  }
+
   @Autowired
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
@@ -96,7 +119,9 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
       UiExecutionStateQueries executionStates,
       UiApprovalDecisions approvalDecisions,
       ChatAttachments attachments,
-      org.zalava.assistant.conversation.application.port.in.ConversationContinuation continuation) {
+      ConversationContinuation continuation,
+      ChatProviderReadiness readiness) {
+    this.readiness = readiness;
     this.continuation = continuation;
     this.objectMapper = objectMapper;
     this.actors = actors;
@@ -202,6 +227,13 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   }
 
   private void streamChat(WebSocketSession session, Actor actor, UiCommand.SendChat command) {
+    if (readiness != null && !readiness.configured()) {
+      sendFailure(
+          session,
+          "command",
+          "Model not configured. Ask your administrator to complete provider setup.");
+      return;
+    }
     ConversationReference conversation = new ConversationReference(command.conversationId());
     if (continuation != null) continuation.requireWeb(actor, conversation);
     StringBuilder text = new StringBuilder();

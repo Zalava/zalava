@@ -61,6 +61,19 @@ cleanup and observable outcomes. Kit acceptance is not real-host acceptance.
 Core owns install/restart/security/persistence/browser journeys against released
 module artifacts. Missing prerequisites are reported, never counted as passing.
 
+For every UI implementation or fix (user directive, 2026-10-09), open the
+changed screens against the implemented host/artifact in an isolated browser,
+capture representative desktop/tablet/phone viewport screenshots and visually
+inspect them against the approved design. Verify layout, readable controls,
+containment, empty/error/pending states and relevant interactions. Reuse the
+Playwright host lane with disposable accounts/data; add focused regressions for
+reproduced layout defects. Automated assertions alone do not establish visual
+conformance. Record revision, viewports, screens inspected, outcomes and remaining
+gaps in the private plan and PR; keep screenshots/traces outside Git. Complete
+these checks before user retest. Keep the user-visible acceptance tab user-driven;
+automated visual checks use a separate browser. Missing prerequisites are explicit
+blockers. This requirement applies in new sessions and to module UI fixes.
+
 Use an explicit step branch, scoped evidence, tests, staged-diff review and a
 ready-for-review PR. Use `gh stack` for dependent PRs. The repository-explicit
 `scripts/zalava-workflow` supports verification and publication across public

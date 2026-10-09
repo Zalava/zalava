@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -61,11 +66,12 @@ class BrowserNavigationAcceptanceTest {
           "Monitoring",
           "Apps",
           "Modules",
-          "Settings");
+          "Settings",
+          "Advanced settings");
   private static final List<String> MEMBER_MENU =
       List.of("Dashboard", "Chat", "Jobs", "Knowledge", "Memory");
   private static final List<String> MEMBER_HIDDEN =
-      List.of("/apps", "/modules", "/monitoring", "/settings");
+      List.of("/apps", "/modules", "/monitoring", "/settings", "/zalava/control");
 
   private static final Map<String, String> PAGES = pages();
 
@@ -121,21 +127,22 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void administratorCreatesChannelLinkCodeThroughSettings() throws IOException {
+  void moduleFreeSettingsDoesNotAdvertiseChannelConfiguration() throws IOException {
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
-      assertThat(page.navigate(baseUrl() + "/settings").status()).isEqualTo(200);
-      page.locator("form[action='/settings/channel-links']").waitFor();
-      page.locator("#channel-link-channel").fill("telegram");
-      page.locator("form[action='/settings/channel-links'] button").click();
-      var code = page.locator("[aria-labelledby='channel-links-heading'] [role='status'] code");
-      code.waitFor();
-      assertThat(code.innerText()).matches("[0-9a-f]{48}");
-      assertThat(page.content()).contains("Expires:");
+      assertThat(page.navigate(baseUrl() + "/settings?section=channels").status()).isEqualTo(200);
+      assertThat(
+              page.getByText(
+                      "No active channel modules are available.",
+                      new Page.GetByTextOptions().setExact(false))
+                  .count())
+          .isEqualTo(1);
+      assertThat(page.locator("form[action='/settings/channel-links']").count()).isZero();
+      assertThat(page.getByText("Bot token").count()).isZero();
     }
   }
 
@@ -153,13 +160,15 @@ class BrowserNavigationAcceptanceTest {
         page.setViewportSize(viewport[0], viewport[1]);
         assertThat(page.navigate(baseUrl() + "/dashboard").status()).isEqualTo(200);
         page.locator(".zalava-navbar").waitFor();
+        var brand = page.locator(".zalava-brand").boundingBox();
+        var mark = page.locator(".zalava-brand-mark").boundingBox();
+        assertThat(mark.x).isGreaterThanOrEqualTo(brand.x);
+        assertThat(mark.x + mark.width).isLessThanOrEqualTo(brand.x + brand.width);
         if (viewport[0] <= 640) {
           page.locator(".navbar-burger").focus();
           page.keyboard().press("Enter");
           page.locator(".zalava-navigation-close")
-              .waitFor(
-                  new com.microsoft.playwright.Locator.WaitForOptions()
-                      .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+              .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
           page.keyboard().press("Tab");
           page.waitForFunction(
               "document.activeElement.classList.contains('zalava-navigation-close')");
@@ -169,9 +178,7 @@ class BrowserNavigationAcceptanceTest {
                           "document.activeElement.classList.contains('zalava-navigation-close')"))
               .isTrue();
           var modules =
-              page.getByRole(
-                  com.microsoft.playwright.options.AriaRole.LINK,
-                  new Page.GetByRoleOptions().setName("Modules"));
+              page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Modules"));
           modules.waitFor();
           assertThat(modules.isVisible()).isTrue();
           page.keyboard().press("Escape");
@@ -219,7 +226,7 @@ class BrowserNavigationAcceptanceTest {
       for (int index = 1; index < metrics.count(); index++) {
         var metric = metrics.nth(index).boundingBox();
         assertThat(metric.y).isEqualTo(first.y);
-        assertThat(metric.width).isCloseTo(first.width, org.assertj.core.data.Offset.offset(1.0));
+        assertThat(metric.width).isCloseTo(first.width, Offset.offset(1.0));
         assertThat(metric.x).isGreaterThan(metrics.nth(index - 1).boundingBox().x + metric.width);
       }
       assertThat(page.locator(".dashboard-activity").first().boundingBox().y)
@@ -229,7 +236,7 @@ class BrowserNavigationAcceptanceTest {
       assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
           .isEqualTo(true);
       assertThat(page.locator("a[aria-current='page']").innerText()).isEqualTo("Dashboard");
-      page.route("**/bulma.min.css", route -> route.abort());
+      page.route("https://**", route -> route.abort());
       page.reload();
       page.locator(".zalava-navbar").waitFor();
       assertThat(page.locator(".zalava-navbar").boundingBox().width).isEqualTo(240);
@@ -253,12 +260,181 @@ class BrowserNavigationAcceptanceTest {
           page.locator(".zalava-navbar").waitFor();
           assertThat(menuLabels(page)).containsExactlyElementsOf(MEMBER_MENU);
         }
+        page.navigate(baseUrl() + "/chat");
+        page.getByText("Ask your workspace administrator to configure a provider.").waitFor();
+        assertThat(
+                page.getByRole(
+                        AriaRole.LINK, new Page.GetByRoleOptions().setName("Set up a provider"))
+                    .count())
+            .isZero();
         for (String hidden : MEMBER_HIDDEN) {
           assertThat(page.navigate(baseUrl() + hidden).status()).isEqualTo(403);
         }
       } finally {
         stopTrace(context);
       }
+    }
+  }
+
+  @Test
+  void changedScreensRemainContainedAndRetainVisualEvidence() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.route("https://**", route -> route.abort());
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 1000);
+        page.navigate(baseUrl() + "/login");
+        page.locator(".auth-card").waitFor();
+        capture(page, "login-" + width);
+        assertContained(page, ".auth-card", ".auth-card input, .auth-card button");
+      }
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      page.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 1000);
+        for (String path :
+            List.of(
+                "/chat",
+                "/settings",
+                "/settings?section=provider",
+                "/settings?section=modules",
+                "/settings?section=channels",
+                "/settings?section=permissions",
+                "/zalava/control")) {
+          assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(200);
+          if (path.equals("/chat")) {
+            page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+            assertThat(page.getByText("Model not configured").isVisible()).isTrue();
+            assertThat(
+                    page.getByRole(
+                            AriaRole.LINK, new Page.GetByRoleOptions().setName("Set up a provider"))
+                        .isVisible())
+                .isTrue();
+            assertThat(page.locator(".composer-send").isDisabled()).isTrue();
+            assertThat(page.locator(".conversations").boundingBox().y).isLessThan(450);
+            if (width > 1024) {
+              assertThat(page.locator(".chat-inspector").boundingBox().height).isGreaterThan(350);
+              assertThat(page.locator(".chat-inspector").boundingBox().y)
+                  .isEqualTo(page.locator(".chat-primary").boundingBox().y);
+            }
+          } else if (path.startsWith("/settings")) {
+            assertContained(
+                page,
+                ".settings-card",
+                ".settings-card input:not([type=hidden]), .settings-card textarea, .settings-card button, .settings-card .button");
+          }
+          if (path.equals("/zalava/control") && width <= 640) {
+            assertThat(page.locator(".navbar-burger").boundingBox().x).isGreaterThan(width - 80.0);
+            page.locator(".navbar-burger").click();
+            page.locator(".zalava-navigation-close").waitFor();
+            assertThat(page.locator(".zalava-navbar a[aria-current='page']").isVisible()).isTrue();
+            page.keyboard().press("Escape");
+          }
+          capture(
+              page,
+              path.substring(1).replace('/', '-').replace('?', '-').replace('=', '-')
+                  + "-"
+                  + width);
+        }
+      }
+      page.navigate(baseUrl() + "/settings");
+      page.locator("#instructions").fill("Browser saved instructions.");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save instructions"))
+          .click();
+      page.getByText("Workspace instructions updated.", new Page.GetByTextOptions().setExact(true))
+          .waitFor();
+      assertThat(Files.readString(WORKSPACE.resolve("AGENT.private.md")))
+          .contains("Browser saved instructions.");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reset to defaults"))
+          .click();
+      page.getByText("Default workspace instructions restored.").waitFor();
+      assertThat(page.locator("#instructions").inputValue())
+          .startsWith("You are Zalava, the assistant for this workspace.");
+      assertThat(Files.readString(WORKSPACE.resolve("AGENT.private.md")))
+          .contains("You are Zalava, the assistant for this workspace.");
+      capture(page, "settings-defaults-1440");
+    }
+  }
+
+  @Autowired AccountLifecycle accounts;
+
+  @Test
+  void temporaryAdministratorMustChangePasswordBeforeChatAndOldPasswordStopsWorking()
+      throws Exception {
+    String login = "browser-temporary-" + UUID.randomUUID();
+    String temporary = "TemporaryBrowserPassword-123";
+    String replacement = "ReplacementBrowserPassword-456";
+    var account = accounts.create(login, temporary, AccountRole.ADMIN);
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.setViewportSize(1440, 1000);
+      signIn(page, login, temporary);
+      page.waitForURL("**/account/password");
+      page.navigate(baseUrl() + "/settings");
+      page.waitForURL("**/account/password");
+      assertThat(page.locator(".auth-card").isVisible()).isTrue();
+      assertThat(
+              page.locator(".auth-card")
+                  .evaluate("element => getComputedStyle(element).backgroundColor"))
+          .isEqualTo("rgb(255, 255, 255)");
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 1000);
+        assertContained(
+            page, ".auth-card", ".auth-card input:not([type=hidden]), .auth-card button");
+        capture(page, "password-required-" + width);
+      }
+      page.locator("input[name=currentPassword]").fill("WrongCurrentPassword-123");
+      page.locator("input[name=replacementPassword]").fill(replacement);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
+          .click();
+      page.getByRole(AriaRole.ALERT).waitFor();
+      assertThat(accounts.findByLoginName(login).orElseThrow().passwordChangeRequired()).isTrue();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 1000);
+        capture(page, "password-error-" + width);
+      }
+      page.locator("input[name=currentPassword]").fill(temporary);
+      page.locator("input[name=replacementPassword]").fill(replacement);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
+          .click();
+      page.waitForURL("**/chat");
+      assertThat(accounts.findByLoginName(login).orElseThrow().passwordChangeRequired()).isFalse();
+    }
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.setViewportSize(1440, 1000);
+      signIn(page, login, temporary);
+      page.waitForURL("**/login?error");
+      assertThat(page.getByRole(AriaRole.ALERT).isVisible()).isTrue();
+      capture(page, "login-error-1440");
+      signIn(page, login, replacement);
+      page.waitForURL("**/chat");
+    }
+  }
+
+  private void capture(Page page, String name) {
+    assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+        .isEqualTo(true);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(DIAGNOSTICS.resolve(name + ".png")).setFullPage(true));
+  }
+
+  private void assertContained(Page page, String container, String controls) {
+    var box = page.locator(container).boundingBox();
+    for (var control : page.locator(controls).all()) {
+      var bounds = control.boundingBox();
+      if (bounds == null) continue;
+      assertThat(bounds.x).isGreaterThanOrEqualTo(box.x);
+      assertThat(bounds.x + bounds.width).isLessThanOrEqualTo(box.x + box.width + 1);
     }
   }
 
@@ -283,10 +459,7 @@ class BrowserNavigationAcceptanceTest {
     page.navigate(baseUrl() + "/login");
     page.locator("input[name=username]").fill(login);
     page.locator("input[name=password]").fill(password);
-    page.getByRole(
-            com.microsoft.playwright.options.AriaRole.BUTTON,
-            new Page.GetByRoleOptions().setName("Sign in"))
-        .click();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
   }
 
   private String baseUrl() {
@@ -304,6 +477,7 @@ class BrowserNavigationAcceptanceTest {
     pages.put("/apps", "Apps");
     pages.put("/modules", "Modules");
     pages.put("/settings", "Settings");
+    pages.put("/zalava/control", "Advanced settings");
     return pages;
   }
 
