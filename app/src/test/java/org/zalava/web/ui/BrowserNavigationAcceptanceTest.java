@@ -314,6 +314,14 @@ class BrowserNavigationAcceptanceTest {
                         .isVisible())
                 .isTrue();
             assertThat(page.locator(".composer-send").isDisabled()).isTrue();
+            assertThat(page.locator("#message").isDisabled()).isTrue();
+            assertThat(
+                    page.getByRole(
+                            AriaRole.BUTTON,
+                            new Page.GetByRoleOptions().setName("New conversation"))
+                        .isDisabled())
+                .isTrue();
+            assertThat(page.locator(".composer-options-toggle").isDisabled()).isTrue();
             var notice = page.locator(".provider-notice").boundingBox();
             assertThat(page.locator(".conversations").boundingBox().y)
                 .as("Conversation toolbar follows model setup without unused vertical space")

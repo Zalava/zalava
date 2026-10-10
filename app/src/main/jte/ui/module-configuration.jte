@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-@template.ui.navigation(items = navigation.items(), activePage = "modules")
+@template.ui.navigation(items = navigation.items(), activePage = "modules", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
 <main class="section">
     <div class="container">
         <a class="is-size-7" href="/modules">← Modules</a>
@@ -49,9 +49,6 @@
                 <p class="has-text-grey mb-5">Valid changes apply when saved. Stored secret values are never shown; enter a replacement only when it changes.</p>
                 <form method="post" action="/modules/${model.moduleId()}/configuration">
                     <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-                    @if(model.onboarding())
-                        <input type="hidden" name="onboarding" value="true">
-                    @endif
                     @for(Field field : model.fields())
                         <div class="field">
                             <label class="label" for="${field.name()}">${field.label()}</label>

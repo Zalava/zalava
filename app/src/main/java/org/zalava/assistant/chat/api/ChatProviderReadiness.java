@@ -2,7 +2,7 @@ package org.zalava.assistant.chat.api;
 
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import org.zalava.SupportedProvider;
+import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog;
 
 /** Configured provider availability is distinct from WebSocket connectivity. */
 @Component
@@ -14,7 +14,7 @@ public final class ChatProviderReadiness {
   }
 
   public boolean configured() {
-    return SupportedProvider.from(environment.getProperty("spring.ai.model.chat", "unknown"))
-        .isPresent();
+    return ChatProviderCatalog.supportsRuntime(
+        environment.getProperty("spring.ai.model.chat", "unknown"));
   }
 }

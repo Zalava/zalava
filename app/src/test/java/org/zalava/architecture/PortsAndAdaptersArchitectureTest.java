@@ -416,24 +416,24 @@ class PortsAndAdaptersArchitectureTest {
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
 
   @ArchTest
-  static final ArchRule onboarding_domain_must_be_framework_independent =
+  static final ArchRule model_provider_domain_must_be_framework_independent =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.web.onboarding.domain..")
+          .resideInAnyPackage("org.zalava.assistant.models.configuration.domain..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(FRAMEWORK_PACKAGES);
 
   @ArchTest
-  static final ArchRule onboarding_application_must_not_depend_on_adapters_or_frameworks =
+  static final ArchRule model_provider_application_must_not_depend_on_adapters_or_frameworks =
       noClasses()
           .that()
-          .resideInAnyPackage("org.zalava.web.onboarding.application..")
+          .resideInAnyPackage("org.zalava.assistant.models.configuration.application..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "org.zalava.web.onboarding.api..",
-              "org.zalava.web.onboarding.adapter..",
+              "org.zalava.assistant.models.configuration.adapter.in..",
+              "org.zalava.assistant.models.configuration.adapter.out..",
               "org.springframework..",
               "java.nio.file..");
 

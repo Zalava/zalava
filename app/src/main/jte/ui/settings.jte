@@ -3,6 +3,10 @@
 @import org.zalava.web.ui.SettingsController.SettingsModel
 @import org.springframework.security.web.csrf.CsrfToken
 @import java.util.List
+@import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog.Provider
+@import org.zalava.assistant.models.configuration.application.ModelProviderConfiguration.Display
+@param List<Provider> providers
+@param Display providerSettings
 @param SettingsModel model
 @param String section
 @param String settingsMessage
@@ -15,7 +19,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zalava Settings</title>
 <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-ui.css">
 </head><body>
-@template.ui.navigation(items = navigation.items(), activePage = "settings")
+@template.ui.navigation(items = navigation.items(), activePage = "settings", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
 <main class="section"><div class="container">
 <header class="settings-heading mb-5"><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
 <h1 class="title is-2 mb-3">Settings</h1><p class="subtitle is-5 has-text-grey">Shape your assistant and configure your workspace.</p></header>
@@ -37,8 +41,28 @@
 <form method="post" action="/settings/instructions/reset"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><button class="button is-light" type="submit">Reset to defaults</button></form></div>
 <p class="help mt-3">Reset replaces your saved instructions with Zalava's recommended defaults.</p></section>
 @elseif(section.equals("provider"))
-<section class="box settings-card"><h2 class="title is-4">Provider & workspace</h2><dl class="settings-details"><div><dt>Location</dt><dd>${model.workspacePath()}</dd></div><div><dt>Chat provider</dt><dd>${model.providerLabel()}</dd></div></dl>
-<a class="button is-primary mt-4" href="/onboarding/provider">Open provider setup</a><p class="help mt-2">Provider changes take effect after setup and restart.</p></section>
+<section class="box settings-card" aria-labelledby="provider-heading">
+<div class="settings-actions mb-3"><h2 id="provider-heading" class="title is-4 mb-0">Model provider</h2>
+@if(providerSettings.restartRequired())<span class="tag is-warning is-light">Restart required</span>@endif</div>
+<p class="has-text-grey mb-4">Running provider: <strong>${providerSettings.runningLabel()}</strong>. Saved changes apply after restarting Zalava.</p>
+<form method="get" action="/settings" class="provider-selection" data-repeatable><input type="hidden" name="section" value="provider">
+<div class="field"><label class="label" for="provider-choice">Provider</label><div class="select is-fullwidth"><select id="provider-choice" name="provider">
+@for(Provider choice : providers)<option value="${choice.id()}" selected="${choice.id().equals(providerSettings.provider().id())}">${choice.label()}</option>@endfor
+</select></div></div><button class="button is-light" type="submit">Choose provider</button></form>
+<hr><h3 class="title is-5">${providerSettings.provider().label()} configuration</h3>
+<p class="has-text-grey mb-4">${providerSettings.provider().help()}</p>
+<form method="post" action="/settings/provider"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="provider" value="${providerSettings.provider().id()}">
+@for(var field : providerSettings.fields())
+<div class="field"><label class="label" for="provider-${field.name()}">${field.label()}</label>
+<div class="control"><input class="input" id="provider-${field.name()}" name="${field.name()}" type="${field.secret() ? "password" : "text"}" value="${field.value()}" required="${field.required() && !field.savedSecret()}" autocomplete="${field.secret() ? "new-password" : "off"}" maxlength="8192"></div>
+@if(field.secret() && field.savedSecret())<label class="checkbox mt-2"><input type="checkbox" name="clear-${field.name()}" value="true"> Remove saved credential (provide a replacement if required)</label>@endif
+@if(field.secret())<p class="help">${field.savedSecret() ? "A credential is saved. Leave blank to keep it, or enter a replacement." : "Stored privately; never shown after saving."}</p>@endif
+</div>
+@endfor
+<button class="button is-primary mt-3" type="submit">Save provider</button></form>
+<p class="help mt-3">Saving stores configuration; it does not verify that the provider can respond. Restart Zalava, then try a message in Chat.</p>
+<details class="mt-5"><summary>Workspace location</summary><p class="mt-2 settings-path">${model.workspacePath()}</p></details>
+</section>
 @elseif(section.equals("modules"))
 <section class="box settings-card" aria-labelledby="module-configuration-heading"><h2 id="module-configuration-heading" class="title is-4">Module configuration</h2><p class="has-text-grey mb-4">Each installed module owns its settings, including channel credentials.</p>
 @if(model.moduleConfigurationHealth().isEmpty())<p>No loaded modules currently declare configuration.</p><a class="button is-light mt-4" href="/modules">Browse modules</a>

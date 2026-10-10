@@ -1,7 +1,10 @@
 package org.zalava.packaging;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
@@ -418,7 +421,18 @@ class ReleasedModuleDistributableAcceptanceTest {
               argument.startsWith("-Dhttps.proxy")
                   || argument.startsWith("-Djavax.net.ssl.trustStore"));
     }
-    return new ProcessBuilder(arguments);
+    ProcessBuilder builder = new ProcessBuilder(arguments);
+    builder
+        .environment()
+        .keySet()
+        .removeIf(
+            key ->
+                key.startsWith("SPRING_")
+                    || key.startsWith("AGENT_")
+                    || key.startsWith("ZALAVA_")
+                    || key.startsWith("SEA_")
+                    || key.startsWith("JOBRUNR_"));
+    return builder;
   }
 
   @Test
@@ -471,6 +485,90 @@ class ReleasedModuleDistributableAcceptanceTest {
       } finally {
         stop();
       }
+    }
+  }
+
+  @Test
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  void persistsProviderFromSettingsAcrossPackagedHostRestartAndAnswersChat() throws Exception {
+    Files.createDirectories(diagnostics);
+    Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
+    Files.writeString(workspace.resolve("AGENT.md"), "Disposable native-provider acceptance.");
+    WireMockServer modelServer = new WireMockServer(0);
+    modelServer.start();
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+            data: {"id":"fixture","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Native fixture answer"},"finish_reason":null}]}
+
+            data: {"id":"fixture","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """)));
+    try (PostgreSQLContainer postgres =
+            new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
+                .withDatabaseName("provider_acceptance")
+                .withUsername("provider_acceptance")
+                .withPassword(UUID.randomUUID().toString());
+        Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext admin = browser.newContext()) {
+      postgres.start();
+      Page page = admin.newPage();
+      try {
+        start(postgres, workspace, "test");
+        signIn(page, LOGIN, INITIAL_PASSWORD, true);
+        page.waitForURL("**/chat");
+        assertThat(page.locator("#message").isDisabled()).isTrue();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Set up a provider"))
+            .click();
+        page.locator("#provider-choice").selectOption("openai-compatible");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Choose provider"))
+            .click();
+        page.locator("input[name=model]").fill("fixture-model");
+        page.locator("input[name=apiKey]").fill("fixture-key");
+        page.locator("input[name=baseUrl]").fill(modelServer.baseUrl() + "/v1");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save provider"))
+            .click();
+        page.getByText("Restart required", new Page.GetByTextOptions().setExact(true)).waitFor();
+        assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
+        page.navigate(baseUrl + "/chat");
+        assertThat(page.locator("#message").isDisabled()).isTrue();
+        stop();
+        start(postgres, workspace, "test");
+        signIn(page, LOGIN, PASSWORD, false);
+        page.waitForURL("**/chat");
+        page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+        assertThat(page.locator("#message").isDisabled()).isFalse();
+        assertThat(page.locator(".provider-notice").count()).isZero();
+        page.locator("#message").fill("Hello local fixture");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        page.getByText("Native fixture answer", new Page.GetByTextOptions().setExact(true))
+            .waitFor();
+        modelServer.verify(
+            postRequestedFor(urlEqualTo("/v1/chat/completions"))
+                .withHeader("Authorization", equalTo("Bearer fixture-key"))
+                .withRequestBody(matchingJsonPath("$.model", equalTo("fixture-model")))
+                .withRequestBody(matchingJsonPath("$.stream", equalTo("true"))));
+        page.navigate(baseUrl + "/settings?section=provider");
+        assertThat(
+                page.getByText("Restart required", new Page.GetByTextOptions().setExact(true))
+                    .count())
+            .isZero();
+        assertThat(page.locator("input[name=model]").inputValue()).isEqualTo("fixture-model");
+        assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
+      } finally {
+        stop();
+      }
+    } finally {
+      modelServer.stop();
     }
   }
 

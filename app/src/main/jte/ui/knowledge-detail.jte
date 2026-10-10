@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-  @template.ui.navigation(items = navigation.items(), activePage = "knowledge")
+  @template.ui.navigation(items = navigation.items(), activePage = "knowledge", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
   <main class="section">
     <div class="container">
       <a href="/knowledge" class="is-size-7">Back to knowledge</a>

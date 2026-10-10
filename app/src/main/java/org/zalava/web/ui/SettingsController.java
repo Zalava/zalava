@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.zalava.SupportedProvider;
 import org.zalava.api.ModuleConfigurationStatus;
 import org.zalava.assistant.agent.WorkspaceInstructions;
+import org.zalava.assistant.models.configuration.application.ModelProviderConfiguration;
+import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog;
+import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog.Provider;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.identity.channels.application.port.in.ChannelLinkChallenges;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
@@ -28,6 +30,7 @@ import org.zalava.modules.runtime.ZalavaRuntime;
 public class SettingsController {
 
   private final Resource workspace;
+  private final ModelProviderConfiguration providers;
   private final Environment environment;
   private final ZalavaRuntime zalavaRuntime;
   private final FileSystemModuleConfigurationStore moduleConfigurationStore;
@@ -42,7 +45,9 @@ public class SettingsController {
       FileSystemModuleConfigurationStore moduleConfigurationStore,
       WorkspaceInstructions instructions,
       ChannelLinkChallenges channelLinkChallenges,
-      AuthenticatedActorResolver actors) {
+      AuthenticatedActorResolver actors,
+      ModelProviderConfiguration providers) {
+    this.providers = providers;
     this.workspace = workspace;
     this.environment = environment;
     this.zalavaRuntime = zalavaRuntime;
@@ -54,7 +59,17 @@ public class SettingsController {
 
   @GetMapping("/settings")
   public String settings(
-      Model model, CsrfToken csrf, @RequestParam(defaultValue = "assistant") String section) {
+      Model model,
+      CsrfToken csrf,
+      @RequestParam(defaultValue = "assistant") String section,
+      @RequestParam(required = false) String provider)
+      throws IOException {
+    model.addAttribute("providers", ChatProviderCatalog.providers());
+    try {
+      model.addAttribute("providerSettings", providers.display(provider));
+    } catch (IllegalArgumentException invalid) {
+      model.addAttribute("providerSettings", providers.display(null));
+    }
     model.addAttribute("model", buildModel());
     model.addAttribute(
         "section",
@@ -112,7 +127,12 @@ public class SettingsController {
   private SettingsModel buildModel() {
     String providerId = environment.getProperty("spring.ai.model.chat", "unknown");
     String providerLabel =
-        SupportedProvider.from(providerId).map(SupportedProvider::label).orElse("Not configured");
+        ChatProviderCatalog.providers().stream()
+            .filter(
+                p -> p.id().equals(environment.getProperty("zalava.model.provider", providerId)))
+            .map(Provider::label)
+            .findFirst()
+            .orElse("Not configured");
     return new SettingsModel(
         workspacePath(),
         providerLabel,
