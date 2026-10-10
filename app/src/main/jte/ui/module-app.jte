@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-@template.ui.navigation(items = navigation.items(), activePage = "apps")
+@template.ui.navigation(items = navigation.items(), activePage = "apps", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
 
 <main class="section">
     <div class="container">$unsafe{content}</div>

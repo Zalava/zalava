@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-  @template.ui.navigation(items = navigation.items(), activePage = "memory")
+  @template.ui.navigation(items = navigation.items(), activePage = "memory", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
   <main class="section">
     <div class="container">
       <header class="mb-5">

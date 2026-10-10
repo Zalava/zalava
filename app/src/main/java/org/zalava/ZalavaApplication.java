@@ -35,14 +35,9 @@ public class ZalavaApplication {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-      String isConfigured = environment.getProperty("agent.onboarding.completed");
-      if (Boolean.parseBoolean(isConfigured)) {
-        log.info("Zalava is running and waiting for your commands!");
-      } else {
-        log.info(
-            "Zalava is waiting to be configured! Navigate to http://localhost:{}/onboarding to start the onboarding wizard",
-            environment.getProperty("local.server.port"));
-      }
+      log.info(
+          "Zalava is running. Configure your model provider in Settings at http://localhost:{}/settings?section=provider",
+          environment.getProperty("local.server.port"));
     }
 
     @EventListener

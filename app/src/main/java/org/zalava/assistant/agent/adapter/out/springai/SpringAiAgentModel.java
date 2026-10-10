@@ -21,6 +21,7 @@ import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.port.out.AgentModel;
@@ -36,13 +37,22 @@ import tools.jackson.databind.ObjectMapper;
 public final class SpringAiAgentModel implements AgentModel {
   private final ChatClient chatClient;
   private final WorkspaceAgentPrompt systemPrompt;
+  private final boolean toolCallingEnabled;
 
   public SpringAiAgentModel(ChatClient chatClient) {
     this(chatClient, null);
   }
 
-  @Autowired
   public SpringAiAgentModel(ChatClient chatClient, WorkspaceAgentPrompt systemPrompt) {
+    this(chatClient, systemPrompt, true);
+  }
+
+  @Autowired
+  public SpringAiAgentModel(
+      ChatClient chatClient,
+      WorkspaceAgentPrompt systemPrompt,
+      @Value("${zalava.model.tool-calling-enabled:true}") boolean toolCallingEnabled) {
+    this.toolCallingEnabled = toolCallingEnabled;
     this.chatClient = chatClient;
     this.systemPrompt = systemPrompt;
   }
@@ -79,15 +89,19 @@ public final class SpringAiAgentModel implements AgentModel {
       String conversationId, String prompt, List<Object> tools, Class<T> resultType) {
     AtomicInteger attempts = StructuredRunEvidence.begin();
     try {
-      return request(conversationId, prompt, tools)
-          .advisors(
-              StructuredOutputValidationAdvisor.builder()
-                  .outputType(resultType)
-                  .maxRepeatAttempts(2)
-                  .build(),
-              new StructuredAttemptCountingAdvisor(attempts))
-          .call()
-          .entity(resultType, structuredOutput -> structuredOutput.useProviderStructuredOutput());
+      var structuredRequest =
+          request(conversationId, prompt, tools)
+              .advisors(
+                  StructuredOutputValidationAdvisor.builder()
+                      .outputType(resultType)
+                      .maxRepeatAttempts(2)
+                      .build(),
+                  new StructuredAttemptCountingAdvisor(attempts))
+              .call();
+      return toolCallingEnabled
+          ? structuredRequest.entity(
+              resultType, structuredOutput -> structuredOutput.useProviderStructuredOutput())
+          : structuredRequest.entity(resultType);
     } catch (JacksonException failure) {
       throw new StructuredOutputSchemaException(
           "Structured output schema validation failed after " + attempts.get() + " attempts",
@@ -97,6 +111,10 @@ public final class SpringAiAgentModel implements AgentModel {
 
   @Override
   public TaskAgent.Result task(String conversationId, String prompt, List<Object> tools) {
+    if (!toolCallingEnabled)
+      return new TaskAgent.Result(
+          Task.Status.failed,
+          "The selected provider does not support tool execution. Choose a tool-capable provider in Settings.");
     ChatResponse response =
         request(conversationId, prompt, tools)
             .advisors(AdvisorParams.toolCallingAdvisorAutoRegister(false))
@@ -174,11 +192,18 @@ public final class SpringAiAgentModel implements AgentModel {
     if (systemPrompt != null) {
       request.system(
           p ->
-              p.text(systemPrompt.text())
+              p.text(
+                      systemPrompt.text()
+                          + (toolCallingEnabled
+                              ? ""
+                              : "\nThe selected provider cannot execute tools. Answer questions using available context and do not claim to perform actions."))
                   .param(AgentEnvironment.ENVIRONMENT_INFO_KEY, AgentEnvironment.info()));
     }
+    if (!toolCallingEnabled && systemPrompt == null)
+      request.system(
+          "The selected provider cannot execute tools. Answer questions using available context and do not claim to perform actions.");
     return request
-        .tools(callbacks(tools).toArray())
+        .tools(toolCallingEnabled ? callbacks(tools).toArray() : new Object[0])
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId));
   }
 }

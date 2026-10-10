@@ -24,7 +24,7 @@
     <script src="/css/vendor/bootstrap-5.3.8.bundle.min.js" defer></script>
 </head>
 <body class="zalava-advanced">
-    @template.ui.navigation(items = navigation.items(), activePage = "advanced")
+    @template.ui.navigation(items = navigation.items(), activePage = "advanced", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
 
   <div class="advanced-destinations px-4 pt-4"><a href="/zalava/accounts">Manage accounts</a>@if(metricsEnabled)<a href="/zalava/control/metrics">Runtime metrics</a>@endif</div>
   <main id="zalava-control" class="container-fluid px-4 py-4">

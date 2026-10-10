@@ -23,11 +23,11 @@ class ProductUiParityComponentTest {
   @Autowired private MockMvc mockMvc;
 
   @Test
-  void completedSetupUsesZalavaProductRoutesAndNavigation() throws Exception {
+  void rootOpensChatAndPagesUseZalavaProductNavigation() throws Exception {
     mockMvc
         .perform(get("/"))
         .andExpect(status().is3xxRedirection())
-        .andExpect(redirectedUrl("/dashboard"));
+        .andExpect(redirectedUrl("/chat"));
 
     assertProductPage("/dashboard", "Zalava Dashboard");
     assertInteractiveChatPage();

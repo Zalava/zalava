@@ -499,15 +499,6 @@ public class ZalavaConfiguration {
             taskCommands, taskQueries));
   }
 
-  @Bean
-  public org.zalava.web.onboarding.application.OnboardingWorkflow onboardingWorkflow(
-      List<org.zalava.web.onboarding.OnboardingProvider> steps,
-      org.zalava.platform.configuration.application.port.in.ConfigurationCommands
-          configurationCommands) {
-    return new org.zalava.web.onboarding.application.OnboardingWorkflow(
-        steps, configurationCommands);
-  }
-
   public static final String AGENT_MD = "AGENT.private.md";
   static final String BUILD_TRAINING_AGENT_PROMPT =
       """

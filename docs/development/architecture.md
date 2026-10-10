@@ -11,7 +11,7 @@ keeps its domain, application ports and adapters.
 `modules` owns catalog/installation, module runtime, managed services, development
 and module web extensions. `platform.observability` owns shared operational
 metrics across agent, task, knowledge and provider execution. Module runtime
-does not own all host observability. Host UI/control/onboarding live in `web`.
+does not own all host observability. Host UI/control live in `web`.
 External modules may still use their own `org.zalava.modules.<module>` namespace;
 the loader protects specific host module-management subpackages instead of
 reserving that entire prefix.
@@ -42,8 +42,9 @@ The public repository is a Gradle multi-project build: `module-api` is the stabl
 The host owns policy enforcement, validation, persistence, lifecycle, authorization, and audit boundaries. Business capabilities use explicit ports; adapters connect frameworks and external systems. Modules supply provider factories and instances, allowing configuration, permission, lifecycle, and audit decisions to attach to the provider that performs work. Modules do not depend on each other directly or receive arbitrary host application objects.
 
 Browser CI must use deterministic fixtures without local provider credentials.
-Onboarding acceptance targets each step's own form so HTMX fragment replacement
-finishes before another submission. Navigation acceptance verifies the reviewed
+Provider acceptance uses the integrated Settings form and verifies persistence
+across a restart of the packaged host. See [model provider configuration](model-providers.md)
+for the supported integrations and configuration lifecycle. Navigation acceptance verifies the reviewed
 sidebar, card layout and surface color and retains its screenshot; a PNG byte
 hash is not a portable pixel comparison across operating-system font renderers.
 Generated template build output must not enter the host distributable.

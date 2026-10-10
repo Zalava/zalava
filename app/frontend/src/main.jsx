@@ -182,6 +182,7 @@ function ZalavaRuntime({ children }) {
     () => ({
       accept: ACCEPT,
       add: async ({ file }) => {
+        if (!providerConfigured) throw new Error("Configure a provider before attaching files to Chat.");
         setUploadError(null);
         const contentType = contentTypeFor(file);
         if (!contentType) throw new Error(`Unsupported attachment type: ${file.name}`);
@@ -324,6 +325,26 @@ function ZalavaRuntime({ children }) {
 }
 
 function Chat() {
+  const [fileOptionsOpen, setFileOptionsOpen] = useState(false);
+  const fileOptionsRef = useRef(null);
+  useEffect(() => {
+    if (!fileOptionsOpen) return;
+    const closeOutside = (event) => {
+      if (!fileOptionsRef.current?.contains(event.target)) setFileOptionsOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setFileOptionsOpen(false);
+        fileOptionsRef.current?.querySelector(".composer-options-toggle")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [fileOptionsOpen]);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState("Run");
   const {
@@ -379,16 +400,16 @@ function Chat() {
         </div>
         <output className="zalava-status" aria-label="Chat connection" aria-live="polite">{status}</output>
       </header>
-      {!providerConfigured && <section className="provider-notice" aria-label="Model setup" role="status">
+      {!providerConfigured && <section id="model-setup" className="provider-notice" aria-label="Model setup" role="status">
         <strong>Model not configured</strong>
-        <p>The chat connection is available, but Zalava needs a model before it can respond.</p>
-        {providerSetupAllowed ? <a className="zalava-button" href="/onboarding/provider">Set up a provider</a> : <p>Ask your workspace administrator to configure a provider.</p>}
+        <p>Chat is disabled until a model provider is configured. The connection alone does not mean a model is ready.</p>
+        {providerSetupAllowed ? <a className="zalava-button" href="/settings?section=provider">Set up a provider</a> : <p>Ask your workspace administrator to configure a provider.</p>}
       </section>}
       <nav className="conversations" aria-label="Conversations">
-        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={pending || continuing || status !== "Connected"}>
+        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || pending || continuing || status !== "Connected"}>
           {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
         </select>
-        <button className="zalava-button" type="button" onClick={createConversation} disabled={status !== "Connected" || pending || continuing}>New conversation</button>
+        <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
       <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
       {approvals.length > 0 && <div className="permission-shortcut" role="status">
@@ -402,8 +423,8 @@ function Chat() {
         <p>This history is read-only. Continue in a separate private web conversation to send a message.</p>
         {canContinue ? <>
           <label htmlFor="continuation-destination">Continue in</label>
-          <select id="continuation-destination" className="zalava-field" disabled={continuing}><option value="web">Private web chat</option></select>
-          <button className="zalava-button" type="button" onClick={continueConversation} disabled={continuing || status !== "Connected"}>{continuing ? "Continuing…" : "Continue conversation"}</button>
+          <select id="continuation-destination" className="zalava-field" disabled={!providerConfigured || continuing}><option value="web">Private web chat</option></select>
+          <button className="zalava-button" type="button" onClick={continueConversation} disabled={!providerConfigured || continuing || status !== "Connected"}>{continuing ? "Continuing…" : "Continue conversation"}</button>
         </> : <p>Continuation is unavailable for this channel identity or destination.</p>}
       </section>}
       {commandError && commandError !== failure?.content && <p role="alert">{commandError}</p>}
@@ -429,6 +450,7 @@ function Chat() {
       {pending && <p role="status">Zalava is responding…</p>}
       {failure && <p role="alert">{failure.content}</p>}
       {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
+        <fieldset className="composer-fields" disabled={!providerConfigured} aria-describedby={!providerConfigured ? "model-setup" : undefined}>
         <label htmlFor="message">Message Zalava</label>
         <ComposerPrimitive.AttachmentDropzone data-testid="attachment-dropzone" className="composer-dropzone">
           <ComposerPrimitive.Attachments>
@@ -443,33 +465,27 @@ function Chat() {
             <ComposerPrimitive.Input
               id="message"
               className="zalava-field"
-              placeholder="Message Zalava"
+              placeholder={providerConfigured ? "Message Zalava" : "Configure a provider to start chatting"}
               onKeyDown={recallPrompt}
               onChange={() => {
                 historyIndex.current = -1;
               }}
             />
-            <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="zalava-button zalava-button--secondary composer-attach">
-              Attach files
-            </ComposerPrimitive.AddAttachment>
-            <ComposerPrimitive.Send className="zalava-button composer-send">Send</ComposerPrimitive.Send>
           </div>
         </ComposerPrimitive.AttachmentDropzone>
-        <div className="attachments" aria-label="Knowledge import">
-          <label className="zalava-button zalava-button--secondary" htmlFor="knowledge-import-file">Import to knowledge</label>
-          <input
-            id="knowledge-import-file"
-            className="knowledge-file-input"
-            type="file"
-            multiple
-            aria-label="Import files to knowledge"
-            accept={ACCEPT}
-            onChange={(event) => {
-              importFiles(event.target.files);
-              event.target.value = "";
-            }}
-          />
+        <div className="composer-actions">
+          <div className="composer-options" ref={fileOptionsRef}>
+            <button className="zalava-button zalava-button--secondary composer-options-toggle" type="button" aria-label="File options" title="Attach files or import to knowledge" aria-expanded={fileOptionsOpen} aria-controls="composer-file-options" onClick={() => setFileOptionsOpen((open) => !open)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m8 12 7-7a3 3 0 0 1 4 4L9 19a5 5 0 0 1-7-7L13 1" /></svg>
+            </button>
+            {fileOptionsOpen && <div id="composer-file-options" className="composer-options-menu" role="group" aria-label="Attachments and knowledge">
+              <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="zalava-button zalava-button--secondary composer-attach" onClick={() => setFileOptionsOpen(false)}>Attach files</ComposerPrimitive.AddAttachment>
+              <button className="zalava-button zalava-button--secondary" type="button" onClick={() => { document.getElementById("knowledge-import-file").click(); setFileOptionsOpen(false); }}>Import to knowledge</button>
+            </div>}
+          </div>
+          <ComposerPrimitive.Send className="zalava-button composer-send">Send</ComposerPrimitive.Send>
         </div>
+        <input id="knowledge-import-file" className="composer-import-input" type="file" multiple aria-label="Import files to knowledge" accept={ACCEPT} onChange={(event) => { importFiles(event.target.files); event.target.value = ""; }} />
         {imports.length > 0 && (
           <ul className="attachment-list" aria-label="Imported sources">
             {imports.map((entry) => (
@@ -480,6 +496,7 @@ function Chat() {
           </ul>
         )}
         {uploadError && <p role="alert">{uploadError}</p>}
+      </fieldset>
       </ComposerPrimitive.Root>}
       </div>
       <aside id="chat-inspector" className="chat-inspector" aria-label="Workspace inspector">

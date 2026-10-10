@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-@template.ui.navigation(items = navigation.items(), activePage = "modules")
+@template.ui.navigation(items = navigation.items(), activePage = "modules", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
 <main class="section">
     <div class="container" data-module-detail="${model.moduleId()}">
         <a class="is-size-7" href="/modules">← Modules</a>

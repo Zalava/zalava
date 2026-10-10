@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.ApplicationRunner;
@@ -144,8 +145,16 @@ class BrowserFileAcceptanceTest {
         page.getByText("attach these").waitFor();
         assertThat(page.locator(".attachment-chip").count()).isZero();
 
-        page.locator("#knowledge-import-file")
-            .setInputFiles(file("report.txt", "text/plain", "durable report"));
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+            .click();
+        FileChooser importChooser =
+            page.waitForFileChooser(
+                () ->
+                    page.getByRole(
+                            AriaRole.BUTTON,
+                            new Page.GetByRoleOptions().setName("Import to knowledge"))
+                        .click());
+        importChooser.setFiles(file("report.txt", "text/plain", "durable report"));
         page.locator(".attachment-list").getByText("Imported").waitFor();
 
         page.navigate(baseUrl() + "/knowledge");
@@ -157,12 +166,41 @@ class BrowserFileAcceptanceTest {
         page.getByRole(AriaRole.ALERT).getByText("Unsupported attachment type").waitFor();
 
         page.setViewportSize(375, 667);
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+            .click();
         assertThat(
                 page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Attach files"))
                     .isVisible())
             .isTrue();
-        assertThat(page.locator("#knowledge-import-file").isVisible()).isTrue();
+        assertThat(
+                page.getByRole(
+                        AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Import to knowledge"))
+                    .isVisible())
+            .isTrue();
         assertThat(page.locator("#message").isVisible()).isTrue();
+        for (int width : List.of(390, 768, 1440)) {
+          page.setViewportSize(width, 1000);
+          page.evaluate(
+              "new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+          page.waitForFunction(
+              "document.getAnimations().filter(a => a instanceof CSSTransition).every(a => a.playState === 'finished')");
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(DIAGNOSTICS.resolve("chat-file-menu-" + width + ".png"))
+                  .setFullPage(true));
+          page.keyboard().press("Escape");
+          assertThat(
+                  page.getByRole(
+                          AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+                      .getAttribute("aria-expanded"))
+              .isEqualTo("false");
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(DIAGNOSTICS.resolve("chat-composer-" + width + ".png"))
+                  .setFullPage(true));
+          page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+              .click();
+        }
       } finally {
         context
             .tracing()
@@ -172,6 +210,9 @@ class BrowserFileAcceptanceTest {
   }
 
   private static void attachThroughPicker(Page page, FilePayload payload) {
+    if (!page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Attach files"))
+        .isVisible())
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options")).click();
     FileChooser chooser =
         page.waitForFileChooser(
             () ->

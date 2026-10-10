@@ -1012,3 +1012,22 @@ body {
     .zalava-navbar .navbar-brand { margin-inline: 0; }
     .zalava-navbar .navbar-brand .navbar-item { width: auto; padding: .65rem .9rem; }
 }
+
+/* Account actions and provider configuration share the adaptive shell. */
+.zalava-sign-out { margin: 0; }
+.zalava-sign-out-button { border: 0; background: transparent; font: inherit; cursor: pointer; color: inherit; white-space: nowrap; }
+.zalava-sign-out-button:focus-visible { outline: 2px solid var(--zalava-primary, #245d58); outline-offset: -3px; }
+.provider-selection { display: flex; align-items: end; gap: 1rem; flex-wrap: wrap; }
+.provider-selection .field { flex: 1 1 15rem; margin-bottom: 0; min-width: 0; }
+.settings-path { overflow-wrap: anywhere; }
+@media (max-width: 1023px) { .zalava-sign-out-button { width: 100%; text-align: left; padding: .8rem 1rem; } }
+
+.zalava-navbar .zalava-sign-out-button { width: auto; text-align: left; justify-content: flex-start; }
+@media (min-width: 1025px) { .zalava-navbar .zalava-sign-out-button { width: calc(100% - 1.5rem); } }
+@media (min-width: 641px) and (max-width: 1024px) { .zalava-navbar .zalava-sign-out-button { min-width: 5rem; white-space: nowrap; } }
+
+/* A filtered header must not become the containing block for the phone drawer. */
+@media (max-width: 640px) {
+  .zalava-navbar { backdrop-filter: none; }
+  .zalava-navbar .navbar-menu { height: 100dvh; min-height: 100dvh; }
+}

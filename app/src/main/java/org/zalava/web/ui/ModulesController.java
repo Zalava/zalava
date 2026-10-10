@@ -303,11 +303,7 @@ public class ModulesController {
   }
 
   @GetMapping("/modules/{moduleId}/configuration")
-  public String configuration(
-      @PathVariable String moduleId,
-      @RequestParam(defaultValue = "false") boolean onboarding,
-      Model model,
-      CsrfToken csrf) {
+  public String configuration(@PathVariable String moduleId, Model model, CsrfToken csrf) {
     ZalavaModule module = module(moduleId);
     ModuleConfigurationSnapshot snapshot =
         moduleConfigurationStore
@@ -323,8 +319,7 @@ public class ModulesController {
             status(moduleId),
             ModuleConfigurationForm.fields(module.configuration(), snapshot.factories()),
             snapshot.secretReferences().size(),
-            moduleConfigurationStore.candidate(moduleId).isPresent(),
-            onboarding));
+            moduleConfigurationStore.candidate(moduleId).isPresent()));
     return "redirect:/modules/" + moduleId + "#configuration";
   }
 
@@ -332,7 +327,6 @@ public class ModulesController {
   public String saveConfiguration(
       @PathVariable String moduleId,
       @RequestParam Map<String, String> submitted,
-      @RequestParam(defaultValue = "false") boolean onboarding,
       RedirectAttributes redirectAttributes) {
     ZalavaModule module = module(moduleId);
     try {
@@ -370,9 +364,7 @@ public class ModulesController {
           "configurationError",
           "Module configuration could not be activated. Previous settings remain active.");
     }
-    return onboarding && !redirectAttributes.getFlashAttributes().containsKey("configurationError")
-        ? "redirect:/onboarding/starters"
-        : "redirect:/modules/" + moduleId + "#configuration";
+    return "redirect:/modules/" + moduleId + "#configuration";
   }
 
   @PostMapping("/modules/{moduleId}/start")
@@ -440,16 +432,12 @@ public class ModulesController {
 
   @PostMapping("/modules/{moduleId}/configuration/cancel")
   public String cancelConfiguration(
-      @PathVariable String moduleId,
-      @RequestParam(defaultValue = "false") boolean onboarding,
-      RedirectAttributes redirectAttributes) {
+      @PathVariable String moduleId, RedirectAttributes redirectAttributes) {
     module(moduleId);
     moduleConfigurationStore.cancelCandidate(moduleId);
     redirectAttributes.addFlashAttribute(
         "configurationMessage", "Pending configuration changes discarded.");
-    return onboarding
-        ? "redirect:/onboarding/starters"
-        : "redirect:/modules/" + moduleId + "#configuration";
+    return "redirect:/modules/" + moduleId + "#configuration";
   }
 
   private ModulesModel buildModel() {
@@ -1032,8 +1020,7 @@ public class ModulesController {
       ConfigurationHealth configuration,
       List<ModuleConfigurationForm.Field> fields,
       int storedSecretCount,
-      boolean candidatePresent,
-      boolean onboarding) {}
+      boolean candidatePresent) {}
 
   public record ConfigurationHealth(String label, String cssClass) {}
 }

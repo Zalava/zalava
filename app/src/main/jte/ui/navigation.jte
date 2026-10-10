@@ -2,6 +2,8 @@
 @import org.zalava.web.ui.navigation.NavItem
 @param List<NavItem> items
 @param String activePage
+@param String csrfName
+@param String csrfValue
 
 <nav class="navbar zalava-navbar" role="navigation" aria-label="Zalava navigation">
     <div class="container">
@@ -29,6 +31,10 @@
                     <a class="navbar-item" href="${item.href()}" title="${item.label()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
                     @endif
                 @endfor
+            <form class="zalava-sign-out" method="post" action="/logout">
+                <input type="hidden" name="${csrfName}" value="${csrfValue}">
+                <button class="navbar-item zalava-sign-out-button" type="submit">Sign out</button>
+            </form>
             </div>
         </div>
     </div>
