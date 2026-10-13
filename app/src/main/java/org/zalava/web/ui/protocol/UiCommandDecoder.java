@@ -28,6 +28,7 @@ public final class UiCommandDecoder {
       case "chat.select", "channelChanged" -> selectConversation(payload, acceptedVersion);
       case "chat.create", "createConversation" ->
           Optional.of(new UiCommand.CreateConversation(acceptedVersion));
+      case "chat.rename" -> renameConversation(payload, acceptedVersion);
       case "chat.continue" -> continueConversation(payload, acceptedVersion);
       case "approval.decide" -> decideApproval(payload, acceptedVersion);
       case "attachment.put" -> putAttachment(payload, acceptedVersion);
@@ -92,6 +93,14 @@ public final class UiCommandDecoder {
     }
     return Optional.of(
         new UiCommand.PutAttachment(version, intent, name.trim(), contentType.trim(), content));
+  }
+
+  private static Optional<UiCommand> renameConversation(Map<String, ?> payload, String version) {
+    String id = string(payload.get("conversationId"));
+    String title = string(payload.get("title"));
+    if (blank(id) || id.length() > 128 || blank(title) || title.length() > 120)
+      return Optional.empty();
+    return Optional.of(new UiCommand.RenameConversation(version, id.strip(), title));
   }
 
   private static Optional<UiCommand> importAttachment(Map<String, ?> payload, String version) {

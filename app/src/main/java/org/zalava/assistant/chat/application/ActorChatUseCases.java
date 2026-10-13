@@ -12,6 +12,7 @@ import org.zalava.assistant.chat.domain.ChatMessage;
 import org.zalava.assistant.conversation.application.port.in.ActorConversations;
 import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.assistant.conversation.domain.ConversationReference;
+import org.zalava.assistant.conversation.domain.ConversationSummary;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.Actor;
@@ -126,6 +127,17 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
   @Override
   public List<ConversationReference> conversations(Actor actor) {
     return conversations.findReferences(actor);
+  }
+
+  @Override
+  public List<ConversationSummary> summaries(Actor actor) {
+    return conversations.summaries(actor);
+  }
+
+  @Override
+  public void rename(Actor actor, ConversationReference conversation, String title) {
+    requireOwned(actor, conversation);
+    conversations.rename(actor, conversation, ConversationSummary.requireTitle(title));
   }
 
   @Override

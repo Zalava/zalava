@@ -156,7 +156,7 @@ class BrowserFileAcceptanceTest {
         assertThat(page.locator(".message.user").innerText())
             .contains("attach these", "notes.txt")
             .doesNotContain("sha256", "bytes");
-        page.getByText("attach these").waitFor();
+        page.locator(".message.user").getByText("attach these").waitFor();
         assertThat(
                 page.locator(
                         "[data-testid=composer] #message, [data-testid=composer] .composer-send, [data-testid=composer] .attachment-name")

@@ -255,3 +255,11 @@ h1, p { margin: var(--zalava-space-1) 0; }
 .composer-fields, .composer-dropzone { grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .composer .attachments, .composer-actions { min-width: 0; max-width: 100%; }
 .composer textarea { width: 100%; max-width: 100%; min-width: 0; }
+
+.conversation-meta { margin: .5rem 0; font-size: .875rem; overflow-wrap: anywhere; color: var(--zalava-color-text-muted, #59647a); }
+.conversation-options { margin-bottom: .75rem; font-size: .875rem; }
+.conversation-options summary { cursor: pointer; font-weight: 600; }
+.conversation-options form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem; padding: .75rem 0; }
+.conversation-options label { grid-column: 1 / -1; font-weight: 600; }
+.conversation-options input { width: 100%; min-width: 0; }
+@media (max-width: 640px) { .conversation-options form { grid-template-columns: minmax(0, 1fr); } .conversation-options button { justify-self: start; } }

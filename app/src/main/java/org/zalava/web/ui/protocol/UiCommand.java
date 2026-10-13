@@ -13,6 +13,7 @@ import java.util.List;
 public sealed interface UiCommand
     permits UiCommand.SendChat,
         UiCommand.SelectConversation,
+        UiCommand.RenameConversation,
         UiCommand.CreateConversation,
         UiCommand.ContinueConversation,
         UiCommand.DecideApproval,
@@ -31,6 +32,9 @@ public sealed interface UiCommand
   }
 
   record SelectConversation(String protocolVersion, String conversationId) implements UiCommand {}
+
+  record RenameConversation(String protocolVersion, String conversationId, String title)
+      implements UiCommand {}
 
   record CreateConversation(String protocolVersion) implements UiCommand {}
 

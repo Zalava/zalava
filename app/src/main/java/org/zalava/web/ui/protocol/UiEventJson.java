@@ -14,6 +14,8 @@ public final class UiEventJson {
       case UiEvent.ConversationList conversations -> {
         json.put("type", "conversation.list");
         json.put("conversationIds", conversations.conversationIds());
+        if (!conversations.conversations().isEmpty())
+          json.put("conversations", conversations.conversations());
       }
       case UiEvent.ConversationSnapshot snapshot -> {
         json.put("type", "conversation.snapshot");

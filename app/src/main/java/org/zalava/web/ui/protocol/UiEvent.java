@@ -25,11 +25,20 @@ public sealed interface UiEvent
 
   String protocolVersion();
 
-  record ConversationList(String protocolVersion, List<String> conversationIds) implements UiEvent {
+  record ConversationList(
+      String protocolVersion, List<String> conversationIds, List<ConversationInfo> conversations)
+      implements UiEvent {
+    public ConversationList(String version, List<String> ids) {
+      this(version, ids, List.of());
+    }
+
     public ConversationList {
       conversationIds = List.copyOf(conversationIds);
+      conversations = List.copyOf(conversations);
     }
   }
+
+  record ConversationInfo(String id, String title, String createdAt, String updatedAt) {}
 
   record ConversationSnapshot(
       String protocolVersion,

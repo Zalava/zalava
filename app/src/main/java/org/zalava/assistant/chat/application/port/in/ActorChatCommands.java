@@ -35,5 +35,9 @@ public interface ActorChatCommands {
     return streamChat(actor, conversation, request.question(), listener);
   }
 
+  default void rename(Actor actor, ConversationReference conversation, String title) {
+    throw new UnsupportedOperationException("Conversation naming is unavailable");
+  }
+
   ConversationReference createWebConversation(Actor actor);
 }

@@ -165,8 +165,9 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
     Actor actor = actor(session);
+    ConversationReference selected = selectedConversation(actor);
     sendConversationList(session, actor);
-    sendSnapshot(session, selectedConversation(actor));
+    sendSnapshot(session, selected);
     sendMemoryReviews(session, actor);
     sendDocumentProcessingStatus(session);
     if (executionStates != null) {
@@ -197,6 +198,11 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         }
         case UiCommand.SelectConversation select ->
             sendSnapshot(session, new ConversationReference(select.conversationId()));
+        case UiCommand.RenameConversation rename -> {
+          ConversationReference reference = new ConversationReference(rename.conversationId());
+          commands.rename(actor, reference, rename.title());
+          sendConversationList(session, actor);
+        }
         case UiCommand.ContinueConversation commandContinue -> {
           if (continuation == null) throw new IllegalStateException("Continuation is unavailable");
           var target =
@@ -304,6 +310,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
                     conversation.value(),
                     fullText,
                     jobs.stream().map(job -> job.value()).toList()));
+            sendConversationList(session, actor);
             sendMemoryReviews(session, actor);
             sendDocumentProcessingStatus(session);
             if (executionStates != null) {
@@ -388,9 +395,11 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
 
   private ConversationReference selectedConversation(Actor actor) {
     List<ConversationReference> conversations = queries.conversations(actor);
-    return conversations.isEmpty()
-        ? commands.createWebConversation(actor)
-        : conversations.getFirst();
+    if (conversations.isEmpty()) return commands.createWebConversation(actor);
+    var summaries = queries.summaries(actor);
+    return summaries.isEmpty()
+        ? conversations.getFirst()
+        : new ConversationReference(summaries.getFirst().id());
   }
 
   private void sendConversationList(WebSocketSession session, Actor actor) {
@@ -398,7 +407,16 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         session,
         new UiEvent.ConversationList(
             UiCommandDecoder.VERSION,
-            queries.conversations(actor).stream().map(ConversationReference::value).toList()));
+            queries.conversations(actor).stream().map(ConversationReference::value).toList(),
+            queries.summaries(actor).stream()
+                .map(
+                    summary ->
+                        new UiEvent.ConversationInfo(
+                            summary.id(),
+                            summary.title(),
+                            summary.createdAt(),
+                            summary.updatedAt()))
+                .toList()));
   }
 
   private void sendSnapshot(WebSocketSession session, ConversationReference conversation) {

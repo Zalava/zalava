@@ -15,6 +15,14 @@ const providerConfigured = document.getElementById("root").dataset.providerConfi
 const providerSetupAllowed = document.getElementById("root").dataset.providerSetupAllowed === "true";
 
 const ZalavaChatContext = createContext(null);
+const SELECTED_CONVERSATION_KEY = "zalava.chat.selectedConversation";
+function rememberedConversation() { try { return sessionStorage.getItem(SELECTED_CONVERSATION_KEY); } catch { return null; } }
+function rememberConversation(id) { try { sessionStorage.setItem(SELECTED_CONVERSATION_KEY, id); } catch { /* Storage is optional; ownership is checked by Zalava. */ } }
+function conversationDate(value) {
+  if (!value) return "Date unavailable";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Date unavailable" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ACCEPT =
   ".txt,.text,.md,.markdown,.html,.htm,.pdf,.docx," +
@@ -73,6 +81,8 @@ function ZalavaRuntime({ children }) {
   const [documentProcessing, setDocumentProcessing] = useState(null);
   const [conversationId, setConversationId] = useState(null);
   const [conversationIds, setConversationIds] = useState([]);
+  const [conversationSummaries, setConversationSummaries] = useState([]);
+  const ownedConversationIds = useRef([]);
   const [jobs, setJobs] = useState({});
   const [approvals, setApprovals] = useState({});
   const [imports, setImports] = useState([]);
@@ -101,8 +111,17 @@ function ZalavaRuntime({ children }) {
       const event = JSON.parse(data);
       if (event.type === "conversation.list") {
         setConversationIds(event.conversationIds);
+        ownedConversationIds.current = event.conversationIds;
+        setConversationSummaries(event.conversations ?? []);
       } else if (event.type === "conversation.snapshot") {
+        const remembered = rememberedConversation();
+        if (!selectedConversation.current && remembered && remembered !== event.conversationId && ownedConversationIds.current.includes(remembered)) {
+          selectedConversation.current = remembered;
+          connection.send(JSON.stringify({ protocol: "zalava.ui/v1", type: "chat.select", conversationId: remembered }));
+          return;
+        }
         selectedConversation.current = event.conversationId;
+        rememberConversation(event.conversationId);
         setConversationId(event.conversationId);
         setOrigin(event.channelId ?? "web");
         setCanSend(event.canSend === true);
@@ -290,6 +309,7 @@ function ZalavaRuntime({ children }) {
       status,
       conversationId,
       conversationIds,
+      conversationSummaries,
       jobs,
       approvals: Object.entries(approvals).filter(([, approval]) => approval.pending),
       imports,
@@ -309,8 +329,12 @@ function ZalavaRuntime({ children }) {
       },
       selectConversation: (id) => sendCommand({ type: "chat.select", conversationId: id }),
       createConversation: () => sendCommand({ type: "chat.create" }),
+      renameConversation: (title) => {
+        setCommandError(null);
+        if (!sendCommand({ type: "chat.rename", conversationId, title })) setCommandError("Zalava is not connected");
+      },
     }),
-    [messages, memoryReviews, documentProcessing, status, conversationId, conversationIds, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError],
+    [messages, memoryReviews, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError],
   );
 
   return (
@@ -354,6 +378,7 @@ function Chat() {
     status,
     conversationId,
     conversationIds,
+    conversationSummaries,
     jobs,
     approvals,
     imports,
@@ -364,7 +389,11 @@ function Chat() {
     decideApproval,
     selectConversation,
     createConversation,
+    renameConversation,
   } = useContext(ZalavaChatContext);
+  const selectedSummary = conversationSummaries.find((entry) => entry.id === conversationId);
+  const [conversationName, setConversationName] = useState("");
+  useEffect(() => setConversationName(selectedSummary?.title ?? "New conversation"), [conversationId, selectedSummary?.title]);
   const aui = useAui();
   const historyIndex = useRef(-1);
   const preservedDraft = useRef("");
@@ -410,10 +439,23 @@ function Chat() {
       </section>}
       <nav className="conversations" aria-label="Conversations">
         <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || pending || continuing || status !== "Connected"}>
-          {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
+          {!conversationId && <option value="">Start a conversation</option>}
+          {conversationIds.map((id) => {
+            const summary = conversationSummaries.find((entry) => entry.id === id);
+            return <option key={id} value={id}>{summary?.title ?? "Saved conversation"} · {conversationDate(summary?.updatedAt ?? summary?.createdAt)}</option>;
+          })}
         </select>
         <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
+      {selectedSummary && <p className="conversation-meta"><strong>{selectedSummary.title}</strong> · Updated <time dateTime={selectedSummary.updatedAt ?? selectedSummary.createdAt}>{conversationDate(selectedSummary.updatedAt ?? selectedSummary.createdAt)}</time></p>}
+      {conversationId && <details className="conversation-options">
+        <summary>Conversation options</summary>
+        <form onSubmit={(event) => { event.preventDefault(); if (conversationName.trim()) renameConversation(conversationName.trim()); }}>
+          <label htmlFor="conversation-name">Conversation name</label>
+          <input id="conversation-name" className="zalava-field" value={conversationName} maxLength={120} onChange={(event) => setConversationName(event.target.value)} disabled={pending || status !== "Connected"} />
+          <button className="zalava-button zalava-button--secondary" type="submit" disabled={!conversationName.trim() || pending || status !== "Connected"}>Save name</button>
+        </form>
+      </details>}
       {memoryReviews.length > 0 && <section className="memory-review-notice" aria-label="Memory review" role="status">
         <strong>Memory proposals need your review.</strong>
         <p>These are pending preferences or facts, separate from tool permissions.</p>

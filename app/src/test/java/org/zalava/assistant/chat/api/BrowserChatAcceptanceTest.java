@@ -386,6 +386,83 @@ class BrowserChatAcceptanceTest {
     }
   }
 
+  @Test
+  void titlesDatesAndUserNamingReplaceIdsAndRestoreTheSelectedConversation() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signInDisposableMember(page);
+      var selector =
+          page.getByRole(
+              AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"));
+      page.waitForFunction(
+          "() => document.querySelector('select[aria-label=\"Select conversation\"]')?.value !== ''");
+      assertThat(selector.locator("option:checked").innerText()).contains("New conversation");
+      page.locator("#message").fill("Plan the school trip for Tuesday.");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.getByText(
+              "Hello from the component test model.", new Page.GetByTextOptions().setExact(true))
+          .waitFor();
+      page.waitForFunction(
+          "() => document.querySelector('select[aria-label=\"Select conversation\"] option:checked').textContent.includes('school trip')");
+      assertThat(selector.locator("option:checked").innerText()).containsPattern("[0-9]{4}");
+      String firstId = selector.inputValue();
+      page.locator(".conversation-options summary").click();
+      page.getByLabel("Conversation name", new Page.GetByLabelOptions().setExact(true))
+          .fill("School trip planning");
+      page.getByRole(
+              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save name").setExact(true))
+          .click();
+      page.waitForFunction(
+          "() => document.querySelector('select[aria-label=\"Select conversation\"] option:checked').textContent.includes('School trip planning')");
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        settleChatNavigation(page);
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
+        assertThat(
+                page.getByLabel("Conversation name", new Page.GetByLabelOptions().setExact(true))
+                    .boundingBox()
+                    .width)
+            .isGreaterThan(100);
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(
+                    Path.of(
+                        "build/browser-acceptance/chat-conversation-naming-" + width + ".png")));
+      }
+      page.getByRole(
+              AriaRole.BUTTON,
+              new Page.GetByRoleOptions().setName("New conversation").setExact(true))
+          .click();
+      page.waitForFunction(
+          "oldId => document.querySelector('select[aria-label=\"Select conversation\"]').value !== oldId",
+          firstId);
+      page.locator("#message").fill("A different later conversation.");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.getByText(
+              "Hello from the component test model.", new Page.GetByTextOptions().setExact(true))
+          .waitFor();
+      selector.selectOption(firstId);
+      page.getByText(
+              "Plan the school trip for Tuesday.", new Page.GetByTextOptions().setExact(true))
+          .waitFor();
+      page.reload();
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      page.getByText(
+              "Plan the school trip for Tuesday.", new Page.GetByTextOptions().setExact(true))
+          .waitFor();
+      assertThat(selector.inputValue()).isEqualTo(firstId);
+      assertThat(selector.locator("option:checked").innerText())
+          .contains("School trip planning")
+          .doesNotContain(firstId);
+    }
+  }
+
   private void settleChatNavigation(Page page) {
     page.waitForFunction(
         """

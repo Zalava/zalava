@@ -127,6 +127,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         case UiCommand.SendChat send ->
             handleUserMessage(
                 session, Map.of("conversationId", send.conversationId(), "message", send.text()));
+        case UiCommand.RenameConversation ignored -> {
+          // Naming is available on the authenticated product JSON adapter.
+        }
         case UiCommand.ContinueConversation ignored -> {
           // Explicit continuation is available through the product JSON adapter.
         }
