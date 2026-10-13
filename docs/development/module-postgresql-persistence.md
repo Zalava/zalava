@@ -77,3 +77,11 @@ This public module is independently released and its README states that the host
 - Shopping List `build.gradle` bundles `sqlite-jdbc` at runtime, and `module-metadata.yaml` declares `sqlitePath` and `local-storage`. Update metadata and dependencies for the new host database capability; avoid bundling host API classes.
 - SQLite SQL uses integer active flags, text timestamps, `AUTOINCREMENT`, `COLLATE NOCASE`, and a partial unique index. Port to PostgreSQL boolean, timestamptz, identity columns, explicit case-insensitive ordering and a PostgreSQL partial index.
 - The complete installation/activation path and dynamic module classloader resource discovery still require implementation-time audit and PostgreSQL integration tests. This is source-level feasibility, not a passing end-to-end verification.
+
+## Future compatibility with Spring-enabled modules
+
+- **Preserve the JDK-only Module API.** Database contracts must remain usable by plain Java modules without depending on Spring or Spring Boot. Optional Spring integration may be introduced separately later; do not add a Spring dependency to `module-api`.
+- **Separate schema provisioning and Flyway migrations from provider construction.** The host must prepare and validate a module's schema before activating its providers. This lifecycle boundary must also allow a future module-specific Spring application context to be created *after* successful database preparation.
+- **Allow optional integration models without implementing them now.** Future advanced modules might use an isolated, host-managed Spring context or an independent Spring Boot service/process, while continuing to expose Zalava tools/services through stable contracts. Do not register arbitrary module beans in the host application context.
+- **Do not assume Spring transaction semantics in the base API.** Any future Spring transaction adapter must preserve host-managed connection ownership, transaction propagation, module schema scoping, and classloader/dependency isolation.
+- **Out of scope for this PR and the Shopping List pilot:** Spring module runtime, new Spring-specific Gradle projects, separate Boot services, and multi-database migration support. PostgreSQL remains the initial supported module database.
