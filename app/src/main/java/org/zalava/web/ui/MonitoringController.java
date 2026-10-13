@@ -6,14 +6,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.zalava.assistant.agent.application.port.in.AgentRunQueries;
 import org.zalava.assistant.agent.domain.AgentRun;
 import org.zalava.tasks.application.port.in.TaskQueries;
-import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
 import org.zalava.web.control.application.port.in.BootstrapVerificationQueries;
@@ -38,7 +36,6 @@ public class MonitoringController {
       DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ENGLISH);
   private static final DateTimeFormatter STARTED_AT =
       DateTimeFormatter.ofPattern("MMM d, HH:mm:ss", Locale.ENGLISH);
-  private static final Pattern UUID = Pattern.compile("[0-9a-fA-F-]{36}");
 
   private final TaskQueries taskQueries;
   private final AgentRunQueries agentRuns;
@@ -124,7 +121,6 @@ public class MonitoringController {
   }
 
   private static RunEntry toRunEntry(AgentRun run) {
-    String[] evidence = evidence(run.conversationId());
     return new RunEntry(
         run.id(),
         run.promptType() == AgentRun.PromptType.STRUCTURED ? "Structured" : "Conversational",
@@ -137,9 +133,7 @@ public class MonitoringController {
         run.contextCharacterBudget(),
         run.promptPreview(),
         run.resultPreview(),
-        run.errorPreview(),
-        evidence[0],
-        evidence[1]);
+        run.errorPreview());
   }
 
   private static CallEntry toCallEntry(InvocationLogQueries.Entry call) {
@@ -165,22 +159,6 @@ public class MonitoringController {
         provider.available() ? "Available" : "Missing",
         provider.available() ? "is-success is-light" : "is-warning is-light",
         bound(provider.missingReason(), PROVIDER_PREVIEW_LIMIT));
-  }
-
-  private static String[] evidence(String conversationId) {
-    if (conversationId == null || conversationId.isBlank()) {
-      return new String[] {null, null};
-    }
-    try {
-      ActorTaskExecutionReference reference = ActorTaskExecutionReference.parse(conversationId);
-      return new String[] {"View job evidence", "/jobs/" + reference.taskReference().value()};
-    } catch (IllegalArgumentException ignored) {
-      // Not an actor task conversation; fall through to the other evidence shapes.
-    }
-    if (UUID.matcher(conversationId).matches()) {
-      return new String[] {"View job evidence", "/jobs/" + conversationId};
-    }
-    return new String[] {"View in chat", "/chat"};
   }
 
   private static String errorDetail(String errorType, String errorMessage) {
@@ -274,9 +252,7 @@ public class MonitoringController {
       int contextCharacterBudget,
       String promptPreview,
       String resultPreview,
-      String errorPreview,
-      String evidenceLabel,
-      String evidenceUrl) {}
+      String errorPreview) {}
 
   public record CallEntry(
       String timestamp,

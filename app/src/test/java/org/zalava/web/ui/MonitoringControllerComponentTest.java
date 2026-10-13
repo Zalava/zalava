@@ -137,12 +137,53 @@ class MonitoringControllerComponentTest {
             content().string(containsString("href=\"/jobs/2026-09-18/081850-Running_build.md\"")))
         .andExpect(content().string(containsString("data-run-id=\"run-3\"")))
         .andExpect(content().string(containsString("data-run-failed=\"true\"")))
-        .andExpect(content().string(containsString("href=\"/jobs/" + taskId + "\"")))
-        .andExpect(content().string(containsString("View job evidence")))
-        .andExpect(content().string(containsString("href=\"/chat\"")))
+        .andExpect(content().string(not(containsString("data-run-evidence"))))
         .andExpect(content().string(containsString("ProviderTimeout")))
         .andExpect(content().string(containsString("Missing tools: browser")))
         .andExpect(content().string(stringContainsInOrder("run-3", "run-2", "run-1")));
+  }
+
+  @Test
+  void chatRunIdentitiesNeverBecomeUnverifiedJobLinks() throws Exception {
+    String conversationId = UUID.randomUUID().toString();
+    String actorId = UUID.randomUUID().toString();
+    runStore.record(
+        run(
+            "bare-chat-run",
+            conversationId,
+            AgentRun.Status.SUCCEEDED,
+            "A chat turn with no job",
+            Instant.now()));
+    runStore.record(
+        run(
+            "owned-chat-run",
+            actorId + ":" + conversationId,
+            AgentRun.Status.SUCCEEDED,
+            "An owner-scoped chat turn with no job",
+            Instant.now()));
+    runStore.record(
+        run(
+            "legacy-chat-run",
+            "web-conversation",
+            AgentRun.Status.SUCCEEDED,
+            "Legacy chat evidence",
+            Instant.now()));
+    String body =
+        mockMvc
+            .perform(get("/monitoring"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertThat(body)
+        .contains(
+            "bare-chat-run",
+            "owned-chat-run",
+            "legacy-chat-run",
+            "result-bare-chat-run",
+            "result-owned-chat-run",
+            "result-legacy-chat-run")
+        .doesNotContain("data-run-evidence", "/jobs/" + conversationId, "View in chat");
   }
 
   @Test
