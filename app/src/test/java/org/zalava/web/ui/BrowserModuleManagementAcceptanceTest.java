@@ -7,6 +7,7 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import java.io.ByteArrayOutputStream;
@@ -129,7 +130,7 @@ class BrowserModuleManagementAcceptanceTest {
         page.getByRole(
                 AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true))
             .click();
-        assertThat(page.locator("[data-catalog-module]").count()).isEqualTo(1);
+        PlaywrightAssertions.assertThat(page.locator("[data-catalog-module]")).hasCount(1);
         assertThat(page.locator("[data-catalog-module=zalava-module-tasks]").innerText())
             .contains("Not installed");
         capture(page, "module-search-" + width);

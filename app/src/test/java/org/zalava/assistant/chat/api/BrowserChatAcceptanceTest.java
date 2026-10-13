@@ -9,6 +9,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import java.io.IOException;
@@ -190,7 +191,7 @@ class BrowserChatAcceptanceTest {
         page.locator("select[aria-label='Select conversation']").selectOption(source.value());
         page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("telegram history"))
             .waitFor();
-        assertThat(page.locator("#message").count()).isZero();
+        PlaywrightAssertions.assertThat(page.locator("#message")).hasCount(0);
         page.locator("#continuation-destination").focus();
         page.locator("#continuation-destination").press("Tab");
         assertThat(page.evaluate("document.activeElement.textContent"))
@@ -377,12 +378,17 @@ class BrowserChatAcceptanceTest {
       page.locator("#message").fill("What greeting do I prefer?");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
           .click();
-      page.waitForFunction(
-          "document.querySelector('.messages').getAttribute('aria-busy') === 'false'");
+      // Wait for this turn's response, not an idle state that can precede dispatch.
+      PlaywrightAssertions.assertThat(page.locator(".message.user").last())
+          .containsText("What greeting do I prefer?");
+      PlaywrightAssertions.assertThat(page.locator(".message.assistant").last().locator("p"))
+          .hasText("Hello from the component test model.");
+      PlaywrightAssertions.assertThat(page.locator(".messages")).hasAttribute("aria-busy", "false");
       page.reload();
       page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
-      assertThat(page.locator(".message.user").last().locator("p").allTextContents())
-          .containsExactly("What greeting do I prefer?");
+      // Connected acknowledges the transport; history is delivered in a later snapshot.
+      PlaywrightAssertions.assertThat(page.locator(".message.user").last().locator("p"))
+          .hasText(new String[] {"What greeting do I prefer?"});
     }
   }
 

@@ -457,7 +457,11 @@ class ReleasedModuleDistributableAcceptanceTest {
     Files.createDirectories(diagnostics);
     Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
     Files.writeString(workspace.resolve("AGENT.md"), "Disposable public catalog acceptance.");
-    try (PostgreSQLContainer postgres =
+    // Keep the production public default URLs and real released artifact, while
+    // resolving immutable module-owned metadata through the existing HTTPS fixture.
+    Release releasedTime = downloadReleases(Set.of("time")).getFirst();
+    try (CatalogReleaseProxy proxy = new CatalogReleaseProxy(diagnostics, releasedTime.path());
+        PostgreSQLContainer postgres =
             new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
                 .withDatabaseName("zalava_public_catalog")
                 .withUsername("zalava_public_catalog")
@@ -466,6 +470,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext admin = browser.newContext()) {
+      catalogProxy = proxy;
       postgres.start();
       Page page = admin.newPage();
       try {
@@ -498,6 +503,13 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(time.text()).contains("UTC");
         page.screenshot(
             new Page.ScreenshotOptions().setPath(diagnostics.resolve("public-restart.png")));
+      } catch (Throwable failure) {
+        Files.writeString(diagnostics.resolve("public-catalog-failure.html"), page.content());
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("public-catalog-failure.png"))
+                .setFullPage(true));
+        throw failure;
       } finally {
         stop();
       }
