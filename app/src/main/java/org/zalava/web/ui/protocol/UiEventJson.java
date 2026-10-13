@@ -14,6 +14,8 @@ public final class UiEventJson {
       case UiEvent.ConversationList conversations -> {
         json.put("type", "conversation.list");
         json.put("conversationIds", conversations.conversationIds());
+        if (!conversations.conversations().isEmpty())
+          json.put("conversations", conversations.conversations());
       }
       case UiEvent.ConversationSnapshot snapshot -> {
         json.put("type", "conversation.snapshot");
@@ -22,6 +24,14 @@ public final class UiEventJson {
         json.put("channelId", snapshot.channelId());
         json.put("canSend", snapshot.canSend());
         json.put("canContinue", snapshot.canContinue());
+      }
+      case UiEvent.MemoryReviews memory -> {
+        json.put("type", "memory.reviews");
+        json.put("reviews", memory.reviews());
+      }
+      case UiEvent.DocumentProcessingStatus status -> {
+        json.put("type", "document.processing");
+        json.put("available", status.available());
       }
       case UiEvent.ChatDelta delta -> {
         json.put("type", "chat.delta");

@@ -3,6 +3,7 @@
 @import org.zalava.knowledge.memory.domain.Memory
 @import org.zalava.knowledge.memory.domain.MemoryProposal
 @import org.zalava.knowledge.memory.domain.MemoryScope
+@import org.zalava.web.ui.LibraryPresentation
 @param MemoryModel model
 @param NavigationModel navigation
 @param String memoryMessage
@@ -17,13 +18,14 @@
   <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-  @template.ui.navigation(items = navigation.items(), activePage = "memory", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
+  @template.ui.navigation(items = navigation.items(), activePage = "memory", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
   <main class="section">
     <div class="container">
       <header class="mb-5">
         <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Recall</p>
         <h1 class="title is-3">Memory</h1>
-        <p class="has-text-grey">What Zalava remembers for you, with its scope and provenance.</p>
+        <p class="has-text-grey">Private to your account. Approved memories help Zalava recall relevant preferences and knowledge.</p>
+        <details class="mt-3"><summary>What do the scopes mean?</summary><ul class="content mt-3"><li><strong>Personal preferences</strong>: facts and preferences about you.</li><li><strong>Project knowledge</strong>: information about your projects.</li><li><strong>Agent knowledge</strong>: lessons you want Zalava to use.</li><li><strong>Execution trace</strong>: temporary run information, excluded from durable recall.</li></ul><p>All of these scopes stay private to your account; a scope does not share a memory with other members.</p></details>
       </header>
       @if(memoryMessage != null)
         <article class="message is-success" role="status"><div class="message-body">${memoryMessage}</div></article>
@@ -43,8 +45,8 @@
           <div class="control">
             <div class="select">
               <select id="proposal-scope" name="scope">
-                @for(MemoryScope option : MemoryScope.durableScopes())
-                  <option value="${option.name()}">${option.name()}</option>
+                @for(MemoryScope option : LibraryPresentation.durableScopes())
+                  <option value="${option.name()}">${LibraryPresentation.scope(option)}</option>
                 @endfor
               </select>
             </div>
@@ -56,23 +58,23 @@
         </div>
         <button class="button is-primary" data-action="propose">Propose</button>
       </form>
-      <form method="get" action="/memory" class="field has-addons">
-        <div class="control is-expanded">
-          <input class="input" type="search" name="query" value="${model.query()}" maxlength="256" aria-label="Search memory">
+      <form method="get" action="/memory" class="library-search memory-search">
+        <div class="field">
+          <label class="label" for="memory-query">Search memory</label><input id="memory-query" class="input" type="search" name="query" value="${model.query()}" maxlength="256" aria-label="Search memory">
         </div>
-        <div class="control">
-          <div class="select">
-            <select name="scope" aria-label="Filter by scope">
+        <div class="field"><label class="label" for="memory-filter-scope">Scope</label>
+          <div class="select is-fullwidth">
+            <select id="memory-filter-scope" name="scope" aria-label="Filter by scope">
               @if(model.scope().isEmpty())
                 <option value="" selected>All scopes</option>
               @else
                 <option value="">All scopes</option>
               @endif
-              @for(MemoryScope option : MemoryScope.all())
+              @for(MemoryScope option : MemoryScope.values())
                 @if(option.name().equals(model.scope()))
-                  <option value="${option.name()}" selected>${option.name()}</option>
+                  <option value="${option.name()}" selected>${LibraryPresentation.scope(option)}</option>
                 @else
-                  <option value="${option.name()}">${option.name()}</option>
+                  <option value="${option.name()}">${LibraryPresentation.scope(option)}</option>
                 @endif
               @endfor
             </select>
@@ -86,9 +88,9 @@
       @else
         <ul>
         @for(MemoryProposal proposal : model.proposals())
-          <li class="box" data-memory-proposal="${proposal.id()}">
+          <li class="box" id="proposal-${proposal.id()}" data-memory-proposal="${proposal.id()}">
             <p class="has-text-weight-bold">${proposal.text()}</p>
-            <span class="is-size-7 has-text-grey" data-proposal-scope>${proposal.scope()} · ${proposal.provenance().source()} · ${proposal.createdAt()}</span>
+            <span class="is-size-7 has-text-grey" data-proposal-scope>${LibraryPresentation.scope(proposal.scope())} · Awaiting your review · <time datetime="${proposal.createdAt()}">${LibraryPresentation.date(proposal.createdAt())}</time></span>
             <div class="mt-3">
               <form method="post" action="/memory/proposals/${proposal.id()}/approve" class="is-inline-block">
                 <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
@@ -115,7 +117,7 @@
         @for(Memory memory : model.memories())
           <li class="box" data-memory-entry="${memory.id()}">
             <a class="has-text-weight-bold" href="/memory/${memory.id()}">${memory.text()}</a><br>
-            <span class="is-size-7 has-text-grey" data-memory-scope>${memory.scope()} · ${memory.provenance().source()}@if(memory.provenance().reference() != null) · ${memory.provenance().reference()}@endif · created ${memory.createdAt().toString()}@if(memory.updatedAt() != null) · revised ${memory.updatedAt().toString()}@endif</span>
+            <span class="is-size-7 has-text-grey" data-memory-scope>${LibraryPresentation.scope(memory.scope())} · ${LibraryPresentation.provenance(memory.provenance().source())}@if(memory.provenance().reference() != null) · ${memory.provenance().reference()}@endif · created <time datetime="${memory.createdAt().toString()}">${LibraryPresentation.date(memory.createdAt())}</time>@if(memory.updatedAt() != null) · revised <time datetime="${memory.updatedAt().toString()}">${LibraryPresentation.date(memory.updatedAt())}</time>@endif</span>
             <form method="post" action="/memory/${memory.id()}/delete" class="mt-3">
               <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
               <input type="hidden" name="confirmed" value="true">

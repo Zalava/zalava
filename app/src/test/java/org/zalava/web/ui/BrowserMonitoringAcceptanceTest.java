@@ -8,6 +8,8 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.ScreenshotType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,8 +39,8 @@ import org.zalava.tasks.domain.Task;
 
 /**
  * Real-browser acceptance for the administrator Monitoring screen. It proves live work renders, a
- * freshly recorded run appears after a reload (freshness/reconnect, no stale view) and the run
- * links to its owning job.
+ * freshly recorded run appears after a reload (freshness/reconnect, no stale view) and chat run
+ * identities do not create dangling job links.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -110,17 +112,50 @@ class BrowserMonitoringAcceptanceTest {
         page.reload();
         page.locator("[data-run-id=\"browser-monitoring-run\"]").waitFor();
         assertThat(page.locator("[data-empty=\"runs\"]").count()).isEqualTo(0);
-        assertThat(page.locator("[data-run-evidence]").getAttribute("href"))
-            .isEqualTo("/jobs/" + taskId);
+        assertThat(page.locator("[data-run-evidence]").count()).isZero();
+        String conversationId = UUID.randomUUID().toString();
+        runStore.record(run("browser-chat-run", accountId + ":" + conversationId));
+        runStore.record(run("browser-legacy-chat-run", UUID.randomUUID().toString()));
+        page.reload();
+        assertThat(page.locator("[data-run-id=browser-chat-run]").innerText())
+            .contains("browser monitoring result", "Recorded run evidence is shown here");
+        assertThat(page.locator("[data-run-evidence]").count()).isZero();
+        for (int width : new int[] {390, 768, 1440}) {
+          page.setViewportSize(width, 900);
+          page.waitForFunction(
+              """
+              () => {
+                const menu = document.querySelector('.navbar-menu');
+                if (!menu || window.innerWidth > 1024) return true;
+                const bounds = menu.getBoundingClientRect();
+                return menu.classList.contains('is-active') ? Math.abs(bounds.left) < .5 : bounds.right <= .5;
+              }
+              """);
+          page.locator("[data-run-id=browser-chat-run]")
+              .evaluate("node => node.scrollIntoView({block: \"center\"})");
+          assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+              .isEqualTo(true);
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setType(ScreenshotType.PNG)
+                  .setFullPage(false)
+                  .setPath(DIAGNOSTICS.resolve("monitoring-runs-" + width + ".png")));
+        }
+        page.setViewportSize(1440, 900);
+        var jobLink = page.locator("[data-monitoring-live] a[data-job]").first();
+        String jobUrl = jobLink.getAttribute("href");
+        jobLink.click();
+        assertThat(page.url()).endsWith(jobUrl);
+        assertThat(page.locator("body").innerText()).contains("Monitoring live job");
+        assertThat(page.locator("body").innerText()).doesNotContain("Page not found");
+        page.navigate(baseUrl() + "/monitoring");
 
         Files.writeString(
             APPLICATION_LOG,
             "browser log before restart\n",
             StandardOpenOption.CREATE,
             StandardOpenOption.APPEND);
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.LINK,
-                new Page.GetByRoleOptions().setName("View Zalava logs"))
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View Zalava logs"))
             .click();
         assertThat(page.url()).endsWith("/monitoring/logs");
         assertThat(page.locator("body").innerText()).contains("browser log before restart");
@@ -154,10 +189,7 @@ class BrowserMonitoringAcceptanceTest {
     page.navigate(baseUrl() + "/login");
     page.locator("input[name=username]").fill(login);
     page.locator("input[name=password]").fill(ADMIN_PASSWORD);
-    page.getByRole(
-            com.microsoft.playwright.options.AriaRole.BUTTON,
-            new Page.GetByRoleOptions().setName("Sign in"))
-        .click();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
   }
 
   private String baseUrl() {

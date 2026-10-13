@@ -3,6 +3,7 @@ package org.zalava.assistant.conversation.application.port.in;
 import java.util.List;
 import org.zalava.assistant.conversation.domain.ConversationMessage;
 import org.zalava.assistant.conversation.domain.ConversationReference;
+import org.zalava.assistant.conversation.domain.ConversationSummary;
 import org.zalava.identity.accounts.domain.Actor;
 
 /** Actor-bound private conversation access. */
@@ -14,6 +15,22 @@ public interface ActorConversations {
   void appendAll(Actor actor, ConversationReference reference, List<ConversationMessage> messages);
 
   void saveAll(Actor actor, ConversationReference reference, List<ConversationMessage> messages);
+
+  default List<ConversationSummary> summaries(Actor actor) {
+    return findReferences(actor).stream()
+        .map(
+            reference ->
+                new ConversationSummary(
+                    reference.value(),
+                    ConversationSummary.defaultTitle(findByReference(actor, reference)),
+                    null,
+                    null))
+        .toList();
+  }
+
+  default void rename(Actor actor, ConversationReference reference, String title) {
+    throw new UnsupportedOperationException("Conversation naming is unavailable");
+  }
 
   void delete(Actor actor, ConversationReference reference);
 }

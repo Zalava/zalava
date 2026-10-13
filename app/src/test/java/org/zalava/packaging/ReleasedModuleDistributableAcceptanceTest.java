@@ -34,6 +34,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.jobrunr.jobs.context.JobContext;
@@ -49,6 +50,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.support.DigitalPdfFixture;
 import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
 import org.zalava.tasks.adapter.out.filesystem.ActorFileSystemTaskStore;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
@@ -366,6 +368,10 @@ class ReleasedModuleDistributableAcceptanceTest {
   private record JobEvidenceFixture(String report, String future, Instant due, String output) {}
 
   private List<Release> downloadReleases() throws Exception {
+    return downloadReleases(Set.of());
+  }
+
+  private List<Release> downloadReleases(Set<String> selected) throws Exception {
     Properties pins = new Properties();
     try (var input = getClass().getResourceAsStream("/released-modules.properties")) {
       assertThat(input).as("immutable released-module pins").isNotNull();
@@ -373,7 +379,11 @@ class ReleasedModuleDistributableAcceptanceTest {
     }
     assertThat(pins).hasSize(12);
     List<Release> result = new ArrayList<>();
-    for (String name : pins.stringPropertyNames().stream().sorted().toList()) {
+    for (String name :
+        pins.stringPropertyNames().stream()
+            .filter(name -> selected.isEmpty() || selected.contains(name))
+            .sorted()
+            .toList()) {
       String[] pin = pins.getProperty(name).split(",");
       String moduleId = "zalava-module-" + name;
       String asset = moduleId + "-" + pin[0] + ".jar";
@@ -510,6 +520,24 @@ class ReleasedModuleDistributableAcceptanceTest {
             data: [DONE]
 
             """)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(1)
+            .withRequestBody(
+                matchingJsonPath(
+                    "$.messages[?(@.role == 'user')].content", containing("amber-larch-1013")))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+            data: {"id":"pdf-fixture","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Your PDF code is amber-larch-1013."},"finish_reason":null}]}
+
+            data: {"id":"pdf-fixture","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """)));
     try (PostgreSQLContainer postgres =
             new PostgreSQLContainer(DockerImageName.parse("postgres:18.4-alpine"))
                 .withDatabaseName("provider_acceptance")
@@ -540,6 +568,12 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
         page.navigate(baseUrl + "/chat");
         assertThat(page.locator("#message").isDisabled()).isTrue();
+        Release tika = downloadReleases(Set.of("tika")).getFirst();
+        page.navigate(baseUrl + "/modules");
+        page.locator("input[name=moduleJar]").setInputFiles(tika.path());
+        page.locator("[data-action=upload-module]").click();
+        page.getByText("Uploaded " + tika.moduleId() + " " + tika.version() + " installed")
+            .waitFor();
         stop();
         start(postgres, workspace, "test");
         signIn(page, LOGIN, PASSWORD, false);
@@ -557,6 +591,55 @@ class ReleasedModuleDistributableAcceptanceTest {
                 .withHeader("Authorization", equalTo("Bearer fixture-key"))
                 .withRequestBody(matchingJsonPath("$.model", equalTo("fixture-model")))
                 .withRequestBody(matchingJsonPath("$.stream", equalTo("true"))));
+        startModule(page, "zalava-module-tika");
+        page.navigate(baseUrl + "/chat");
+        page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+            .click();
+        var chooser =
+            page.waitForFileChooser(
+                () ->
+                    page.getByRole(
+                            AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Attach files"))
+                        .click());
+        String pdfFact = "The PDF acceptance code is amber-larch-1013.";
+        chooser.setFiles(
+            new FilePayload(
+                "acceptance.pdf", "application/pdf", DigitalPdfFixture.withText(pdfFact)));
+        page.locator("[data-testid=composer] .attachment-chip")
+            .getByText("acceptance.pdf")
+            .waitFor();
+        page.locator("#message").fill("What code does my PDF contain?");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        page.getByText(
+                "Your PDF code is amber-larch-1013.", new Page.GetByTextOptions().setExact(true))
+            .waitFor();
+        modelServer.verify(
+            postRequestedFor(urlEqualTo("/v1/chat/completions"))
+                .withRequestBody(
+                    matchingJsonPath(
+                        "$.messages[?(@.role == 'user')].content",
+                        containing("amber-larch-1013"))));
+        String pdfConversation =
+            page.getByRole(
+                    AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+                .inputValue();
+        page.reload();
+        page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+        page.getByRole(
+                AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+            .selectOption(pdfConversation);
+        page.locator(".message.user .attachment-chip").getByText("acceptance.pdf").waitFor();
+        assertThat(page.locator(".message.user p").allTextContents())
+            .containsExactly("What code does my PDF contain?");
+        assertThat(page.locator(".message.user").innerText())
+            .doesNotContain("sha256", "bytes", "amber-larch-1013");
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("chat-released-tika-pdf.png")));
         page.navigate(baseUrl + "/settings?section=provider");
         assertThat(
                 page.getByText("Restart required", new Page.GetByTextOptions().setExact(true))

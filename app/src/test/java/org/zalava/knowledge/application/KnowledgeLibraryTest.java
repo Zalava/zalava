@@ -78,7 +78,8 @@ class KnowledgeLibraryTest {
                 SourceProcessingState.READY,
                 Instant.EPOCH,
                 Instant.EPOCH,
-                0));
+                0,
+                true));
     assertThat(library.inspect(owner, privateToAnother.id())).isEmpty();
   }
 

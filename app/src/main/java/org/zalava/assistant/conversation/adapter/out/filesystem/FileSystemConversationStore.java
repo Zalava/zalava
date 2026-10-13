@@ -1,27 +1,32 @@
 package org.zalava.assistant.conversation.adapter.out.filesystem;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.zalava.assistant.conversation.application.port.in.ActorConversations;
+import org.zalava.assistant.conversation.application.port.out.ConversationOriginStore;
 import org.zalava.assistant.conversation.application.port.out.ConversationStore;
 import org.zalava.assistant.conversation.domain.ConversationMessage;
+import org.zalava.assistant.conversation.domain.ConversationOrigin;
 import org.zalava.assistant.conversation.domain.ConversationReference;
+import org.zalava.assistant.conversation.domain.ConversationSummary;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.platform.storage.private_state.ActorScopedPaths;
 import org.zalava.platform.storage.yaml.YamlDocument;
 import org.zalava.platform.storage.yaml.YamlParser;
 
 public final class FileSystemConversationStore
-    implements ConversationStore,
-        ActorConversations,
-        org.zalava.assistant.conversation.application.port.out.ConversationOriginStore {
+    implements ConversationStore, ActorConversations, ConversationOriginStore {
   private final Path conversationsDirectory;
   private final ActorScopedPaths actorPaths;
 
@@ -77,12 +82,8 @@ public final class FileSystemConversationStore
       Map<String, String> frontmatter = new LinkedHashMap<>();
       frontmatter.put("createdAt", createdAt);
       frontmatter.put("updatedAt", Instant.now().toString());
-      Files.writeString(
-          file,
-          YamlParser.serialize(
-              new YamlDocument(frontmatter, ConversationYamlSerializer.serialize(messages))),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING);
+      writeAtomically(
+          file, new YamlDocument(frontmatter, ConversationYamlSerializer.serialize(messages)));
     } catch (IOException exception) {
       throw new RuntimeException("Failed to save conversation: " + conversationId, exception);
     }
@@ -98,7 +99,7 @@ public final class FileSystemConversationStore
   }
 
   @Override
-  public List<ConversationReference> findReferences(Actor actor) {
+  public synchronized List<ConversationReference> findReferences(Actor actor) {
     Path directory = actorPaths.directory(actor, "conversations");
     try (Stream<Path> files = Files.list(directory)) {
       return files
@@ -114,7 +115,8 @@ public final class FileSystemConversationStore
   }
 
   @Override
-  public List<ConversationMessage> findByReference(Actor actor, ConversationReference reference) {
+  public synchronized List<ConversationMessage> findByReference(
+      Actor actor, ConversationReference reference) {
     Path file = actorFile(actor, reference);
     if (!Files.exists(file)) return List.of();
     try {
@@ -126,7 +128,7 @@ public final class FileSystemConversationStore
   }
 
   @Override
-  public void appendAll(
+  public synchronized void appendAll(
       Actor actor, ConversationReference reference, List<ConversationMessage> messages) {
     saveAll(
         actor,
@@ -135,7 +137,7 @@ public final class FileSystemConversationStore
   }
 
   @Override
-  public void saveAll(
+  public synchronized void saveAll(
       Actor actor, ConversationReference reference, List<ConversationMessage> messages) {
     Path file = actorFile(actor, reference);
     try {
@@ -150,19 +152,15 @@ public final class FileSystemConversationStore
         frontmatter.putAll(YamlParser.parse(Files.readString(file)).frontmatter());
       frontmatter.put("createdAt", createdAt);
       frontmatter.put("updatedAt", Instant.now().toString());
-      Files.writeString(
-          file,
-          YamlParser.serialize(
-              new YamlDocument(frontmatter, ConversationYamlSerializer.serialize(messages))),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING);
+      writeAtomically(
+          file, new YamlDocument(frontmatter, ConversationYamlSerializer.serialize(messages)));
     } catch (IOException exception) {
       throw new RuntimeException("Failed to save actor conversation", exception);
     }
   }
 
   @Override
-  public void delete(Actor actor, ConversationReference reference) {
+  public synchronized void delete(Actor actor, ConversationReference reference) {
     try {
       Files.deleteIfExists(actorFile(actor, reference));
     } catch (IOException exception) {
@@ -171,15 +169,15 @@ public final class FileSystemConversationStore
   }
 
   @Override
-  public java.util.Optional<org.zalava.assistant.conversation.domain.ConversationOrigin> origin(
+  public synchronized Optional<ConversationOrigin> origin(
       Actor actor, ConversationReference reference) {
     Path file = actorFile(actor, reference);
-    if (!Files.exists(file)) return java.util.Optional.empty();
+    if (!Files.exists(file)) return Optional.empty();
     try {
       Map<String, String> metadata = YamlParser.parse(Files.readString(file)).frontmatter();
-      if (!metadata.containsKey("channelId")) return java.util.Optional.empty();
-      return java.util.Optional.of(
-          new org.zalava.assistant.conversation.domain.ConversationOrigin(
+      if (!metadata.containsKey("channelId")) return Optional.empty();
+      return Optional.of(
+          new ConversationOrigin(
               metadata.get("channelId"), metadata.getOrDefault("channelSubject", ""),
               metadata.getOrDefault("channelDestination", ""),
                   "true".equals(metadata.get("privateDestination"))));
@@ -189,10 +187,8 @@ public final class FileSystemConversationStore
   }
 
   @Override
-  public void saveOrigin(
-      Actor actor,
-      ConversationReference reference,
-      org.zalava.assistant.conversation.domain.ConversationOrigin origin) {
+  public synchronized void saveOrigin(
+      Actor actor, ConversationReference reference, ConversationOrigin origin) {
     Path file = actorFile(actor, reference);
     if (!Files.exists(file)) throw new IllegalArgumentException("Conversation is unavailable");
     try {
@@ -202,12 +198,80 @@ public final class FileSystemConversationStore
       metadata.put("channelSubject", origin.subject());
       metadata.put("channelDestination", origin.deliveryHandle());
       metadata.put("privateDestination", Boolean.toString(origin.privateDestination()));
-      Files.writeString(
-          file,
-          YamlParser.serialize(new YamlDocument(metadata, document.body())),
-          StandardOpenOption.TRUNCATE_EXISTING);
+      writeAtomically(file, new YamlDocument(metadata, document.body()));
     } catch (IOException exception) {
       throw new IllegalStateException("Unable to save conversation origin", exception);
+    }
+  }
+
+  @Override
+  public synchronized List<ConversationSummary> summaries(Actor actor) {
+    return findReferences(actor).stream()
+        .map(reference -> summary(actor, reference))
+        .sorted(
+            Comparator.comparing(
+                    (ConversationSummary summary) ->
+                        summary.updatedAt() == null ? null : Instant.parse(summary.updatedAt()),
+                    Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(ConversationSummary::id))
+        .toList();
+  }
+
+  private ConversationSummary summary(Actor actor, ConversationReference reference) {
+    try {
+      YamlDocument document = YamlParser.parse(Files.readString(actorFile(actor, reference)));
+      String title = document.frontmatter().get("title");
+      if (title == null || title.isBlank())
+        title =
+            ConversationSummary.defaultTitle(
+                ConversationYamlSerializer.deserialize(document.body()));
+      return new ConversationSummary(
+          reference.value(),
+          title,
+          savedDate(document.frontmatter().get("createdAt")),
+          savedDate(document.frontmatter().get("updatedAt")));
+    } catch (IOException exception) {
+      throw new IllegalStateException("Unable to read conversation metadata", exception);
+    }
+  }
+
+  @Override
+  public synchronized void rename(Actor actor, ConversationReference reference, String title) {
+    String name = ConversationSummary.requireTitle(title);
+    Path file = actorFile(actor, reference);
+    if (!Files.isRegularFile(file)) throw new IllegalArgumentException("Conversation not found");
+    try {
+      YamlDocument document = YamlParser.parse(Files.readString(file));
+      var metadata = new LinkedHashMap<>(document.frontmatter());
+      metadata.put("title", name);
+      metadata.put("updatedAt", Instant.now().toString());
+      writeAtomically(file, new YamlDocument(metadata, document.body()));
+    } catch (IOException exception) {
+      throw new IllegalStateException("Unable to name conversation", exception);
+    }
+  }
+
+  private static String savedDate(String value) {
+    if (value == null) return null;
+    try {
+      return Instant.parse(value).toString();
+    } catch (DateTimeParseException exception) {
+      return null;
+    }
+  }
+
+  private static void writeAtomically(Path file, YamlDocument document) throws IOException {
+    Path temporary = Files.createTempFile(file.getParent(), "conversation-", ".tmp");
+    try {
+      Files.writeString(temporary, YamlParser.serialize(document));
+      try {
+        Files.move(
+            temporary, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+      } catch (AtomicMoveNotSupportedException exception) {
+        Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
+      }
+    } finally {
+      Files.deleteIfExists(temporary);
     }
   }
 

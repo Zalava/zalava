@@ -24,7 +24,8 @@ public final class ZalavaNavigation {
           new NavItem("apps", "Apps", "/apps"),
           new NavItem("modules", "Modules", "/modules"),
           new NavItem("settings", "Settings", "/settings"),
-          new NavItem("advanced", "Advanced settings", "/zalava/control"));
+          new NavItem("advanced", "Advanced settings", "/zalava/control"),
+          new NavItem("account", "My account", "/account/password"));
 
   private final WebInvocationPrivilegeEvaluator privilegeEvaluator;
 
@@ -39,6 +40,9 @@ public final class ZalavaNavigation {
     return new NavigationModel(
         ITEMS.stream()
             .filter(item -> privilegeEvaluator.isAllowed("", item.href(), "GET", authentication))
-            .toList());
+            .toList(),
+        "",
+        "",
+        authentication.getName());
   }
 }

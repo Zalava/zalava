@@ -19,6 +19,7 @@ public final class NavigationModelAdvice {
   public NavigationModel navigation(Authentication authentication, CsrfToken csrf) {
     var model = navigation.forAuthentication(authentication);
     if (csrf == null) return model;
-    return new NavigationModel(model.items(), csrf.getParameterName(), csrf.getToken());
+    return new NavigationModel(
+        model.items(), csrf.getParameterName(), csrf.getToken(), model.accountName());
   }
 }

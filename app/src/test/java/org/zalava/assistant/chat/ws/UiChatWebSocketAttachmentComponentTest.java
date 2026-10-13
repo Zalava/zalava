@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.Base64;
 import java.util.List;
@@ -19,12 +20,16 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
+import org.zalava.assistant.chat.attachment.application.ChatAttachments;
+import org.zalava.assistant.chat.attachment.domain.ChatAttachmentIntent;
 import org.zalava.assistant.chat.domain.ChatMessage;
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
+import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
 import org.zalava.support.SecureZalavaComponentTest;
 import tools.jackson.databind.ObjectMapper;
 
@@ -45,6 +50,9 @@ class UiChatWebSocketAttachmentComponentTest {
   @Autowired private AccountLifecycle accounts;
   @Autowired private ActorChatQueries chatQueries;
   @Autowired private ObjectMapper objectMapper;
+  @Autowired private KnowledgeSourceStore sources;
+  @Autowired private KnowledgeSourceLifecycle lifecycle;
+  @Autowired private ChatAttachments attachments;
 
   @Test
   void storesTaskOnlyAttachmentAndReplaysItForTheOwner() throws Exception {
@@ -116,7 +124,7 @@ class UiChatWebSocketAttachmentComponentTest {
   }
 
   @Test
-  void includesBoundedAttachmentManifestInTheOwnedChatTurn() throws Exception {
+  void missingExtractorDoesNotPersistAMetadataManifestAsUserText() throws Exception {
     Account owner = member();
     WebSocketSession session = session(owner);
     handler.handleTextMessage(session, put("task-only", "notes.txt", "text/plain"));
@@ -137,7 +145,82 @@ class UiChatWebSocketAttachmentComponentTest {
             .stream()
             .map(ChatMessage::text)
             .reduce("", String::concat);
-    assertThat(history).contains("Attached file: notes.txt").contains("text/plain");
+    assertThat(history).isEmpty();
+    assertThat(payloads(session))
+        .contains("document-processing module")
+        .doesNotContain("chat.completed");
+  }
+
+  @Test
+  void savesAnAlreadyUploadedFileWithoutUploadingAgainAndRepeatedClicksReuseItsSource()
+      throws Exception {
+    Account owner = member();
+    Actor actor = new Actor(owner.id());
+    WebSocketSession session = session(owner);
+    handler.handleTextMessage(session, put("task-only", "saved-once.txt", "text/plain"));
+    String id = attachmentId(payloads(session));
+    TextMessage save =
+        new TextMessage(
+            objectMapper.writeValueAsString(
+                Map.of(
+                    "protocol", "zalava.ui/v1", "type", "attachment.import", "attachmentId", id)));
+    handler.handleTextMessage(session, save);
+    handler.handleTextMessage(session, save);
+    assertThat(payloads(session)).contains("knowledge-import", "sourceId");
+    var owned =
+        sources.visibleTo(actor).stream()
+            .filter(
+                value ->
+                    value.displayName().equals("saved-once.txt") && value.owner().equals(actor))
+            .toList();
+    assertThat(owned).hasSize(1);
+    assertThat(attachments.read(actor, id)).isEqualTo("hello".getBytes());
+    handler.handleTextMessage(session, delete(id));
+    assertThat(sources.visibleTo(actor))
+        .anyMatch(value -> value.id().equals(owned.getFirst().id()));
+  }
+
+  @Test
+  void anotherActorCannotImportAnUploadedPrivateFile() throws Exception {
+    Account owner = member();
+    WebSocketSession ownerSession = session(owner);
+    handler.handleTextMessage(ownerSession, put("task-only", "private-import.txt", "text/plain"));
+    String id = attachmentId(payloads(ownerSession));
+    Account outsider = member();
+    WebSocketSession foreign = session(outsider);
+    handler.handleTextMessage(
+        foreign,
+        new TextMessage(
+            objectMapper.writeValueAsString(
+                Map.of(
+                    "protocol", "zalava.ui/v1", "type", "attachment.import", "attachmentId", id))));
+    assertThat(payloads(foreign))
+        .contains("failure")
+        .doesNotContain("sourceId", "knowledge-import");
+    assertThat(sources.visibleTo(new Actor(outsider.id())))
+        .noneMatch(value -> value.displayName().equals("private-import.txt"));
+  }
+
+  @Test
+  void deletingTheKnowledgeCopyMakesTheOriginalUploadAvailableToSaveAgain() {
+    Account owner = member();
+    Actor actor = new Actor(owner.id());
+    var uploaded =
+        attachments.put(
+            actor, ChatAttachmentIntent.TASK_ONLY, "resave.txt", "text/plain", "hello".getBytes());
+    var saved = attachments.importExisting(actor, uploaded.attachmentId());
+    var source =
+        sources.visibleTo(actor).stream()
+            .filter(value -> value.id().value().toString().equals(saved.sourceId()))
+            .findFirst()
+            .orElseThrow();
+    lifecycle.hardDelete(actor, source.id());
+    assertThat(attachments.reference(actor, uploaded.attachmentId()).sourceId()).isNull();
+    var again = attachments.importExisting(actor, uploaded.attachmentId());
+    assertThat(again.sourceId()).isNotEqualTo(saved.sourceId());
+    assertThat(sources.visibleTo(actor))
+        .filteredOn(sourceValue -> sourceValue.owner().equals(actor))
+        .hasSize(1);
   }
 
   private TextMessage put(String intent, String name, String contentType) throws Exception {
@@ -199,7 +282,7 @@ class UiChatWebSocketAttachmentComponentTest {
     ArgumentCaptor<TextMessage> sent = ArgumentCaptor.forClass(TextMessage.class);
     try {
       verify(session, atLeastOnce()).sendMessage(sent.capture());
-    } catch (java.io.IOException exception) {
+    } catch (IOException exception) {
       throw new IllegalStateException(exception);
     }
     return sent.getAllValues().stream().map(TextMessage::getPayload).reduce("", String::concat);

@@ -51,8 +51,10 @@ public final class MemoryPromotionTools {
       Map<String, Object> result = new LinkedHashMap<>();
       result.put("proposalId", created.id());
       result.put("status", created.status().name());
+      result.put("reviewUrl", "/memory#proposal-" + created.id());
       result.put(
-          "nextAction", "Report the pending proposal id and wait for the owner to review it.");
+          "nextAction",
+          "Give the owner the reviewUrl as a clickable review link and wait for their decision. The proposal is not yet stored as approved memory.");
       return json(result);
     } catch (ZalavaMemoryPromotions.DuplicateMemoryException exception) {
       return error("An identical durable memory already exists.");

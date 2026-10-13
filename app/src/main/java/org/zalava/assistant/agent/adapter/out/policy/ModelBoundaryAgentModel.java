@@ -2,11 +2,13 @@ package org.zalava.assistant.agent.adapter.out.policy;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.zalava.assistant.agent.adapter.out.springai.SpringAiAgentModel;
 import org.zalava.assistant.agent.application.ModelBoundary;
 import org.zalava.assistant.agent.application.port.out.AgentModel;
+import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -46,11 +48,32 @@ public final class ModelBoundaryAgentModel implements AgentModel {
   @Override
   public String conversational(
       String conversationId, String prompt, List<Object> tools, Consumer<String> deltas) {
+    return stream(
+        chunk -> delegate.conversational(conversationId, boundary.input(prompt), tools, chunk),
+        deltas);
+  }
+
+  @Override
+  public String conversationalInput(
+      String conversationId, AgentModelInput input, List<Object> tools) {
+    return boundary.redact(
+        delegate.conversationalInput(conversationId, input.mapTexts(boundary::input), tools));
+  }
+
+  @Override
+  public String conversationalInput(
+      String conversationId, AgentModelInput input, List<Object> tools, Consumer<String> deltas) {
+    return stream(
+        chunk ->
+            delegate.conversationalInput(
+                conversationId, input.mapTexts(boundary::input), tools, chunk),
+        deltas);
+  }
+
+  private String stream(Function<Consumer<String>, String> invoke, Consumer<String> deltas) {
     StreamState state = new StreamState();
     state.holdBack = Math.max(0, boundary.maximumSecretLength() - 1);
-    String result =
-        delegate.conversational(
-            conversationId, boundary.input(prompt), tools, chunk -> onChunk(state, chunk, deltas));
+    String result = invoke.apply(chunk -> onChunk(state, chunk, deltas));
     String full = boundary.redact(result);
     if (!full.startsWith(state.emitted.toString())) {
       throw new IllegalStateException(

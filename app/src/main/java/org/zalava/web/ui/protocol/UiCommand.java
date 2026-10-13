@@ -13,10 +13,12 @@ import java.util.List;
 public sealed interface UiCommand
     permits UiCommand.SendChat,
         UiCommand.SelectConversation,
+        UiCommand.RenameConversation,
         UiCommand.CreateConversation,
         UiCommand.ContinueConversation,
         UiCommand.DecideApproval,
         UiCommand.PutAttachment,
+        UiCommand.ImportAttachment,
         UiCommand.DeleteAttachment {
 
   String protocolVersion();
@@ -30,6 +32,9 @@ public sealed interface UiCommand
   }
 
   record SelectConversation(String protocolVersion, String conversationId) implements UiCommand {}
+
+  record RenameConversation(String protocolVersion, String conversationId, String title)
+      implements UiCommand {}
 
   record CreateConversation(String protocolVersion) implements UiCommand {}
 
@@ -49,6 +54,8 @@ public sealed interface UiCommand
   record PutAttachment(
       String protocolVersion, String intent, String name, String contentType, String contentBase64)
       implements UiCommand {}
+
+  record ImportAttachment(String protocolVersion, String attachmentId) implements UiCommand {}
 
   record DeleteAttachment(String protocolVersion, String attachmentId) implements UiCommand {}
 }

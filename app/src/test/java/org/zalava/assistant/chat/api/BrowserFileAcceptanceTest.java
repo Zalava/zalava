@@ -30,8 +30,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.convention.TestBean;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.modules.runtime.ZalavaRuntime;
+import org.zalava.support.DocumentFixtureRuntime;
 
 /**
  * Real-browser acceptance for bounded attachments. It drives the built React bundle over the real
@@ -50,6 +53,13 @@ class BrowserFileAcceptanceTest {
   private static final Path DIAGNOSTICS = diagnostics();
   private static final String LOGIN = "browser-file-" + UUID.randomUUID();
   private static final String PASSWORD = "BrowserFilePassword-123";
+
+  @TestBean(name = "zalavaRuntime", methodName = "artifactRuntime", enforceOverride = true)
+  ZalavaRuntime runtime;
+
+  static ZalavaRuntime artifactRuntime() throws Exception {
+    return new DocumentFixtureRuntime();
+  }
 
   @LocalServerPort private int port;
 
@@ -71,6 +81,7 @@ class BrowserFileAcceptanceTest {
 
   @Test
   void attachesImportsRemovesAndRejectsBoundedFiles() throws IOException {
+    ((DocumentFixtureRuntime) runtime).available = true;
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -141,21 +152,59 @@ class BrowserFileAcceptanceTest {
 
         page.reload();
         page.getByText("Connected").waitFor();
-        page.getByText("Attached file: notes.txt").waitFor();
-        page.getByText("attach these").waitFor();
-        assertThat(page.locator(".attachment-chip").count()).isZero();
-
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+        page.locator(".message.user .attachment-chip").getByText("notes.txt").waitFor();
+        assertThat(page.locator(".message.user").innerText())
+            .contains("attach these", "notes.txt")
+            .doesNotContain("sha256", "bytes");
+        page.locator(".message.user").getByText("attach these").waitFor();
+        assertThat(
+                page.locator(
+                        "[data-testid=composer] #message, [data-testid=composer] .composer-send, [data-testid=composer] .attachment-name")
+                    .evaluateAll(
+                        "nodes => nodes.every(n => { const b=n.getBoundingClientRect(); const c=n.closest(\"[data-testid=composer]\").getBoundingClientRect(); return b.left >= c.left && b.right <= c.right; })"))
+            .isEqualTo(true);
+        assertThat(page.locator("[data-testid=composer] .attachment-chip").count()).isZero();
+        page.locator(".uploaded-file-options summary").click();
+        page.locator(".uploaded-file-options li")
+            .filter(new Locator.FilterOptions().setHasText("notes.txt"))
+            .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save to knowledge"))
             .click();
-        FileChooser importChooser =
-            page.waitForFileChooser(
-                () ->
-                    page.getByRole(
-                            AriaRole.BUTTON,
-                            new Page.GetByRoleOptions().setName("Import to knowledge"))
-                        .click());
-        importChooser.setFiles(file("report.txt", "text/plain", "durable report"));
-        page.locator(".attachment-list").getByText("Imported").waitFor();
+        page.locator(".uploaded-file-options li")
+            .filter(new Locator.FilterOptions().setHasText("notes.txt"))
+            .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Open in Knowledge"))
+            .waitFor();
+        captureFileState(page, "chat-existing-upload-saved");
+        page.reload();
+        page.getByText("Connected").waitFor();
+        page.locator(".uploaded-file-options summary").click();
+        assertThat(
+                page.locator(".uploaded-file-options li")
+                    .filter(new Locator.FilterOptions().setHasText("notes.txt"))
+                    .getByRole(
+                        AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Save to knowledge"))
+                    .count())
+            .isZero();
+        page.locator(".uploaded-file-options li")
+            .filter(new Locator.FilterOptions().setHasText("notes.txt"))
+            .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Open in Knowledge"))
+            .click();
+        assertThat(page.locator("main").innerText()).contains("notes.txt");
+        page.navigate(baseUrl() + "/chat");
+        page.getByText("Connected").waitFor();
+
+        attachThroughPicker(
+            page,
+            file("long-document-name-".repeat(7) + "report.txt", "text/plain", "durable report"));
+        page.locator("[data-testid=composer] .attachment-chip").getByText("report.txt").waitFor();
+        captureFileState(page, "chat-staged-knowledge-save");
+        page.locator("[data-testid=composer] .attachment-chip")
+            .filter(new Locator.FilterOptions().setHasText("report.txt"))
+            .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save to knowledge"))
+            .click();
+        page.locator(".attachment-list")
+            .getByText("Saved to Knowledge:", new Locator.GetByTextOptions().setExact(false))
+            .waitFor();
 
         page.navigate(baseUrl() + "/knowledge");
         page.getByText("report.txt").waitFor();
@@ -175,8 +224,8 @@ class BrowserFileAcceptanceTest {
         assertThat(
                 page.getByRole(
                         AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Import to knowledge"))
-                    .isVisible())
-            .isTrue();
+                    .count())
+            .isZero();
         assertThat(page.locator("#message").isVisible()).isTrue();
         for (int width : List.of(390, 768, 1440)) {
           page.setViewportSize(width, 1000);
@@ -206,6 +255,92 @@ class BrowserFileAcceptanceTest {
             .tracing()
             .stop(new Tracing.StopOptions().setPath(DIAGNOSTICS.resolve("file-trace.zip")));
       }
+    }
+  }
+
+  @Test
+  void missingDocumentProcessorExplainsBothFileOptionsAndSendFailure() throws Exception {
+    ((DocumentFixtureRuntime) runtime).available = false;
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page);
+      page.navigate(baseUrl() + "/chat");
+      page.getByText("Connected").waitFor();
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+            .click();
+        page.locator(".document-processing-notice")
+            .getByText("A document-processing module is needed to read files.")
+            .waitFor();
+        assertThat(page.locator(".document-processing-notice").innerText())
+            .contains("Reading attachments", "Knowledge imports", "active module");
+        page.waitForFunction(
+            "() => { const m=document.querySelector('.navbar-menu'); return window.innerWidth > 1024 || !m || m.getBoundingClientRect().right <= .5; }");
+        page.locator(".document-processing-notice").scrollIntoViewIfNeeded();
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(DIAGNOSTICS.resolve("chat-document-prerequisite-" + width + ".png")));
+        page.keyboard().press("Escape");
+      }
+      attachThroughPicker(page, file("unread.txt", "text/plain", "No reading without a module"));
+      page.locator(".attachment-chip").getByText("unread.txt").waitFor();
+      page.locator("[data-testid=composer] .attachment-chip")
+          .filter(new Locator.FilterOptions().setHasText("unread.txt"))
+          .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save to knowledge"))
+          .click();
+      page.locator(".attachment-list")
+          .getByText(
+              "A document-processing module is needed to read it",
+              new Locator.GetByTextOptions().setExact(false))
+          .waitFor();
+
+      page.locator("#message").fill("Read this attached file");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.getByRole(AriaRole.ALERT)
+          .getByText(
+              "Reading attached files needs an active document-processing module",
+              new Locator.GetByTextOptions().setExact(false))
+          .waitFor();
+    } finally {
+      ((DocumentFixtureRuntime) runtime).available = true;
+    }
+  }
+
+  private static void captureFileState(Page page, String prefix) {
+    for (int width : new int[] {390, 768, 1440}) {
+      page.setViewportSize(width, 900);
+      page.waitForFunction(
+          "() => { const m=document.querySelector('.navbar-menu'); return window.innerWidth > 1024 || !m || m.getBoundingClientRect().right <= .5; }");
+      page.locator("[data-testid=composer]").scrollIntoViewIfNeeded();
+      assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+          .isEqualTo(true);
+      assertThat(
+              page.locator("[data-testid=composer] .attachment-chip button")
+                  .evaluateAll(
+                      "nodes => nodes.every(n => { const b=n.getBoundingClientRect(); return b.left >= 0 && b.right <= window.innerWidth; })"))
+          .isEqualTo(true);
+      assertThat(
+              page.locator("[data-testid=composer] .attachment-chip")
+                  .evaluateAll(
+                      "nodes => nodes.every(n => n.getBoundingClientRect().height <= 140)"))
+          .isEqualTo(true);
+      Locator controls =
+          page.locator(
+              "[data-testid=composer] #message, [data-testid=composer] .composer-send, [data-testid=composer] .attachment-name");
+      assertThat(controls.count()).isGreaterThanOrEqualTo(2);
+      assertThat(
+              controls.evaluateAll(
+                  "nodes => nodes.every(n => { const b=n.getBoundingClientRect(); const c=n.closest('[data-testid=composer]').getBoundingClientRect(); return b.left >= c.left && b.right <= c.right; })"))
+          .isEqualTo(true);
+      page.screenshot(
+          new Page.ScreenshotOptions().setPath(DIAGNOSTICS.resolve(prefix + "-" + width + ".png")));
     }
   }
 

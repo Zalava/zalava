@@ -1,5 +1,8 @@
 package org.zalava.knowledge;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Clock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,12 +12,16 @@ import org.zalava.api.extensions.content.ContentExtractionLimits;
 import org.zalava.knowledge.adapter.out.filesystem.FileSystemKnowledgeBlobStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeAuditStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeDerivationStore;
+import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeEvidenceStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeExtractionRecordStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeSearchStore;
 import org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeSourceStore;
+import org.zalava.knowledge.adapter.out.transaction.TransactionalKnowledgeSourceLifecycle;
+import org.zalava.knowledge.application.KnowledgeEvidenceQueries;
 import org.zalava.knowledge.application.KnowledgeExtractionJob;
 import org.zalava.knowledge.application.KnowledgeIngestion;
 import org.zalava.knowledge.application.KnowledgeLibrary;
+import org.zalava.knowledge.application.KnowledgeProcessingQueries;
 import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
 import org.zalava.knowledge.application.port.out.KnowledgeAuditStore;
 import org.zalava.knowledge.application.port.out.KnowledgeBlobStore;
@@ -24,15 +31,14 @@ import org.zalava.knowledge.application.port.out.KnowledgeIngestionScheduler;
 import org.zalava.knowledge.application.port.out.KnowledgeSearchStore;
 import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
+import org.zalava.platform.observability.application.port.out.OperationalMetrics;
 
 @Configuration
 class KnowledgeConfiguration {
 
   @Bean
-  org.zalava.knowledge.application.KnowledgeEvidenceQueries knowledgeEvidenceQueries(
-      JdbcClient jdbc) {
-    return new org.zalava.knowledge.application.KnowledgeEvidenceQueries(
-        new org.zalava.knowledge.adapter.out.jdbc.JdbcKnowledgeEvidenceStore(jdbc));
+  KnowledgeEvidenceQueries knowledgeEvidenceQueries(JdbcClient jdbc) {
+    return new KnowledgeEvidenceQueries(new JdbcKnowledgeEvidenceStore(jdbc));
   }
 
   @Bean
@@ -87,6 +93,15 @@ class KnowledgeConfiguration {
   }
 
   @Bean
+  KnowledgeProcessingQueries knowledgeProcessingQueries(
+      KnowledgeSourceStore sources,
+      KnowledgeDerivationStore derivations,
+      KnowledgeExtractionRecordStore records,
+      RuntimeQueries runtime) {
+    return new KnowledgeProcessingQueries(sources, derivations, records, runtime);
+  }
+
+  @Bean
   KnowledgeAuditStore knowledgeAuditStore(JdbcClient jdbc) {
     return new JdbcKnowledgeAuditStore(jdbc);
   }
@@ -97,19 +112,17 @@ class KnowledgeConfiguration {
       KnowledgeDerivationStore derivations,
       KnowledgeBlobStore blobs,
       KnowledgeAuditStore audit,
-      org.zalava.platform.observability.application.port.out.OperationalMetrics metrics) {
-    return new org.zalava.knowledge.adapter.out.transaction.TransactionalKnowledgeSourceLifecycle(
-        sources, derivations, blobs, audit, java.time.Clock.systemUTC(), metrics);
+      OperationalMetrics metrics) {
+    return new TransactionalKnowledgeSourceLifecycle(
+        sources, derivations, blobs, audit, Clock.systemUTC(), metrics);
   }
 
   @Bean
   KnowledgeBlobStore knowledgeBlobStore(
       @Value("${zalava.knowledge.managed-data-root:}") String managedDataRoot,
       @Value("${agent.workspace:Unknown}") Resource workspace)
-      throws java.io.IOException {
+      throws IOException {
     return new FileSystemKnowledgeBlobStore(
-        managedDataRoot.isBlank()
-            ? workspace.getFilePath()
-            : java.nio.file.Path.of(managedDataRoot));
+        managedDataRoot.isBlank() ? workspace.getFilePath() : Path.of(managedDataRoot));
   }
 }

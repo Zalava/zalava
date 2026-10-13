@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/zalava-ui.css">
 </head>
 <body>
-@template.ui.navigation(items = navigation.items(), activePage = "monitoring", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
+@template.ui.navigation(items = navigation.items(), activePage = "monitoring", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
 
 <main class="section">
     <div class="container">
@@ -171,9 +171,8 @@
                                 @if(run.resultPreview() != null && !run.resultPreview().isBlank())
                                     <p class="is-size-7"><strong>Result:</strong> ${run.resultPreview()}</p>
                                 @endif
-                                @if(run.evidenceUrl() != null)
-                                    <a class="is-size-7" href="${run.evidenceUrl()}" data-run-evidence>${run.evidenceLabel()}</a>
-                                @endif
+                                <p class="is-size-7 has-text-grey">Recorded run evidence is shown here. Jobs have their own evidence links above.</p>
+
                             </div>
                             <span class="tag ${run.statusClass()}">${run.statusLabel()}</span>
                         </article>

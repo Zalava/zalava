@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.port.out.AgentModel;
+import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import org.zalava.assistant.agent.application.port.out.StructuredOutputSchemaException;
 import org.zalava.assistant.agent.application.port.out.StructuredRunEvidence;
 import org.zalava.tasks.application.BoundedTaskAgentLoop.ToolFailure;
@@ -76,6 +77,25 @@ public final class SpringAiAgentModel implements AgentModel {
       String conversationId, String prompt, List<Object> tools, Consumer<String> deltas) {
     StringBuilder full = new StringBuilder();
     for (String chunk : request(conversationId, prompt, tools).stream().content().toIterable()) {
+      if (chunk != null && !chunk.isEmpty()) {
+        full.append(chunk);
+        deltas.accept(chunk);
+      }
+    }
+    return full.toString();
+  }
+
+  @Override
+  public String conversationalInput(
+      String conversationId, AgentModelInput input, List<Object> tools) {
+    return request(conversationId, input, tools).call().content();
+  }
+
+  @Override
+  public String conversationalInput(
+      String conversationId, AgentModelInput input, List<Object> tools, Consumer<String> deltas) {
+    StringBuilder full = new StringBuilder();
+    for (String chunk : request(conversationId, input, tools).stream().content().toIterable()) {
       if (chunk != null && !chunk.isEmpty()) {
         full.append(chunk);
         deltas.accept(chunk);
@@ -188,7 +208,12 @@ public final class SpringAiAgentModel implements AgentModel {
 
   private ChatClient.ChatClientRequestSpec request(
       String conversationId, String prompt, List<Object> tools) {
-    var request = chatClient.prompt(prompt);
+    return request(conversationId, new AgentModelInput(prompt, prompt), tools);
+  }
+
+  private ChatClient.ChatClientRequestSpec request(
+      String conversationId, AgentModelInput input, List<Object> tools) {
+    var request = chatClient.prompt(input.modelText());
     if (systemPrompt != null) {
       request.system(
           p ->
@@ -204,6 +229,10 @@ public final class SpringAiAgentModel implements AgentModel {
           "The selected provider cannot execute tools. Answer questions using available context and do not claim to perform actions.");
     return request
         .tools(toolCallingEnabled ? callbacks(tools).toArray() : new Object[0])
-        .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId));
+        .advisors(
+            a -> {
+              a.param(ChatMemory.CONVERSATION_ID, conversationId);
+              a.param(AgentModelInput.ADVISOR_KEY, input);
+            });
   }
 }

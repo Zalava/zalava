@@ -7,12 +7,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.assistant.agent.AgentRequestTools;
+import org.zalava.assistant.agent.application.port.in.AgentExecution;
+import org.zalava.assistant.agent.application.port.out.AgentModel;
+import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -24,6 +35,8 @@ import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.support.SecureZalavaComponentTest;
+import org.zalava.web.control.application.port.in.InvocationLogQueries;
+import tools.jackson.databind.ObjectMapper;
 
 @SecureZalavaComponentTest
 class KnowledgeEvidenceComponentTest {
@@ -34,11 +47,10 @@ class KnowledgeEvidenceComponentTest {
   @Autowired KnowledgeExtractionRecordStore records;
   @Autowired ActorExecutionContext actors;
   @Autowired AgentRequestTools selection;
-  @Autowired org.zalava.assistant.agent.application.port.in.AgentExecution agent;
-  @Autowired org.zalava.web.control.application.port.in.InvocationLogQueries audit;
+  @Autowired AgentExecution agent;
+  @Autowired InvocationLogQueries audit;
 
-  @org.springframework.test.context.bean.override.mockito.MockitoBean
-  org.zalava.assistant.agent.application.port.out.AgentModel model;
+  @MockitoBean AgentModel model;
 
   @Test
   void uploadedHouseholdEvidenceIsCitedAndSharingRevocationIsImmediate() throws Exception {
@@ -84,26 +96,26 @@ class KnowledgeEvidenceComponentTest {
       records.record(KnowledgeExtractionRecord.succeeded(candidate, text));
       lifecycle.completeReprocessing(owner, candidate, true);
       String question = "What does my " + document[0].replace(".txt", "") + " say?";
-      org.mockito.Mockito.doAnswer(
+      Mockito.doAnswer(
               invocation -> {
-                assertThat((String) invocation.getArgument(1)).contains(question);
-                java.util.List<Object> callbacks = invocation.getArgument(2);
+                AgentModelInput input = invocation.getArgument(1);
+                assertThat(input.authoredText()).isEqualTo(question);
+                assertThat(input.modelText()).contains(question);
+                List<Object> callbacks = invocation.getArgument(2);
                 var callback =
                     callbacks.stream()
                         .flatMap(
                             value -> {
-                              if (value instanceof org.springframework.ai.tool.ToolCallback tool)
-                                return java.util.stream.Stream.of(tool);
-                              return java.util.Arrays.stream(
-                                  ((org.springframework.ai.tool.ToolCallbackProvider) value)
-                                      .getToolCallbacks());
+                              if (value instanceof ToolCallback tool) return Stream.of(tool);
+                              return Arrays.stream(
+                                  ((ToolCallbackProvider) value).getToolCallbacks());
                             })
                         .filter(
                             value -> value.getToolDefinition().name().equals("knowledge.search"))
                         .findFirst()
                         .orElseThrow();
                 var result =
-                    new tools.jackson.databind.ObjectMapper()
+                    new ObjectMapper()
                         .readTree(callback.call("{\"query\":\"" + marker + "\",\"limit\":1}"));
                 assertThat(result.path("status").stringValue("")).isEqualTo("OK");
                 var evidence = result.path("sources").get(0);
@@ -113,11 +125,11 @@ class KnowledgeEvidenceComponentTest {
                     + ")";
               })
           .when(model)
-          .conversational(
-              org.mockito.ArgumentMatchers.anyString(),
-              org.mockito.ArgumentMatchers.anyString(),
-              org.mockito.ArgumentMatchers.anyList());
-      org.mockito.Mockito.clearInvocations(model);
+          .conversationalInput(
+              ArgumentMatchers.anyString(),
+              ArgumentMatchers.any(AgentModelInput.class),
+              ArgumentMatchers.anyList());
+      Mockito.clearInvocations(model);
       String answer =
           actors.call(
               owner,

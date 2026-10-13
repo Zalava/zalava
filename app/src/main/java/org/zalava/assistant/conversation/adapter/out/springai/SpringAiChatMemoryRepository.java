@@ -1,6 +1,8 @@
 package org.zalava.assistant.conversation.adapter.out.springai;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -68,12 +70,12 @@ public final class SpringAiChatMemoryRepository implements AppendableChatMemoryR
         .orElseGet(() -> conversations.findByConversationId(conversationId));
   }
 
-  private java.util.Optional<ActorConversationId> actorConversation(String conversationId) {
-    if (actorConversations == null) return java.util.Optional.empty();
+  private Optional<ActorConversationId> actorConversation(String conversationId) {
+    if (actorConversations == null) return Optional.empty();
     try {
-      return java.util.Optional.of(ActorConversationId.parse(conversationId));
+      return Optional.of(ActorConversationId.parse(conversationId));
     } catch (IllegalArgumentException ignored) {
-      return java.util.Optional.empty();
+      return Optional.empty();
     }
   }
 
@@ -94,12 +96,25 @@ public final class SpringAiChatMemoryRepository implements AppendableChatMemoryR
               throw new IllegalArgumentException(
                   "Unsupported persisted chat message: " + message.getMessageType());
         },
-        message.getText());
+        message.getText(),
+        attachmentNames(message));
+  }
+
+  private static List<String> attachmentNames(Message message) {
+    Object value = message.getMetadata().get("zalava.attachmentNames");
+    if (!(value instanceof List<?> names)) return List.of();
+    return names.stream().map(String.class::cast).toList();
   }
 
   private static Message message(ConversationMessage message) {
     return switch (message.role()) {
-      case USER -> new UserMessage(message.text());
+      case USER ->
+          message.attachmentNames().isEmpty()
+              ? new UserMessage(message.text())
+              : UserMessage.builder()
+                  .text(message.text())
+                  .metadata(Map.of("zalava.attachmentNames", message.attachmentNames()))
+                  .build();
       case ASSISTANT -> new AssistantMessage(message.text());
       case SYSTEM -> new SystemMessage(message.text());
     };

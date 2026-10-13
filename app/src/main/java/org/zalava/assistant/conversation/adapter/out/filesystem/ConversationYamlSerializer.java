@@ -2,6 +2,7 @@ package org.zalava.assistant.conversation.adapter.out.filesystem;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -10,25 +11,38 @@ import org.zalava.assistant.conversation.domain.ConversationMessage;
 final class ConversationYamlSerializer {
   static List<ConversationMessage> deserialize(String body) {
     if (body == null || body.isBlank()) return List.of();
-    List<Map<String, String>> entries = new Yaml().load(body);
+    List<Map<String, Object>> entries = new Yaml().load(body);
     if (entries == null) return List.of();
     return entries.stream()
         .map(
             entry -> {
-              var item = entry.entrySet().iterator().next();
+              var item =
+                  entry.entrySet().stream()
+                      .filter(value -> !value.getKey().equals("attachments"))
+                      .findFirst()
+                      .orElseThrow();
+              Object stored = entry.get("attachments");
+              List<String> names =
+                  stored instanceof List<?> values
+                      ? values.stream().map(String.class::cast).toList()
+                      : List.of();
               return new ConversationMessage(
-                  ConversationMessage.Role.valueOf(item.getKey().toUpperCase()), item.getValue());
+                  ConversationMessage.Role.valueOf(item.getKey().toUpperCase(Locale.ROOT)),
+                  (String) item.getValue(),
+                  names);
             })
         .toList();
   }
 
   static String serialize(List<ConversationMessage> messages) {
-    List<Map<String, String>> entries =
+    List<Map<String, Object>> entries =
         messages.stream()
             .map(
                 message -> {
-                  Map<String, String> entry = new LinkedHashMap<>();
-                  entry.put(message.role().name().toLowerCase(), message.text());
+                  Map<String, Object> entry = new LinkedHashMap<>();
+                  entry.put(message.role().name().toLowerCase(Locale.ROOT), message.text());
+                  if (!message.attachmentNames().isEmpty())
+                    entry.put("attachments", message.attachmentNames());
                   return entry;
                 })
             .toList();

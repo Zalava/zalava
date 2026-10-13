@@ -75,7 +75,9 @@ class DefaultAgentContextAssemblerTest {
     AgentContext context =
         assembler.assemble("query", new AgentToolSelection(List.of(), List.of(), List.of()));
 
-    assertThat(context.prompt()).contains("Untrusted selected memories:").contains("remembered");
+    assertThat(context.prompt())
+        .contains("Selected saved memories", "approval=unreviewed", "remembered")
+        .doesNotContain("approval=owner-approved");
     assertThat(context.sourceMetrics())
         .extracting(AgentContext.SourceMetric::sourceType)
         .containsExactly("user_prompt", "selected_memories");

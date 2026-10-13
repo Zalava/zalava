@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -33,12 +34,25 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderCapabilities;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactory;
+import org.zalava.api.ProviderFactoryContext;
+import org.zalava.api.ProviderFactoryDescriptor;
+import org.zalava.api.ZalavaModule;
+import org.zalava.api.ZalavaOperationResult;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.assistant.chat.ChatChannel;
 import org.zalava.assistant.chat.ChatTurnResult;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
 import org.zalava.modules.runtime.ZalavaRuntime;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -226,70 +240,64 @@ class ChatControllerComponentTest {
     }
 
     @Bean
-    org.zalava.api.ZalavaModule timeModule() {
-      org.zalava.api.ZalavaProvider provider =
-          new org.zalava.api.ZalavaProvider() {
+    ZalavaModule timeModule() {
+      ZalavaProvider provider =
+          new ZalavaProvider() {
             @Override
-            public org.zalava.api.ProviderDescriptor descriptor() {
-              return new org.zalava.api.ProviderDescriptor(
+            public ProviderDescriptor descriptor() {
+              return new ProviderDescriptor(
                   "time-provider",
                   "test-time",
                   "time",
                   "Test Time",
                   "Current time provider",
                   "1.0.0",
-                  org.zalava.api.ProviderCapabilities.toolsOnly(),
+                  ProviderCapabilities.toolsOnly(),
                   List.of(),
-                  java.util.Map.of());
+                  Map.of());
             }
 
             @Override
-            public org.zalava.api.ProviderCapabilities capabilities() {
-              return org.zalava.api.ProviderCapabilities.toolsOnly();
+            public ProviderCapabilities capabilities() {
+              return ProviderCapabilities.toolsOnly();
             }
 
             @Override
-            public List<org.zalava.api.ZalavaToolDescriptor> listTools() {
+            public List<ZalavaToolDescriptor> listTools() {
               return List.of(
-                  new org.zalava.api.ZalavaToolDescriptor(
+                  new ZalavaToolDescriptor(
                       "current_time",
                       "Returns the current time.",
                       false,
                       List.of(),
-                      java.util.Map.of("type", "object")));
+                      Map.of("type", "object")));
             }
 
             @Override
-            public org.zalava.api.ZalavaOperationResult callTool(
-                String toolName,
-                java.util.Map<String, Object> argumentValues,
-                org.zalava.api.InvocationContext context) {
-              tools.jackson.databind.JsonNode arguments =
-                  new tools.jackson.databind.json.JsonMapper().valueToTree(argumentValues);
-              return org.zalava.api.ZalavaOperationResult.success(
-                  java.util.Map.of("time", "12:34:56Z"));
+            public ZalavaOperationResult callTool(
+                String toolName, Map<String, Object> argumentValues, InvocationContext context) {
+              JsonNode arguments = new JsonMapper().valueToTree(argumentValues);
+              return ZalavaOperationResult.success(Map.of("time", "12:34:56Z"));
             }
           };
-      return new org.zalava.api.ZalavaModule() {
+      return new ZalavaModule() {
         @Override
-        public org.zalava.api.ModuleDescriptor descriptor() {
-          return new org.zalava.api.ModuleDescriptor(
-              "test-time", "1.0.0", "Test Time", "Test time module");
+        public ModuleDescriptor descriptor() {
+          return new ModuleDescriptor("test-time", "1.0.0", "Test Time", "Test time module");
         }
 
         @Override
-        public List<org.zalava.api.ProviderFactory> providerFactories() {
+        public List<ProviderFactory> providerFactories() {
           return List.of(
-              new org.zalava.api.ProviderFactory() {
+              new ProviderFactory() {
                 @Override
-                public org.zalava.api.ProviderFactoryDescriptor descriptor() {
-                  return new org.zalava.api.ProviderFactoryDescriptor(
+                public ProviderFactoryDescriptor descriptor() {
+                  return new ProviderFactoryDescriptor(
                       "time-factory", "test-time", "time", "Test Time", "Test time provider");
                 }
 
                 @Override
-                public List<org.zalava.api.ZalavaProvider> createProviders(
-                    org.zalava.api.ProviderFactoryContext context) {
+                public List<ZalavaProvider> createProviders(ProviderFactoryContext context) {
                   return List.of(provider);
                 }
               });
@@ -308,11 +316,17 @@ class ChatControllerComponentTest {
       lastPrompt.set(prompt);
       if (prompt.getLastUserOrToolResponseMessage() instanceof ToolResponseMessage toolResponse) {
         String response = toolResponse.getResponses().getFirst().responseData();
+        if (response.contains("\"proposalId\""))
+          return response("A memory proposal is ready for your review.");
         return response(response);
       }
       return switch (originalUserInput(prompt)) {
         case "what time is it now" ->
             toolCall(ZalavaToolCallbackNames.forTool("time-provider", "current_time"), "{}");
+        case "propose a greeting memory" ->
+            toolCall(
+                "proposeMemory",
+                "{\"proposal\":{\"scope\":\"USER\",\"text\":\"My preferred greeting is meadow-lamp.\",\"metadata\":{},\"reference\":null}}");
         case "render markdown" ->
             response("**Bold result**\n\n```java\nSystem.out.println(\"safe\");\n```");
         case "fail chat" -> throw new IllegalStateException("Scripted chat failure");
@@ -329,7 +343,7 @@ class ChatControllerComponentTest {
     @Override
     public Flux<ChatResponse> stream(Prompt prompt) {
       if (originalUserInput(prompt).equals("slow response")) {
-        return Flux.just(response("Eventually complete.")).delayElements(Duration.ofMillis(300));
+        return Flux.just(response("Eventually complete.")).delayElements(Duration.ofMillis(1200));
       }
       return Flux.just(call(prompt));
     }

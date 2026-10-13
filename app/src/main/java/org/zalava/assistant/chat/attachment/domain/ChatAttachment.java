@@ -13,9 +13,29 @@ public record ChatAttachment(
     String contentType,
     long byteCount,
     String sha256,
-    Instant createdAt) {
+    Instant createdAt,
+    String knowledgeSourceId) {
+
+  public ChatAttachment(
+      String id,
+      Actor owner,
+      String displayName,
+      String contentType,
+      long byteCount,
+      String sha256,
+      Instant createdAt) {
+    this(id, owner, displayName, contentType, byteCount, sha256, createdAt, null);
+  }
+
+  public ChatAttachment withKnowledgeSource(String sourceId) {
+    return new ChatAttachment(
+        id, owner, displayName, contentType, byteCount, sha256, createdAt, sourceId);
+  }
 
   public ChatAttachment {
+    if (knowledgeSourceId != null
+        && (knowledgeSourceId.isBlank() || knowledgeSourceId.length() > 128))
+      throw new IllegalArgumentException("Invalid knowledge source reference");
     Objects.requireNonNull(id, "id");
     Objects.requireNonNull(owner, "owner");
     Objects.requireNonNull(displayName, "displayName");

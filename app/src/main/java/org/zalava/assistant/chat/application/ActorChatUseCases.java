@@ -2,13 +2,17 @@ package org.zalava.assistant.chat.application;
 
 import java.util.List;
 import org.zalava.assistant.agent.application.port.in.AgentExecution;
+import org.zalava.assistant.agent.application.port.in.AgentStreamListener;
+import org.zalava.assistant.agent.domain.AgentRequest;
 import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
+import org.zalava.assistant.chat.application.port.in.ActorChatStreamListener;
 import org.zalava.assistant.chat.domain.ActorChatTurn;
 import org.zalava.assistant.chat.domain.ChatMessage;
 import org.zalava.assistant.conversation.application.port.in.ActorConversations;
 import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.assistant.conversation.domain.ConversationReference;
+import org.zalava.assistant.conversation.domain.ConversationSummary;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.Actor;
@@ -60,7 +64,16 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
       Actor actor,
       ConversationReference conversation,
       String message,
-      org.zalava.assistant.chat.application.port.in.ActorChatStreamListener listener) {
+      ActorChatStreamListener listener) {
+    return streamChatInput(actor, conversation, AgentRequest.question(message), listener);
+  }
+
+  @Override
+  public ActorChatTurn streamChatInput(
+      Actor actor,
+      ConversationReference conversation,
+      AgentRequest request,
+      ActorChatStreamListener listener) {
     requireOwned(actor, conversation);
     var account =
         accounts
@@ -75,11 +88,10 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
                     actor,
                     account.role(),
                     () ->
-                        agent.respondTo(
+                        respondTo(
                             new ActorConversationId(actor, conversation).value(),
-                            message,
-                            new org.zalava.assistant.agent.application.port.in
-                                .AgentStreamListener() {
+                            request,
+                            new AgentStreamListener() {
                               @Override
                               public void onDelta(String text) {
                                 listener.onDelta(text);
@@ -118,13 +130,34 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
   }
 
   @Override
+  public List<ConversationSummary> summaries(Actor actor) {
+    return conversations.summaries(actor);
+  }
+
+  @Override
+  public void rename(Actor actor, ConversationReference conversation, String title) {
+    requireOwned(actor, conversation);
+    conversations.rename(actor, conversation, ConversationSummary.requireTitle(title));
+  }
+
+  @Override
   public List<ChatMessage> history(Actor actor, ConversationReference conversation) {
     requireOwned(actor, conversation);
     return conversations.findByReference(actor, conversation).stream()
         .map(
             message ->
-                new ChatMessage(ChatMessage.Role.valueOf(message.role().name()), message.text()))
+                new ChatMessage(
+                    ChatMessage.Role.valueOf(message.role().name()),
+                    message.text(),
+                    message.attachmentNames()))
         .toList();
+  }
+
+  private String respondTo(
+      String conversationId, AgentRequest request, AgentStreamListener listener) {
+    return request.attachmentContext().isEmpty()
+        ? agent.respondTo(conversationId, request.question(), listener)
+        : agent.respondToInput(conversationId, request, listener);
   }
 
   private void requireOwned(Actor actor, ConversationReference conversation) {

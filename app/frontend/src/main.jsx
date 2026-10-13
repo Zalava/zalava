@@ -15,6 +15,14 @@ const providerConfigured = document.getElementById("root").dataset.providerConfi
 const providerSetupAllowed = document.getElementById("root").dataset.providerSetupAllowed === "true";
 
 const ZalavaChatContext = createContext(null);
+const SELECTED_CONVERSATION_KEY = "zalava.chat.selectedConversation";
+function rememberedConversation() { try { return sessionStorage.getItem(SELECTED_CONVERSATION_KEY); } catch { return null; } }
+function rememberConversation(id) { try { sessionStorage.setItem(SELECTED_CONVERSATION_KEY, id); } catch { /* Storage is optional; ownership is checked by Zalava. */ } }
+function conversationDate(value) {
+  if (!value) return "Date unavailable";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Date unavailable" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ACCEPT =
   ".txt,.text,.md,.markdown,.html,.htm,.pdf,.docx," +
@@ -69,11 +77,17 @@ function AttachmentErrorReporter({ onError }) {
 
 function ZalavaRuntime({ children }) {
   const [messages, setMessages] = useState([]);
+  const [memoryReviews, setMemoryReviews] = useState([]);
+  const [documentProcessing, setDocumentProcessing] = useState(null);
   const [conversationId, setConversationId] = useState(null);
   const [conversationIds, setConversationIds] = useState([]);
+  const [conversationSummaries, setConversationSummaries] = useState([]);
+  const ownedConversationIds = useRef([]);
   const [jobs, setJobs] = useState({});
   const [approvals, setApprovals] = useState({});
   const [imports, setImports] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [pendingImports, setPendingImports] = useState([]);
   const [uploadError, setUploadError] = useState(null);
   const [status, setStatus] = useState("Connecting");
   const [origin, setOrigin] = useState("web");
@@ -97,15 +111,28 @@ function ZalavaRuntime({ children }) {
       const event = JSON.parse(data);
       if (event.type === "conversation.list") {
         setConversationIds(event.conversationIds);
+        ownedConversationIds.current = event.conversationIds;
+        setConversationSummaries(event.conversations ?? []);
       } else if (event.type === "conversation.snapshot") {
+        const remembered = rememberedConversation();
+        if (!selectedConversation.current && remembered && remembered !== event.conversationId && ownedConversationIds.current.includes(remembered)) {
+          selectedConversation.current = remembered;
+          connection.send(JSON.stringify({ protocol: "zalava.ui/v1", type: "chat.select", conversationId: remembered }));
+          return;
+        }
         selectedConversation.current = event.conversationId;
+        rememberConversation(event.conversationId);
         setConversationId(event.conversationId);
         setOrigin(event.channelId ?? "web");
         setCanSend(event.canSend === true);
         setCanContinue(event.canContinue === true);
         setContinuing(false);
         setCommandError(null);
-        setMessages(event.messages.map((message) => ({ role: message.role, content: message.text })));
+        setMessages(event.messages.map((message) => ({ role: message.role, content: message.text, attachmentNames: message.attachmentNames ?? [] })));
+      } else if (event.type === "document.processing") {
+        setDocumentProcessing(event.available);
+      } else if (event.type === "memory.reviews") {
+        setMemoryReviews(event.reviews);
       } else if (event.type === "chat.delta") {
         if (event.conversationId !== selectedConversation.current) return;
         setMessages((current) => {
@@ -131,6 +158,10 @@ function ZalavaRuntime({ children }) {
           [event.requestId]: { jobId: event.jobId, summary: event.summary, pending: true },
         }));
       } else if (event.type === "attachment.available") {
+        if (event.attachmentId) {
+          setUploadedFiles((current) => [...current.filter((entry) => entry.attachmentId !== event.attachmentId), event]);
+          setPendingImports((current) => current.filter((id) => id !== event.attachmentId));
+        }
         setUploadError(null);
         if (event.intent === "knowledge-import") {
           setImports((current) =>
@@ -152,8 +183,9 @@ function ZalavaRuntime({ children }) {
           }
         }
       } else if (event.type === "attachment.removed") {
-        setImports((current) => current.filter((entry) => entry.attachmentId !== event.attachmentId));
+        setUploadedFiles((current) => current.filter((entry) => entry.attachmentId !== event.attachmentId));
       } else if (event.type === "failure") {
+        setPendingImports([]);
         setContinuing(false);
         if (event.operation !== "chat.send") setCommandError(event.message);
         setApprovals((current) => Object.fromEntries(Object.entries(current).map(([id, entry]) =>
@@ -230,32 +262,14 @@ function ZalavaRuntime({ children }) {
     [],
   );
 
-  const importFiles = (fileList) => {
+  const saveUploadedFile = (attachmentId) => {
+    if (pendingImports.includes(attachmentId)) return;
     setUploadError(null);
-    Array.from(fileList ?? []).forEach((file) => {
-      const contentType = contentTypeFor(file);
-      if (!contentType) {
-        setUploadError(`Unsupported attachment type: ${file.name}`);
-        return;
-      }
-      if (file.size > MAX_ATTACHMENT_BYTES) {
-        setUploadError(`${file.name} exceeds the 5 MiB attachment limit`);
-        return;
-      }
-      file.arrayBuffer().then((buffer) => {
-        if (
-          !sendCommandRef.current({
-            type: "attachment.put",
-            intent: "knowledge-import",
-            name: file.name,
-            contentType,
-            content: toBase64(buffer),
-          })
-        ) {
+    setPendingImports((current) => [...current, attachmentId]);
+    if (!sendCommand({ type: "attachment.import", attachmentId })) {
+      setPendingImports((current) => current.filter((id) => id !== attachmentId));
       setUploadError("Zalava is not connected");
-        }
-      });
-    });
+    }
   };
 
   const onNew = async (message) => {
@@ -289,15 +303,20 @@ function ZalavaRuntime({ children }) {
   const value = useMemo(
     () => ({
       messages,
+      memoryReviews,
+      documentProcessing,
       origin, canSend, canContinue, continuing, commandError,
       status,
       conversationId,
       conversationIds,
+      conversationSummaries,
       jobs,
       approvals: Object.entries(approvals).filter(([, approval]) => approval.pending),
       imports,
       uploadError,
-      importFiles,
+      saveUploadedFile,
+      uploadedFiles,
+      pendingImports,
       decideApproval: (jobId, requestId, decision) => {
         if (sendCommand({ type: "approval.decide", jobId, requestId, decision })) {
           setApprovals((current) => ({ ...current, [requestId]: { ...current[requestId], submitting: true } }));
@@ -310,8 +329,12 @@ function ZalavaRuntime({ children }) {
       },
       selectConversation: (id) => sendCommand({ type: "chat.select", conversationId: id }),
       createConversation: () => sendCommand({ type: "chat.create" }),
+      renameConversation: (title) => {
+        setCommandError(null);
+        if (!sendCommand({ type: "chat.rename", conversationId, title })) setCommandError("Zalava is not connected");
+      },
     }),
-    [messages, status, conversationId, conversationIds, jobs, approvals, imports, uploadError, origin, canSend, canContinue, continuing, commandError],
+    [messages, memoryReviews, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError],
   );
 
   return (
@@ -350,18 +373,27 @@ function Chat() {
   const {
     origin, canSend, canContinue, continuing, commandError, continueConversation,
     messages,
+    memoryReviews,
+    documentProcessing,
     status,
     conversationId,
     conversationIds,
+    conversationSummaries,
     jobs,
     approvals,
     imports,
     uploadError,
-    importFiles,
+    saveUploadedFile,
+    uploadedFiles,
+    pendingImports,
     decideApproval,
     selectConversation,
     createConversation,
+    renameConversation,
   } = useContext(ZalavaChatContext);
+  const selectedSummary = conversationSummaries.find((entry) => entry.id === conversationId);
+  const [conversationName, setConversationName] = useState("");
+  useEffect(() => setConversationName(selectedSummary?.title ?? "New conversation"), [conversationId, selectedSummary?.title]);
   const aui = useAui();
   const historyIndex = useRef(-1);
   const preservedDraft = useRef("");
@@ -407,10 +439,29 @@ function Chat() {
       </section>}
       <nav className="conversations" aria-label="Conversations">
         <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || pending || continuing || status !== "Connected"}>
-          {conversationIds.map((id) => <option key={id} value={id}>Conversation {id.slice(0, 8)}</option>)}
+          {!conversationId && <option value="">Start a conversation</option>}
+          {conversationIds.map((id) => {
+            const summary = conversationSummaries.find((entry) => entry.id === id);
+            return <option key={id} value={id}>{summary?.title ?? "Saved conversation"} · {conversationDate(summary?.updatedAt ?? summary?.createdAt)}</option>;
+          })}
         </select>
         <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
+      {selectedSummary && <p className="conversation-meta"><strong>{selectedSummary.title}</strong> · Updated <time dateTime={selectedSummary.updatedAt ?? selectedSummary.createdAt}>{conversationDate(selectedSummary.updatedAt ?? selectedSummary.createdAt)}</time></p>}
+      {conversationId && <details className="conversation-options">
+        <summary>Conversation options</summary>
+        <form onSubmit={(event) => { event.preventDefault(); if (conversationName.trim()) renameConversation(conversationName.trim()); }}>
+          <label htmlFor="conversation-name">Conversation name</label>
+          <input id="conversation-name" className="zalava-field" value={conversationName} maxLength={120} onChange={(event) => setConversationName(event.target.value)} disabled={pending || status !== "Connected"} />
+          <button className="zalava-button zalava-button--secondary" type="submit" disabled={!conversationName.trim() || pending || status !== "Connected"}>Save name</button>
+        </form>
+      </details>}
+      {memoryReviews.length > 0 && <section className="memory-review-notice" aria-label="Memory review" role="status">
+        <strong>Memory proposals need your review.</strong>
+        <p>These are pending preferences or facts, separate from tool permissions.</p>
+        <ul>{memoryReviews.slice(0, 3).map((review) => <li key={review.proposalId}><a href={review.reviewUrl}>Review memory proposal</a><span> — {review.summary}</span></li>)}</ul>
+        {memoryReviews.length > 3 && <a href="/memory">Open all pending memory proposals</a>}
+      </section>}
       <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
       {approvals.length > 0 && <div className="permission-shortcut" role="status">
         <span>{approvals.length} pending permission{approvals.length === 1 ? "" : "s"}</span>
@@ -433,8 +484,9 @@ function Chat() {
         {messages.map((message, index) => (
           <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
             <strong>{message.role === "user" ? "You" : "Zalava"}</strong>
+            {message.streaming && !message.content && <p className="assistant-pending" role="status"><span className="pending-dots" aria-hidden="true"><i></i><i></i><i></i></span>Zalava is responding…</p>}
             <Markdown
-              allowedElements={["p", "strong", "em", "code", "pre", "ul", "ol", "li", "blockquote", "a"]}
+              allowedElements={["p", "strong", "em", "code", "pre", "ul", "ol", "li", "blockquote", "a", "h1", "h2", "h3", "h4", "h5", "h6"]}
               components={{ a: ({ href, children }) => <a href={href} rel="noopener noreferrer">{children}</a> }}
             >
               {message.content}
@@ -447,7 +499,6 @@ function Chat() {
         ))}
       </section>
 
-      {pending && <p role="status">Zalava is responding…</p>}
       {failure && <p role="alert">{failure.content}</p>}
       {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
         <fieldset className="composer-fields" disabled={!providerConfigured} aria-describedby={!providerConfigured ? "model-setup" : undefined}>
@@ -456,7 +507,8 @@ function Chat() {
           <ComposerPrimitive.Attachments>
             {({ attachment }) => (
               <AttachmentPrimitive.Root className="attachment-chip">
-                <AttachmentPrimitive.Name />
+                <span className="attachment-name" title={attachment.name}><AttachmentPrimitive.Name /></span>
+                {uploadedFiles.find((file) => file.attachmentId === attachment.id)?.sourceId ? <a href={`/knowledge/${uploadedFiles.find((file) => file.attachmentId === attachment.id).sourceId}`}>Open in Knowledge</a> : <button type="button" className="zalava-button zalava-button--secondary" disabled={attachment.status.type === "running" || pendingImports.includes(attachment.id)} onClick={() => saveUploadedFile(attachment.id)}>{pendingImports.includes(attachment.id) ? "Saving…" : "Save to knowledge"}</button>}
                 <AttachmentPrimitive.Remove className="zalava-button zalava-button--secondary" aria-label="Remove">Remove</AttachmentPrimitive.Remove>
               </AttachmentPrimitive.Root>
             )}
@@ -475,22 +527,33 @@ function Chat() {
         </ComposerPrimitive.AttachmentDropzone>
         <div className="composer-actions">
           <div className="composer-options" ref={fileOptionsRef}>
-            <button className="zalava-button zalava-button--secondary composer-options-toggle" type="button" aria-label="File options" title="Attach files or import to knowledge" aria-expanded={fileOptionsOpen} aria-controls="composer-file-options" onClick={() => setFileOptionsOpen((open) => !open)}>
+            <button className="zalava-button zalava-button--secondary composer-options-toggle" type="button" aria-label="File options" title="Attach files" aria-expanded={fileOptionsOpen} aria-controls="composer-file-options" onClick={() => setFileOptionsOpen((open) => !open)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m8 12 7-7a3 3 0 0 1 4 4L9 19a5 5 0 0 1-7-7L13 1" /></svg>
             </button>
-            {fileOptionsOpen && <div id="composer-file-options" className="composer-options-menu" role="group" aria-label="Attachments and knowledge">
+            {fileOptionsOpen && <div id="composer-file-options" className="composer-options-menu" role="group" aria-label="Attach files">
+              <div className="document-processing-notice" role="status">
+                {documentProcessing === null ? <p>Checking document-processing support…</p> : documentProcessing ? <p>An active document-processing module can read attached files. Supported formats depend on that module; unreadable files show an error. Up to 5 files, 5 MB each; large extracted documents may need smaller parts.</p> : <><strong>A document-processing module is needed to read files.</strong><p>Files can be stored now. Reading attachments and processing Knowledge imports need an installed, configured and active module.</p>{providerSetupAllowed ? <a href="/modules">Find a document-processing module</a> : <p>Ask your workspace administrator to install and start a document-processing module.</p>}</>}
+              </div>
               <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="zalava-button zalava-button--secondary composer-attach" onClick={() => setFileOptionsOpen(false)}>Attach files</ComposerPrimitive.AddAttachment>
-              <button className="zalava-button zalava-button--secondary" type="button" onClick={() => { document.getElementById("knowledge-import-file").click(); setFileOptionsOpen(false); }}>Import to knowledge</button>
+
             </div>}
           </div>
           <ComposerPrimitive.Send className="zalava-button composer-send">Send</ComposerPrimitive.Send>
         </div>
-        <input id="knowledge-import-file" className="composer-import-input" type="file" multiple aria-label="Import files to knowledge" accept={ACCEPT} onChange={(event) => { importFiles(event.target.files); event.target.value = ""; }} />
+        {uploadedFiles.length > 0 && <details className="uploaded-file-options">
+          <summary>Uploaded files</summary>
+          <p>Save a file to your private Knowledge library without uploading it again. This keeps a separate copy; removing a Chat attachment does not delete the Knowledge source.</p>
+          <ul>{uploadedFiles.map((file) => <li key={file.attachmentId}>
+            <span>{file.name}</span>
+            {file.sourceId ? <a href={`/knowledge/${file.sourceId}`}>Open in Knowledge</a> : <button className="zalava-button zalava-button--secondary" type="button" disabled={pendingImports.includes(file.attachmentId)} onClick={() => saveUploadedFile(file.attachmentId)}>{pendingImports.includes(file.attachmentId) ? "Saving…" : "Save to knowledge"}</button>}
+          </li>)}</ul>
+          {!documentProcessing && <p>Reading saved sources needs an active document-processing module. Files can be stored now.</p>}
+        </details>}
         {imports.length > 0 && (
           <ul className="attachment-list" aria-label="Imported sources">
             {imports.map((entry) => (
               <li key={entry.sourceId ?? entry.attachmentId}>
-                Imported <a href={`/knowledge/${entry.sourceId}`}>{entry.name}</a>
+                Saved to Knowledge: <a href={`/knowledge/${entry.sourceId}`}>{entry.name}</a>. {documentProcessing ? "Processing pending; open the source for its result." : "A document-processing module is needed to read it."}
               </li>
             ))}
           </ul>

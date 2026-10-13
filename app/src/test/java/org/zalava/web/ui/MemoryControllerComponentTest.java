@@ -1,5 +1,6 @@
 package org.zalava.web.ui;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
@@ -57,7 +58,7 @@ class MemoryControllerComponentTest {
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Zalava modules expose providers")))
         .andExpect(content().string(containsString("PROJECT")))
-        .andExpect(content().string(containsString("user")))
+        .andExpect(content().string(containsString("Saved by you")))
         .andExpect(content().string(containsString("run-7")));
   }
 
@@ -103,7 +104,7 @@ class MemoryControllerComponentTest {
         .andExpect(status().is3xxRedirection())
         .andExpect(flash().attribute("memoryMessage", "Proposal revoked."));
 
-    org.assertj.core.api.Assertions.assertThat(memories.find(actor, memoryId)).isEmpty();
+    assertThat(memories.find(actor, memoryId)).isEmpty();
   }
 
   @Test
@@ -127,9 +128,9 @@ class MemoryControllerComponentTest {
         .andExpect(content().string(containsString("Last revised")));
 
     Memory reloaded = memories.find(actor, memory.id()).orElseThrow();
-    org.assertj.core.api.Assertions.assertThat(reloaded.text()).isEqualTo("after");
-    org.assertj.core.api.Assertions.assertThat(reloaded.scope()).isEqualTo(MemoryScope.AGENT);
-    org.assertj.core.api.Assertions.assertThat(reloaded.updatedAt()).isNotNull();
+    assertThat(reloaded.text()).isEqualTo("after");
+    assertThat(reloaded.scope()).isEqualTo(MemoryScope.AGENT);
+    assertThat(reloaded.updatedAt()).isNotNull();
 
     mockMvc
         .perform(
@@ -162,8 +163,8 @@ class MemoryControllerComponentTest {
                 .attribute(
                     "memoryError", "A memory proposal must not contain credentials or secrets"));
 
-    org.assertj.core.api.Assertions.assertThat(memories.recent(actor, 10)).isEmpty();
-    org.assertj.core.api.Assertions.assertThat(promotions.pending(actor)).isEmpty();
+    assertThat(memories.recent(actor, 10)).isEmpty();
+    assertThat(promotions.pending(actor)).isEmpty();
   }
 
   @Test
@@ -213,7 +214,7 @@ class MemoryControllerComponentTest {
         .andExpect(status().is3xxRedirection())
         .andExpect(flash().attribute("memoryError", "Memory deletion could not be completed."));
 
-    org.assertj.core.api.Assertions.assertThat(memories.find(actor, memory.id())).isPresent();
+    assertThat(memories.find(actor, memory.id())).isPresent();
   }
 
   @Test
@@ -231,8 +232,7 @@ class MemoryControllerComponentTest {
         .andExpect(status().is3xxRedirection())
         .andExpect(flash().attributeExists("memoryError"));
 
-    org.assertj.core.api.Assertions.assertThat(
-            promotions.get(new Actor(owner.id()), proposal.id()).status())
+    assertThat(promotions.get(new Actor(owner.id()), proposal.id()).status())
         .isEqualTo(MemoryProposal.Status.PENDING);
   }
 }

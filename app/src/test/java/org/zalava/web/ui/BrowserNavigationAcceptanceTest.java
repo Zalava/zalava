@@ -10,8 +10,10 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -31,8 +33,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.api.extensions.content.ContentExtractionFailureCategory;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
+import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
+import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
+import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.support.ZalavaComponentTestConfiguration;
 
 /**
@@ -67,9 +75,10 @@ class BrowserNavigationAcceptanceTest {
           "Apps",
           "Modules",
           "Settings",
-          "Advanced settings");
+          "Advanced settings",
+          "My account");
   private static final List<String> MEMBER_MENU =
-      List.of("Dashboard", "Chat", "Jobs", "Knowledge", "Memory");
+      List.of("Dashboard", "Chat", "Jobs", "Knowledge", "Memory", "My account");
   private static final List<String> MEMBER_HIDDEN =
       List.of("/apps", "/modules", "/monitoring", "/settings", "/zalava/control");
 
@@ -164,7 +173,7 @@ class BrowserNavigationAcceptanceTest {
         var mark = page.locator(".zalava-brand-mark").boundingBox();
         assertThat(mark.x).isGreaterThanOrEqualTo(brand.x);
         assertThat(mark.x + mark.width).isLessThanOrEqualTo(brand.x + brand.width);
-        if (viewport[0] <= 640) {
+        if (viewport[0] <= 1024) {
           page.locator(".navbar-burger").focus();
           page.keyboard().press("Enter");
           page.locator(".zalava-navigation-close")
@@ -373,6 +382,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Autowired AccountLifecycle accounts;
+  @Autowired KnowledgeSourceLifecycle knowledgeLifecycle;
+  @Autowired KnowledgeExtractionRecordStore extractionRecords;
 
   @Test
   void temporaryAdministratorMustChangePasswordBeforeChatAndOldPasswordStopsWorking()
@@ -434,7 +445,376 @@ class BrowserNavigationAcceptanceTest {
     }
   }
 
+  @Test
+  void accountsAndCompactNavigationRemainReadableAndContained() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      page.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        page.navigate(baseUrl() + "/zalava/accounts");
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(DIAGNOSTICS.resolve("accounts-" + width + ".png"))
+                .setFullPage(true));
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
+        assertThat(page.locator(".zalava-navbar").count()).isEqualTo(1);
+        for (Locator control :
+            page.locator("main input:not([type=hidden]), main select, main button").all()) {
+          var bounds = control.boundingBox();
+          if (bounds == null) continue;
+          assertThat(bounds.x).isGreaterThanOrEqualTo(0);
+          assertThat(bounds.x + bounds.width).isLessThanOrEqualTo(width + 1.0);
+        }
+        if (width <= 1024) {
+          page.locator(".navbar-burger").click();
+          page.locator(".zalava-navigation-close").waitFor();
+          page.waitForFunction(
+              "document.querySelector('.navbar-menu').getBoundingClientRect().left >= -0.5");
+          assertThat(page.locator(".navbar-menu").boundingBox().height)
+              .isGreaterThanOrEqualTo(900.0);
+          for (Locator label : page.locator(".zalava-nav-label").all()) {
+            assertThat(label.boundingBox().width)
+                .as("Full destination names remain visibly readable")
+                .isGreaterThan(20);
+          }
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(DIAGNOSTICS.resolve("navigation-readable-" + width + ".png")));
+          page.keyboard().press("Escape");
+        }
+      }
+    }
+  }
+
+  @Test
+  void tabletNavigationDisplaysFullDestinationNames() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.setViewportSize(768, 900);
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      page.waitForURL("**/chat");
+      Locator burger = page.locator(".navbar-burger");
+      if (burger.isVisible()) burger.click();
+      page.waitForFunction(
+          "document.querySelector('.navbar-menu').getBoundingClientRect().left >= -0.5");
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(DIAGNOSTICS.resolve("navigation-readable-tablet.png")));
+      assertThat(page.locator(".navbar-menu").boundingBox().height).isGreaterThanOrEqualTo(900.0);
+      for (Locator label : page.locator(".zalava-nav-label").all()) {
+        assertThat(label.boundingBox().width)
+            .as("Visible destination labels on tablet")
+            .isGreaterThan(20);
+      }
+    }
+  }
+
+  @Test
+  void accountActionsConfirmPersistenceAndPreserveSafeDuplicateInput() throws Exception {
+    String login = "browser-managed-" + UUID.randomUUID();
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.setViewportSize(1440, 900);
+      signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
+      page.waitForURL("**/chat");
+      page.navigate(baseUrl() + "/zalava/accounts");
+      page.locator("#create-login").fill(login);
+      page.locator("#create-password").fill("ManagedBrowserPassword-123");
+      page.getByRole(
+              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create account").setExact(true))
+          .click();
+      page.getByRole(AriaRole.STATUS)
+          .getByText("Account created", new Locator.GetByTextOptions().setExact(false))
+          .waitFor();
+      var managed = accounts.findByLoginName(login).orElseThrow();
+      String card = "[data-account-id='" + managed.id().value() + "']";
+      page.locator(card)
+          .getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Disable").setExact(true))
+          .click();
+      page.getByRole(AriaRole.STATUS)
+          .getByText("Account disabled", new Locator.GetByTextOptions().setExact(false))
+          .waitFor();
+      assertThat(accounts.findById(managed.id()).orElseThrow().enabled()).isFalse();
+      page.locator(card)
+          .getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Enable").setExact(true))
+          .click();
+      page.getByRole(AriaRole.STATUS)
+          .getByText("Account enabled.", new Locator.GetByTextOptions().setExact(true))
+          .waitFor();
+      assertThat(accounts.findById(managed.id()).orElseThrow().enabled()).isTrue();
+      page.locator("#create-login").fill(login);
+      page.locator("#create-password").fill("ManagedBrowserPassword-123");
+      page.getByRole(
+              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create account").setExact(true))
+          .click();
+      page.getByRole(AriaRole.ALERT).getByText("Login name is already in use").waitFor();
+      assertThat(page.locator("#create-login").inputValue()).isEqualTo(login);
+      assertThat(page.locator("#create-password").inputValue()).isEmpty();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        capture(page, "accounts-duplicate-feedback-" + width);
+      }
+    }
+  }
+
+  @Test
+  void memberPersonalPageAndDeniedPagesRetainSafeRecoveryAtAllWidths() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
+      page.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        assertThat(page.navigate(baseUrl() + "/account/password").status()).isEqualTo(200);
+        assertThat(page.locator(".auth-card").innerText())
+            .contains(MEMBER_LOGIN)
+            .doesNotContain("temporary or has been reset");
+        assertThat(
+                page.locator("body")
+                    .evaluate("element => getComputedStyle(element).fontFamily")
+                    .toString())
+            .doesNotContain("Times");
+        assertContained(
+            page,
+            ".auth-card",
+            ".auth-card input:not([type=hidden]), .auth-card button, .auth-card a");
+        capture(page, "personal-account-" + width);
+        for (String path : List.of("/settings", "/knowledge/not-a-source")) {
+          int expected = path.equals("/settings") ? 403 : 404;
+          assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(expected);
+          assertThat(page.locator("body").innerText()).doesNotContain("Whitelabel", "not-a-source");
+          assertThat(
+                  page.getByRole(
+                          AriaRole.LINK, new Page.GetByRoleOptions().setName("Return to Chat"))
+                      .isVisible())
+              .isTrue();
+          capture(page, "error-" + expected + "-" + width);
+        }
+      }
+    }
+  }
+
+  @Test
+  void knowledgeSearchControlsStayWithinViewport() throws Exception {
+    checkLibrarySearch("/knowledge");
+  }
+
+  @Test
+  void memorySearchControlsStayWithinViewport() throws Exception {
+    checkLibrarySearch("/memory");
+  }
+
+  private void checkLibrarySearch(String path) throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
+      page.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(200);
+        capture(page, path.substring(1) + "-search-" + width);
+        for (Locator control :
+            page.locator(
+                    "form[action='"
+                        + path
+                        + "'] input, form[action='"
+                        + path
+                        + "'] select, form[action='"
+                        + path
+                        + "'] button")
+                .all()) {
+          var bounds = control.boundingBox();
+          assertThat(bounds.x).isGreaterThanOrEqualTo(0);
+          assertThat(bounds.x + bounds.width)
+              .as("Search controls are visible within the viewport")
+              .isLessThanOrEqualTo(width + 1.0);
+        }
+      }
+    }
+  }
+
+  @Test
+  void knowledgeUploadSharingAndMemberReadOnlyViewsWorkThroughTheUi() throws Exception {
+    String name = "browser-library-" + UUID.randomUUID() + ".txt";
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext adminContext = browser.newContext();
+        BrowserContext memberContext = browser.newContext()) {
+      Page admin = adminContext.newPage();
+      signIn(admin, ADMIN_LOGIN, ADMIN_PASSWORD);
+      admin.waitForURL("**/chat");
+      admin.navigate(baseUrl() + "/knowledge");
+      admin
+          .locator("#knowledge-file")
+          .setInputFiles(
+              new FilePayload(
+                  name,
+                  "text/plain",
+                  "Synthetic library acceptance document.".getBytes(StandardCharsets.UTF_8)));
+      admin
+          .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source uploaded for processing.").waitFor();
+      Locator sourceLink =
+          admin.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true));
+      String href = sourceLink.getAttribute("href");
+      Locator card = admin.locator("li.box").filter(new Locator.FilterOptions().setHas(sourceLink));
+      for (int width : List.of(390, 768, 1440)) {
+        admin.setViewportSize(width, 900);
+        capture(admin, "knowledge-pending-" + width);
+        assertThat(admin.navigate(baseUrl() + href).status()).isEqualTo(200);
+        assertThat(admin.locator("body").innerText())
+            .contains("Waiting for a document processing module");
+        capture(admin, "knowledge-processing-detail-" + width);
+        admin.navigate(baseUrl() + "/knowledge");
+      }
+      // Seed only a processor outcome for visual diagnostics; this does not claim real extraction.
+      var owner = new Actor(accounts.findByLoginName(ADMIN_LOGIN).orElseThrow().id());
+      var sourceId = new KnowledgeSourceId(UUID.fromString(href.substring("/knowledge/".length())));
+      var candidate = knowledgeLifecycle.beginReprocessing(owner, sourceId, "qa-parser", "1");
+      extractionRecords.record(
+          KnowledgeExtractionRecord.failed(
+              candidate,
+              ContentExtractionFailureCategory.MALFORMED_INPUT,
+              "private processor fixture detail"));
+      knowledgeLifecycle.completeReprocessing(owner, candidate, false);
+      for (int width : List.of(390, 768, 1440)) {
+        admin.setViewportSize(width, 900);
+        admin.navigate(baseUrl() + href);
+        assertThat(admin.locator("body").innerText())
+            .contains("Processing failed", "The document could not be read")
+            .doesNotContain("private processor fixture detail");
+        capture(admin, "knowledge-failed-processing-" + width);
+      }
+      admin.navigate(baseUrl() + "/knowledge");
+      card.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Share").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source sharing updated.").waitFor();
+      Page member = memberContext.newPage();
+      signIn(member, MEMBER_LOGIN, MEMBER_PASSWORD);
+      member.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        member.setViewportSize(width, 900);
+        member.navigate(baseUrl() + "/knowledge");
+        Locator sharedLink =
+            member.getByRole(
+                AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true));
+        Locator sharedCard =
+            member.locator("li.box").filter(new Locator.FilterOptions().setHas(sharedLink));
+        assertThat(sharedCard.innerText()).contains("Shared read-only");
+        assertThat(sharedCard.locator("form").count()).isZero();
+        capture(member, "knowledge-shared-read-only-" + width);
+      }
+      card.getByRole(
+              AriaRole.BUTTON,
+              new Locator.GetByRoleOptions().setName("Make private").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source sharing updated.").waitFor();
+      assertThat(member.navigate(baseUrl() + href).status()).isEqualTo(404);
+      admin.reload();
+      assertThat(
+              card.getByRole(
+                      AriaRole.BUTTON,
+                      new Locator.GetByRoleOptions().setName("Share").setExact(true))
+                  .count())
+          .isEqualTo(1);
+      card.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Delete").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source deleted.").waitFor();
+      admin.reload();
+      assertThat(
+              admin
+                  .getByRole(
+                      AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true))
+                  .count())
+          .isZero();
+      admin
+          .locator("#knowledge-file")
+          .setInputFiles(
+              new FilePayload(
+                  "invalid.pdf", "application/pdf", "not a pdf".getBytes(StandardCharsets.UTF_8)));
+      admin
+          .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.ALERT).getByText("Source upload could not be completed.").waitFor();
+      for (int width : List.of(390, 768, 1440)) {
+        admin.setViewportSize(width, 900);
+        capture(admin, "knowledge-upload-error-" + width);
+      }
+    }
+  }
+
+  @Test
+  void memoryScopeExplanationReviewAndDetailsRemainReadable() throws Exception {
+    String text = "Browser private preference " + UUID.randomUUID();
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
+      page.waitForURL("**/chat");
+      page.navigate(baseUrl() + "/memory");
+      page.locator("#proposal-scope").selectOption("USER");
+      page.locator("#proposal-text").fill(text);
+      page.locator("[data-action=propose]").click();
+      Locator proposal =
+          page.locator("[data-memory-proposal]")
+              .filter(new Locator.FilterOptions().setHasText(text));
+      proposal.waitFor();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        capture(page, "memory-proposal-" + width);
+      }
+      proposal.locator("[data-action=approve]").click();
+      page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(text).setExact(true))
+          .click();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        assertThat(page.locator("body").innerText())
+            .contains(
+                "Private to your account", "Personal preferences", "Approved memory proposal");
+        capture(page, "memory-readable-detail-" + width);
+      }
+      page.getByText("Stored metadata", new Page.GetByTextOptions().setExact(true)).click();
+      assertThat(page.locator("[data-memory-id]").isVisible()).isTrue();
+      capture(page, "memory-metadata-expanded-1440");
+    }
+  }
+
   private void capture(Page page, String name) {
+    page.waitForFunction(
+        """
+        () => {
+          const menu = document.querySelector('.navbar-menu');
+          if (!menu || window.innerWidth > 1024) return true;
+          const bounds = menu.getBoundingClientRect();
+          return menu.classList.contains('is-active') ? Math.abs(bounds.left) < 0.5 : bounds.right <= 0.5;
+        }
+        """);
     assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
         .isEqualTo(true);
     page.screenshot(

@@ -3,6 +3,7 @@ package org.zalava.assistant.chat.ws;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +14,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.zalava.assistant.agent.domain.AgentRequest;
 import org.zalava.assistant.chat.api.ChatProviderReadiness;
 import org.zalava.assistant.chat.application.UiExecutionStateQueries;
 import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
 import org.zalava.assistant.chat.application.port.in.ActorChatStreamListener;
+import org.zalava.assistant.chat.attachment.application.AttachmentReadingException;
 import org.zalava.assistant.chat.attachment.application.ChatAttachments;
 import org.zalava.assistant.chat.attachment.domain.ChatAttachmentIntent;
 import org.zalava.assistant.chat.domain.ChatMessage;
@@ -25,6 +28,7 @@ import org.zalava.assistant.conversation.application.port.in.ConversationContinu
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
+import org.zalava.knowledge.memory.application.port.in.MemoryPromotions;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 import org.zalava.web.ui.protocol.UiCommand;
@@ -51,6 +55,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   private final ChatAttachments attachments;
   private final ConversationContinuation continuation;
   private final ChatProviderReadiness readiness;
+  private final MemoryPromotions memoryPromotions;
 
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
@@ -110,7 +115,6 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         null);
   }
 
-  @Autowired
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
       AuthenticatedActorResolver actors,
@@ -121,6 +125,32 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
       ChatAttachments attachments,
       ConversationContinuation continuation,
       ChatProviderReadiness readiness) {
+    this(
+        objectMapper,
+        actors,
+        commands,
+        queries,
+        executionStates,
+        approvalDecisions,
+        attachments,
+        continuation,
+        readiness,
+        null);
+  }
+
+  @Autowired
+  public UiChatWebSocketHandler(
+      ObjectMapper objectMapper,
+      AuthenticatedActorResolver actors,
+      ActorChatCommands commands,
+      ActorChatQueries queries,
+      UiExecutionStateQueries executionStates,
+      UiApprovalDecisions approvalDecisions,
+      ChatAttachments attachments,
+      ConversationContinuation continuation,
+      ChatProviderReadiness readiness,
+      MemoryPromotions memoryPromotions) {
+    this.memoryPromotions = memoryPromotions;
     this.readiness = readiness;
     this.continuation = continuation;
     this.objectMapper = objectMapper;
@@ -135,8 +165,11 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
     Actor actor = actor(session);
+    ConversationReference selected = selectedConversation(actor);
     sendConversationList(session, actor);
-    sendSnapshot(session, selectedConversation(actor));
+    sendSnapshot(session, selected);
+    sendMemoryReviews(session, actor);
+    sendDocumentProcessingStatus(session);
     if (executionStates != null) {
       executionStates.states(actor).forEach(state -> publishExecutionState(session, state));
     }
@@ -165,6 +198,11 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         }
         case UiCommand.SelectConversation select ->
             sendSnapshot(session, new ConversationReference(select.conversationId()));
+        case UiCommand.RenameConversation rename -> {
+          ConversationReference reference = new ConversationReference(rename.conversationId());
+          commands.rename(actor, reference, rename.title());
+          sendConversationList(session, actor);
+        }
         case UiCommand.ContinueConversation commandContinue -> {
           if (continuation == null) throw new IllegalStateException("Continuation is unavailable");
           var target =
@@ -178,8 +216,16 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         case UiCommand.SendChat send -> streamChat(session, actor, send);
         case UiCommand.DecideApproval decide -> decideApproval(session, decide);
         case UiCommand.PutAttachment put -> putAttachment(session, actor, put);
+        case UiCommand.ImportAttachment save -> {
+          sendDocumentProcessingStatus(session);
+          send(
+              session,
+              attachmentAvailable(requireAttachments().importExisting(actor, save.attachmentId())));
+        }
         case UiCommand.DeleteAttachment delete -> deleteAttachment(session, actor, delete);
       }
+    } catch (AttachmentReadingException exception) {
+      sendFailure(session, "chat.send", exception.getMessage());
     } catch (RuntimeException exception) {
       log.warn("UI chat command failed", exception);
       sendFailure(session, "command", "Zalava could not complete that request");
@@ -200,6 +246,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   private void putAttachment(
       WebSocketSession session, Actor actor, UiCommand.PutAttachment command) {
     ChatAttachments available = requireAttachments();
+    sendDocumentProcessingStatus(session);
     ChatAttachmentIntent intent =
         switch (command.intent()) {
           case "task-only" -> ChatAttachmentIntent.TASK_ONLY;
@@ -237,8 +284,11 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
     ConversationReference conversation = new ConversationReference(command.conversationId());
     if (continuation != null) continuation.requireWeb(actor, conversation);
     StringBuilder text = new StringBuilder();
-    String message = withAttachmentManifest(actor, command);
-    commands.streamChat(
+    AgentRequest message =
+        command.attachmentIds().isEmpty()
+            ? AgentRequest.question(command.text())
+            : requireAttachments().prepare(actor, command.text(), command.attachmentIds());
+    streamInput(
         actor,
         conversation,
         message,
@@ -260,6 +310,9 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
                     conversation.value(),
                     fullText,
                     jobs.stream().map(job -> job.value()).toList()));
+            sendConversationList(session, actor);
+            sendMemoryReviews(session, actor);
+            sendDocumentProcessingStatus(session);
             if (executionStates != null) {
               jobs.forEach(
                   job -> publishExecutionState(session, executionStates.state(actor, job)));
@@ -274,26 +327,36 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         });
   }
 
-  private String withAttachmentManifest(Actor actor, UiCommand.SendChat command) {
-    if (command.attachmentIds().isEmpty()) {
-      return command.text();
-    }
-    ChatAttachments available = requireAttachments();
-    StringBuilder message = new StringBuilder(command.text());
-    for (String attachmentId : command.attachmentIds()) {
-      ChatAttachments.Reference reference = available.reference(actor, attachmentId);
-      message
-          .append("\n\nAttached file: ")
-          .append(reference.name())
-          .append(" (")
-          .append(reference.contentType())
-          .append(", ")
-          .append(reference.byteCount())
-          .append(" bytes, sha256 ")
-          .append(reference.sha256(), 0, 12)
-          .append(")");
-    }
-    return message.toString();
+  private void streamInput(
+      Actor actor,
+      ConversationReference conversation,
+      AgentRequest message,
+      ActorChatStreamListener listener) {
+    if (message.attachmentContext().isEmpty())
+      commands.streamChat(actor, conversation, message.question(), listener);
+    else commands.streamChatInput(actor, conversation, message, listener);
+  }
+
+  private void sendDocumentProcessingStatus(WebSocketSession session) {
+    send(
+        session,
+        new UiEvent.DocumentProcessingStatus(
+            UiCommandDecoder.VERSION, attachments != null && attachments.readingAvailable()));
+  }
+
+  private void sendMemoryReviews(WebSocketSession session, Actor actor) {
+    if (memoryPromotions == null) return;
+    var reviews =
+        memoryPromotions.pending(actor).stream()
+            .limit(20)
+            .map(
+                proposal ->
+                    new UiEvent.MemoryReview(
+                        proposal.id(),
+                        proposal.text().substring(0, Math.min(120, proposal.text().length())),
+                        "/memory#proposal-" + proposal.id()))
+            .toList();
+    send(session, new UiEvent.MemoryReviews(UiCommandDecoder.VERSION, reviews));
   }
 
   private static UiEvent.AttachmentAvailable attachmentAvailable(
@@ -332,9 +395,11 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
 
   private ConversationReference selectedConversation(Actor actor) {
     List<ConversationReference> conversations = queries.conversations(actor);
-    return conversations.isEmpty()
-        ? commands.createWebConversation(actor)
-        : conversations.getFirst();
+    if (conversations.isEmpty()) return commands.createWebConversation(actor);
+    var summaries = queries.summaries(actor);
+    return summaries.isEmpty()
+        ? conversations.getFirst()
+        : new ConversationReference(summaries.getFirst().id());
   }
 
   private void sendConversationList(WebSocketSession session, Actor actor) {
@@ -342,7 +407,16 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         session,
         new UiEvent.ConversationList(
             UiCommandDecoder.VERSION,
-            queries.conversations(actor).stream().map(ConversationReference::value).toList()));
+            queries.conversations(actor).stream().map(ConversationReference::value).toList(),
+            queries.summaries(actor).stream()
+                .map(
+                    summary ->
+                        new UiEvent.ConversationInfo(
+                            summary.id(),
+                            summary.title(),
+                            summary.createdAt(),
+                            summary.updatedAt()))
+                .toList()));
   }
 
   private void sendSnapshot(WebSocketSession session, ConversationReference conversation) {
@@ -353,7 +427,9 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
             .map(
                 message ->
                     new UiEvent.ConversationMessage(
-                        message.role().name().toLowerCase(), message.text()))
+                        message.role().name().toLowerCase(Locale.ROOT),
+                        message.text(),
+                        message.attachmentNames()))
             .toList();
     send(
         session,

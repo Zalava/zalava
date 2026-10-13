@@ -38,7 +38,7 @@ public final class KnowledgeLibrary {
     validateLimit(limit);
     return sources.visibleTo(actor).stream()
         .filter(filter::matches)
-        .map(SourceSummary::from)
+        .map(source -> SourceSummary.from(source, actor))
         .sorted(order())
         .limit(limit)
         .toList();
@@ -51,7 +51,7 @@ public final class KnowledgeLibrary {
     return sources.visibleTo(actor).stream()
         .filter(source -> source.id().equals(id))
         .findFirst()
-        .map(SourceDetail::from);
+        .map(source -> SourceDetail.from(source, actor));
   }
 
   public List<SourceSummary> search(Actor actor, String query, int limit) {
@@ -77,7 +77,7 @@ public final class KnowledgeLibrary {
         .filter(visible::contains)
         .flatMap(id -> sources.findById(id).stream())
         .filter(filter::matches)
-        .map(SourceSummary::from)
+        .map(source -> SourceSummary.from(source, actor))
         .sorted(order())
         .limit(limit)
         .toList();
@@ -130,8 +130,9 @@ public final class KnowledgeLibrary {
       long byteCount,
       KnowledgeVisibility visibility,
       SourceProcessingState processingState,
-      Instant updatedAt) {
-    private static SourceSummary from(KnowledgeSource source) {
+      Instant updatedAt,
+      boolean owned) {
+    private static SourceSummary from(KnowledgeSource source, Actor actor) {
       return new SourceSummary(
           source.id(),
           source.displayName(),
@@ -139,7 +140,8 @@ public final class KnowledgeLibrary {
           source.byteCount(),
           source.visibility(),
           source.processingState(),
-          source.updatedAt());
+          source.updatedAt(),
+          source.owner().equals(actor));
     }
   }
 
@@ -153,8 +155,9 @@ public final class KnowledgeLibrary {
       SourceProcessingState processingState,
       Instant createdAt,
       Instant updatedAt,
-      long version) {
-    private static SourceDetail from(KnowledgeSource source) {
+      long version,
+      boolean owned) {
+    private static SourceDetail from(KnowledgeSource source, Actor actor) {
       return new SourceDetail(
           source.id(),
           source.displayName(),
@@ -164,7 +167,8 @@ public final class KnowledgeLibrary {
           source.processingState(),
           source.createdAt(),
           source.updatedAt(),
-          source.version());
+          source.version(),
+          source.owner().equals(actor));
     }
   }
 }

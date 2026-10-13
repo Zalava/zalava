@@ -1,6 +1,8 @@
 package org.zalava.web.ui;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -8,13 +10,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.knowledge.application.KnowledgeIngestion;
 import org.zalava.knowledge.application.KnowledgeLibrary;
+import org.zalava.knowledge.application.KnowledgeProcessingQueries;
 import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
@@ -27,16 +32,19 @@ public final class KnowledgeController {
   private final AuthenticatedActorResolver actors;
   private final KnowledgeIngestion ingestion;
   private final KnowledgeSourceLifecycle lifecycle;
+  private final KnowledgeProcessingQueries processing;
 
   public KnowledgeController(
       KnowledgeLibrary library,
       AuthenticatedActorResolver actors,
       KnowledgeIngestion ingestion,
-      KnowledgeSourceLifecycle lifecycle) {
+      KnowledgeSourceLifecycle lifecycle,
+      KnowledgeProcessingQueries processing) {
     this.library = library;
     this.actors = actors;
     this.ingestion = ingestion;
     this.lifecycle = lifecycle;
+    this.processing = processing;
   }
 
   @GetMapping("/knowledge")
@@ -69,7 +77,9 @@ public final class KnowledgeController {
             contentType == null ? "" : contentType,
             processingState == null ? "" : processingState,
             error,
-            csrf));
+            csrf,
+            processing.extractorAvailable(),
+            actors.role(authentication) == AccountRole.ADMIN));
     return "ui/knowledge";
   }
 
@@ -81,13 +91,19 @@ public final class KnowledgeController {
               .inspect(actors.actor(authentication), sourceId(sourceId))
               .orElseThrow(KnowledgeController::unavailable);
       model.addAttribute("model", source);
+      model.addAttribute(
+          "processing",
+          processing
+              .inspect(actors.actor(authentication), source.id())
+              .orElseThrow(KnowledgeController::unavailable));
+      model.addAttribute("administrator", actors.role(authentication) == AccountRole.ADMIN);
       return "ui/knowledge-detail";
     } catch (IllegalArgumentException exception) {
       throw unavailable();
     }
   }
 
-  @org.springframework.web.bind.annotation.PostMapping("/knowledge/upload")
+  @PostMapping("/knowledge/upload")
   String upload(
       @RequestParam MultipartFile file,
       Authentication authentication,
@@ -105,7 +121,7 @@ public final class KnowledgeController {
     return "redirect:/knowledge";
   }
 
-  @org.springframework.web.bind.annotation.PostMapping("/knowledge/{sourceId}/visibility")
+  @PostMapping("/knowledge/{sourceId}/visibility")
   String visibility(
       @PathVariable String sourceId,
       @RequestParam boolean shared,
@@ -123,7 +139,7 @@ public final class KnowledgeController {
     return "redirect:/knowledge";
   }
 
-  @org.springframework.web.bind.annotation.PostMapping("/knowledge/{sourceId}/delete")
+  @PostMapping("/knowledge/{sourceId}/delete")
   String delete(
       @PathVariable String sourceId,
       @RequestParam(defaultValue = "false") boolean confirmed,
@@ -139,7 +155,7 @@ public final class KnowledgeController {
     return "redirect:/knowledge";
   }
 
-  @org.springframework.web.bind.annotation.PostMapping("/knowledge/{sourceId}/retry")
+  @PostMapping("/knowledge/{sourceId}/retry")
   String retry(
       @PathVariable String sourceId, Authentication authentication, RedirectAttributes redirect) {
     try {
@@ -152,7 +168,7 @@ public final class KnowledgeController {
   }
 
   private static KnowledgeSourceId sourceId(String value) {
-    return new KnowledgeSourceId(java.util.UUID.fromString(value));
+    return new KnowledgeSourceId(UUID.fromString(value));
   }
 
   private static ResponseStatusException unavailable() {
@@ -166,7 +182,7 @@ public final class KnowledgeController {
   private static SourceProcessingState processingState(String value) {
     return value == null || value.isBlank()
         ? null
-        : SourceProcessingState.valueOf(value.strip().toUpperCase(java.util.Locale.ROOT));
+        : SourceProcessingState.valueOf(value.strip().toUpperCase(Locale.ROOT));
   }
 
   public record KnowledgeModel(
@@ -175,5 +191,7 @@ public final class KnowledgeController {
       String contentType,
       String processingState,
       String error,
-      CsrfToken csrf) {}
+      CsrfToken csrf,
+      boolean extractorAvailable,
+      boolean administrator) {}
 }
