@@ -88,7 +88,7 @@
       @else
         <ul>
         @for(MemoryProposal proposal : model.proposals())
-          <li class="box" data-memory-proposal="${proposal.id()}">
+          <li class="box" id="proposal-${proposal.id()}" data-memory-proposal="${proposal.id()}">
             <p class="has-text-weight-bold">${proposal.text()}</p>
             <span class="is-size-7 has-text-grey" data-proposal-scope>${LibraryPresentation.scope(proposal.scope())} · Awaiting your review · <time datetime="${proposal.createdAt()}">${LibraryPresentation.date(proposal.createdAt())}</time></span>
             <div class="mt-3">

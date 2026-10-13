@@ -23,6 +23,10 @@ public final class UiEventJson {
         json.put("canSend", snapshot.canSend());
         json.put("canContinue", snapshot.canContinue());
       }
+      case UiEvent.MemoryReviews memory -> {
+        json.put("type", "memory.reviews");
+        json.put("reviews", memory.reviews());
+      }
       case UiEvent.ChatDelta delta -> {
         json.put("type", "chat.delta");
         json.put("conversationId", delta.conversationId());

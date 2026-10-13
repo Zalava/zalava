@@ -15,7 +15,9 @@ import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.util.Assert;
+import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -85,6 +87,11 @@ public final class MessageChatMemoryAdvisor implements BaseChatMemoryAdvisor {
 
     // 4. Add the new user message to the conversation memory.
     Message userMessage = processedChatClientRequest.prompt().getLastUserOrToolResponseMessage();
+    if (userMessage instanceof UserMessage
+        && chatClientRequest.context().get(AgentModelInput.ADVISOR_KEY)
+            instanceof AgentModelInput input) {
+      userMessage = new UserMessage(input.authoredText());
+    }
     this.chatMemory.add(conversationId, userMessage);
 
     return processedChatClientRequest;

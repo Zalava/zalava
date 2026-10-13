@@ -69,6 +69,7 @@ function AttachmentErrorReporter({ onError }) {
 
 function ZalavaRuntime({ children }) {
   const [messages, setMessages] = useState([]);
+  const [memoryReviews, setMemoryReviews] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [conversationIds, setConversationIds] = useState([]);
   const [jobs, setJobs] = useState({});
@@ -106,6 +107,8 @@ function ZalavaRuntime({ children }) {
         setContinuing(false);
         setCommandError(null);
         setMessages(event.messages.map((message) => ({ role: message.role, content: message.text })));
+      } else if (event.type === "memory.reviews") {
+        setMemoryReviews(event.reviews);
       } else if (event.type === "chat.delta") {
         if (event.conversationId !== selectedConversation.current) return;
         setMessages((current) => {
@@ -289,6 +292,7 @@ function ZalavaRuntime({ children }) {
   const value = useMemo(
     () => ({
       messages,
+      memoryReviews,
       origin, canSend, canContinue, continuing, commandError,
       status,
       conversationId,
@@ -311,7 +315,7 @@ function ZalavaRuntime({ children }) {
       selectConversation: (id) => sendCommand({ type: "chat.select", conversationId: id }),
       createConversation: () => sendCommand({ type: "chat.create" }),
     }),
-    [messages, status, conversationId, conversationIds, jobs, approvals, imports, uploadError, origin, canSend, canContinue, continuing, commandError],
+    [messages, memoryReviews, status, conversationId, conversationIds, jobs, approvals, imports, uploadError, origin, canSend, canContinue, continuing, commandError],
   );
 
   return (
@@ -350,6 +354,7 @@ function Chat() {
   const {
     origin, canSend, canContinue, continuing, commandError, continueConversation,
     messages,
+    memoryReviews,
     status,
     conversationId,
     conversationIds,
@@ -411,6 +416,12 @@ function Chat() {
         </select>
         <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
+      {memoryReviews.length > 0 && <section className="memory-review-notice" aria-label="Memory review" role="status">
+        <strong>Memory proposals need your review.</strong>
+        <p>These are pending preferences or facts, separate from tool permissions.</p>
+        <ul>{memoryReviews.slice(0, 3).map((review) => <li key={review.proposalId}><a href={review.reviewUrl}>Review memory proposal</a><span> — {review.summary}</span></li>)}</ul>
+        {memoryReviews.length > 3 && <a href="/memory">Open all pending memory proposals</a>}
+      </section>}
       <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
       {approvals.length > 0 && <div className="permission-shortcut" role="status">
         <span>{approvals.length} pending permission{approvals.length === 1 ? "" : "s"}</span>
@@ -433,8 +444,9 @@ function Chat() {
         {messages.map((message, index) => (
           <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
             <strong>{message.role === "user" ? "You" : "Zalava"}</strong>
+            {message.streaming && !message.content && <p className="assistant-pending" role="status"><span className="pending-dots" aria-hidden="true"><i></i><i></i><i></i></span>Zalava is responding…</p>}
             <Markdown
-              allowedElements={["p", "strong", "em", "code", "pre", "ul", "ol", "li", "blockquote", "a"]}
+              allowedElements={["p", "strong", "em", "code", "pre", "ul", "ol", "li", "blockquote", "a", "h1", "h2", "h3", "h4", "h5", "h6"]}
               components={{ a: ({ href, children }) => <a href={href} rel="noopener noreferrer">{children}</a> }}
             >
               {message.content}
@@ -447,7 +459,6 @@ function Chat() {
         ))}
       </section>
 
-      {pending && <p role="status">Zalava is responding…</p>}
       {failure && <p role="alert">{failure.content}</p>}
       {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
         <fieldset className="composer-fields" disabled={!providerConfigured} aria-describedby={!providerConfigured ? "model-setup" : undefined}>

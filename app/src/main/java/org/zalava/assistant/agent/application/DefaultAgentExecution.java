@@ -1,11 +1,14 @@
 package org.zalava.assistant.agent.application;
 
 import java.time.Instant;
+import java.util.Locale;
+import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.assistant.agent.application.port.in.AgentExecution;
 import org.zalava.assistant.agent.application.port.in.AgentStreamListener;
 import org.zalava.assistant.agent.application.port.out.AgentClock;
 import org.zalava.assistant.agent.application.port.out.AgentContextAssembler;
 import org.zalava.assistant.agent.application.port.out.AgentModel;
+import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import org.zalava.assistant.agent.application.port.out.AgentRunIdGenerator;
 import org.zalava.assistant.agent.application.port.out.AgentRunStore;
 import org.zalava.assistant.agent.application.port.out.AgentToolSelector;
@@ -90,7 +93,10 @@ public final class DefaultAgentExecution implements AgentExecution {
         question,
         AgentRun.PromptType.CONVERSATIONAL,
         (context, selection) ->
-            model.conversational(conversationId, context.prompt(), selection.tools()));
+            model.conversationalInput(
+                conversationId,
+                new AgentModelInput(question, context.prompt()),
+                selection.tools()));
   }
 
   @Override
@@ -101,8 +107,11 @@ public final class DefaultAgentExecution implements AgentExecution {
         AgentRun.PromptType.CONVERSATIONAL,
         listener,
         (context, selection) ->
-            model.conversational(
-                conversationId, context.prompt(), selection.tools(), listener::onDelta));
+            model.conversationalInput(
+                conversationId,
+                new AgentModelInput(question, context.prompt()),
+                selection.tools(),
+                listener::onDelta));
   }
 
   @Override
@@ -143,7 +152,7 @@ public final class DefaultAgentExecution implements AgentExecution {
     AgentContext context = contextAssembler.assemble(input, selection);
     try {
       T result =
-          org.zalava.assistant.agent.ConversationChannelContext.call(
+          ConversationChannelContext.call(
               conversationId, () -> invocation.call(context, selection));
       record(
           conversationId,
@@ -214,7 +223,7 @@ public final class DefaultAgentExecution implements AgentExecution {
             structuredFailureCategory(promptType, failure)));
     try {
       metrics.agentRun(
-          status.name().toLowerCase(java.util.Locale.ROOT),
+          status.name().toLowerCase(Locale.ROOT),
           Math.max(0, completedAt.toEpochMilli() - startedAt.toEpochMilli()),
           context.sourceMetrics().stream()
               .map(
@@ -239,7 +248,7 @@ public final class DefaultAgentExecution implements AgentExecution {
     if (failure instanceof StructuredOutputSchemaException) {
       return AgentRun.StructuredFailureCategory.SCHEMA_VALIDATION;
     }
-    String message = String.valueOf(failure.getMessage()).toLowerCase(java.util.Locale.ROOT);
+    String message = String.valueOf(failure.getMessage()).toLowerCase(Locale.ROOT);
     return message.contains("schema") || message.contains("structured output")
         ? AgentRun.StructuredFailureCategory.SCHEMA_VALIDATION
         : AgentRun.StructuredFailureCategory.MODEL_FAILURE;

@@ -9,6 +9,7 @@ import java.util.List;
 public sealed interface UiEvent
     permits UiEvent.ConversationList,
         UiEvent.ConversationSnapshot,
+        UiEvent.MemoryReviews,
         UiEvent.ChatDelta,
         UiEvent.ChatCompleted,
         UiEvent.ToolProgress,
@@ -47,6 +48,14 @@ public sealed interface UiEvent
   }
 
   record ConversationMessage(String role, String text) {}
+
+  record MemoryReviews(String protocolVersion, List<MemoryReview> reviews) implements UiEvent {
+    public MemoryReviews {
+      reviews = List.copyOf(reviews);
+    }
+  }
+
+  record MemoryReview(String proposalId, String summary, String reviewUrl) {}
 
   record ChatDelta(String protocolVersion, String conversationId, String text) implements UiEvent {}
 

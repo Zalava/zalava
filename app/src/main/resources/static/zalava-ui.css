@@ -1022,3 +1022,5 @@ body {
 .library-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .library-actions form { margin-top: 1rem !important; }
 @media (max-width: 1024px) { .library-search, .library-search.memory-search { grid-template-columns: minmax(0, 1fr); } }
+
+[data-memory-proposal]:target { outline: 2px solid var(--zalava-primary); outline-offset: 3px; }

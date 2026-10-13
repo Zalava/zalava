@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,12 +18,25 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.assistant.conversation.application.port.in.ActorConversations;
+import org.zalava.assistant.conversation.application.port.in.ConversationContinuation;
+import org.zalava.assistant.conversation.domain.ConversationMessage;
+import org.zalava.assistant.conversation.domain.ConversationOrigin;
+import org.zalava.assistant.conversation.domain.ConversationReference;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
+import org.zalava.identity.channels.domain.ChannelOperationScope;
+import org.zalava.identity.channels.domain.ExternalChannelIdentity;
 
 /**
  * Real-browser foundation for the Zalava chat entry point. The only substituted boundary is the
@@ -40,19 +56,15 @@ class BrowserChatAcceptanceTest {
 
   @LocalServerPort private int port;
 
-  @org.springframework.beans.factory.annotation.Autowired
-  private org.zalava.identity.accounts.application.port.in.AccountLifecycle accounts;
+  @Autowired private AccountLifecycle accounts;
 
-  @org.springframework.beans.factory.annotation.Autowired
-  private org.zalava.identity.channels.application.port.in.ChannelIdentityLinks links;
+  @Autowired private ChannelIdentityLinks links;
 
-  @org.springframework.beans.factory.annotation.Autowired
-  private org.zalava.assistant.conversation.application.port.in.ConversationContinuation
-      continuation;
+  @Autowired private ConversationContinuation continuation;
 
-  @org.springframework.beans.factory.annotation.Autowired
-  @org.springframework.beans.factory.annotation.Qualifier("actorConversations")
-  private org.zalava.assistant.conversation.application.port.in.ActorConversations conversations;
+  @Autowired
+  @Qualifier("actorConversations")
+  private ActorConversations conversations;
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
@@ -87,32 +99,20 @@ class BrowserChatAcceptanceTest {
         page.navigate("http://127.0.0.1:" + port + "/login");
         page.locator("input[name=username]").fill(LOGIN);
         page.locator("input[name=password]").fill("BrowserTestPassword-123");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Sign in"))
-            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
         assertThat(page.url()).endsWith("/account/password");
         page.locator("input[name=currentPassword]").fill("BrowserTestPassword-123");
         page.locator("input[name=replacementPassword]").fill("BrowserTestPassword-456");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Change password"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
             .click();
         page.navigate("http://127.0.0.1:" + port + "/chat");
         assertThat(page.url()).endsWith("/chat");
         page.locator("#message").waitFor();
         page.getByText("Connected").waitFor();
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .waitFor(
-                new com.microsoft.playwright.Locator.WaitForOptions()
-                    .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"))
+            .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
         page.locator("#message").fill("what time is it now");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
         assertThat(outboundFrames)
             .anySatisfy(frame -> assertThat(frame).contains("chat.send", "what time is it now"));
 
@@ -126,14 +126,9 @@ class BrowserChatAcceptanceTest {
         String originalConversation =
             page.locator("select[aria-label='Select conversation']").inputValue();
         page.locator("#message").fill("first shell prompt");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
         page.getByText("first shell prompt").waitFor();
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("New conversation"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
             .click();
         page.waitForFunction(
             "document.querySelector(\"select[aria-label='Select conversation']\").options.length === 2");
@@ -150,28 +145,19 @@ class BrowserChatAcceptanceTest {
         assertThat(page.locator("#message").inputValue()).isEqualTo("unfinished draft");
 
         page.locator("#message").fill("render markdown");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
         page.getByText("Bold result").waitFor();
         assertThat(page.locator("pre code").innerText()).contains("System.out.println");
 
         page.locator("#message").fill("slow response");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
         page.getByText("Zalava is responding…").waitFor();
         page.getByText("Eventually complete.").waitFor();
         assertThat(page.getByText("Zalava is responding…").isHidden()).isTrue();
 
         page.locator("#message").fill("fail chat");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .click();
-        page.getByRole(com.microsoft.playwright.options.AriaRole.ALERT)
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
+        page.getByRole(AriaRole.ALERT)
             .getByText("Zalava could not complete that request")
             .waitFor();
         assertThat(page.locator(".messages").getAttribute("aria-busy")).isEqualTo("false");
@@ -181,42 +167,28 @@ class BrowserChatAcceptanceTest {
         assertThat(page.locator("#message").isVisible()).isTrue();
         assertThat(
                 page.getByRole(
-                        com.microsoft.playwright.options.AriaRole.BUTTON,
-                        new Page.GetByRoleOptions().setName("New conversation"))
+                        AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
                     .isVisible())
             .isTrue();
 
-        var actor =
-            new org.zalava.identity.accounts.domain.Actor(
-                accounts.findByLoginName(LOGIN).orElseThrow().id());
-        var identity =
-            new org.zalava.identity.channels.domain.ExternalChannelIdentity(
-                "telegram", "browser-continuation");
-        var link =
-            links.link(
-                actor,
-                identity,
-                org.zalava.identity.channels.domain.ChannelOperationScope.of("chat:send"));
+        var actor = new Actor(accounts.findByLoginName(LOGIN).orElseThrow().id());
+        var identity = new ExternalChannelIdentity("telegram", "browser-continuation");
+        var link = links.link(actor, identity, ChannelOperationScope.of("chat:send"));
         var source =
             continuation.channelConversation(
                 actor,
-                new org.zalava.assistant.conversation.domain.ConversationOrigin(
+                new ConversationOrigin(
                     "telegram", identity.subject(), "private-browser-chat", true));
         var sourceMessages =
             List.of(
-                new org.zalava.assistant.conversation.domain.ConversationMessage(
-                    org.zalava.assistant.conversation.domain.ConversationMessage.Role.USER,
-                    "Channel source question"),
-                new org.zalava.assistant.conversation.domain.ConversationMessage(
-                    org.zalava.assistant.conversation.domain.ConversationMessage.Role.ASSISTANT,
-                    "Channel source answer"));
+                new ConversationMessage(ConversationMessage.Role.USER, "Channel source question"),
+                new ConversationMessage(
+                    ConversationMessage.Role.ASSISTANT, "Channel source answer"));
         conversations.saveAll(actor, source, sourceMessages);
         page.reload();
         page.getByText("Connected").waitFor();
         page.locator("select[aria-label='Select conversation']").selectOption(source.value());
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.HEADING,
-                new Page.GetByRoleOptions().setName("telegram history"))
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("telegram history"))
             .waitFor();
         assertThat(page.locator("#message").count()).isZero();
         page.locator("#continuation-destination").focus();
@@ -229,10 +201,7 @@ class BrowserChatAcceptanceTest {
         assertThat(targetId).isNotEqualTo(source.value());
         page.getByText("Channel source answer").waitFor();
         page.locator("#message").fill("what time is it now");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Send"))
-            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
         page.getByText("12:34:56Z").waitFor();
         page.reload();
         page.getByText("Connected").waitFor();
@@ -240,11 +209,9 @@ class BrowserChatAcceptanceTest {
         page.getByText("12:34:56Z").waitFor();
         assertThat(conversations.findByReference(actor, source)).isEqualTo(sourceMessages);
         var targetMessages =
-            conversations.findByReference(
-                actor,
-                new org.zalava.assistant.conversation.domain.ConversationReference(targetId));
+            conversations.findByReference(actor, new ConversationReference(targetId));
         assertThat(targetMessages)
-            .extracting(org.zalava.assistant.conversation.domain.ConversationMessage::text)
+            .extracting(ConversationMessage::text)
             .contains("Channel source question", "Channel source answer", "what time is it now")
             .anySatisfy(text -> assertThat(text).contains("12:34:56Z"));
         for (int width : new int[] {375, 768, 1440}) {
@@ -252,25 +219,16 @@ class BrowserChatAcceptanceTest {
           if (width < 1024) {
             var disclosure =
                 page.getByRole(
-                    com.microsoft.playwright.options.AriaRole.BUTTON,
-                    new Page.GetByRoleOptions().setName("Workspace details"));
+                    AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Workspace details"));
             if (!"true".equals(disclosure.getAttribute("aria-expanded"))) disclosure.click();
           }
-          page.getByRole(
-                  com.microsoft.playwright.options.AriaRole.TAB,
-                  new Page.GetByRoleOptions().setName("Tools"))
-              .click();
+          page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Tools")).click();
           page.getByText("No pending permissions.").waitFor();
-          page.getByRole(
-                  com.microsoft.playwright.options.AriaRole.TAB,
-                  new Page.GetByRoleOptions().setName("Tools"))
+          page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Tools"))
               .press("ArrowRight");
           assertThat(page.evaluate("document.activeElement.textContent")).isEqualTo("Context");
 
-          page.getByRole(
-                  com.microsoft.playwright.options.AriaRole.TAB,
-                  new Page.GetByRoleOptions().setName("Context"))
-              .click();
+          page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Context")).click();
           page.getByText("Available knowledge sources").waitFor();
           assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
               .isEqualTo(true);
@@ -283,24 +241,20 @@ class BrowserChatAcceptanceTest {
             .waitFor();
         assertThat(
                 page.getByRole(
-                        com.microsoft.playwright.options.AriaRole.BUTTON,
+                        AriaRole.BUTTON,
                         new Page.GetByRoleOptions().setName("Continue conversation"))
                     .count())
             .isZero();
         page.navigate("http://127.0.0.1:" + port + "/settings");
         page.locator("textarea[name=instructions]").fill("Browser acceptance instructions.");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Save instructions"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save instructions"))
             .click();
         page.getByText("Workspace instructions updated.").waitFor();
         assertThat(page.locator("textarea[name=instructions]").inputValue())
             .isEqualTo("Browser acceptance instructions.\n");
 
         page.locator("textarea[name=instructions]").fill("   ");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Save instructions"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save instructions"))
             .click();
         page.getByText("Workspace instructions cannot be empty.").waitFor();
         assertThat(page.locator("textarea[name=instructions]").inputValue())
@@ -313,6 +267,147 @@ class BrowserChatAcceptanceTest {
                     .setPath(diagnosticDirectory.resolve("chat-tool-trace.zip")));
       }
     }
+  }
+
+  @Test
+  void userMarkdownHeadingsRemainVisible() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signInDisposableMember(page);
+      page.locator("#message").fill("## A visible formatting heading\n\nA plain sentence.");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.locator(".message.user").last().waitFor();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(Path.of("build/browser-acceptance/chat-heading.png"))
+              .setFullPage(true));
+      assertThat(page.locator(".message.user").last().innerText())
+          .contains("A visible formatting heading", "A plain sentence.");
+    }
+  }
+
+  @Test
+  void firstTokenWaitIsVisibleInsideTheAssistantBubble() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signInDisposableMember(page);
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        settleChatNavigation(page);
+        page.locator("#message").fill("slow response");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        page.getByText("Zalava is responding…", new Page.GetByTextOptions().setExact(true))
+            .waitFor();
+        page.locator(".message.assistant").last().scrollIntoViewIfNeeded();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-first-token-" + width + ".png"))
+                .setFullPage(true));
+        assertThat(page.locator(".message.assistant").last().getByRole(AriaRole.STATUS).count())
+            .isEqualTo(1);
+        page.waitForFunction(
+            "document.querySelector('.messages').getAttribute('aria-busy') === 'false'");
+        assertThat(page.locator(".message.assistant").last().innerText())
+            .contains("Eventually complete.");
+        assertThat(page.locator(".message.assistant").last().getByRole(AriaRole.STATUS).count())
+            .isZero();
+      }
+    }
+  }
+
+  @Test
+  void memoryReviewLinkWorksEvenWhenTheModelDoesNotRepeatTheUrl() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signInDisposableMember(page);
+      page.locator("#message").fill("propose a greeting memory");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.getByText(
+              "A memory proposal is ready for your review.",
+              new Page.GetByTextOptions().setExact(true))
+          .waitFor();
+      page.getByRole(
+              AriaRole.LINK,
+              new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+          .waitFor();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        settleChatNavigation(page);
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-memory-review-" + width + ".png"))
+                .setFullPage(true));
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
+      }
+      String href =
+          page.getByRole(
+                  AriaRole.LINK,
+                  new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+              .getAttribute("href");
+      page.getByRole(
+              AriaRole.LINK,
+              new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+          .click();
+      page.locator(href.substring(href.indexOf('#'))).waitFor();
+      assertThat(page.locator(href.substring(href.indexOf('#'))).innerText())
+          .contains("My preferred greeting is meadow-lamp.", "Awaiting your review");
+      page.locator(href.substring(href.indexOf('#'))).locator("[data-action=approve]").click();
+      page.getByText("Memory approved and stored.").waitFor();
+      page.navigate("http://127.0.0.1:" + port + "/chat");
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      assertThat(
+              page.getByRole(
+                      AriaRole.LINK,
+                      new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+                  .count())
+          .isZero();
+      page.locator("#message").fill("What greeting do I prefer?");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.waitForFunction(
+          "document.querySelector('.messages').getAttribute('aria-busy') === 'false'");
+      page.reload();
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      assertThat(page.locator(".message.user").last().locator("p").allTextContents())
+          .containsExactly("What greeting do I prefer?");
+    }
+  }
+
+  private void settleChatNavigation(Page page) {
+    page.waitForFunction(
+        """
+        () => {
+          const menu = document.querySelector('.navbar-menu');
+          if (!menu || window.innerWidth > 1024) return true;
+          const bounds = menu.getBoundingClientRect();
+          return menu.classList.contains('is-active') ? Math.abs(bounds.left) < .5 : bounds.right <= .5;
+        }
+        """);
+  }
+
+  private void signInDisposableMember(Page page) {
+    String login = "browser-chat-" + UUID.randomUUID();
+    var account = accounts.create(login, "BrowserTestPassword-123", AccountRole.MEMBER);
+    accounts.changePassword(account.id(), "BrowserTestPassword-123", "BrowserTestPassword-456");
+    page.navigate("http://127.0.0.1:" + port + "/login");
+    page.locator("input[name=username]").fill(login);
+    page.locator("input[name=password]").fill("BrowserTestPassword-456");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+    page.waitForURL("**/chat");
+    page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
   }
 
   private static Path workspace() {

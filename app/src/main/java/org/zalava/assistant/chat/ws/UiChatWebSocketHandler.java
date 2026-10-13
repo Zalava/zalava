@@ -25,6 +25,7 @@ import org.zalava.assistant.conversation.application.port.in.ConversationContinu
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
+import org.zalava.knowledge.memory.application.port.in.MemoryPromotions;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.Task;
 import org.zalava.web.ui.protocol.UiCommand;
@@ -51,6 +52,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   private final ChatAttachments attachments;
   private final ConversationContinuation continuation;
   private final ChatProviderReadiness readiness;
+  private final MemoryPromotions memoryPromotions;
 
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
@@ -110,7 +112,6 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         null);
   }
 
-  @Autowired
   public UiChatWebSocketHandler(
       ObjectMapper objectMapper,
       AuthenticatedActorResolver actors,
@@ -121,6 +122,32 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
       ChatAttachments attachments,
       ConversationContinuation continuation,
       ChatProviderReadiness readiness) {
+    this(
+        objectMapper,
+        actors,
+        commands,
+        queries,
+        executionStates,
+        approvalDecisions,
+        attachments,
+        continuation,
+        readiness,
+        null);
+  }
+
+  @Autowired
+  public UiChatWebSocketHandler(
+      ObjectMapper objectMapper,
+      AuthenticatedActorResolver actors,
+      ActorChatCommands commands,
+      ActorChatQueries queries,
+      UiExecutionStateQueries executionStates,
+      UiApprovalDecisions approvalDecisions,
+      ChatAttachments attachments,
+      ConversationContinuation continuation,
+      ChatProviderReadiness readiness,
+      MemoryPromotions memoryPromotions) {
+    this.memoryPromotions = memoryPromotions;
     this.readiness = readiness;
     this.continuation = continuation;
     this.objectMapper = objectMapper;
@@ -137,6 +164,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
     Actor actor = actor(session);
     sendConversationList(session, actor);
     sendSnapshot(session, selectedConversation(actor));
+    sendMemoryReviews(session, actor);
     if (executionStates != null) {
       executionStates.states(actor).forEach(state -> publishExecutionState(session, state));
     }
@@ -260,6 +288,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
                     conversation.value(),
                     fullText,
                     jobs.stream().map(job -> job.value()).toList()));
+            sendMemoryReviews(session, actor);
             if (executionStates != null) {
               jobs.forEach(
                   job -> publishExecutionState(session, executionStates.state(actor, job)));
@@ -272,6 +301,21 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
             sendFailure(session, "chat.send", "Zalava could not complete that request");
           }
         });
+  }
+
+  private void sendMemoryReviews(WebSocketSession session, Actor actor) {
+    if (memoryPromotions == null) return;
+    var reviews =
+        memoryPromotions.pending(actor).stream()
+            .limit(20)
+            .map(
+                proposal ->
+                    new UiEvent.MemoryReview(
+                        proposal.id(),
+                        proposal.text().substring(0, Math.min(120, proposal.text().length())),
+                        "/memory#proposal-" + proposal.id()))
+            .toList();
+    send(session, new UiEvent.MemoryReviews(UiCommandDecoder.VERSION, reviews));
   }
 
   private String withAttachmentManifest(Actor actor, UiCommand.SendChat command) {
