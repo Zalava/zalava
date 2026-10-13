@@ -26,6 +26,7 @@ import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.knowledge.application.KnowledgeIngestion;
 import org.zalava.knowledge.application.KnowledgeLibrary;
+import org.zalava.knowledge.application.KnowledgeProcessingQueries;
 import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
 import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.knowledge.domain.KnowledgeVisibility;
@@ -58,7 +59,11 @@ class KnowledgeControllerTest {
                     0)));
     controller =
         new KnowledgeController(
-            library, new AuthenticatedActorResolver(accounts), ingestion, lifecycle);
+            library,
+            new AuthenticatedActorResolver(accounts),
+            ingestion,
+            lifecycle,
+            mock(KnowledgeProcessingQueries.class));
   }
 
   @Test

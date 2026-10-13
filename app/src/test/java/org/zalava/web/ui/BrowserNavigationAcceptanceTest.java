@@ -10,8 +10,10 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -31,8 +33,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.api.extensions.content.ContentExtractionFailureCategory;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.knowledge.application.KnowledgeSourceLifecycle;
+import org.zalava.knowledge.application.port.out.KnowledgeExtractionRecordStore;
+import org.zalava.knowledge.domain.KnowledgeExtractionRecord;
+import org.zalava.knowledge.domain.KnowledgeSourceId;
 import org.zalava.support.ZalavaComponentTestConfiguration;
 
 /**
@@ -374,6 +382,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Autowired AccountLifecycle accounts;
+  @Autowired KnowledgeSourceLifecycle knowledgeLifecycle;
+  @Autowired KnowledgeExtractionRecordStore extractionRecords;
 
   @Test
   void temporaryAdministratorMustChangePasswordBeforeChatAndOldPasswordStopsWorking()
@@ -598,6 +608,200 @@ class BrowserNavigationAcceptanceTest {
           capture(page, "error-" + expected + "-" + width);
         }
       }
+    }
+  }
+
+  @Test
+  void knowledgeSearchControlsStayWithinViewport() throws Exception {
+    checkLibrarySearch("/knowledge");
+  }
+
+  @Test
+  void memorySearchControlsStayWithinViewport() throws Exception {
+    checkLibrarySearch("/memory");
+  }
+
+  private void checkLibrarySearch(String path) throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
+      page.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(200);
+        capture(page, path.substring(1) + "-search-" + width);
+        for (Locator control :
+            page.locator(
+                    "form[action='"
+                        + path
+                        + "'] input, form[action='"
+                        + path
+                        + "'] select, form[action='"
+                        + path
+                        + "'] button")
+                .all()) {
+          var bounds = control.boundingBox();
+          assertThat(bounds.x).isGreaterThanOrEqualTo(0);
+          assertThat(bounds.x + bounds.width)
+              .as("Search controls are visible within the viewport")
+              .isLessThanOrEqualTo(width + 1.0);
+        }
+      }
+    }
+  }
+
+  @Test
+  void knowledgeUploadSharingAndMemberReadOnlyViewsWorkThroughTheUi() throws Exception {
+    String name = "browser-library-" + UUID.randomUUID() + ".txt";
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext adminContext = browser.newContext();
+        BrowserContext memberContext = browser.newContext()) {
+      Page admin = adminContext.newPage();
+      signIn(admin, ADMIN_LOGIN, ADMIN_PASSWORD);
+      admin.waitForURL("**/chat");
+      admin.navigate(baseUrl() + "/knowledge");
+      admin
+          .locator("#knowledge-file")
+          .setInputFiles(
+              new FilePayload(
+                  name,
+                  "text/plain",
+                  "Synthetic library acceptance document.".getBytes(StandardCharsets.UTF_8)));
+      admin
+          .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source uploaded for processing.").waitFor();
+      Locator sourceLink =
+          admin.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true));
+      String href = sourceLink.getAttribute("href");
+      Locator card = admin.locator("li.box").filter(new Locator.FilterOptions().setHas(sourceLink));
+      for (int width : List.of(390, 768, 1440)) {
+        admin.setViewportSize(width, 900);
+        capture(admin, "knowledge-pending-" + width);
+        assertThat(admin.navigate(baseUrl() + href).status()).isEqualTo(200);
+        assertThat(admin.locator("body").innerText())
+            .contains("Waiting for a document processing module");
+        capture(admin, "knowledge-processing-detail-" + width);
+        admin.navigate(baseUrl() + "/knowledge");
+      }
+      // Seed only a processor outcome for visual diagnostics; this does not claim real extraction.
+      var owner = new Actor(accounts.findByLoginName(ADMIN_LOGIN).orElseThrow().id());
+      var sourceId = new KnowledgeSourceId(UUID.fromString(href.substring("/knowledge/".length())));
+      var candidate = knowledgeLifecycle.beginReprocessing(owner, sourceId, "qa-parser", "1");
+      extractionRecords.record(
+          KnowledgeExtractionRecord.failed(
+              candidate,
+              ContentExtractionFailureCategory.MALFORMED_INPUT,
+              "private processor fixture detail"));
+      knowledgeLifecycle.completeReprocessing(owner, candidate, false);
+      for (int width : List.of(390, 768, 1440)) {
+        admin.setViewportSize(width, 900);
+        admin.navigate(baseUrl() + href);
+        assertThat(admin.locator("body").innerText())
+            .contains("Processing failed", "The document could not be read")
+            .doesNotContain("private processor fixture detail");
+        capture(admin, "knowledge-failed-processing-" + width);
+      }
+      admin.navigate(baseUrl() + "/knowledge");
+      card.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Share").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source sharing updated.").waitFor();
+      Page member = memberContext.newPage();
+      signIn(member, MEMBER_LOGIN, MEMBER_PASSWORD);
+      member.waitForURL("**/chat");
+      for (int width : List.of(390, 768, 1440)) {
+        member.setViewportSize(width, 900);
+        member.navigate(baseUrl() + "/knowledge");
+        Locator sharedLink =
+            member.getByRole(
+                AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true));
+        Locator sharedCard =
+            member.locator("li.box").filter(new Locator.FilterOptions().setHas(sharedLink));
+        assertThat(sharedCard.innerText()).contains("Shared read-only");
+        assertThat(sharedCard.locator("form").count()).isZero();
+        capture(member, "knowledge-shared-read-only-" + width);
+      }
+      card.getByRole(
+              AriaRole.BUTTON,
+              new Locator.GetByRoleOptions().setName("Make private").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source sharing updated.").waitFor();
+      assertThat(member.navigate(baseUrl() + href).status()).isEqualTo(404);
+      admin.reload();
+      assertThat(
+              card.getByRole(
+                      AriaRole.BUTTON,
+                      new Locator.GetByRoleOptions().setName("Share").setExact(true))
+                  .count())
+          .isEqualTo(1);
+      card.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Delete").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.STATUS).getByText("Source deleted.").waitFor();
+      admin.reload();
+      assertThat(
+              admin
+                  .getByRole(
+                      AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true))
+                  .count())
+          .isZero();
+      admin
+          .locator("#knowledge-file")
+          .setInputFiles(
+              new FilePayload(
+                  "invalid.pdf", "application/pdf", "not a pdf".getBytes(StandardCharsets.UTF_8)));
+      admin
+          .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true))
+          .click();
+      admin.getByRole(AriaRole.ALERT).getByText("Source upload could not be completed.").waitFor();
+      for (int width : List.of(390, 768, 1440)) {
+        admin.setViewportSize(width, 900);
+        capture(admin, "knowledge-upload-error-" + width);
+      }
+    }
+  }
+
+  @Test
+  void memoryScopeExplanationReviewAndDetailsRemainReadable() throws Exception {
+    String text = "Browser private preference " + UUID.randomUUID();
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
+      page.waitForURL("**/chat");
+      page.navigate(baseUrl() + "/memory");
+      page.locator("#proposal-scope").selectOption("USER");
+      page.locator("#proposal-text").fill(text);
+      page.locator("[data-action=propose]").click();
+      Locator proposal =
+          page.locator("[data-memory-proposal]")
+              .filter(new Locator.FilterOptions().setHasText(text));
+      proposal.waitFor();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        capture(page, "memory-proposal-" + width);
+      }
+      proposal.locator("[data-action=approve]").click();
+      page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(text).setExact(true))
+          .click();
+      for (int width : List.of(390, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        assertThat(page.locator("body").innerText())
+            .contains(
+                "Private to your account", "Personal preferences", "Approved memory proposal");
+        capture(page, "memory-readable-detail-" + width);
+      }
+      page.getByText("Stored metadata", new Page.GetByTextOptions().setExact(true)).click();
+      assertThat(page.locator("[data-memory-id]").isVisible()).isTrue();
+      capture(page, "memory-metadata-expanded-1440");
     }
   }
 
