@@ -1024,3 +1024,10 @@ body {
 @media (max-width: 1024px) { .library-search, .library-search.memory-search { grid-template-columns: minmax(0, 1fr); } }
 
 [data-memory-proposal]:target { outline: 2px solid var(--zalava-primary); outline-offset: 3px; }
+
+.module-capability-search { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; }
+.module-capability-search .field { flex: 1 1 15rem; min-width: 0; margin-bottom: 0; }
+[data-module-developer-options] summary { cursor: pointer; min-height: 44px; display: list-item; }
+[data-module-developer-options] .columns { min-width: 0; }
+
+.module-copy [data-artifact-digest] { overflow-wrap: anywhere; }

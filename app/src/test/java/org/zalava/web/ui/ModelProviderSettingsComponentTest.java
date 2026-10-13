@@ -50,7 +50,7 @@ class ModelProviderSettingsComponentTest {
   }
 
   @Test
-  void persistsProviderSecretWithoutEchoAndShowsRestartState() throws Exception {
+  void persistsProviderSecretWithoutEchoAndAppliesItWithoutRestart() throws Exception {
     mvc.perform(
             post("/settings/provider")
                 .param("provider", "openai")
@@ -58,12 +58,12 @@ class ModelProviderSettingsComponentTest {
                 .param("apiKey", "not-a-real-secret")
                 .param("baseUrl", "https://example.test/v1"))
         .andExpect(redirectedUrl("/settings?section=provider"))
-        .andExpect(flash().attribute("settingsMessage", containsString("Restart Zalava")));
+        .andExpect(flash().attribute("settingsMessage", containsString("saved and applied")));
     assertThat(store.read()).containsEntry("provider", "openai");
     mvc.perform(get("/settings").param("section", "provider"))
         .andExpect(content().string(not(containsString("not-a-real-secret"))))
         .andExpect(content().string(containsString("Leave blank to keep it")))
-        .andExpect(content().string(containsString("Restart required")));
+        .andExpect(content().string(not(containsString("Restart required"))));
     mvc.perform(
             post("/settings/provider")
                 .param("provider", "openai")

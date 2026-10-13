@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.modules.development.adapter.in.agent.CapabilityGapTools;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -16,7 +17,9 @@ class CapabilityGapToolsTest {
   void returnsBoundedRecommendationWithoutCreatingADevelopmentRequest() throws Exception {
     JsonNode result =
         JSON.readTree(
-            new CapabilityGapTools()
+            new CapabilityGapTools(
+                    capability -> ModuleSuggestions.Outcome.of(ModuleSuggestions.Status.NO_MATCH),
+                    () -> false)
                 .recommend("pollen forecast", "Can you tell me tomorrow's pollen forecast?"));
 
     assertThat(result.path("status").stringValue("")).isEqualTo("REVIEW_REQUIRED");
@@ -28,6 +31,13 @@ class CapabilityGapToolsTest {
     assertThat(result.path("automaticActions")).isEmpty();
     assertThat(result.toString())
         .doesNotContain("requestId", "workspacePath", "artifactPath", "installation");
+  }
+
+  @Test
+  void unconfiguredCatalogIsNotEvidenceForModuleDevelopment() throws Exception {
+    JsonNode result = JSON.readTree(new CapabilityGapTools().recommend("jobs", "Create a job"));
+    assertThat(result.path("status").asString()).isEqualTo("CATALOG_DISABLED");
+    assertThat(result.toString()).doesNotContain("manual_module_development");
   }
 
   @Test

@@ -30,7 +30,7 @@
             <p class="has-text-grey">${model.moduleId()}</p>
             <p class="mt-3">
                 <span class="tag ${model.statusClass()}" data-module-status>${model.statusLabel()}</span>
-                <span class="tag is-light" data-runtime-state="${model.lifecycleState()}">${model.lifecycleState().replace('_', ' ')}</span>
+                <span class="tag is-light" data-runtime-state="${model.lifecycleState()}">${model.lifecycleState().equals("AVAILABLE") ? "Available in catalog" : model.lifecycleState().replace('_', ' ')}</span>
                 @if(model.version() != null)
                     <span class="tag is-light">Version ${model.version()}</span>
                 @endif
@@ -84,7 +84,9 @@
                 <div class="level-left"><h2 id="module-configuration-heading" class="title is-5 mb-0">Configuration</h2></div>
                 <div class="level-right">
             <span class="tag ${model.configuration().cssClass()}" data-configuration-status>${model.configuration().label()}</span>
-            <span class="tag is-light" data-stored-secret-count>${model.storedSecretCount()} stored secret reference(s)</span>
+            @if(model.loaded())
+                <span class="tag is-light" data-stored-secret-count>${model.storedSecretCount()} stored secret reference(s)</span>
+            @endif
                 </div>
             </div>
         @if(!model.configurationFields().isEmpty())
@@ -124,7 +126,15 @@
                 </div>
             </form>
         @else
-            <p class="has-text-grey mt-4">No configuration is required.</p>
+            @if(model.loaded())
+                <p class="has-text-grey mt-4">No configuration is required.</p>
+            @else
+                @if(model.enabledExternal())
+                    <p class="has-text-grey mt-4">Restart Zalava to load this module and see its configuration requirements.</p>
+                @else
+                    <p class="has-text-grey mt-4">Install and load this module to see its configuration requirements.</p>
+                @endif
+            @endif
         @endif
         @if(model.enabledExternal())
                 <form method="post" action="/modules/${model.moduleId()}/disable" class="mt-4">
@@ -195,7 +205,11 @@
         <section class="box" aria-labelledby="module-permissions-heading">
             <h2 id="module-permissions-heading" class="title is-5">Declared permissions</h2>
             @if(model.declaredPermissions().isEmpty())
-                <p class="has-text-grey">This module declares no permissions.</p>
+                @if(model.loaded() || model.enabledExternal())
+                    <p class="has-text-grey">This module declares no permissions.</p>
+                @else
+                    <p class="has-text-grey">Declared permissions will be available after installation.</p>
+                @endif
             @else
                 <ul data-declared-permissions>
                     @for(String permission : model.declaredPermissions())

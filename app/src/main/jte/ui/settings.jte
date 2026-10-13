@@ -44,7 +44,7 @@
 <section class="box settings-card" aria-labelledby="provider-heading">
 <div class="settings-actions mb-3"><h2 id="provider-heading" class="title is-4 mb-0">Model provider</h2>
 @if(providerSettings.restartRequired())<span class="tag is-warning is-light">Restart required</span>@endif</div>
-<p class="has-text-grey mb-4">Running provider: <strong>${providerSettings.runningLabel()}</strong>. Saved changes apply after restarting Zalava.</p>
+<p class="has-text-grey mb-4">Running provider: <strong>${providerSettings.runningLabel()}</strong>. Saved changes apply immediately to new requests.</p>
 <form method="get" action="/settings" class="provider-selection" data-repeatable><input type="hidden" name="section" value="provider">
 <div class="field"><label class="label" for="provider-choice">Provider</label><div class="select is-fullwidth"><select id="provider-choice" name="provider">
 @for(Provider choice : providers)<option value="${choice.id()}" selected="${choice.id().equals(providerSettings.provider().id())}">${choice.label()}</option>@endfor
@@ -60,7 +60,7 @@
 </div>
 @endfor
 <button class="button is-primary mt-3" type="submit">Save provider</button></form>
-<p class="help mt-3">Saving stores configuration; it does not verify that the provider can respond. Restart Zalava, then try a message in Chat.</p>
+<p class="help mt-3">Saving applies the configuration; it does not verify that the provider can respond. Try a message in Chat.</p>
 <details class="mt-5"><summary>Workspace location</summary><p class="mt-2 settings-path">${model.workspacePath()}</p></details>
 </section>
 @elseif(section.equals("modules"))

@@ -1,15 +1,18 @@
 package org.zalava.web.ui;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.api.ModuleDescriptor;
 import org.zalava.api.ProviderDescriptor;
@@ -100,8 +104,14 @@ public class ModulesController {
   }
 
   @GetMapping("/modules")
-  public String modules(Model model, CsrfToken csrf) {
-    model.addAttribute("model", buildModel());
+  public String modules(@RequestParam(defaultValue = "") String q, Model model, CsrfToken csrf) {
+    if (q.length() > 200) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Module search is limited to 200 characters");
+    }
+    String query = q.strip();
+    model.addAttribute("catalogQuery", query);
+    model.addAttribute("model", buildModel(query));
     model.addAttribute("csrf", csrf);
     return "ui/modules";
   }
@@ -149,7 +159,7 @@ public class ModulesController {
               + " installed ("
               + request.artifactDigest()
               + "). Restart Zalava once to load its classes.");
-    } catch (java.io.IOException exception) {
+    } catch (IOException exception) {
       redirectAttributes.addFlashAttribute(
           "marketplaceError", "Unable to read uploaded module JAR.");
     } catch (RuntimeException exception) {
@@ -440,7 +450,7 @@ public class ModulesController {
     return "redirect:/modules/" + moduleId + "#configuration";
   }
 
-  private ModulesModel buildModel() {
+  private ModulesModel buildModel(String query) {
     Map<String, ModuleQueries.EnabledModule> enabled =
         moduleQueries.enabledModules().stream()
             .collect(
@@ -476,6 +486,7 @@ public class ModulesController {
             .toList();
     List<CatalogModuleEntry> catalogModules =
         marketplace.snapshot().modules().stream()
+            .filter(module -> matches(module, query))
             .map(
                 module ->
                     new CatalogModuleEntry(
@@ -502,6 +513,13 @@ public class ModulesController {
         new RestartEntry(restart.availability().name(), restart.phase().name(), restart.message()));
   }
 
+  private static boolean matches(ModuleMarketplace.Module module, String query) {
+    String text =
+        (module.moduleId() + " " + module.displayName() + " " + module.description())
+            .toLowerCase(Locale.ROOT);
+    return text.contains(query.toLowerCase(Locale.ROOT));
+  }
+
   private ModuleDetailModel detailModel(
       String moduleId,
       ZalavaModule loaded,
@@ -512,7 +530,10 @@ public class ModulesController {
       String moduleError,
       String configurationMessage,
       String configurationError) {
-    ConfigurationHealth health = loaded != null ? configurationStatus(loaded) : status(moduleId);
+    ConfigurationHealth health =
+        loaded != null
+            ? configurationStatus(loaded)
+            : new ConfigurationHealth("Not loaded", "is-light");
     ModuleConfigurationSnapshot configurationSnapshot =
         loaded == null
             ? null
@@ -546,7 +567,7 @@ public class ModulesController {
             ? provenance(enabled)
             : loaded != null && isExternal(loaded)
                 ? "External module (restart to unload)"
-                : "Bundled with Zalava";
+                : loaded != null ? "Bundled with Zalava" : "Available in the module catalog";
     List<String> permissions = enabled != null ? enabled.declaredPermissions() : List.of();
     List<ProviderEntry> providers =
         zalavaRuntime.loadedProviders().stream()
@@ -591,7 +612,9 @@ public class ModulesController {
         displayName,
         description,
         version,
-        health.label(),
+        loaded != null
+            ? health.label()
+            : enabled != null ? "Installed · restart to load" : "Not installed",
         health.cssClass(),
         provenance,
         permissions,

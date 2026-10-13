@@ -64,6 +64,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-tool-search-advisor'
     implementation 'org.springframework.ai:spring-ai-tool-search-tool'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.cloud:spring-cloud-context:5.0.3'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'

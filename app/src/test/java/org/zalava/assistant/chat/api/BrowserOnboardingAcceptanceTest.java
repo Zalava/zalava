@@ -8,6 +8,7 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,14 +91,16 @@ class BrowserOnboardingAcceptanceTest {
           .isEqualTo("/settings?section=provider");
       page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Set up a provider"))
           .click();
-      assertThat(page.locator(".settings-sections").isVisible()).isTrue();
+      PlaywrightAssertions.assertThat(page.locator(".settings-sections")).isVisible();
       page.locator("#provider-choice").selectOption("anthropic");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Choose provider"))
           .click();
       page.locator("input[name=apiKey]").fill("browser-provider-key");
       page.locator("input[name=model]").fill("test-model");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save provider")).click();
-      page.getByText("Provider configuration saved.", new Page.GetByTextOptions().setExact(false))
+      page.getByText(
+              "Provider configuration saved and applied.",
+              new Page.GetByTextOptions().setExact(false))
           .waitFor();
       assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
       page.reload();

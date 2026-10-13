@@ -6,19 +6,29 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.zalava.assistant.models.configuration.application.port.out.ModelProviderActivation;
 import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog;
 import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog.Provider;
 import org.zalava.platform.configuration.application.port.out.ConfigurationStore;
 
-/** Persisted selection is applied on restart, before Spring AI auto-configuration. */
+/** Validates and persists selection, with prepared live activation when the host supports it. */
 public final class ModelProviderConfiguration {
   private final ConfigurationStore store;
+  private final ModelProviderActivation activation;
   private final BiFunction<String, String, String> environment;
 
   public ModelProviderConfiguration(
       ConfigurationStore store, BiFunction<String, String, String> environment) {
+    this(store, environment, ModelProviderActivation.onRestart());
+  }
+
+  public ModelProviderConfiguration(
+      ConfigurationStore store,
+      BiFunction<String, String, String> environment,
+      ModelProviderActivation activation) {
     this.store = store;
     this.environment = environment;
+    this.activation = activation;
   }
 
   public record DisplayField(
@@ -108,7 +118,11 @@ public final class ModelProviderConfiguration {
           "Provide both AWS access and secret keys, or leave both empty.");
     var configurations = configurations(saved);
     configurations.put(id, values);
-    store.write(Map.of("provider", id, "configurations", configurations));
+    Map<String, Object> candidate = Map.of("provider", id, "configurations", configurations);
+    try (var prepared = activation.prepare(runtimeProperties(candidate))) {
+      store.write(candidate);
+      prepared.commit();
+    }
   }
 
   private String selected(Map<String, Object> saved) {
@@ -175,6 +189,7 @@ public final class ModelProviderConfiguration {
       properties.put("spring.ai.google.genai.location", "");
       properties.put("spring.ai.google.genai.credentials-uri", "");
     }
+    properties.put("zalava.model.tool-calling-enabled", true);
     properties.putAll(provider.fixedProperties());
     return properties;
   }

@@ -8,6 +8,7 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.ScreenshotType;
 import java.io.IOException;
@@ -158,7 +159,8 @@ class BrowserMonitoringAcceptanceTest {
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View Zalava logs"))
             .click();
         assertThat(page.url()).endsWith("/monitoring/logs");
-        assertThat(page.locator("body").innerText()).contains("browser log before restart");
+        PlaywrightAssertions.assertThat(page.locator(".zalava-log-output"))
+            .containsText("browser log before restart");
       } finally {
         stopTrace(context);
       }

@@ -42,8 +42,9 @@ The public repository is a Gradle multi-project build: `module-api` is the stabl
 The host owns policy enforcement, validation, persistence, lifecycle, authorization, and audit boundaries. Business capabilities use explicit ports; adapters connect frameworks and external systems. Modules supply provider factories and instances, allowing configuration, permission, lifecycle, and audit decisions to attach to the provider that performs work. Modules do not depend on each other directly or receive arbitrary host application objects.
 
 Browser CI must use deterministic fixtures without local provider credentials.
-Provider acceptance uses the integrated Settings form and verifies persistence
-across a restart of the packaged host. See [model provider configuration](model-providers.md)
+Provider acceptance uses the integrated Settings form, verifies immediate client
+changes without restart, and checks persistence across a separate packaged-host
+restart for module loading. See [model provider configuration](model-providers.md)
 for the supported integrations and configuration lifecycle. Navigation acceptance verifies the reviewed
 sidebar, card layout and surface color and retains its screenshot; a PNG byte
 hash is not a portable pixel comparison across operating-system font renderers.
