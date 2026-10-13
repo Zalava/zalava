@@ -148,6 +148,9 @@ class ReleasedModuleDistributableAcceptanceTest {
               .isEqualTo(403);
         }
         page.navigate(baseUrl + "/modules");
+        if (page.locator("[data-module-developer-options]").getAttribute("open") == null) {
+          page.locator("[data-module-developer-options] summary").click();
+        }
         page.locator("input[name=moduleJar]")
             .setInputFiles(
                 new FilePayload("invalid.jar", "application/java-archive", new byte[] {1}));
@@ -163,6 +166,9 @@ class ReleasedModuleDistributableAcceptanceTest {
         for (Release release : releases) {
           if (release.moduleId().equals("zalava-module-time")) continue;
           page.navigate(baseUrl + "/modules");
+          if (page.locator("[data-module-developer-options]").getAttribute("open") == null) {
+            page.locator("[data-module-developer-options] summary").click();
+          }
           page.locator("input[name=moduleJar]").setInputFiles(release.path());
           page.locator("[data-action=upload-module]").click();
           page.getByText("Uploaded " + release.moduleId() + " " + release.version() + " installed")
@@ -570,6 +576,9 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(page.locator("#message").isDisabled()).isTrue();
         Release tika = downloadReleases(Set.of("tika")).getFirst();
         page.navigate(baseUrl + "/modules");
+        if (page.locator("[data-module-developer-options]").getAttribute("open") == null) {
+          page.locator("[data-module-developer-options] summary").click();
+        }
         page.locator("input[name=moduleJar]").setInputFiles(tika.path());
         page.locator("[data-action=upload-module]").click();
         page.getByText("Uploaded " + tika.moduleId() + " " + tika.version() + " installed")

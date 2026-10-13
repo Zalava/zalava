@@ -9,9 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -37,6 +39,8 @@ import org.zalava.modules.catalog.application.port.out.ModuleReleaseIndexRetriev
 import org.zalava.modules.catalog.install.application.port.out.CuratedMavenArtifactResolver;
 import org.zalava.modules.catalog.install.application.port.out.ModuleLocatorReleaseLocator;
 import org.zalava.support.AuthenticatedMockMvcTestConfiguration;
+import org.zalava.support.ComponentTestAccounts;
+import org.zalava.support.PostgreSqlTestDatabase;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -54,7 +58,7 @@ class ModuleMarketplaceComponentTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private AccountLifecycle accounts;
-  @Autowired private org.zalava.support.ComponentTestAccounts componentTestAccounts;
+  @Autowired private ComponentTestAccounts componentTestAccounts;
 
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {
@@ -64,7 +68,7 @@ class ModuleMarketplaceComponentTest {
     registry.add(
         "zalava.module-configuration.root",
         () -> WORKSPACE.resolve("module-configuration").toString());
-    org.zalava.support.PostgreSqlTestDatabase.register(registry);
+    PostgreSqlTestDatabase.register(registry);
     registry.add("agent.modules.local-artifact-roots", () -> WORKSPACE.toString());
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("agent.channels.telegram.token", () -> "false");
@@ -98,6 +102,59 @@ class ModuleMarketplaceComponentTest {
         .andExpect(content().string(containsString("data-catalog-module=\"zalava-module-tika\"")))
         .andExpect(content().string(containsString("Content extraction")))
         .andExpect(content().string(containsString("Check catalog")));
+  }
+
+  @Test
+  void catalogOnlyDetailsDoNotInventInstallationOrConfiguration() throws Exception {
+    refreshCatalog();
+    String html =
+        mockMvc
+            .perform(get("/modules/zalava-module-tasks"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertThat(html)
+        .contains(
+            "Not installed",
+            "Available in the module catalog",
+            "Install and load this module to see its configuration requirements.")
+        .doesNotContain(
+            "Bundled with Zalava",
+            "Setup required",
+            "No configuration is required.",
+            "This module declares no permissions.");
+  }
+
+  @Test
+  void capabilityBrowsingPrecedesCollapsedDeveloperWorkflows() throws Exception {
+    refreshCatalog();
+    String html = modulesHtml();
+    assertThat(html).contains("name=\"q\"", "Search capabilities", "data-module-developer-options");
+    assertThat(html.indexOf("id=\"marketplace-heading\""))
+        .isLessThan(html.indexOf("id=\"uploaded-module-installation-heading\""));
+    assertThat(html)
+        .contains("<details class=\"box module-list mt-5\" data-module-developer-options>");
+  }
+
+  @Test
+  void searchesCapabilityDescriptionsAndShowsUsefulNoMatchRecovery() throws Exception {
+    refreshCatalog();
+    mockMvc
+        .perform(get("/modules").param("q", "EXTRACTION"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("data-catalog-module=\"zalava-module-tika\"")));
+    String noMatch =
+        mockMvc
+            .perform(get("/modules").param("q", "unmatched-capability"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertThat(noMatch)
+        .contains("No modules match this search.", "Clear search")
+        .doesNotContain("data-catalog-module=\"zalava-module-tika\"");
+    mockMvc.perform(get("/modules").param("q", "x".repeat(201))).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -237,7 +294,9 @@ class ModuleMarketplaceComponentTest {
       return new ModuleLocatorReleaseLocator() {
         @Override
         public List<Module> modules() {
-          return List.of(new Module("zalava-module-tika", "Tika", "Content extraction"));
+          return List.of(
+              new Module("zalava-module-tika", "Tika", "Content extraction"),
+              new Module("zalava-module-tasks", "Tasks", "Create and schedule jobs"));
         }
 
         @Override
@@ -287,10 +346,8 @@ class ModuleMarketplaceComponentTest {
         return HexFormat.of()
             .formatHex(
                 MessageDigest.getInstance("SHA-256")
-                    .digest(
-                        "fixture module artifact"
-                            .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-      } catch (java.security.NoSuchAlgorithmException ex) {
+                    .digest("fixture module artifact".getBytes(StandardCharsets.UTF_8)));
+      } catch (NoSuchAlgorithmException ex) {
         throw new IllegalStateException(ex);
       }
     }

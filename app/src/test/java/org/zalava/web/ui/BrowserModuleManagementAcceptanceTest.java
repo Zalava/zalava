@@ -8,15 +8,21 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.FilePayload;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -105,6 +111,61 @@ class BrowserModuleManagementAcceptanceTest {
   }
 
   @Test
+  void capabilitiesAreSearchableAndCatalogOnlyDetailsStayTruthful() throws IOException {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signIn(page);
+      page.navigate(baseUrl() + "/modules");
+      assertThat(page.locator("[data-module-developer-options]").getAttribute("open")).isNull();
+      assertThat(page.locator("input[name=moduleJar]").isVisible()).isFalse();
+      page.locator("[data-action=refresh-catalog]").click();
+      page.locator("[data-catalog-module=zalava-module-tasks]").waitFor();
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        page.locator("#module-search").fill("schedule");
+        page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true))
+            .click();
+        assertThat(page.locator("[data-catalog-module]").count()).isEqualTo(1);
+        assertThat(page.locator("[data-catalog-module=zalava-module-tasks]").innerText())
+            .contains("Not installed");
+        capture(page, "module-search-" + width);
+        page.locator("[data-catalog-module=zalava-module-tasks] [data-catalog-detail-link]")
+            .click();
+        assertThat(page.locator("[data-module-status]").innerText()).isEqualTo("Not installed");
+        assertThat(page.locator("main").innerText())
+            .contains(
+                "Available in the module catalog",
+                "Install and load this module to see its configuration requirements.")
+            .doesNotContain(
+                "Bundled with Zalava", "Setup required", "No configuration is required.");
+        capture(page, "module-catalog-detail-" + width);
+        page.navigate(baseUrl() + "/modules?q=unmatched-capability");
+        page.getByText("No modules match this search.", new Page.GetByTextOptions().setExact(false))
+            .waitFor();
+        capture(page, "module-no-match-" + width);
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Clear search")).click();
+      }
+      page.locator("[data-module-developer-options] summary").click();
+      assertThat(page.locator("input[name=moduleJar]").isVisible()).isTrue();
+      assertThat(page.locator("input[name=projectDirectory]").isVisible()).isTrue();
+      capture(page, "module-developer-options-390");
+    }
+  }
+
+  private static void capture(Page page, String name) throws IOException {
+    assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth <= innerWidth"))
+        .isTrue();
+    Path directory = Path.of("build/browser-acceptance/module-catalog");
+    Files.createDirectories(directory);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(directory.resolve(name + ".png")).setFullPage(true));
+  }
+
+  @Test
   void preparesLocalDevelopmentInstallationThroughModulesPage() throws IOException {
     LOCAL_DEVELOPMENT_REQUEST.set(null);
     try (Playwright playwright = Playwright.create();
@@ -117,6 +178,7 @@ class BrowserModuleManagementAcceptanceTest {
 
       assertThat(page.url()).isEqualTo(baseUrl() + "/modules");
 
+      page.locator("[data-module-developer-options] summary").click();
       page.getByRole(
               AriaRole.HEADING,
               new Page.GetByRoleOptions().setName("Install a local build").setExact(true))
@@ -150,12 +212,11 @@ class BrowserModuleManagementAcceptanceTest {
       Page page = context.newPage();
       signIn(page);
       page.navigate(baseUrl() + "/modules");
+      page.locator("[data-module-developer-options] summary").click();
       page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Upload a module JAR"))
           .waitFor();
       page.locator("input[name=moduleJar][type=file]")
-          .setInputFiles(
-              new com.microsoft.playwright.options.FilePayload(
-                  "fixture.jar", "application/java-archive", uploadedJar()));
+          .setInputFiles(new FilePayload("fixture.jar", "application/java-archive", uploadedJar()));
       page.locator("[data-action=upload-module]").click();
       page.getByText("Uploaded uploaded-fixture 1.0.0 installed").waitFor();
     }
@@ -183,9 +244,9 @@ class BrowserModuleManagementAcceptanceTest {
   }
 
   private static byte[] uploadedJar() throws IOException {
-    try (java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
-        java.util.jar.JarOutputStream jar = new java.util.jar.JarOutputStream(bytes)) {
-      jar.putNextEntry(new java.util.jar.JarEntry("module-metadata.yaml"));
+    try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        JarOutputStream jar = new JarOutputStream(bytes)) {
+      jar.putNextEntry(new JarEntry("module-metadata.yaml"));
       jar.write(
           """
           schemaVersion: 1
@@ -215,7 +276,7 @@ class BrowserModuleManagementAcceptanceTest {
               security:
                 permissions: [file.read]
           """
-              .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+              .getBytes(StandardCharsets.UTF_8));
       jar.closeEntry();
       jar.finish();
       return bytes.toByteArray();
@@ -302,7 +363,9 @@ class BrowserModuleManagementAcceptanceTest {
       return new ModuleLocatorReleaseLocator() {
         @Override
         public List<Module> modules() {
-          return List.of(new Module("zalava-module-tika", "Tika", "Content extraction"));
+          return List.of(
+              new Module("zalava-module-tika", "Tika", "Content extraction"),
+              new Module("zalava-module-tasks", "Tasks", "Create and schedule jobs"));
         }
 
         @Override
@@ -352,10 +415,8 @@ class BrowserModuleManagementAcceptanceTest {
         return HexFormat.of()
             .formatHex(
                 MessageDigest.getInstance("SHA-256")
-                    .digest(
-                        "fixture module artifact"
-                            .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-      } catch (java.security.NoSuchAlgorithmException ex) {
+                    .digest("fixture module artifact".getBytes(StandardCharsets.UTF_8)));
+      } catch (NoSuchAlgorithmException ex) {
         throw new IllegalStateException(ex);
       }
     }
