@@ -12,6 +12,7 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.RequestOptions;
@@ -650,9 +651,91 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.locator("[data-action=upload-module]").click();
         page.getByText("Uploaded " + tika.moduleId() + " " + tika.version() + " installed")
             .waitFor();
-        stop();
-        start(postgres, workspace, "test");
+        // Use the production Actuator context restart with no external dispatcher.
+        long pid = process.pid();
+        page.navigate(baseUrl + "/modules");
+        assertThat(page.locator("[data-action=restart-zalava]").isEnabled()).isTrue();
+        assertThat(page.locator("[data-zalava-restart-status]").textContent())
+            .contains("Ready to restart the Zalava application");
+        for (int width : new int[] {1440, 768, 390}) {
+          page.setViewportSize(width, 900);
+          if (width <= 1024)
+            page.waitForFunction(
+                "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+          assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+              .isTrue();
+          assertThat(
+                  (Boolean)
+                      page.locator("[data-artifact-digest]")
+                          .first()
+                          .evaluate("e => e.scrollWidth<=e.clientWidth"))
+              .as("artifact digest remains readable inside its card at %s", width)
+              .isTrue();
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(diagnostics.resolve("application-restart-ready-" + width + ".png"))
+                  .setFullPage(true));
+        }
+        // The response may finish before or during server shutdown; poll durable completion.
+        try {
+          page.locator("[data-action=restart-zalava]").click();
+        } catch (PlaywrightException restarting) {
+          assertThat(process.isAlive()).isTrue();
+        }
+        Path restartJournal =
+            workspace
+                .resolveSibling(workspace.getFileName() + "-application-control")
+                .resolve("zalava-runtime-restart/request.properties");
+        long restartDeadline = System.nanoTime() + Duration.ofSeconds(120).toNanos();
+        boolean completed = false;
+        while (System.nanoTime() < restartDeadline) {
+          assertThat(process.isAlive()).as("Actuator restart retains the packaged JVM").isTrue();
+          if (Files.isRegularFile(restartJournal)) {
+            Properties status = new Properties();
+            try (var input = Files.newInputStream(restartJournal)) {
+              status.load(input);
+            }
+            if ("COMPLETED".equals(status.getProperty("phase"))) {
+              try {
+                if (http.send(
+                            HttpRequest.newBuilder(URI.create(baseUrl + "/login"))
+                                .timeout(Duration.ofSeconds(2))
+                                .GET()
+                                .build(),
+                            HttpResponse.BodyHandlers.discarding())
+                        .statusCode()
+                    == 200) {
+                  completed = true;
+                  break;
+                }
+              } catch (IOException notReady) {
+                /* Context still opening its web server. */
+              }
+            }
+          }
+          Thread.sleep(250);
+        }
+        assertThat(completed).as("Actuator context restart completes").isTrue();
+        assertThat(process.pid()).isEqualTo(pid);
+        assertThat(workspace.resolve("zalava-runtime-restart/request.properties")).doesNotExist();
+        admin.clearCookies();
         signIn(page, LOGIN, PASSWORD, false);
+        page.navigate(baseUrl + "/modules");
+        assertThat(
+                page.locator("[data-zalava-restart-status]")
+                    .getAttribute("data-zalava-restart-status"))
+            .isEqualTo("COMPLETED");
+        for (int width : new int[] {1440, 768, 390}) {
+          page.setViewportSize(width, 900);
+          if (width <= 1024)
+            page.waitForFunction(
+                "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(diagnostics.resolve("application-restart-completed-" + width + ".png"))
+                  .setFullPage(true));
+        }
+        page.navigate(baseUrl + "/chat");
         page.waitForURL("**/chat");
         page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
         assertThat(page.locator("#message").isDisabled()).isFalse();

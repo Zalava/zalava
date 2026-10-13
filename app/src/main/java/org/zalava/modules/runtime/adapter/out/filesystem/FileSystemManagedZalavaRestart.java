@@ -75,6 +75,15 @@ public final class FileSystemManagedZalavaRestart implements ManagedZalavaRestar
         "Restart requested. Zalava will briefly disconnect while the local service manager starts it again.");
   }
 
+  public synchronized void recordFailure() {
+    try {
+      Files.createDirectories(failureFile.getParent());
+      Files.writeString(failureFile, "Restart failed. Check host logs.");
+    } catch (IOException failure) {
+      throw new IllegalStateException("Unable to persist Zalava restart failure", failure);
+    }
+  }
+
   private void completePriorRequest() {
     if (!available) {
       return;

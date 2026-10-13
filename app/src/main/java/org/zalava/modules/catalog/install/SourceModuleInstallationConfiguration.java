@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.restart.RestartEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -56,6 +57,8 @@ import org.zalava.modules.catalog.install.application.port.out.ModuleReleaseInst
 import org.zalava.modules.development.adapter.out.filesystem.FileSystemInstalledModuleAcceptanceStore;
 import org.zalava.modules.development.application.DevelopmentCandidateValidationGateway;
 import org.zalava.modules.development.application.port.out.InstalledModuleAcceptanceStore;
+import org.zalava.modules.runtime.adapter.out.actuator.ActuatorManagedZalavaRestart;
+import org.zalava.modules.runtime.adapter.out.actuator.ActuatorManagedZalavaRestart.TrackedRestartEndpoint;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemManagedZalavaRestart;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
 import org.zalava.modules.runtime.application.AdministratorAuthorizedManagedZalavaRestart;
@@ -71,12 +74,28 @@ public class SourceModuleInstallationConfiguration {
   }
 
   @Bean
+  FileSystemManagedZalavaRestart applicationRestartJournal(
+      @Value("${agent.workspace:Unknown}") Resource workspace) throws IOException {
+    var path = workspace.getFilePath().toAbsolutePath().normalize();
+    return new FileSystemManagedZalavaRestart(
+        path.resolveSibling(path.getFileName() + "-application-control"), Clock.systemUTC(), true);
+  }
+
+  @Bean
+  RestartEndpoint restartEndpoint(FileSystemManagedZalavaRestart applicationRestartJournal) {
+    return new TrackedRestartEndpoint(applicationRestartJournal);
+  }
+
+  @Bean
   ManagedZalavaRestart rawManagedZalavaRestart(
       @Value("${agent.workspace:Unknown}") Resource workspace,
-      @Value("${zalava.managed-restart.dispatcher-enabled:false}") boolean dispatcherEnabled)
+      @Value("${zalava.managed-restart.dispatcher-enabled:false}") boolean dispatcherEnabled,
+      RestartEndpoint restartEndpoint,
+      FileSystemManagedZalavaRestart applicationRestartJournal)
       throws IOException {
-    return new FileSystemManagedZalavaRestart(
-        workspace.getFilePath(), Clock.systemUTC(), dispatcherEnabled);
+    return dispatcherEnabled
+        ? new FileSystemManagedZalavaRestart(workspace.getFilePath(), Clock.systemUTC(), true)
+        : new ActuatorManagedZalavaRestart(restartEndpoint, applicationRestartJournal);
   }
 
   @Bean

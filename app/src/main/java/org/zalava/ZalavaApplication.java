@@ -6,6 +6,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -17,7 +18,7 @@ import org.zalava.platform.configuration.ConfigurationChangedEvent;
 public class ZalavaApplication {
 
   private static final Logger log = LoggerFactory.getLogger(ZalavaApplication.class);
-  private static ConfigurableApplicationContext applicationContext;
+  private static volatile ConfigurableApplicationContext applicationContext;
 
   public static void main(String[] args) {
     applicationContext = SpringApplication.run(ZalavaApplication.class, args);
@@ -38,6 +39,11 @@ public class ZalavaApplication {
       log.info(
           "Zalava is running. Configure your model provider in Settings at http://localhost:{}/settings?section=provider",
           environment.getProperty("local.server.port"));
+    }
+
+    @EventListener
+    public void on(ApplicationReadyEvent ready) {
+      applicationContext = ready.getApplicationContext();
     }
 
     @EventListener
