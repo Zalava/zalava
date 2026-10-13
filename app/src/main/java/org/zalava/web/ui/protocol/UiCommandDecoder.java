@@ -31,6 +31,7 @@ public final class UiCommandDecoder {
       case "chat.continue" -> continueConversation(payload, acceptedVersion);
       case "approval.decide" -> decideApproval(payload, acceptedVersion);
       case "attachment.put" -> putAttachment(payload, acceptedVersion);
+      case "attachment.import" -> importAttachment(payload, acceptedVersion);
       case "attachment.delete" -> deleteAttachment(payload, acceptedVersion);
       default -> Optional.empty();
     };
@@ -91,6 +92,12 @@ public final class UiCommandDecoder {
     }
     return Optional.of(
         new UiCommand.PutAttachment(version, intent, name.trim(), contentType.trim(), content));
+  }
+
+  private static Optional<UiCommand> importAttachment(Map<String, ?> payload, String version) {
+    String id = string(payload.get("attachmentId"));
+    if (blank(id) || id.length() > 128) return Optional.empty();
+    return Optional.of(new UiCommand.ImportAttachment(version, id.trim()));
   }
 
   private static Optional<UiCommand> deleteAttachment(Map<String, ?> payload, String version) {

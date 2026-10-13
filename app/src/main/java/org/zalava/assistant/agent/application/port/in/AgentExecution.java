@@ -1,5 +1,6 @@
 package org.zalava.assistant.agent.application.port.in;
 
+import org.zalava.assistant.agent.domain.AgentRequest;
 import org.zalava.tasks.application.port.out.TaskAgent;
 
 public interface AgentExecution {
@@ -21,6 +22,13 @@ public interface AgentExecution {
       listener.onError(failure);
       throw failure;
     }
+  }
+
+  default String respondToInput(
+      String conversationId, AgentRequest request, AgentStreamListener listener) {
+    if (!request.attachmentContext().isEmpty())
+      throw new IllegalStateException("Attachment input is unsupported by this agent");
+    return respondTo(conversationId, request.question(), listener);
   }
 
   <T> T prompt(String conversationId, String input, Class<T> resultType);

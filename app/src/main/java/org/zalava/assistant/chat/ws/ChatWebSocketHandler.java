@@ -22,6 +22,7 @@ import org.zalava.assistant.chat.application.port.in.ActorChatCommands;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
 import org.zalava.assistant.chat.application.port.in.ActorChatStreamListener;
 import org.zalava.assistant.chat.domain.ChatMessage;
+import org.zalava.assistant.conversation.application.port.in.ConversationContinuation;
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
@@ -45,8 +46,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
   private final ActorWebSocketSessions sessions;
   private final ActorChatCommands actorCommands;
   private final ActorChatQueries actorQueries;
-  private final org.zalava.assistant.conversation.application.port.in.ConversationContinuation
-      continuation;
+  private final ConversationContinuation continuation;
 
   public ChatWebSocketHandler(ChatChannel chatChannel, ObjectMapper objectMapper) {
     this(chatChannel, objectMapper, null, null, null, null);
@@ -70,7 +70,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
       ActorWebSocketSessions sessions,
       ActorChatCommands actorCommands,
       ActorChatQueries actorQueries,
-      org.zalava.assistant.conversation.application.port.in.ConversationContinuation continuation) {
+      ConversationContinuation continuation) {
     this.continuation = continuation;
     this.chatChannel = chatChannel;
     this.objectMapper = objectMapper;
@@ -133,6 +133,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         case UiCommand.DecideApproval ignored -> {
           // Approval decisions are intentionally available only on the authenticated Zalava UI
           // adapter.
+        }
+        case UiCommand.ImportAttachment ignored -> {
+          // Knowledge saving is available only on the authenticated product JSON adapter.
         }
         case UiCommand.PutAttachment ignored -> {
           // Attachments are intentionally available only on the authenticated Zalava UI adapter.

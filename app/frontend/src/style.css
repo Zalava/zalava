@@ -236,3 +236,22 @@ h1, p { margin: var(--zalava-space-1) 0; }
 .memory-review-notice { padding: 1rem; border: 1px solid #c9d9f0; border-radius: .8rem; background: #eef4ff; margin: 1rem 0; overflow-wrap: anywhere; }
 .memory-review-notice p { margin: .35rem 0; }
 .memory-review-notice ul { margin: .5rem 0 0; padding-left: 1rem; }
+
+.document-processing-notice { font-size: .875rem; line-height: 1.45; max-width: 28rem; white-space: normal; overflow-wrap: anywhere; }
+.document-processing-notice p { margin: .35rem 0; }
+.composer-options-menu { width: min(28rem, calc(100vw - 3rem)); }
+
+.uploaded-file-options { margin-top: .75rem; font-size: .875rem; overflow-wrap: anywhere; }
+.uploaded-file-options summary { cursor: pointer; font-weight: 600; }
+.uploaded-file-options p { margin: .5rem 0; }
+.uploaded-file-options li { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: .5rem 0; }
+.uploaded-file-options button, .attachment-chip button { font-size: .875rem; padding: .35rem .6rem; }
+
+.composer .attachment-chip { display: flex; flex-wrap: wrap; width: min(100%, 24rem); max-width: 100%; }
+.attachment-name { flex: 1 1 100%; min-width: 0; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.composer .attachment-chip button { flex: 0 0 auto; min-height: 2.75rem; white-space: nowrap; }
+.attachment-list li { display: block; font-size: .875rem; overflow-wrap: anywhere; margin-top: .5rem; }
+
+.composer-fields, .composer-dropzone { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.composer .attachments, .composer-actions { min-width: 0; max-width: 100%; }
+.composer textarea { width: 100%; max-width: 100%; min-width: 0; }

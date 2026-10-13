@@ -27,6 +27,10 @@ public final class UiEventJson {
         json.put("type", "memory.reviews");
         json.put("reviews", memory.reviews());
       }
+      case UiEvent.DocumentProcessingStatus status -> {
+        json.put("type", "document.processing");
+        json.put("available", status.available());
+      }
       case UiEvent.ChatDelta delta -> {
         json.put("type", "chat.delta");
         json.put("conversationId", delta.conversationId());

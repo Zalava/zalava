@@ -42,6 +42,8 @@ public final class FileSystemChatAttachmentStore implements ChatAttachmentStore 
       frontmatter.put("byteCount", Long.toString(attachment.byteCount()));
       frontmatter.put("sha256", attachment.sha256());
       frontmatter.put("createdAt", attachment.createdAt().toString());
+      if (attachment.knowledgeSourceId() != null)
+        frontmatter.put("knowledgeSourceId", attachment.knowledgeSourceId());
       Files.writeString(
           metadata(actor, attachment.id()),
           YamlParser.serialize(new YamlDocument(frontmatter, null)),
@@ -109,7 +111,8 @@ public final class FileSystemChatAttachmentStore implements ChatAttachmentStore 
         frontmatter.get("contentType"),
         Long.parseLong(frontmatter.get("byteCount")),
         frontmatter.get("sha256"),
-        Instant.parse(frontmatter.get("createdAt")));
+        Instant.parse(frontmatter.get("createdAt")),
+        frontmatter.get("knowledgeSourceId"));
   }
 
   private Path metadata(Actor actor, String attachmentId) {

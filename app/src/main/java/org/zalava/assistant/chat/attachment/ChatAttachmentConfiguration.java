@@ -12,6 +12,8 @@ import org.zalava.assistant.chat.attachment.application.ChatAttachments;
 import org.zalava.assistant.chat.attachment.application.port.out.ChatAttachmentStore;
 import org.zalava.assistant.chat.attachment.application.port.out.KnowledgeImportPort;
 import org.zalava.knowledge.application.KnowledgeIngestion;
+import org.zalava.knowledge.application.port.out.KnowledgeSourceStore;
+import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 @Configuration
 class ChatAttachmentConfiguration {
@@ -26,15 +28,17 @@ class ChatAttachmentConfiguration {
   }
 
   @Bean
-  KnowledgeImportPort chatKnowledgeImportPort(KnowledgeIngestion ingestion) {
-    return new KnowledgeImportAdapter(ingestion);
+  KnowledgeImportPort chatKnowledgeImportPort(
+      KnowledgeIngestion ingestion, KnowledgeSourceStore sources) {
+    return new KnowledgeImportAdapter(ingestion, sources);
   }
 
   @Bean
   ChatAttachments chatAttachments(
       ChatAttachmentStore store,
       KnowledgeImportPort knowledgeImports,
+      RuntimeQueries runtime,
       @Value("${zalava.chat.attachment.maximum-upload-bytes:5242880}") long maximumUploadBytes) {
-    return new ChatAttachments(store, knowledgeImports, maximumUploadBytes);
+    return new ChatAttachments(store, knowledgeImports, maximumUploadBytes, runtime);
   }
 }

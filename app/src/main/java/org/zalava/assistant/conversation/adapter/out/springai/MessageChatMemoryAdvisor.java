@@ -3,6 +3,7 @@ package org.zalava.assistant.conversation.adapter.out.springai;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.SequencedSet;
 import org.springframework.ai.chat.client.ChatClientMessageAggregator;
 import org.springframework.ai.chat.client.ChatClientRequest;
@@ -90,7 +91,13 @@ public final class MessageChatMemoryAdvisor implements BaseChatMemoryAdvisor {
     if (userMessage instanceof UserMessage
         && chatClientRequest.context().get(AgentModelInput.ADVISOR_KEY)
             instanceof AgentModelInput input) {
-      userMessage = new UserMessage(input.authoredText());
+      userMessage =
+          input.attachmentNames().isEmpty()
+              ? new UserMessage(input.authoredText())
+              : UserMessage.builder()
+                  .text(input.authoredText())
+                  .metadata(Map.of("zalava.attachmentNames", input.attachmentNames()))
+                  .build();
     }
     this.chatMemory.add(conversationId, userMessage);
 

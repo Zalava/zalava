@@ -278,7 +278,9 @@ tasks.named('check') {
 tasks.register('browserAcceptanceTest', Test) {
     group = 'verification'
     description = 'Runs the isolated Playwright browser acceptance journey.'
-    dependsOn tasks.named('testClasses')
+    dependsOn tasks.named('testClasses'), tasks.named('externalModuleFixtureJar')
+    systemProperty 'zalava.test.external-module-jar',
+        tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
     dependsOn installPlaywrightChromium
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs

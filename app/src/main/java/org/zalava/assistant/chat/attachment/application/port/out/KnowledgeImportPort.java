@@ -6,5 +6,9 @@ import org.zalava.identity.accounts.domain.Actor;
 public interface KnowledgeImportPort {
   ImportedSource importSource(Actor actor, String displayName, String contentType, byte[] content);
 
+  default boolean sourceAvailable(Actor actor, String sourceId) {
+    return true;
+  }
+
   record ImportedSource(String sourceId) {}
 }

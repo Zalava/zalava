@@ -1,5 +1,6 @@
 package org.zalava.assistant.chat.application.port.in;
 
+import org.zalava.assistant.agent.domain.AgentRequest;
 import org.zalava.assistant.chat.domain.ActorChatTurn;
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.identity.accounts.domain.Actor;
@@ -17,11 +18,21 @@ public interface ActorChatCommands {
       Actor actor,
       ConversationReference conversation,
       String message,
-      org.zalava.assistant.chat.application.port.in.ActorChatStreamListener listener) {
+      ActorChatStreamListener listener) {
     ActorChatTurn turn = chat(actor, conversation, message);
     listener.onDelta(turn.text());
     listener.onComplete(turn.text(), turn.taskReferences());
     return turn;
+  }
+
+  default ActorChatTurn streamChatInput(
+      Actor actor,
+      ConversationReference conversation,
+      AgentRequest request,
+      ActorChatStreamListener listener) {
+    if (!request.attachmentContext().isEmpty())
+      throw new IllegalStateException("Attachment input is unsupported by this chat adapter");
+    return streamChat(actor, conversation, request.question(), listener);
   }
 
   ConversationReference createWebConversation(Actor actor);

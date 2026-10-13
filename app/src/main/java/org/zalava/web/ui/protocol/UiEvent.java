@@ -10,6 +10,7 @@ public sealed interface UiEvent
     permits UiEvent.ConversationList,
         UiEvent.ConversationSnapshot,
         UiEvent.MemoryReviews,
+        UiEvent.DocumentProcessingStatus,
         UiEvent.ChatDelta,
         UiEvent.ChatCompleted,
         UiEvent.ToolProgress,
@@ -47,7 +48,15 @@ public sealed interface UiEvent
     }
   }
 
-  record ConversationMessage(String role, String text) {}
+  record ConversationMessage(String role, String text, List<String> attachmentNames) {
+    public ConversationMessage(String role, String text) {
+      this(role, text, List.of());
+    }
+
+    public ConversationMessage {
+      attachmentNames = List.copyOf(attachmentNames);
+    }
+  }
 
   record MemoryReviews(String protocolVersion, List<MemoryReview> reviews) implements UiEvent {
     public MemoryReviews {
@@ -56,6 +65,8 @@ public sealed interface UiEvent
   }
 
   record MemoryReview(String proposalId, String summary, String reviewUrl) {}
+
+  record DocumentProcessingStatus(String protocolVersion, boolean available) implements UiEvent {}
 
   record ChatDelta(String protocolVersion, String conversationId, String text) implements UiEvent {}
 

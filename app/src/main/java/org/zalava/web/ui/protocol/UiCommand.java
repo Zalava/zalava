@@ -17,6 +17,7 @@ public sealed interface UiCommand
         UiCommand.ContinueConversation,
         UiCommand.DecideApproval,
         UiCommand.PutAttachment,
+        UiCommand.ImportAttachment,
         UiCommand.DeleteAttachment {
 
   String protocolVersion();
@@ -49,6 +50,8 @@ public sealed interface UiCommand
   record PutAttachment(
       String protocolVersion, String intent, String name, String contentType, String contentBase64)
       implements UiCommand {}
+
+  record ImportAttachment(String protocolVersion, String attachmentId) implements UiCommand {}
 
   record DeleteAttachment(String protocolVersion, String attachmentId) implements UiCommand {}
 }
