@@ -4,6 +4,7 @@
 @param String activePage
 @param String csrfName
 @param String csrfValue
+@param String accountName = ""
 
 <nav class="navbar zalava-navbar" role="navigation" aria-label="Zalava navigation">
     <div class="container">
@@ -31,6 +32,7 @@
                     <a class="navbar-item" href="${item.href()}" title="${item.label()}" data-nav-initial="${item.label().substring(0, 1)}"><span class="zalava-nav-label">${item.label()}</span></a>
                     @endif
                 @endfor
+            @if(!accountName.isBlank())<p class="zalava-account-identity">Signed in as <strong>${accountName}</strong></p>@endif
             <form class="zalava-sign-out" method="post" action="/logout">
                 <input type="hidden" name="${csrfName}" value="${csrfValue}">
                 <button class="navbar-item zalava-sign-out-button" type="submit">Sign out</button>
@@ -60,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function () {
             menu.classList.add('is-active');
             burger.classList.add('is-active');
             burger.setAttribute('aria-expanded', 'true');
-            closeButton.focus();
         }
         burger.addEventListener('click', function () {
             if (menu.classList.contains('is-active')) closeNavigation();

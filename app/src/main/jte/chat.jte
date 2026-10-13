@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/zalava-chat/assets/zalava-chat.css">
 </head>
 <body>
-@template.ui.navigation(items = navigation.items(), activePage = "chat", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
+@template.ui.navigation(items = navigation.items(), activePage = "chat", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
 
 <div id="root" data-provider-configured="${providerConfigured}" data-provider-setup-allowed="${providerSetupAllowed}"></div>
 

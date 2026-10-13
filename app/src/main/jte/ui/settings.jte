@@ -19,7 +19,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zalava Settings</title>
 <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-ui.css">
 </head><body>
-@template.ui.navigation(items = navigation.items(), activePage = "settings", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken())
+@template.ui.navigation(items = navigation.items(), activePage = "settings", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
 <main class="section"><div class="container">
 <header class="settings-heading mb-5"><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
 <h1 class="title is-2 mb-3">Settings</h1><p class="subtitle is-5 has-text-grey">Shape your assistant and configure your workspace.</p></header>

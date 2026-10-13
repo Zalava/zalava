@@ -868,7 +868,7 @@ body {
     display: none;
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (max-width: 1024px) {
     .zalava-navbar .navbar-menu {
         display: block;
         position: fixed;
@@ -892,42 +892,6 @@ body {
     .zalava-navigation-close {
         display: inline-flex;
         margin: 0 0 1rem auto;
-    }
-}
-
-@media screen and (min-width: 641px) and (max-width: 1024px) {
-    .zalava-navbar .navbar-burger {
-        display: none;
-    }
-
-    .zalava-navbar .navbar-menu {
-        display: block;
-    }
-
-    .zalava-navbar .navbar-start {
-        display: flex;
-        justify-content: center;
-        gap: .25rem;
-    }
-
-    .zalava-navbar .navbar-item {
-        width: 2.75rem;
-        justify-content: center;
-        padding: .5rem;
-    }
-
-    .zalava-nav-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        white-space: nowrap;
-    }
-
-    .zalava-navbar .navbar-item::after {
-        content: attr(data-nav-initial);
-        font-weight: 800;
     }
 }
 
@@ -1026,8 +990,26 @@ body {
 @media (min-width: 1025px) { .zalava-navbar .zalava-sign-out-button { width: calc(100% - 1.5rem); } }
 @media (min-width: 641px) and (max-width: 1024px) { .zalava-navbar .zalava-sign-out-button { min-width: 5rem; white-space: nowrap; } }
 
-/* A filtered header must not become the containing block for the phone drawer. */
-@media (max-width: 640px) {
+/* A filtered header must not become the containing block for the compact drawer. */
+@media (max-width: 1024px) {
   .zalava-navbar { backdrop-filter: none; }
   .zalava-navbar .navbar-menu { height: 100dvh; min-height: 100dvh; }
 }
+
+/* Account management and personal identity share the product shell. */
+.accounts-layout { display: grid; gap: 1.5rem; max-width: 68rem; }
+.accounts-layout .box { margin-bottom: 0; }
+.account-create-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.account-create-form .field { margin-bottom: 0; min-width: 0; }
+.account-list { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.account-card { min-width: 0; overflow-wrap: anywhere; }
+.account-card-heading .title { overflow-wrap: anywhere; margin-bottom: .75rem; }
+.account-card-heading .tag { height: auto; white-space: normal; padding-block: .35rem; }
+.account-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.account-actions .button { white-space: normal; height: auto; min-height: 2.5rem; }
+.account-password-reset summary { cursor: pointer; color: var(--zalava-primary); }
+.account-password-reset form { margin-top: 1rem; }
+.zalava-account-identity { padding: .75rem 1rem; font-size: .8rem; overflow-wrap: anywhere; }
+.auth-recovery { display: block; margin-top: 1rem; padding: .8rem; border-radius: .5rem; background: var(--zalava-primary); color: white; text-align: center; }
+.auth-recovery.auth-secondary { background: var(--zalava-surface-muted); color: var(--zalava-ink); }
+@media (max-width: 768px) { .account-create-form, .account-list { grid-template-columns: minmax(0, 1fr); } }

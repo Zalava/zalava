@@ -32,9 +32,9 @@ public class AccountLoginController {
   }
 
   @GetMapping("/account/password")
-  String password(Model model, CsrfToken csrf) {
+  String password(Model model, CsrfToken csrf, Authentication authentication) {
     model.addAttribute("error", null);
-    model.addAttribute("csrf", csrf);
+    passwordModel(model, csrf, authentication);
     return "accounts/password";
   }
 
@@ -51,8 +51,15 @@ public class AccountLoginController {
       return "redirect:/chat";
     } catch (RuntimeException exception) {
       model.addAttribute("error", "Password could not be changed");
-      model.addAttribute("csrf", csrf);
+      passwordModel(model, csrf, authentication);
       return "accounts/password";
     }
+  }
+
+  private void passwordModel(Model model, CsrfToken csrf, Authentication authentication) {
+    var account = accounts.findByLoginName(authentication.getName()).orElseThrow();
+    model.addAttribute("csrf", csrf);
+    model.addAttribute("required", account.passwordChangeRequired());
+    model.addAttribute("loginName", account.loginName());
   }
 }
