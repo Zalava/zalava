@@ -98,7 +98,9 @@ class BrowserOnboardingAcceptanceTest {
       page.locator("input[name=apiKey]").fill("browser-provider-key");
       page.locator("input[name=model]").fill("test-model");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save provider")).click();
-      page.getByText("Provider configuration saved.", new Page.GetByTextOptions().setExact(false))
+      page.getByText(
+              "Provider configuration saved and applied.",
+              new Page.GetByTextOptions().setExact(false))
           .waitFor();
       assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
       page.reload();

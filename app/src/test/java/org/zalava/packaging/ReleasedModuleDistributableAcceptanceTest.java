@@ -582,10 +582,65 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.locator("input[name=baseUrl]").fill(modelServer.baseUrl() + "/v1");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save provider"))
             .click();
-        page.getByText("Restart required", new Page.GetByTextOptions().setExact(true)).waitFor();
+        page.getByText(
+                "Provider configuration saved and applied.",
+                new Page.GetByTextOptions().setExact(false))
+            .waitFor();
         assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
+        for (int width : new int[] {1440, 768, 390}) {
+          page.setViewportSize(width, 900);
+          if (width <= 1024)
+            page.waitForFunction(
+                "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+          assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+              .isTrue();
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(diagnostics.resolve("provider-applied-" + width + ".png"))
+                  .setFullPage(true));
+        }
         page.navigate(baseUrl + "/chat");
-        assertThat(page.locator("#message").isDisabled()).isTrue();
+        page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+        assertThat(page.locator("#message").isDisabled()).isFalse();
+        assertThat(page.locator(".provider-notice").count()).isZero();
+        page.locator("#message").fill("Hello before restarting");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        page.locator(".message.assistant").getByText("Native fixture answer").waitFor();
+        modelServer.verify(
+            postRequestedFor(urlEqualTo("/v1/chat/completions"))
+                .withRequestBody(matchingJsonPath("$.model", equalTo("fixture-model"))));
+        page.navigate(baseUrl + "/settings?section=provider");
+        page.locator("input[name=model]").fill("updated-fixture-model");
+        // Blank credential preserves the saved secret and must not block native form submission.
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save provider"))
+            .click();
+        page.getByText(
+                "Provider configuration saved and applied.",
+                new Page.GetByTextOptions().setExact(false))
+            .waitFor();
+        page.navigate(baseUrl + "/chat");
+        page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+            .click();
+        page.locator("#message").fill("Use the updated model immediately");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        page.locator(".message.assistant").getByText("Native fixture answer").waitFor();
+        modelServer.verify(
+            postRequestedFor(urlEqualTo("/v1/chat/completions"))
+                .withRequestBody(matchingJsonPath("$.model", equalTo("updated-fixture-model")))
+                .withHeader("Authorization", equalTo("Bearer fixture-key")));
+        for (int width : new int[] {1440, 768, 390}) {
+          page.setViewportSize(width, 900);
+          if (width <= 1024)
+            page.waitForFunction(
+                "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(diagnostics.resolve("chat-live-provider-" + width + ".png"))
+                  .setFullPage(true));
+        }
         Release tika = downloadReleases(Set.of("tika")).getFirst();
         page.navigate(baseUrl + "/modules");
         if (page.locator("[data-module-developer-options]").getAttribute("open") == null) {
@@ -602,6 +657,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
         assertThat(page.locator("#message").isDisabled()).isFalse();
         assertThat(page.locator(".provider-notice").count()).isZero();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+            .click();
         page.locator("#message").fill("Hello local fixture");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
             .click();
@@ -610,7 +667,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         modelServer.verify(
             postRequestedFor(urlEqualTo("/v1/chat/completions"))
                 .withHeader("Authorization", equalTo("Bearer fixture-key"))
-                .withRequestBody(matchingJsonPath("$.model", equalTo("fixture-model")))
+                .withRequestBody(matchingJsonPath("$.model", equalTo("updated-fixture-model")))
                 .withRequestBody(matchingJsonPath("$.stream", equalTo("true"))));
         startModule(page, "zalava-module-tika");
         page.navigate(baseUrl + "/chat");
@@ -666,7 +723,8 @@ class ReleasedModuleDistributableAcceptanceTest {
                 page.getByText("Restart required", new Page.GetByTextOptions().setExact(true))
                     .count())
             .isZero();
-        assertThat(page.locator("input[name=model]").inputValue()).isEqualTo("fixture-model");
+        assertThat(page.locator("input[name=model]").inputValue())
+            .isEqualTo("updated-fixture-model");
         assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
       } finally {
         stop();

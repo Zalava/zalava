@@ -556,7 +556,7 @@ public class ZalavaConfiguration {
             List.of(
                 new Generation(
                     new AssistantMessage(
-                        "No AI model has been configured. If you did configure a model recently, restart Zalava manually for the changes to take effect."))));
+                        "No AI model has been configured. Ask an administrator to set up a provider in Settings."))));
   }
 
   @Bean

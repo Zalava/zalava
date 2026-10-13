@@ -20,6 +20,7 @@ import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,8 @@ import org.zalava.assistant.agent.application.port.out.AgentModel;
 import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import org.zalava.assistant.agent.application.port.out.StructuredOutputSchemaException;
 import org.zalava.assistant.agent.application.port.out.StructuredRunEvidence;
+import org.zalava.assistant.models.configuration.application.port.in.ModelGenerationSource;
+import org.zalava.assistant.models.configuration.application.port.in.ModelGenerationSource.Session;
 import org.zalava.tasks.application.BoundedTaskAgentLoop.ToolFailure;
 import org.zalava.tasks.application.port.out.TaskAgent;
 import org.zalava.tasks.domain.Task;
@@ -37,6 +40,7 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public final class SpringAiAgentModel implements AgentModel {
   private final ChatClient chatClient;
+  private final ModelGenerationSource<ChatClient> generations;
   private final WorkspaceAgentPrompt systemPrompt;
   private final boolean toolCallingEnabled;
 
@@ -48,11 +52,26 @@ public final class SpringAiAgentModel implements AgentModel {
     this(chatClient, systemPrompt, true);
   }
 
+  public SpringAiAgentModel(
+      ChatClient chatClient, WorkspaceAgentPrompt systemPrompt, boolean toolCallingEnabled) {
+    this(chatClient, systemPrompt, toolCallingEnabled, (ModelGenerationSource<ChatClient>) null);
+  }
+
   @Autowired
   public SpringAiAgentModel(
       ChatClient chatClient,
       WorkspaceAgentPrompt systemPrompt,
-      @Value("${zalava.model.tool-calling-enabled:true}") boolean toolCallingEnabled) {
+      @Value("${zalava.model.tool-calling-enabled:true}") boolean toolCallingEnabled,
+      ObjectProvider<ModelGenerationSource<ChatClient>> generations) {
+    this(chatClient, systemPrompt, toolCallingEnabled, generations.getIfAvailable());
+  }
+
+  private SpringAiAgentModel(
+      ChatClient chatClient,
+      WorkspaceAgentPrompt systemPrompt,
+      boolean toolCallingEnabled,
+      ModelGenerationSource<ChatClient> generations) {
+    this.generations = generations;
     this.toolCallingEnabled = toolCallingEnabled;
     this.chatClient = chatClient;
     this.systemPrompt = systemPrompt;
@@ -60,7 +79,9 @@ public final class SpringAiAgentModel implements AgentModel {
 
   @Override
   public String conversational(String conversationId, String prompt, List<Object> tools) {
-    return request(conversationId, prompt, tools).call().content();
+    try (Session<ChatClient> generation = acquire()) {
+      return request(generation, conversationId, prompt, tools).call().content();
+    }
   }
 
   /**
@@ -75,42 +96,50 @@ public final class SpringAiAgentModel implements AgentModel {
   @Override
   public String conversational(
       String conversationId, String prompt, List<Object> tools, Consumer<String> deltas) {
-    StringBuilder full = new StringBuilder();
-    for (String chunk : request(conversationId, prompt, tools).stream().content().toIterable()) {
-      if (chunk != null && !chunk.isEmpty()) {
-        full.append(chunk);
-        deltas.accept(chunk);
+    try (Session<ChatClient> generation = acquire()) {
+      StringBuilder full = new StringBuilder();
+      for (String chunk :
+          request(generation, conversationId, prompt, tools).stream().content().toIterable()) {
+        if (chunk != null && !chunk.isEmpty()) {
+          full.append(chunk);
+          deltas.accept(chunk);
+        }
       }
+      return full.toString();
     }
-    return full.toString();
   }
 
   @Override
   public String conversationalInput(
       String conversationId, AgentModelInput input, List<Object> tools) {
-    return request(conversationId, input, tools).call().content();
+    try (Session<ChatClient> generation = acquire()) {
+      return request(generation, conversationId, input, tools).call().content();
+    }
   }
 
   @Override
   public String conversationalInput(
       String conversationId, AgentModelInput input, List<Object> tools, Consumer<String> deltas) {
-    StringBuilder full = new StringBuilder();
-    for (String chunk : request(conversationId, input, tools).stream().content().toIterable()) {
-      if (chunk != null && !chunk.isEmpty()) {
-        full.append(chunk);
-        deltas.accept(chunk);
+    try (Session<ChatClient> generation = acquire()) {
+      StringBuilder full = new StringBuilder();
+      for (String chunk :
+          request(generation, conversationId, input, tools).stream().content().toIterable()) {
+        if (chunk != null && !chunk.isEmpty()) {
+          full.append(chunk);
+          deltas.accept(chunk);
+        }
       }
+      return full.toString();
     }
-    return full.toString();
   }
 
   @Override
   public <T> T structured(
       String conversationId, String prompt, List<Object> tools, Class<T> resultType) {
     AtomicInteger attempts = StructuredRunEvidence.begin();
-    try {
+    try (Session<ChatClient> generation = acquire()) {
       var structuredRequest =
-          request(conversationId, prompt, tools)
+          request(generation, conversationId, prompt, tools)
               .advisors(
                   StructuredOutputValidationAdvisor.builder()
                       .outputType(resultType)
@@ -118,7 +147,7 @@ public final class SpringAiAgentModel implements AgentModel {
                       .build(),
                   new StructuredAttemptCountingAdvisor(attempts))
               .call();
-      return toolCallingEnabled
+      return generation.toolCallingEnabled()
           ? structuredRequest.entity(
               resultType, structuredOutput -> structuredOutput.useProviderStructuredOutput())
           : structuredRequest.entity(resultType);
@@ -131,38 +160,40 @@ public final class SpringAiAgentModel implements AgentModel {
 
   @Override
   public TaskAgent.Result task(String conversationId, String prompt, List<Object> tools) {
-    if (!toolCallingEnabled)
-      return new TaskAgent.Result(
-          Task.Status.failed,
-          "The selected provider does not support tool execution. Choose a tool-capable provider in Settings.");
-    ChatResponse response =
-        request(conversationId, prompt, tools)
-            .advisors(AdvisorParams.toolCallingAdvisorAutoRegister(false))
-            .call()
-            .chatResponse();
-    if (response.getResult().getOutput().getToolCalls().isEmpty()) {
-      try {
-        return new ObjectMapper()
-            .readValue(response.getResult().getOutput().getText(), TaskAgent.Result.class);
-      } catch (RuntimeException failure) {
+    try (Session<ChatClient> generation = acquire()) {
+      if (!generation.toolCallingEnabled())
         return new TaskAgent.Result(
-            Task.Status.failed, "Task model did not return a valid task result.");
+            Task.Status.failed,
+            "The selected provider does not support tool execution. Choose a tool-capable provider in Settings.");
+      ChatResponse response =
+          request(generation, conversationId, prompt, tools)
+              .advisors(AdvisorParams.toolCallingAdvisorAutoRegister(false))
+              .call()
+              .chatResponse();
+      if (response.getResult().getOutput().getToolCalls().isEmpty()) {
+        try {
+          return new ObjectMapper()
+              .readValue(response.getResult().getOutput().getText(), TaskAgent.Result.class);
+        } catch (RuntimeException failure) {
+          return new TaskAgent.Result(
+              Task.Status.failed, "Task model did not return a valid task result.");
+        }
       }
-    }
-    List<ToolCallback> callbacks = callbacks(tools);
-    try {
-      ToolExecutionResult toolResult =
-          ToolCallingManager.builder()
-              .toolCallbackResolver(new StaticToolCallbackResolver(callbacks))
-              .build()
-              .executeToolCalls(
-                  new Prompt(
-                      new UserMessage(prompt),
-                      ToolCallingChatOptions.builder().toolCallbacks(callbacks).build()),
-                  response);
-      return new TaskAgent.Result(Task.Status.in_progress, toolFeedback(toolResult));
-    } catch (RuntimeException failure) {
-      throw new ToolFailure("tool execution failed: " + failure.getClass().getSimpleName());
+      List<ToolCallback> callbacks = callbacks(tools);
+      try {
+        ToolExecutionResult toolResult =
+            ToolCallingManager.builder()
+                .toolCallbackResolver(new StaticToolCallbackResolver(callbacks))
+                .build()
+                .executeToolCalls(
+                    new Prompt(
+                        new UserMessage(prompt),
+                        ToolCallingChatOptions.builder().toolCallbacks(callbacks).build()),
+                    response);
+        return new TaskAgent.Result(Task.Status.in_progress, toolFeedback(toolResult));
+      } catch (RuntimeException failure) {
+        throw new ToolFailure("tool execution failed: " + failure.getClass().getSimpleName());
+      }
     }
   }
 
@@ -206,29 +237,38 @@ public final class SpringAiAgentModel implements AgentModel {
     }
   }
 
-  private ChatClient.ChatClientRequestSpec request(
-      String conversationId, String prompt, List<Object> tools) {
-    return request(conversationId, new AgentModelInput(prompt, prompt), tools);
+  private Session<ChatClient> acquire() {
+    return generations == null
+        ? ModelGenerationSource.fixed(chatClient, toolCallingEnabled)
+        : generations.acquire();
   }
 
   private ChatClient.ChatClientRequestSpec request(
-      String conversationId, AgentModelInput input, List<Object> tools) {
-    var request = chatClient.prompt(input.modelText());
+      Session<ChatClient> generation, String conversationId, String prompt, List<Object> tools) {
+    return request(generation, conversationId, new AgentModelInput(prompt, prompt), tools);
+  }
+
+  private ChatClient.ChatClientRequestSpec request(
+      Session<ChatClient> generation,
+      String conversationId,
+      AgentModelInput input,
+      List<Object> tools) {
+    var request = generation.client().prompt(input.modelText());
     if (systemPrompt != null) {
       request.system(
           p ->
               p.text(
                       systemPrompt.text()
-                          + (toolCallingEnabled
+                          + (generation.toolCallingEnabled()
                               ? ""
                               : "\nThe selected provider cannot execute tools. Answer questions using available context and do not claim to perform actions."))
                   .param(AgentEnvironment.ENVIRONMENT_INFO_KEY, AgentEnvironment.info()));
     }
-    if (!toolCallingEnabled && systemPrompt == null)
+    if (!generation.toolCallingEnabled() && systemPrompt == null)
       request.system(
           "The selected provider cannot execute tools. Answer questions using available context and do not claim to perform actions.");
     return request
-        .tools(toolCallingEnabled ? callbacks(tools).toArray() : new Object[0])
+        .tools(generation.toolCallingEnabled() ? callbacks(tools).toArray() : new Object[0])
         .advisors(
             a -> {
               a.param(ChatMemory.CONVERSATION_ID, conversationId);

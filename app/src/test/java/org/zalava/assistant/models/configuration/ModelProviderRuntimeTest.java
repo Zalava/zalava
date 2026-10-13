@@ -4,6 +4,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.observation.ObservationRegistry;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.model.anthropic.autoconfigure.AnthropicChatAutoConfiguration;
 import org.springframework.ai.model.bedrock.converse.autoconfigure.BedrockConverseProxyChatAutoConfiguration;
@@ -30,6 +33,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.mock.env.MockEnvironment;
 import org.zalava.assistant.models.configuration.adapter.out.filesystem.ModelProviderStore;
 import org.zalava.assistant.models.configuration.adapter.out.spring.ModelProviderEnvironmentPostProcessor;
+import org.zalava.assistant.models.configuration.adapter.out.spring.SpringAiChatClientFactory;
 import org.zalava.assistant.models.configuration.application.ModelProviderConfiguration;
 import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog;
 
@@ -96,6 +100,17 @@ class ModelProviderRuntimeTest {
     var environment = new MockEnvironment();
     new ModelProviderConfiguration(new ModelProviderStore(workspace), environment::getProperty)
         .save(id, values);
+    var factory =
+        new SpringAiChatClientFactory(
+            environment, MessageWindowChatMemory.builder().build(), ObservationRegistry.NOOP);
+    var candidate =
+        factory.create(
+            ModelProviderConfiguration.runtimeProperties(new ModelProviderStore(workspace).read()));
+    try {
+      assertThat(candidate.chatClient()).isNotNull();
+    } finally {
+      candidate.close().run();
+    }
     runner(workspace)
         .run(
             context -> {
@@ -105,6 +120,54 @@ class ModelProviderRuntimeTest {
               assertThat(context.getBean(ChatModel.class).getOptions().getModel())
                   .isEqualTo("test-model");
             });
+  }
+
+  @Test
+  void liveClientDoesNotInheritAStartupEndpointOrCredentialOverride() throws Exception {
+    WireMockServer server = new WireMockServer(0);
+    server.start();
+    try {
+      String response =
+          "{\"id\":\"fixture\",\"object\":\"chat.completion\",\"created\":1,\"model\":\"new-model\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"New endpoint\"},\"finish_reason\":\"stop\"}]}";
+      server.stubFor(post(urlEqualTo("/v1/chat/completions")).willReturn(okJson(response)));
+      server.stubFor(
+          post(urlEqualTo("/old/chat/completions"))
+              .willReturn(okJson(response.replace("New endpoint", "Old endpoint"))));
+      var environment =
+          new MockEnvironment()
+              .withProperty("spring.ai.openai.chat.base-url", server.baseUrl() + "/old")
+              .withProperty("spring.ai.openai.chat.api-key", "old-startup-key");
+      var store = new ModelProviderStore(root.resolve("isolated-client"));
+      new ModelProviderConfiguration(store, environment::getProperty)
+          .save(
+              "openai-compatible",
+              Map.of(
+                  "model", "new-model", "apiKey", "new-key", "baseUrl", server.baseUrl() + "/v1"));
+      var factory =
+          new SpringAiChatClientFactory(
+              environment, MessageWindowChatMemory.builder().build(), ObservationRegistry.NOOP);
+      var candidate = factory.create(ModelProviderConfiguration.runtimeProperties(store.read()));
+      try {
+        assertThat(
+                candidate
+                    .chatClient()
+                    .prompt("Hello new endpoint")
+                    .advisors(
+                        advisors -> advisors.param(ChatMemory.CONVERSATION_ID, "generation-test"))
+                    .call()
+                    .content())
+            .isEqualTo("New endpoint");
+      } finally {
+        candidate.close().run();
+      }
+      server.verify(
+          postRequestedFor(urlEqualTo("/v1/chat/completions"))
+              .withHeader("Authorization", equalTo("Bearer new-key"))
+              .withRequestBody(matchingJsonPath("$.model", equalTo("new-model"))));
+      server.verify(0, postRequestedFor(urlEqualTo("/old/chat/completions")));
+    } finally {
+      server.stop();
+    }
   }
 
   @Test

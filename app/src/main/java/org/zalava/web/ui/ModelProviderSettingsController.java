@@ -31,7 +31,7 @@ public final class ModelProviderSettingsController {
       configuration.save(provider, form);
       redirect.addFlashAttribute(
           "settingsMessage",
-          "Provider configuration saved. Restart Zalava to apply it; connectivity has not been verified.");
+          "Provider configuration saved and applied. New requests use it immediately; connectivity has not been verified.");
     } catch (IllegalArgumentException exception) {
       redirect.addFlashAttribute("settingsError", exception.getMessage());
     } catch (IOException exception) {

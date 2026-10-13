@@ -19,7 +19,6 @@ import org.zalava.api.ModuleConfigurationStatus;
 import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.assistant.models.configuration.application.ModelProviderConfiguration;
 import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog;
-import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog.Provider;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.identity.channels.application.port.in.ChannelLinkChallenges;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
@@ -124,15 +123,8 @@ public class SettingsController {
     return "redirect:/settings";
   }
 
-  private SettingsModel buildModel() {
-    String providerId = environment.getProperty("spring.ai.model.chat", "unknown");
-    String providerLabel =
-        ChatProviderCatalog.providers().stream()
-            .filter(
-                p -> p.id().equals(environment.getProperty("zalava.model.provider", providerId)))
-            .map(Provider::label)
-            .findFirst()
-            .orElse("Not configured");
+  private SettingsModel buildModel() throws IOException {
+    String providerLabel = providers.display(null).runningLabel();
     return new SettingsModel(
         workspacePath(),
         providerLabel,
