@@ -96,3 +96,9 @@ Keep every dated roadmap/execution plan and private acceptance record only in
 `docs/plans/` in this public product repository. Public contributor, architecture,
 API, and product documentation stays here. Publication must take an explicit
 private-plan path and must not stage that plan in the product PR.
+
+## UX/UI design requirements
+
+All coding agents (including Codex, Claude Code and other contributors) MUST follow [UX/UI design standards](docs/development/ux-design-standards.md) when adding or changing user-facing UI. Use Nielsen's usability heuristics, WCAG 2.2 AA, Material Design 3 and IBM Carbon as evaluation references, not as reasons to replace the existing React, JTE/htmx or Playwright architecture.
+
+Before completing a UI change, inspect phone, tablet and desktop viewports and keyboard navigation; verify visible feedback and relevant pending, loading, empty, error, disabled and success states. Reuse established tokens and components. Document visual evidence, accessibility checks and gaps in the PR and private acceptance record in `cordin/zalava-dev`; do not put private plans or screenshots in the public repository. Documentation-only updates do not require browser screenshots.
