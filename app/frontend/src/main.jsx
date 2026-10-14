@@ -437,15 +437,16 @@ function Chat() {
         <p>Chat is disabled until a model provider is configured. The connection alone does not mean a model is ready.</p>
         {providerSetupAllowed ? <a className="zalava-button" href="/settings?section=provider">Set up a provider</a> : <p>Ask your workspace administrator to configure a provider.</p>}
       </section>}
+      {providerConfigured && !conversationId && status === "Connected" && <p role="status">Loading your conversations…</p>}
       <nav className="conversations" aria-label="Conversations">
-        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || pending || continuing || status !== "Connected"}>
+        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || !conversationId || pending || continuing || status !== "Connected"}>
           {!conversationId && <option value="">Start a conversation</option>}
           {conversationIds.map((id) => {
             const summary = conversationSummaries.find((entry) => entry.id === id);
             return <option key={id} value={id}>{summary?.title ?? "Saved conversation"} · {conversationDate(summary?.updatedAt ?? summary?.createdAt)}</option>;
           })}
         </select>
-        <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || status !== "Connected" || pending || continuing}>New conversation</button>
+        <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || !conversationId || status !== "Connected" || pending || continuing}>New conversation</button>
       </nav>
       {selectedSummary && <p className="conversation-meta"><strong>{selectedSummary.title}</strong> · Updated <time dateTime={selectedSummary.updatedAt ?? selectedSummary.createdAt}>{conversationDate(selectedSummary.updatedAt ?? selectedSummary.createdAt)}</time></p>}
       {conversationId && <details className="conversation-options">
