@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -469,6 +470,102 @@ class BrowserChatAcceptanceTest {
     }
   }
 
+  @Test
+  void waitsForTheInitialSnapshotBeforeConversationActionsAndPreservesChannelSelection() {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      Actor actor = signInDisposableMember(page);
+      var selector = page.locator("select[aria-label='Select conversation']");
+      PlaywrightAssertions.assertThat(selector).hasValue(Pattern.compile(".+"));
+      String remembered = selector.inputValue();
+      var identity =
+          new ExternalChannelIdentity("telegram", "delayed-snapshot-" + UUID.randomUUID());
+      links.link(actor, identity, ChannelOperationScope.of("chat:send"));
+      var source =
+          continuation.channelConversation(
+              actor,
+              new ConversationOrigin("telegram", identity.subject(), "private-delayed-chat", true));
+      conversations.saveAll(
+          actor,
+          source,
+          List.of(
+              new ConversationMessage(ConversationMessage.Role.USER, "Delayed channel question"),
+              new ConversationMessage(
+                  ConversationMessage.Role.ASSISTANT, "Delayed channel answer")));
+      // Forward real server traffic, but hold snapshots to expose the startup window.
+      page.addInitScript(
+          """
+        window.heldConversationSnapshots = [];
+        window.holdConversationSnapshots = true;
+        window.releaseConversationSnapshots = () => {
+          window.holdConversationSnapshots = false;
+          window.heldConversationSnapshots.splice(0).forEach(deliver => deliver());
+        };
+        const NativeWebSocket = window.WebSocket;
+        window.WebSocket = class extends NativeWebSocket {
+          set onmessage(handler) {
+            super.onmessage = event => {
+              if (window.holdConversationSnapshots && JSON.parse(event.data).type === 'conversation.snapshot') {
+                window.heldConversationSnapshots.push(() => handler.call(this, event));
+              } else handler.call(this, event);
+            };
+          }
+          get onmessage() { return super.onmessage; }
+        };
+        """);
+      page.reload();
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      page.waitForFunction("window.heldConversationSnapshots.length > 0");
+      PlaywrightAssertions.assertThat(selector).isDisabled();
+      var create =
+          page.getByRole(
+              AriaRole.BUTTON,
+              new Page.GetByRoleOptions().setName("New conversation").setExact(true));
+      PlaywrightAssertions.assertThat(create).isDisabled();
+      PlaywrightAssertions.assertThat(
+              page.getByText(
+                  "Loading your conversations…", new Page.GetByTextOptions().setExact(true)))
+          .isVisible();
+      for (int width : List.of(1440, 768, 390)) {
+        page.setViewportSize(width, 900);
+        settleChatNavigation(page);
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= innerWidth"))
+            .isEqualTo(true);
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-initial-loading-" + width + ".png"))
+                .setFullPage(true));
+      }
+      page.evaluate("window.releaseConversationSnapshots()");
+      PlaywrightAssertions.assertThat(selector).hasValue(remembered);
+      PlaywrightAssertions.assertThat(selector).isEnabled();
+      PlaywrightAssertions.assertThat(create).isEnabled();
+      selector.selectOption(source.value());
+      PlaywrightAssertions.assertThat(
+              page.getByRole(
+                  AriaRole.HEADING, new Page.GetByRoleOptions().setName("telegram history")))
+          .isVisible();
+      PlaywrightAssertions.assertThat(selector).hasValue(source.value());
+      PlaywrightAssertions.assertThat(page.locator("#message")).hasCount(0);
+      PlaywrightAssertions.assertThat(
+              page.getByText("Delayed channel answer", new Page.GetByTextOptions().setExact(true)))
+          .isVisible();
+      for (int width : List.of(1440, 768, 390)) {
+        page.setViewportSize(width, 900);
+        settleChatNavigation(page);
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(
+                    Path.of(
+                        "build/browser-acceptance/chat-initial-channel-ready-" + width + ".png"))
+                .setFullPage(true));
+      }
+    }
+  }
+
   private void settleChatNavigation(Page page) {
     page.waitForFunction(
         """
@@ -481,7 +578,7 @@ class BrowserChatAcceptanceTest {
         """);
   }
 
-  private void signInDisposableMember(Page page) {
+  private Actor signInDisposableMember(Page page) {
     String login = "browser-chat-" + UUID.randomUUID();
     var account = accounts.create(login, "BrowserTestPassword-123", AccountRole.MEMBER);
     accounts.changePassword(account.id(), "BrowserTestPassword-123", "BrowserTestPassword-456");
@@ -491,6 +588,7 @@ class BrowserChatAcceptanceTest {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
     page.waitForURL("**/chat");
     page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+    return new Actor(account.id());
   }
 
   private static Path workspace() {
