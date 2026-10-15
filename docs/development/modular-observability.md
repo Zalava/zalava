@@ -49,3 +49,26 @@ Default to metadata only: no prompts, responses, tool arguments, secrets or user
 - Failed/removed OCI services do not block agent execution.
 - Integration and module-contract tests, permission tests and browser visual verification follow AGENTS.md.
 - Private execution plan, screenshots and acceptance evidence remain in `cordin/zalava-dev`; no private plans in public repository.
+
+
+## Source-level feasibility review (2026-10-15)
+Verified against current `main` Java sources:
+- `module-api/.../extensions/managed/ManagedServiceDeclaration.java` and `ManagedServiceDesiredState.java`: modules can declare managed OCI services, digest-pinned images, dependencies, resource limits, ports, paths, secrets and lifecycle. `DefaultDeclaredManagedServices` discovers module declarations. `ModuleManagedServiceEngine` delegates to an optional module-provided engine through `RuntimeQueries.findService`. **Feasible** to declare an observability service stack, subject to the existing engine being installed and admin grants.
+- `module-api/.../extensions/web/ZalavaWebExtension.java`, `WebExtensionRegistry.java`, `WebPageRegistration.java`: modules register GET/POST pages. `DefaultWebExtensionRoutes` discovers and routes them; `ZalavaWebExtensionController` exposes `/apps/{moduleId}/{pageId}` using the existing host view. **Feasible** to create an Observability page without a new UI framework.
+- `app/.../platform/observability/adapter/out/micrometer/MicrometerOperationalMetrics.java`: existing metrics cover agent runs, context characters by source, tool invocation counts/timings, task execution and knowledge lifecycle; label cardinality is bounded and errors are fail-open. Reuse this adapter, expand via ports and observations rather than replacing it.
+- `app/build.gradle`: Spring AI model starters, Actuator and Prometheus registry are present. No explicit Micrometer tracing bridge or OTLP exporter dependency found. Traces and export are therefore an implementation gap; check transitive dependency and configuration behavior before choosing a bootstrap approach.
+
+### Confirmed constraints and follow-up design decisions
+1. OCI desired state requires an image digest and administrator-approved limits/paths/ports/secrets. Multiple service declarations and dependency ordering are supported at the API level, but collector-to-Grafana networking, provisioned configuration files and service-to-service DNS require an end-to-end integration test.
+2. Module web pages return host-wrapped HTML; the current page API does not directly grant an authenticated Grafana reverse proxy or secure iframe. Prefer an admin-only module status/configuration page plus an external Grafana link. Embedding requires a separate security/CSP/auth design.
+3. Do **not** make a late-loaded module solely responsible for attaching Spring instrumentation to already-created beans. Keep host-side observations/export bootstrap in the host; make collector endpoint, stack management and dashboard provisioning module-driven. Evaluate whether an exporter module can configure the host through a narrow supported contract; otherwise provide a host-configured OTLP exporter and keep infrastructure/UI modular.
+4. Module web handler authorization and HTML sanitization need dedicated security tests, especially for admin-only observability and multi-user isolation.
+5. Confirm OCI engine image support, persistent storage, port mapping and network topology through integration tests; API declarations alone are not proof of working LGTM deployment.
+
+### Proposed first implementation PRs
+A. Host tracing foundation and missing chat/LLM/context metrics (small, independently testable).
+B. OCI observability stack module using existing managed-service declarations, admin grants and persistent volumes.
+C. Grafana UI module with admin-only status page, provisioned dashboards and safe navigation.
+D. End-to-end trace/run correlation and dashboard acceptance tests.
+
+This review is static source inspection; no Gradle build, packaged host, OCI engine or browser tests have been executed.
