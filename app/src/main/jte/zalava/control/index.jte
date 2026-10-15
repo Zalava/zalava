@@ -12,7 +12,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Zalava Advanced Settings</title>
     <link href="/css/vendor/bootstrap-5.3.8.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/zalava-ui.css">
+    <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
     <link rel="stylesheet" href="/zalava-control.css">
     <script src="/css/vendor/htmx-2.0.4.min.js" defer></script>
     <script>

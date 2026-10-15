@@ -9,7 +9,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Logs</title>
   <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-  <link rel="stylesheet" href="/zalava-ui.css">
+  <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head>
 <body>
 @template.ui.navigation(items = navigation.items(), activePage = "monitoring", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())

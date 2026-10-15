@@ -15,7 +15,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Knowledge</title>
   <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-  <link rel="stylesheet" href="/zalava-ui.css">
+  <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head>
 <body>
   @template.ui.navigation(items = navigation.items(), activePage = "knowledge", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
@@ -24,7 +26,7 @@
       <header class="mb-5">
         <p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Library</p>
         <h1 class="title is-3">Knowledge</h1>
-        <p class="has-text-grey">Your private and explicitly shared source metadata.</p>
+        <p class="has-text-grey">Files you have uploaded or that others have shared with you.</p>
       </header>
       @if(knowledgeMessage != null)<p class="notification is-success is-light" role="status">${knowledgeMessage}</p>@endif
       @if(knowledgeError != null)<p class="notification is-danger is-light" role="alert">${knowledgeError}</p>@endif
@@ -57,9 +59,15 @@
         </select></div></div>
         <div><button class="button is-primary">Search</button></div>
       </form>
-      @if(model.error() != null)<p class="notification is-danger is-light">${model.error()}</p>@endif
+      @if(model.error() != null)<p class="notification is-danger is-light" role="alert">${model.error()}</p>@endif
       @if(model.sources().isEmpty())
-        <p class="has-text-grey">No sources.</p>
+        <section class="empty-state" aria-label="Knowledge results">
+          @if(!model.query().isBlank() || !model.contentType().isBlank() || !model.processingState().isBlank())
+            <p class="has-text-weight-bold">No matching sources.</p><p>Try another search or remove the filters.</p><a class="button is-light" href="/knowledge">Clear filters</a>
+          @else
+            <p class="has-text-weight-bold">No sources yet.</p><p>Upload a file to keep it in your private Knowledge library.</p><a class="button is-light" href="#knowledge-file">Upload a source</a>
+          @endif
+        </section>
       @else
         <ul>
         @for(SourceSummary source : model.sources())
@@ -77,11 +85,7 @@
               <input type="hidden" name="shared" value="${source.visibility() == KnowledgeVisibility.PRIVATE ? "true" : "false"}">
               <button class="button is-small">${source.visibility() == KnowledgeVisibility.PRIVATE ? "Share" : "Make private"}</button>
             </form>
-            <form method="post" action="/knowledge/${source.id().value().toString()}/delete" class="mt-2">
-              <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
-              <input type="hidden" name="confirmed" value="true">
-              <button class="button is-small is-danger is-light">Delete</button>
-            </form>
+            @template.ui.deleteConfirmation(action = "/knowledge/" + source.id().value().toString() + "/delete", item = source.displayName(), csrfName = model.csrf().getParameterName(), csrfValue = model.csrf().getToken(), consequence = "The stored source and its processed content will be removed.")
             </div>
             @else<p class="tag is-light mt-3">Shared read-only</p>@endif
           </li>

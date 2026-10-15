@@ -368,6 +368,15 @@ public class ModulesController {
         redirectAttributes.addFlashAttribute("configurationMessage", "Configuration saved.");
       }
     } catch (IllegalArgumentException exception) {
+      Map<String, String> values = new LinkedHashMap<>();
+      for (var field : ModuleConfigurationForm.fields(module.configuration(), Map.of())) {
+        values.put(field.name(), submitted.getOrDefault(field.name(), ""));
+      }
+      redirectAttributes.addFlashAttribute("configurationValues", values);
+      if (exception instanceof ModuleConfigurationForm.FieldInputException invalid) {
+        redirectAttributes.addFlashAttribute(
+            "configurationFieldErrors", Map.of(invalid.field(), invalid.getMessage()));
+      }
       redirectAttributes.addFlashAttribute("configurationError", exception.getMessage());
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute(

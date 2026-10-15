@@ -161,7 +161,8 @@ class MemoryControllerComponentTest {
         .andExpect(
             flash()
                 .attribute(
-                    "memoryError", "A memory proposal must not contain credentials or secrets"));
+                    "memoryError", "A memory proposal must not contain credentials or secrets"))
+        .andExpect(flash().attribute("proposalText", ""));
 
     assertThat(memories.recent(actor, 10)).isEmpty();
     assertThat(promotions.pending(actor)).isEmpty();
@@ -215,6 +216,29 @@ class MemoryControllerComponentTest {
         .andExpect(flash().attribute("memoryError", "Memory deletion could not be completed."));
 
     assertThat(memories.find(actor, memory.id())).isPresent();
+  }
+
+  @Test
+  void failedProposalRetainsOrdinaryInputAndAssociatesTheFieldError() throws Exception {
+    Account account = accounts.newActivated(AccountRole.MEMBER);
+    var result =
+        mockMvc
+            .perform(
+                post("/memory/proposals")
+                    .param("scope", "PROJECT")
+                    .param("text", "   ")
+                    .with(accounts.authenticatedAs(account)))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("proposalText", "   "))
+            .andExpect(flash().attribute("proposalScope", "PROJECT"))
+            .andReturn();
+    mockMvc
+        .perform(
+            get("/memory").flashAttrs(result.getFlashMap()).with(accounts.authenticatedAs(account)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Enter the memory you want to save.")))
+        .andExpect(content().string(containsString("aria-invalid=\"true\"")))
+        .andExpect(content().string(containsString("id=\"proposal-error\"")));
   }
 
   @Test

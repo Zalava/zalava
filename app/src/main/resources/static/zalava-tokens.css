@@ -1,0 +1,55 @@
+/* Shared semantic tokens for the server shell and chat. */
+:root {
+  color-scheme: light;
+  --zalava-color-canvas: #f5f7fb;
+  --zalava-color-surface: #ffffff;
+  --zalava-color-surface-raised: #ffffff;
+  --zalava-color-text: #172033;
+  --zalava-color-text-muted: #59647a;
+  --zalava-color-border: #dbe1ec;
+  --zalava-color-primary: #1959a6;
+  --zalava-color-primary-strong: #124786;
+  --zalava-color-primary-soft: #e8f0ff;
+  --zalava-color-success: #18794e;
+  --zalava-color-success-soft: #dcf6e8;
+  --zalava-color-warning: #9a6100;
+  --zalava-color-warning-soft: #fff1d6;
+  --zalava-color-danger: #b42318;
+  --zalava-color-danger-soft: #ffebe9;
+  --zalava-font-sans: ui-sans-serif, system-ui, sans-serif;
+  --zalava-space-1: .25rem;
+  --zalava-space-2: .5rem;
+  --zalava-space-3: .75rem;
+  --zalava-space-4: 1rem;
+  --zalava-space-6: 1.5rem;
+  --zalava-radius-sm: .5rem;
+  --zalava-radius-md: .75rem;
+  --zalava-radius-lg: 1rem;
+  --zalava-shadow-sm: 0 1px 3px rgb(23 32 51 / 8%);
+  --zalava-shadow-md: 0 12px 30px rgb(23 32 51 / 10%);
+  --zalava-focus-ring: 0 0 0 3px rgb(25 89 166 / 35%);
+  --zalava-motion-fast: 120ms ease;
+  --zalava-layer-raised: 1;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --zalava-color-canvas: #111827;
+  --zalava-color-surface: #182235;
+  --zalava-color-surface-raised: #202c42;
+  --zalava-color-text: #edf2ff;
+  --zalava-color-text-muted: #b5c0d6;
+  --zalava-color-border: #35435d;
+  --zalava-color-primary: #8ab8ff;
+  --zalava-color-primary-strong: #b8d3ff;
+  --zalava-color-primary-soft: #1c3968;
+  --zalava-color-success: #6ee7a8;
+  --zalava-color-success-soft: #153e30;
+  --zalava-color-warning: #ffd37a;
+  --zalava-color-warning-soft: #4b3510;
+  --zalava-color-danger: #ffaaa3;
+  --zalava-color-danger-soft: #54251f;
+  --zalava-shadow-sm: 0 1px 3px rgb(0 0 0 / 30%);
+  --zalava-shadow-md: 0 12px 30px rgb(0 0 0 / 35%);
+  --zalava-focus-ring: 0 0 0 3px rgb(138 184 255 / 45%);
+}

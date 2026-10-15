@@ -207,7 +207,7 @@ class BrowserFileAcceptanceTest {
             .waitFor();
 
         page.navigate(baseUrl() + "/knowledge");
-        page.getByText("report.txt").waitFor();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("report.txt")).waitFor();
 
         page.navigate(baseUrl() + "/chat");
         page.getByText("Connected").waitFor();

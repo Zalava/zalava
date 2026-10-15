@@ -1,8 +1,21 @@
 :root {
-    --zalava-surface: hsl(220, 24%, 97%);
-    --zalava-border: hsl(220, 16%, 88%);
-    --zalava-ink: hsl(220, 32%, 14%);
+  --zalava-surface: var(--zalava-color-canvas);
+  --zalava-surface-raised: var(--zalava-color-surface);
+  --zalava-surface-muted: var(--zalava-color-primary-soft);
+  --zalava-border: var(--zalava-color-border);
+  --zalava-ink: var(--zalava-color-text);
+  --zalava-text-muted: var(--zalava-color-text-muted);
+  --zalava-primary: var(--zalava-color-primary);
+  --zalava-primary-strong: var(--zalava-color-primary-strong);
+  --zalava-primary-soft: var(--zalava-color-primary-soft);
+  --zalava-success: var(--zalava-color-success);
+  --zalava-success-soft: var(--zalava-color-success-soft);
+  --zalava-warning: var(--zalava-color-warning);
+  --zalava-warning-soft: var(--zalava-color-warning-soft);
+  --zalava-danger: var(--zalava-color-danger);
+  --zalava-danger-soft: var(--zalava-color-danger-soft);
 }
+
 
 html {
     background: var(--zalava-surface);
@@ -664,55 +677,9 @@ body {
 }
 
 /* Zalava-owned design tokens and shared high-traffic primitives. */
-:root {
-    color-scheme: light;
-    --zalava-surface-raised: #ffffff;
-    --zalava-surface-muted: #f0f4fa;
-    --zalava-text-muted: #59647a;
-    --zalava-primary: #1959a6;
-    --zalava-primary-strong: #124786;
-    --zalava-primary-soft: #e8f0ff;
-    --zalava-success: #18794e;
-    --zalava-success-soft: #dcf6e8;
-    --zalava-warning: #9a6100;
-    --zalava-warning-soft: #fff1d6;
-    --zalava-danger: #b42318;
-    --zalava-danger-soft: #ffebe9;
-    --zalava-space-1: .25rem;
-    --zalava-space-2: .5rem;
-    --zalava-space-3: .75rem;
-    --zalava-space-4: 1rem;
-    --zalava-radius-sm: .5rem;
-    --zalava-radius-md: .75rem;
-    --zalava-radius-lg: 1rem;
-    --zalava-shadow-sm: 0 1px 3px rgb(23 32 51 / 8%);
-    --zalava-shadow-md: 0 12px 30px rgb(23 32 51 / 10%);
-    --zalava-focus-ring: 0 0 0 3px rgb(25 89 166 / 35%);
-    --zalava-motion-fast: 120ms ease;
-    --zalava-layer-raised: 1;
-}
 
-:root[data-theme="dark"] {
-    color-scheme: dark;
-    --zalava-surface: #111827;
-    --zalava-surface-raised: #182235;
-    --zalava-surface-muted: #202c42;
-    --zalava-border: #35435d;
-    --zalava-ink: #edf2ff;
-    --zalava-text-muted: #b5c0d6;
-    --zalava-primary: #8ab8ff;
-    --zalava-primary-strong: #b8d3ff;
-    --zalava-primary-soft: #1c3968;
-    --zalava-success: #6ee7a8;
-    --zalava-success-soft: #153e30;
-    --zalava-warning: #ffd37a;
-    --zalava-warning-soft: #4b3510;
-    --zalava-danger: #ffaaa3;
-    --zalava-danger-soft: #54251f;
-    --zalava-shadow-sm: 0 1px 3px rgb(0 0 0 / 30%);
-    --zalava-shadow-md: 0 12px 30px rgb(0 0 0 / 35%);
-    --zalava-focus-ring: 0 0 0 3px rgb(138 184 255 / 45%);
-}
+
+
 
 :where(a, button, input, select, textarea):focus-visible {
     outline: none;
@@ -1031,3 +998,55 @@ body {
 [data-module-developer-options] .columns { min-width: 0; }
 
 .module-copy [data-artifact-digest] { overflow-wrap: anywhere; }
+
+/* Shared component states and native confirmation disclosures. */
+body { font-family: var(--zalava-font-sans); }
+a { color: var(--zalava-primary); }
+:where(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--zalava-primary); outline-offset: 3px; }
+.button.is-link { background: var(--zalava-primary); color: white; }
+.button.is-link:hover, .button.is-primary:hover { background: var(--zalava-primary-strong); color: white; }
+.button.is-link.is-light { background: var(--zalava-primary-soft); color: var(--zalava-primary); }
+.button.is-light:hover { border-color: var(--zalava-primary); }
+.button.is-danger.is-light:hover { background: var(--zalava-danger-soft); color: var(--zalava-danger); border-color: var(--zalava-danger); }
+.auth-card button { transition: background-color var(--zalava-motion-fast), transform var(--zalava-motion-fast); }
+.auth-card button:hover:not(:disabled) { background: var(--zalava-primary-strong); }
+.auth-card button:active:not(:disabled) { transform: translateY(1px); }
+.auth-card button:disabled { opacity: .55; cursor: not-allowed; }
+.auth-card button.auth-secondary:hover:not(:disabled) { background: var(--zalava-primary-soft); color: var(--zalava-primary-strong); }
+.auth-card button[data-pending="true"]::before { content: "↻"; margin-right: .5em; }
+.destructive-confirmation { max-width: 100%; }
+.destructive-confirmation > summary { cursor: pointer; list-style: none; }
+.destructive-confirmation > summary::-webkit-details-marker { display: none; }
+.confirmation-panel { margin-top: var(--zalava-space-3); padding: var(--zalava-space-4); border: 1px solid var(--zalava-danger); border-radius: var(--zalava-radius-md); background: var(--zalava-danger-soft); overflow-wrap: anywhere; }
+.confirmation-panel p { margin-bottom: var(--zalava-space-3); }
+.confirmation-actions, .source-actions { display: flex; flex-wrap: wrap; gap: var(--zalava-space-3); align-items: flex-start; }
+.confirmation-actions .button, .source-actions .button { height: auto; min-height: 2.75rem; white-space: normal; }
+.source-layout { max-width: 64rem; }
+.source-layout h1, .source-layout dd, .source-layout p { overflow-wrap: anywhere; }
+.source-metadata { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--zalava-space-4); }
+.source-metadata dt { color: var(--zalava-text-muted); font-size: .875rem; }
+.source-metadata dd { margin: .25rem 0 0; font-weight: 600; }
+.source-actions form { margin: 0; }
+.source-technical summary { cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; }
+.source-technical dl { margin-top: var(--zalava-space-4); }
+.field-requirement { font-size: .8rem; color: var(--zalava-text-muted); font-weight: 400; }
+.field-error { color: var(--zalava-danger); margin-top: .35rem; }
+[aria-invalid="true"] { border-color: var(--zalava-danger); }
+.empty-state { padding: var(--zalava-space-4); margin-block: var(--zalava-space-4); border: 1px dashed var(--zalava-border); border-radius: var(--zalava-radius-md); }
+.empty-state p { margin-bottom: var(--zalava-space-3); }
+.job-evidence .box { margin-bottom: 0; }
+@media (max-width: 640px) { .source-metadata { grid-template-columns: minmax(0,1fr); } }
+
+.button.is-danger { background: var(--zalava-danger); color: white; }
+.button.is-danger:hover { background: var(--zalava-danger); color: white; box-shadow: var(--zalava-shadow-sm); }
+.button.is-danger.is-light { background: var(--zalava-danger-soft); color: var(--zalava-danger); }
+.button.is-danger.is-light:hover { background: var(--zalava-danger-soft); color: var(--zalava-danger); border-color: var(--zalava-danger); }
+
+/* Native summary elements need the same border-box sizing as button controls. */
+.button { box-sizing: border-box; }
+.destructive-confirmation > summary { box-sizing: border-box; }
+[data-error-summary]:focus { outline: 2px solid var(--zalava-primary); outline-offset: 3px; }
+
+.notification.is-danger { color: var(--zalava-danger); background: var(--zalava-danger-soft); }
+.notification.is-success { color: var(--zalava-success); background: var(--zalava-success-soft); }
+.notification.is-warning { color: var(--zalava-warning); background: var(--zalava-warning-soft); }

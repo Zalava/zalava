@@ -1,57 +1,4 @@
-:root {
-  color-scheme: light;
-  --zalava-color-canvas: #f5f7fb;
-  --zalava-color-surface: #ffffff;
-  --zalava-color-surface-raised: #ffffff;
-  --zalava-color-text: #172033;
-  --zalava-color-text-muted: #59647a;
-  --zalava-color-border: #dbe1ec;
-  --zalava-color-primary: #1959a6;
-  --zalava-color-primary-strong: #124786;
-  --zalava-color-primary-soft: #e8f0ff;
-  --zalava-color-success: #18794e;
-  --zalava-color-success-soft: #dcf6e8;
-  --zalava-color-warning: #9a6100;
-  --zalava-color-warning-soft: #fff1d6;
-  --zalava-color-danger: #b42318;
-  --zalava-color-danger-soft: #ffebe9;
-  --zalava-font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
-  --zalava-space-1: .25rem;
-  --zalava-space-2: .5rem;
-  --zalava-space-3: .75rem;
-  --zalava-space-4: 1rem;
-  --zalava-space-6: 1.5rem;
-  --zalava-radius-sm: .5rem;
-  --zalava-radius-md: .75rem;
-  --zalava-radius-lg: 1rem;
-  --zalava-shadow-sm: 0 1px 3px rgb(23 32 51 / 8%);
-  --zalava-shadow-md: 0 12px 30px rgb(23 32 51 / 10%);
-  --zalava-focus-ring: 0 0 0 3px rgb(25 89 166 / 35%);
-  --zalava-motion-fast: 120ms ease;
-  --zalava-layer-raised: 1;
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --zalava-color-canvas: #111827;
-  --zalava-color-surface: #182235;
-  --zalava-color-surface-raised: #202c42;
-  --zalava-color-text: #edf2ff;
-  --zalava-color-text-muted: #b5c0d6;
-  --zalava-color-border: #35435d;
-  --zalava-color-primary: #8ab8ff;
-  --zalava-color-primary-strong: #b8d3ff;
-  --zalava-color-primary-soft: #1c3968;
-  --zalava-color-success: #6ee7a8;
-  --zalava-color-success-soft: #153e30;
-  --zalava-color-warning: #ffd37a;
-  --zalava-color-warning-soft: #4b3510;
-  --zalava-color-danger: #ffaaa3;
-  --zalava-color-danger-soft: #54251f;
-  --zalava-shadow-sm: 0 1px 3px rgb(0 0 0 / 30%);
-  --zalava-shadow-md: 0 12px 30px rgb(0 0 0 / 35%);
-  --zalava-focus-ring: 0 0 0 3px rgb(138 184 255 / 45%);
-}
+@import "../../src/main/resources/static/zalava-tokens.css";
 
 * { box-sizing: border-box; }
 
@@ -263,3 +210,31 @@ h1, p { margin: var(--zalava-space-1) 0; }
 .conversation-options label { grid-column: 1 / -1; font-weight: 600; }
 .conversation-options input { width: 100%; min-width: 0; }
 @media (max-width: 640px) { .conversation-options form { grid-template-columns: minmax(0, 1fr); } .conversation-options button { justify-self: start; } }
+
+/* Each semantic variant owns its readable interaction colors. */
+.zalava-button--secondary:hover:not(:disabled),
+.composer .composer-attach:hover:not(:disabled),
+.attachment-chip button:hover:not(:disabled),
+.composer .composer-options-toggle:hover:not(:disabled) {
+  color: var(--zalava-color-primary-strong);
+  background: var(--zalava-color-primary-soft);
+  border-color: var(--zalava-color-primary);
+}
+.zalava-button--danger:hover:not(:disabled) {
+  color: var(--zalava-color-danger);
+  background: var(--zalava-color-danger-soft);
+  border-color: var(--zalava-color-danger);
+}
+.zalava-status[data-state="connecting"] { color: var(--zalava-color-text-muted); background: var(--zalava-color-canvas); }
+.zalava-status[data-state="error"] { color: var(--zalava-color-danger); background: var(--zalava-color-danger-soft); }
+.connection-recovery { padding: var(--zalava-space-4); border: 1px solid var(--zalava-color-danger); border-radius: var(--zalava-radius-md); background: var(--zalava-color-danger-soft); }
+.connection-recovery p { margin-bottom: var(--zalava-space-3); }
+.chat-action-status, .composer-help { color: var(--zalava-color-text-muted); font-size: .875rem; }
+.composer-help { margin: 0; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--zalava-color-primary);
+  outline-offset: 3px;
+}
+.conversation-options summary, .uploaded-file-options summary { min-height: 2.75rem; display: flex; align-items: center; }
+
+.chat-inspector [aria-selected="true"]:hover:not(:disabled) { color: white; background: var(--zalava-color-primary-strong); border-color: var(--zalava-color-primary-strong); }

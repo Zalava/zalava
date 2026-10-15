@@ -370,7 +370,10 @@ class BrowserNavigationAcceptanceTest {
           .waitFor();
       assertThat(Files.readString(WORKSPACE.resolve("AGENT.private.md")))
           .contains("Browser saved instructions.");
-      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reset to defaults"))
+      page.locator("[data-action=confirm-action]").click();
+      page.getByRole(
+              AriaRole.BUTTON,
+              new Page.GetByRoleOptions().setName("Reset instructions").setExact(true))
           .click();
       page.getByText("Default workspace instructions restored.").waitFor();
       assertThat(page.locator("#instructions").inputValue())
@@ -685,7 +688,7 @@ class BrowserNavigationAcceptanceTest {
         capture(admin, "knowledge-pending-" + width);
         assertThat(admin.navigate(baseUrl() + href).status()).isEqualTo(200);
         assertThat(admin.locator("body").innerText())
-            .contains("Waiting for a document processing module");
+            .contains("Install and start a document-processing module");
         capture(admin, "knowledge-processing-detail-" + width);
         admin.navigate(baseUrl() + "/knowledge");
       }
@@ -740,9 +743,8 @@ class BrowserNavigationAcceptanceTest {
                       new Locator.GetByRoleOptions().setName("Share").setExact(true))
                   .count())
           .isEqualTo(1);
-      card.getByRole(
-              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Delete").setExact(true))
-          .click();
+      card.locator("[data-action=delete]").click();
+      card.locator("[data-action=confirm-delete]").click();
       admin.getByRole(AriaRole.STATUS).getByText("Source deleted.").waitFor();
       admin.reload();
       assertThat(

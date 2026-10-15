@@ -89,6 +89,7 @@ class BrowserMemoryAcceptanceTest {
 
       page.navigate(baseUrl() + "/memory");
       page.locator("[data-memory-entry] [data-action=delete]").first().click();
+      page.locator("[data-memory-entry] [data-action=confirm-delete]").first().click();
       page.locator("[data-memory-entry]")
           .waitFor(
               new com.microsoft.playwright.Locator.WaitForOptions()

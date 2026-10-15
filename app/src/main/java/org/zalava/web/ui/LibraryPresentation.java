@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import org.zalava.knowledge.application.KnowledgeProcessingQueries.Status;
+import org.zalava.knowledge.domain.KnowledgeVisibility;
 import org.zalava.knowledge.domain.SourceProcessingState;
 import org.zalava.knowledge.memory.domain.MemoryScope;
 
@@ -64,12 +65,33 @@ public final class LibraryPresentation {
     };
   }
 
+  public static String fileType(String type) {
+    return switch (type) {
+      case "text/plain", "text/markdown" -> "Text document";
+      case "text/html" -> "HTML document";
+      case "application/pdf" -> "PDF document";
+      case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ->
+          "Word document";
+      default -> type;
+    };
+  }
+
+  public static String fileSize(long bytes) {
+    if (bytes < 1024) return bytes + (bytes == 1 ? " byte" : " bytes");
+    if (bytes < 1024 * 1024) return String.format(Locale.ENGLISH, "%.1f KB", bytes / 1024.0);
+    return String.format(Locale.ENGLISH, "%.1f MB", bytes / (1024.0 * 1024));
+  }
+
+  public static String visibility(KnowledgeVisibility visibility) {
+    return visibility == KnowledgeVisibility.PRIVATE ? "Private to you" : "Shared with workspace";
+  }
+
   public static String processing(Status status) {
     return switch (status.state()) {
       case PENDING ->
           status.extractorAvailable()
               ? "Waiting in the processing queue. Refresh to check progress."
-              : "Waiting for a document processing module";
+              : "Not processed yet.";
       case PROCESSING -> "The document is being processed. Refresh to check progress.";
       case READY -> "The document has been processed and is available to Knowledge search.";
       case FAILED -> "Processing failed. " + failure(status);

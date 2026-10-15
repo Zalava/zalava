@@ -145,7 +145,8 @@ class KnowledgeAndMemoryUsabilityComponentTest {
             .getResponse()
             .getContentAsString();
     assertThat(detail)
-        .contains("Waiting for a document processing module", "Ask your workspace administrator");
+        .contains(
+            "Install and start a document-processing module", "Ask your workspace administrator");
   }
 
   @Test
@@ -269,7 +270,8 @@ class KnowledgeAndMemoryUsabilityComponentTest {
             .getResponse()
             .getContentAsString();
     assertThat(detail)
-        .contains("Processing failed", "The document could not be read", "Retry")
+        .contains(
+            "Processing failed", "The document could not be read", "document-processing module")
         .doesNotContain("private processor stack detail");
     mockMvc
         .perform(get("/knowledge/" + source.id().value()).with(as(other)))

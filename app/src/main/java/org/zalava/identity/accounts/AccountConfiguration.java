@@ -126,6 +126,8 @@ public class AccountConfiguration {
                     .requestMatchers(
                         "/login",
                         "/zalava-ui.css",
+                        "/zalava-tokens.css",
+                        "/zalava-ui.js",
                         "/zalava-control.css",
                         "/css/**",
                         "/actuator/health")
@@ -154,7 +156,9 @@ public class AccountConfiguration {
                         "/ws/chat",
                         "/ws/ui/chat",
                         "/zalava-chat/**",
-                        "/zalava-ui.css")
+                        "/zalava-ui.css",
+                        "/zalava-tokens.css",
+                        "/zalava-ui.js")
                     .hasAnyRole("ADMIN", "MEMBER")
                     .requestMatchers("/account/password", "/logout")
                     .authenticated()

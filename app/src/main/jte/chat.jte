@@ -10,7 +10,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zalava Chat</title>
     <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-    <link rel="stylesheet" href="/zalava-ui.css">
+    <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
     <link rel="stylesheet" href="/zalava-chat/assets/zalava-chat.css">
 </head>
 <body>

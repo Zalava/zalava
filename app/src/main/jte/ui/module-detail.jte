@@ -1,3 +1,4 @@
+@import java.util.Map
 @import org.zalava.web.ui.navigation.NavigationModel
 @import org.springframework.security.web.csrf.CsrfToken
 @import org.zalava.web.ui.ModulesController.ModuleDetailModel
@@ -9,6 +10,8 @@
 @param ModuleDetailModel model
 @param NavigationModel navigation
 @param CsrfToken csrf
+@param Map<String, String> configurationValues = Map.of()
+@param Map<String, String> configurationFieldErrors = Map.of()
 
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -17,7 +20,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>${model.displayName()} · Zalava Modules</title>
     <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-    <link rel="stylesheet" href="/zalava-ui.css">
+    <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head>
 <body>
 @template.ui.navigation(items = navigation.items(), activePage = "modules", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
@@ -49,7 +54,7 @@
             <div class="notification is-success" role="status">${model.configurationMessage()}</div>
         @endif
         @if(model.configurationError() != null)
-            <div class="notification is-danger" role="alert">${model.configurationError()}</div>
+            <div class="notification is-danger" role="alert" tabindex="-1" data-error-summary>${model.configurationError()}</div>
         @endif
         @if(model.loaded() && model.enabledExternal())
             @if("RUNNING".equals(model.lifecycleState()))
@@ -94,24 +99,25 @@
                 <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
                 @for(var field : model.configurationFields())
                     <div class="field">
-                        <label class="label" for="${field.name()}">${field.label()}</label>
+                        <label class="label" for="${field.name()}">${field.label()} <span class="field-requirement">${field.required() ? "(required)" : "(optional)"}</span></label>
                         @if(field.description() != null)
-                            <p class="help mb-2">${field.description()}</p>
+                            <p class="help mb-2" id="help-${field.name()}">${field.description()}</p>
                         @endif
                         <div class="control">
                             @if(field.type().equals("json"))
-                                <textarea id="${field.name()}" class="textarea is-family-monospace" name="${field.name()}" rows="5" required="${field.required()}">${field.value()}</textarea>
+                                <textarea id="${field.name()}" aria-invalid="${configurationFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="${(field.description() != null ? "help-" + field.name() + " " : "") + (configurationFieldErrors.containsKey(field.name()) ? "error-" + field.name() : "")}" class="textarea is-family-monospace" name="${field.name()}" rows="5" required="${field.required()}">${configurationValues.getOrDefault(field.name(), field.value())}</textarea>
                             @else
                                 @if(field.type().equals("boolean"))
-                                    <label class="checkbox"><input id="${field.name()}" name="${field.name()}" type="checkbox" value="true" checked="${field.value().equals("true")}"> Enabled</label>
+                                    <label class="checkbox"><input id="${field.name()}" aria-invalid="${configurationFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="${(field.description() != null ? "help-" + field.name() + " " : "") + (configurationFieldErrors.containsKey(field.name()) ? "error-" + field.name() : "")}" name="${field.name()}" type="checkbox" value="true" checked="${configurationValues.getOrDefault(field.name(), field.value()).equals("true")}"> Enabled</label>
                                 @else
-                                    <input id="${field.name()}" class="input" name="${field.name()}" type="${field.type().equals("number") || field.type().equals("integer") ? "number" : "text"}" value="${field.value()}" required="${field.required()}">
+                                    <input id="${field.name()}" aria-invalid="${configurationFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="${(field.description() != null ? "help-" + field.name() + " " : "") + (configurationFieldErrors.containsKey(field.name()) ? "error-" + field.name() : "")}" class="input" name="${field.name()}" type="${field.type().equals("number") || field.type().equals("integer") ? "number" : "text"}" value="${configurationValues.getOrDefault(field.name(), field.value())}" required="${field.required()}">
                                 @endif
                             @endif
                         </div>
+                        @if(configurationFieldErrors.containsKey(field.name()))<p class="field-error" id="error-${field.name()}">${configurationFieldErrors.get(field.name())}</p>@endif
                         @if(field.secretReference())
                             <div class="control mt-2">
-                                <label class="label is-size-7" for="${field.replacementSecretName()}">Replace stored secret</label>
+                                <label class="label is-size-7" for="${field.replacementSecretName()}">Replace stored secret <span class="field-requirement">(optional)</span></label>
                                 <input id="${field.replacementSecretName()}" class="input" name="${field.replacementSecretName()}" type="password" autocomplete="new-password" data-secret-replacement="${field.path()}">
                                 <p class="help">Leave blank to keep stored value. Zalava never renders it.</p>
                             </div>
