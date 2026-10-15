@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.lang.reflect.Field;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,19 @@ class AccountSecurityComponentTest {
             () ->
                 accounts.create(
                     "account-security-admin", "TestBootstrapPassword-123", AccountRole.ADMIN));
+  }
+
+  @Test
+  void sharedUiAssetsLoadBeforeSignInAndDuringRequiredPasswordChange() throws Exception {
+    String login = "assets-member-" + UUID.randomUUID();
+    accounts.create(login, "AssetsMemberPassword-123", AccountRole.MEMBER);
+    for (String asset : new String[] {"/zalava-tokens.css", "/zalava-ui.js"}) {
+      mockMvc.perform(get(asset)).andExpect(status().isOk());
+      mockMvc.perform(get(asset).with(user(login).roles("MEMBER"))).andExpect(status().isOk());
+    }
+    mockMvc
+        .perform(get("/memory").with(user(login).roles("MEMBER")))
+        .andExpect(status().is3xxRedirection());
   }
 
   @Test

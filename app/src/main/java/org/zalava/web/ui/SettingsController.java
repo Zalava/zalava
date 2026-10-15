@@ -65,7 +65,12 @@ public class SettingsController {
       throws IOException {
     model.addAttribute("providers", ChatProviderCatalog.providers());
     try {
-      model.addAttribute("providerSettings", providers.display(provider));
+      model.addAttribute(
+          "providerSettings",
+          providers.display(
+              model.getAttribute("submittedProvider") instanceof String submitted
+                  ? submitted
+                  : provider));
     } catch (IllegalArgumentException invalid) {
       model.addAttribute("providerSettings", providers.display(null));
     }
@@ -111,6 +116,7 @@ public class SettingsController {
       redirectAttributes.addFlashAttribute("settingsMessage", "Workspace instructions updated.");
     } catch (IllegalArgumentException exception) {
       redirectAttributes.addFlashAttribute("settingsError", exception.getMessage());
+      redirectAttributes.addFlashAttribute("submittedInstructions", instructions);
     }
     return "redirect:/settings";
   }

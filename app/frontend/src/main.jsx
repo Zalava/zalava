@@ -90,6 +90,10 @@ function ZalavaRuntime({ children }) {
   const [pendingImports, setPendingImports] = useState([]);
   const [uploadError, setUploadError] = useState(null);
   const [status, setStatus] = useState("Connecting");
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
+  const [conversationAction, setConversationAction] = useState("");
+  const [conversationNotice, setConversationNotice] = useState("");
+  const conversationActionRef = useRef("");
   const [origin, setOrigin] = useState("web");
   const [canSend, setCanSend] = useState(false);
   const [canContinue, setCanContinue] = useState(false);
@@ -101,18 +105,37 @@ function ZalavaRuntime({ children }) {
   const sendCommandRef = useRef(() => false);
 
   useEffect(() => {
+    let active = true;
+    const finishAction = (event) => {
+      const action = conversationActionRef.current;
+      if (!action || (action === "rename" ? event !== "list" : event !== "snapshot")) return;
+      conversationActionRef.current = "";
+      setConversationAction("");
+      setConversationNotice(action === "rename" ? "Conversation name saved." : action === "create" ? "Conversation created." : "Conversation loaded.");
+    };
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const connection = new WebSocket(`${protocol}://${window.location.host}/ws/ui/chat`);
     socket.current = connection;
-    connection.onopen = () => setStatus("Connected");
-    connection.onclose = () => setStatus("Disconnected");
-    connection.onerror = () => setStatus("Connection error");
+    connection.onopen = () => { if (active) setStatus("Connected"); };
+    connection.onclose = () => {
+      if (!active) return;
+      setStatus("Disconnected");
+      setConversationAction(""); conversationActionRef.current = "";
+      setContinuing(false);
+      setPendingImports([]);
+      pendingAttachments.current.forEach(pending => pending.reject(new Error("The connection was interrupted. Reconnect and try again.")));
+      pendingAttachments.current.clear();
+      setMessages(current => current.map(message => message.streaming ? { ...message, streaming: false, failure: true, content: message.content || "The connection was interrupted. Reconnect before trying again." } : message));
+    };
+    connection.onerror = () => { if (active) setStatus("Connection error"); };
     connection.onmessage = ({ data }) => {
+      if (!active) return;
       const event = JSON.parse(data);
       if (event.type === "conversation.list") {
         setConversationIds(event.conversationIds);
         ownedConversationIds.current = event.conversationIds;
         setConversationSummaries(event.conversations ?? []);
+        finishAction("list");
       } else if (event.type === "conversation.snapshot") {
         const remembered = rememberedConversation();
         if (!selectedConversation.current && remembered && remembered !== event.conversationId && ownedConversationIds.current.includes(remembered)) {
@@ -123,6 +146,7 @@ function ZalavaRuntime({ children }) {
         selectedConversation.current = event.conversationId;
         rememberConversation(event.conversationId);
         setConversationId(event.conversationId);
+        finishAction("snapshot");
         setOrigin(event.channelId ?? "web");
         setCanSend(event.canSend === true);
         setCanContinue(event.canContinue === true);
@@ -186,6 +210,7 @@ function ZalavaRuntime({ children }) {
         setUploadedFiles((current) => current.filter((entry) => entry.attachmentId !== event.attachmentId));
       } else if (event.type === "failure") {
         setPendingImports([]);
+        setConversationAction(""); conversationActionRef.current = "";
         setContinuing(false);
         if (event.operation !== "chat.send") setCommandError(event.message);
         setApprovals((current) => Object.fromEntries(Object.entries(current).map(([id, entry]) =>
@@ -198,8 +223,18 @@ function ZalavaRuntime({ children }) {
         ]);
       }
     };
-    return () => connection.close();
-  }, []);
+    return () => { active = false; connection.close(); };
+  }, [connectionAttempt]);
+
+  useEffect(() => {
+    if (!conversationAction) return;
+    const timeout = setTimeout(() => {
+      conversationActionRef.current = "";
+      setConversationAction("");
+      setCommandError("Zalava did not confirm the conversation change. Reconnect to check its result before trying again.");
+    }, 15000);
+    return () => clearTimeout(timeout);
+  }, [conversationAction]);
 
   const sendCommand = (command) => {
     if (socket.current?.readyState === WebSocket.OPEN) {
@@ -209,6 +244,17 @@ function ZalavaRuntime({ children }) {
     return false;
   };
   sendCommandRef.current = sendCommand;
+
+  const changeConversation = (action, command, label) => {
+    if (conversationActionRef.current) return;
+    setCommandError(null); setConversationNotice("");
+    conversationActionRef.current = action;
+    setConversationAction(label);
+    if (!sendCommand(command)) {
+      conversationActionRef.current = ""; setConversationAction("");
+      setCommandError("Zalava is disconnected. Reconnect before changing the conversation.");
+    }
+  };
 
   const attachmentAdapter = useMemo(
     () => ({
@@ -274,7 +320,7 @@ function ZalavaRuntime({ children }) {
 
   const onNew = async (message) => {
     const text = messageText(message);
-    if (!providerConfigured || !text.trim() || socket.current?.readyState !== WebSocket.OPEN || !conversationId || !canSend || continuing) return;
+    if (!providerConfigured || !text.trim() || socket.current?.readyState !== WebSocket.OPEN || !conversationId || !canSend || continuing || conversationAction) return;
     const attachments = message.attachments ?? [];
     const attachmentIds = attachments
       .map((attachment) => attachment.content?.find((part) => part.type === "file")?.data ?? attachment.id)
@@ -291,7 +337,7 @@ function ZalavaRuntime({ children }) {
   const runtime = useExternalStoreRuntime({
     messages,
     isRunning: messages.at(-1)?.streaming === true,
-    isSendDisabled: !providerConfigured || status !== "Connected" || !conversationId || !canSend || continuing,
+    isSendDisabled: !providerConfigured || status !== "Connected" || !conversationId || !canSend || continuing || Boolean(conversationAction),
     convertMessage: (message) => ({
       role: message.role,
       content: [{ type: "text", text: message.content }],
@@ -307,6 +353,15 @@ function ZalavaRuntime({ children }) {
       documentProcessing,
       origin, canSend, canContinue, continuing, commandError,
       status,
+      conversationAction, conversationNotice,
+      reconnect: () => {
+        if (status === "Connecting") return;
+        selectedConversation.current = null;
+        setConversationId(null);
+        setStatus("Connecting"); setCommandError(null);
+        setConversationNotice("");
+        setConnectionAttempt(attempt => attempt + 1);
+      },
       conversationId,
       conversationIds,
       conversationSummaries,
@@ -327,14 +382,11 @@ function ZalavaRuntime({ children }) {
         if (sendCommand({ type: "chat.continue", conversationId, destination: "web" })) setContinuing(true);
         else setCommandError("Zalava is not connected");
       },
-      selectConversation: (id) => sendCommand({ type: "chat.select", conversationId: id }),
-      createConversation: () => sendCommand({ type: "chat.create" }),
-      renameConversation: (title) => {
-        setCommandError(null);
-        if (!sendCommand({ type: "chat.rename", conversationId, title })) setCommandError("Zalava is not connected");
-      },
+      selectConversation: (id) => changeConversation("select", { type: "chat.select", conversationId: id }, "Loading conversation…"),
+      createConversation: () => changeConversation("create", { type: "chat.create" }, "Creating conversation…"),
+      renameConversation: (title) => changeConversation("rename", { type: "chat.rename", conversationId, title }, "Saving conversation name…"),
     }),
-    [messages, memoryReviews, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError],
+    [messages, memoryReviews, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice],
   );
 
   return (
@@ -372,6 +424,7 @@ function Chat() {
   const [inspectorTab, setInspectorTab] = useState("Run");
   const {
     origin, canSend, canContinue, continuing, commandError, continueConversation,
+    conversationAction, conversationNotice, reconnect,
     messages,
     memoryReviews,
     documentProcessing,
@@ -402,7 +455,7 @@ function Chat() {
     .map((message) => message.content);
   const recallPrompt = (event) => {
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
-    if (event.shiftKey || promptHistory.length === 0) return;
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || promptHistory.length === 0) return;
     event.preventDefault();
     if (event.key === "ArrowUp") {
       const next = Math.min(historyIndex.current + 1, promptHistory.length - 1);
@@ -430,8 +483,14 @@ function Chat() {
           <h1>Chat</h1>
           <p>Ask Zalava a question or start work that will be tracked as a job.</p>
         </div>
-        <output className="zalava-status" aria-label="Chat connection" aria-live="polite">{status}</output>
+        <output className="zalava-status" data-state={status === "Connected" ? "success" : status === "Connecting" ? "connecting" : "error"} aria-label="Chat connection" aria-live="polite">{status}</output>
       </header>
+      {(status === "Disconnected" || status === "Connection error") && <section className="connection-recovery" role="alert">
+        <p>Chat is disconnected. Your unsent message is kept below. Reconnect to load the latest conversation before sending.</p>
+        <button className="zalava-button" type="button" onClick={reconnect}>Reconnect</button>
+      </section>}
+      {conversationAction && <p className="chat-action-status" role="status">{conversationAction}</p>}
+      {!conversationAction && conversationNotice && <p className="chat-action-status" role="status">{conversationNotice}</p>}
       {!providerConfigured && <section id="model-setup" className="provider-notice" aria-label="Model setup" role="status">
         <strong>Model not configured</strong>
         <p>Chat is disabled until a model provider is configured. The connection alone does not mean a model is ready.</p>
@@ -439,22 +498,22 @@ function Chat() {
       </section>}
       {providerConfigured && !conversationId && status === "Connected" && <p role="status">Loading your conversations…</p>}
       <nav className="conversations" aria-label="Conversations">
-        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || !conversationId || pending || continuing || status !== "Connected"}>
+        <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || !conversationId || pending || continuing || Boolean(conversationAction) || status !== "Connected"}>
           {!conversationId && <option value="">Start a conversation</option>}
           {conversationIds.map((id) => {
             const summary = conversationSummaries.find((entry) => entry.id === id);
             return <option key={id} value={id}>{summary?.title ?? "Saved conversation"} · {conversationDate(summary?.updatedAt ?? summary?.createdAt)}</option>;
           })}
         </select>
-        <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || !conversationId || status !== "Connected" || pending || continuing}>New conversation</button>
+        <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || !conversationId || status !== "Connected" || pending || continuing || Boolean(conversationAction)}>New conversation</button>
       </nav>
       {selectedSummary && <p className="conversation-meta"><strong>{selectedSummary.title}</strong> · Updated <time dateTime={selectedSummary.updatedAt ?? selectedSummary.createdAt}>{conversationDate(selectedSummary.updatedAt ?? selectedSummary.createdAt)}</time></p>}
       {conversationId && <details className="conversation-options">
         <summary>Conversation options</summary>
         <form onSubmit={(event) => { event.preventDefault(); if (conversationName.trim()) renameConversation(conversationName.trim()); }}>
           <label htmlFor="conversation-name">Conversation name</label>
-          <input id="conversation-name" className="zalava-field" value={conversationName} maxLength={120} onChange={(event) => setConversationName(event.target.value)} disabled={pending || status !== "Connected"} />
-          <button className="zalava-button zalava-button--secondary" type="submit" disabled={!conversationName.trim() || pending || status !== "Connected"}>Save name</button>
+          <input id="conversation-name" className="zalava-field" value={conversationName} maxLength={120} onChange={(event) => setConversationName(event.target.value)} disabled={pending || Boolean(conversationAction) || status !== "Connected"} />
+          <button className="zalava-button zalava-button--secondary" type="submit" disabled={!conversationName.trim() || pending || Boolean(conversationAction) || status !== "Connected"}>Save name</button>
         </form>
       </details>}
       {memoryReviews.length > 0 && <section className="memory-review-notice" aria-label="Memory review" role="status">
@@ -479,7 +538,10 @@ function Chat() {
           <button className="zalava-button" type="button" onClick={continueConversation} disabled={!providerConfigured || continuing || status !== "Connected"}>{continuing ? "Continuing…" : "Continue conversation"}</button>
         </> : <p>Continuation is unavailable for this channel identity or destination.</p>}
       </section>}
-      {commandError && commandError !== failure?.content && <p role="alert">{commandError}</p>}
+      {commandError && commandError !== failure?.content && <section className="connection-recovery" role="alert">
+        <p>{commandError}</p>
+        <button className="zalava-button" type="button" onClick={reconnect} disabled={status === "Connecting"}>Reconnect</button>
+      </section>}
       <section className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
         {messages.length === 0 && <div className="chat-empty"><h2>What would you like to work on?</h2><p>{providerConfigured ? "Ask a question, explore your knowledge or start a task. Work and permissions will appear in workspace details." : "Set up a model to start your first conversation. Your workspace is ready for you to explore."}</p></div>}
         {messages.map((message, index) => (
@@ -504,6 +566,7 @@ function Chat() {
       {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
         <fieldset className="composer-fields" disabled={!providerConfigured} aria-describedby={!providerConfigured ? "model-setup" : undefined}>
         <label htmlFor="message">Message Zalava</label>
+        <p className="composer-help" id="composer-help">Alt+Up and Alt+Down recall sent messages. Arrow keys move within your draft.</p>
         <ComposerPrimitive.AttachmentDropzone data-testid="attachment-dropzone" className="composer-dropzone">
           <ComposerPrimitive.Attachments>
             {({ attachment }) => (
@@ -517,6 +580,7 @@ function Chat() {
           <div className="attachments" aria-label="Attachments">
             <ComposerPrimitive.Input
               id="message"
+              aria-describedby="composer-help"
               className="zalava-field"
               placeholder={providerConfigured ? "Message Zalava" : "Configure a provider to start chatting"}
               onKeyDown={recallPrompt}

@@ -1,6 +1,7 @@
-@param org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot evidence
+@import org.zalava.tasks.application.port.in.ActorJobEvidenceQueries.Snapshot
+@param Snapshot evidence
 <div class="container job-evidence" aria-label="Saved reports and upcoming work">
-  <section class="jobs-group" aria-labelledby="saved-reports-title">
+  <section class="box jobs-group" aria-labelledby="saved-reports-title">
     <h2 id="saved-reports-title" class="title is-4">Saved job reports</h2>
     <p>Saved job feedback, ordered by job creation.</p>
     @if(evidence.reports().isEmpty())
@@ -19,7 +20,7 @@
       </ul>
     @endif
   </section>
-  <section class="jobs-group" aria-labelledby="upcoming-jobs-title">
+  <section class="box jobs-group" aria-labelledby="upcoming-jobs-title">
     <h2 id="upcoming-jobs-title" class="title is-4">Upcoming scheduled jobs</h2>
     <p>Due times come from the scheduler's saved records.</p>
     @if(evidence.schedulingUnavailable())

@@ -3,6 +3,7 @@
 @import org.zalava.web.ui.SettingsController.SettingsModel
 @import org.springframework.security.web.csrf.CsrfToken
 @import java.util.List
+@import java.util.Map
 @import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog.Provider
 @import org.zalava.assistant.models.configuration.application.ModelProviderConfiguration.Display
 @param List<Provider> providers
@@ -14,17 +15,22 @@
 @param String channelLinkCode
 @param Instant channelLinkExpiresAt
 @param CsrfToken csrf
+@param Map<String, String> providerValues = Map.of()
+@param Map<String, String> providerFieldErrors = Map.of()
+@param String submittedInstructions = null
 @param NavigationModel navigation
 <!doctype html><html lang="en" data-theme="light"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zalava Settings</title>
-<link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-ui.css">
+<link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head><body>
 @template.ui.navigation(items = navigation.items(), activePage = "settings", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
 <main class="section"><div class="container">
 <header class="settings-heading mb-5"><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7 mb-2">Default workspace</p>
 <h1 class="title is-2 mb-3">Settings</h1><p class="subtitle is-5 has-text-grey">Shape your assistant and configure your workspace.</p></header>
 @if(settingsMessage != null)<article class="message is-success" role="status"><div class="message-body">${settingsMessage}</div></article>@endif
-@if(settingsError != null)<article class="message is-danger" role="alert"><div class="message-body">${settingsError}</div></article>@endif
+@if(settingsError != null)<article class="message is-danger" role="alert" tabindex="-1" data-error-summary><div class="message-body">${settingsError}</div></article>@endif
 <div class="settings-layout">
 <nav class="settings-sections" aria-label="Settings sections">
 @for(String key : List.of("assistant", "provider", "modules", "channels", "permissions"))
@@ -36,9 +42,9 @@
 <div class="settings-actions mb-3"><h2 id="instructions-heading" class="title is-4 mb-0">Workspace instructions</h2><span class="tag is-light">${model.instructionsCustomized() ? "Customized" : "Default"}</span></div>
 <p class="has-text-grey mb-4">Guide how Zalava communicates, uses tools and carries out work. Changes apply to subsequent requests. System permissions and approvals always apply.</p>
 <form method="post" action="/settings/instructions" id="instructions-form"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-<div class="field"><label class="label" for="instructions">Instructions</label><textarea id="instructions" class="textarea settings-editor" name="instructions" required>${model.instructions()}</textarea></div></form>
+<div class="field"><label class="label" for="instructions">Instructions</label><textarea id="instructions" class="textarea settings-editor" name="instructions" required>${submittedInstructions != null ? submittedInstructions : model.instructions()}</textarea></div></form>
 <div class="settings-actions mt-4"><button class="button is-primary" type="submit" form="instructions-form">Save instructions</button>
-<form method="post" action="/settings/instructions/reset"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><button class="button is-light" type="submit">Reset to defaults</button></form></div>
+@template.ui.deleteConfirmation(action = "/settings/instructions/reset", item = "for workspace instructions", csrfName = csrf.getParameterName(), csrfValue = csrf.getToken(), consequence = "Your custom instructions will be replaced with the recommended defaults.", label = "Reset to defaults", actionLabel = "Reset instructions", deletion = false)</div>
 <p class="help mt-3">Reset replaces your saved instructions with Zalava's recommended defaults.</p></section>
 @elseif(section.equals("provider"))
 <section class="box settings-card" aria-labelledby="provider-heading">
@@ -53,9 +59,11 @@
 <p class="has-text-grey mb-4">${providerSettings.provider().help()}</p>
 <form method="post" action="/settings/provider"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="provider" value="${providerSettings.provider().id()}">
 @for(var field : providerSettings.fields())
-<div class="field"><label class="label" for="provider-${field.name()}">${field.label()}</label>
-<div class="control"><input class="input" id="provider-${field.name()}" name="${field.name()}" type="${field.secret() ? "password" : "text"}" value="${field.value()}" required="${field.required() && !field.savedSecret()}" autocomplete="${field.secret() ? "new-password" : "off"}" maxlength="8192"></div>
+<div class="field"><label class="label" for="provider-${field.name()}">${field.label()} <span class="field-requirement">${field.required() ? "(required)" : "(optional)"}</span></label>
+<div class="control"><input class="input" id="provider-${field.name()}" name="${field.name()}" type="${field.secret() ? "password" : "text"}" value="${field.secret() ? "" : providerValues.getOrDefault(field.name(), field.value())}" aria-invalid="${providerFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="provider-help-${field.name()}${providerFieldErrors.containsKey(field.name()) ? " provider-error-" + field.name() : ""}" required="${field.required() && !field.savedSecret()}" autocomplete="${field.secret() ? "new-password" : "off"}" maxlength="8192"></div>
 @if(field.secret() && field.savedSecret())<label class="checkbox mt-2"><input type="checkbox" name="clear-${field.name()}" value="true"> Remove saved credential (provide a replacement if required)</label>@endif
+<p class="help" id="provider-help-${field.name()}">${field.secret() ? "Leave blank to keep a saved credential. Enter a replacement only to change it." : field.required() ? "Required for this provider." : "Optional for this provider."}</p>
+@if(providerFieldErrors.containsKey(field.name()))<p class="field-error" id="provider-error-${field.name()}">${providerFieldErrors.get(field.name())}</p>@endif
 @if(field.secret())<p class="help">${field.savedSecret() ? "A credential is saved. Leave blank to keep it, or enter a replacement." : "Stored privately; never shown after saving."}</p>@endif
 </div>
 @endfor

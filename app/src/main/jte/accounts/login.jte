@@ -5,7 +5,9 @@
 <!doctype html>
 <html lang="en" data-theme="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zalava sign in</title><link rel="stylesheet" href="/zalava-ui.css"></head>
+<title>Zalava sign in</title><link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script></head>
 <body class="zalava-auth"><main class="auth-layout">
 <section class="auth-introduction"><a class="auth-brand" href="/login"><span class="zalava-brand-mark">Z</span>Zalava</a>
 <p class="auth-eyebrow">Your workspace assistant</p><h1>A place to think.<br>A way to get things done.</h1>

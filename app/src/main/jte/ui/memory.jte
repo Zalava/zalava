@@ -8,6 +8,9 @@
 @param NavigationModel navigation
 @param String memoryMessage
 @param String memoryError
+@param String proposalText = ""
+@param String proposalScope = "USER"
+@param String proposalError = null
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
@@ -15,7 +18,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Memory</title>
   <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-  <link rel="stylesheet" href="/zalava-ui.css">
+  <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head>
 <body>
   @template.ui.navigation(items = navigation.items(), activePage = "memory", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
@@ -31,7 +36,7 @@
         <article class="message is-success" role="status"><div class="message-body">${memoryMessage}</div></article>
       @endif
       @if(memoryError != null)
-        <article class="message is-danger" role="alert"><div class="message-body">${memoryError}</div></article>
+        <article class="message is-danger" role="alert" tabindex="-1" data-error-summary><div class="message-body">${memoryError}</div></article>
       @endif
       @if(model.error() != null)
         <p class="notification is-danger is-light">${model.error()}</p>
@@ -41,21 +46,23 @@
         <h2 class="title is-5">Propose a memory</h2>
         <p class="has-text-grey is-size-7 mb-3">Proposals stay pending until you approve them; the model can only propose.</p>
         <div class="field">
-          <label class="label" for="proposal-scope">Scope</label>
+          <label class="label" for="proposal-scope">Scope <span class="field-requirement">(required)</span></label>
           <div class="control">
             <div class="select">
               <select id="proposal-scope" name="scope">
                 @for(MemoryScope option : LibraryPresentation.durableScopes())
-                  <option value="${option.name()}">${LibraryPresentation.scope(option)}</option>
+                  <option value="${option.name()}" selected="${option.name().equals(proposalScope)}">${LibraryPresentation.scope(option)}</option>
                 @endfor
               </select>
             </div>
           </div>
         </div>
         <div class="field">
-          <label class="label" for="proposal-text">Memory</label>
-          <div class="control"><textarea class="textarea" id="proposal-text" name="text" maxlength="2000" required></textarea></div>
+          <label class="label" for="proposal-text">Memory <span class="field-requirement">(required)</span></label>
+          <div class="control"><textarea class="textarea" id="proposal-text" name="text" maxlength="2000" required aria-invalid="${proposalError != null ? "true" : null}" aria-describedby="${proposalError != null ? "proposal-help proposal-error" : "proposal-help"}">${proposalText}</textarea></div>
         </div>
+        <p class="help" id="proposal-help">Up to 2,000 characters. Do not include passwords or credentials.</p>
+        @if(proposalError != null)<p class="field-error" id="proposal-error">${proposalError}</p>@endif
         <button class="button is-primary" data-action="propose">Propose</button>
       </form>
       <form method="get" action="/memory" class="library-search memory-search">
@@ -84,7 +91,7 @@
       </form>
       <h2 class="title is-5">Pending proposals</h2>
       @if(model.proposals().isEmpty())
-        <p class="has-text-grey">No pending proposals.</p>
+        <div class="empty-state"><p>No pending proposals.</p><p>Propose a preference above, or ask Zalava to remember something in Chat. You review it before it is saved.</p></div>
       @else
         <ul>
         @for(MemoryProposal proposal : model.proposals())
@@ -111,18 +118,20 @@
       @endif
       <h2 class="title is-5">Memories</h2>
       @if(model.memories().isEmpty())
-        <p class="has-text-grey" data-memory-empty>No memories.</p>
+        <section class="empty-state" data-memory-empty>
+        @if(!model.query().isBlank() || !model.scope().isBlank())
+          <p class="has-text-weight-bold">No matching memories.</p><a class="button is-light" href="/memory">Clear filters</a>
+        @else
+          <p class="has-text-weight-bold">No memories yet.</p><p>Propose and approve a preference to make it available for recall.</p><a class="button is-light" href="#proposal-text">Propose a memory</a>
+        @endif
+        </section>
       @else
         <ul>
         @for(Memory memory : model.memories())
           <li class="box" data-memory-entry="${memory.id()}">
             <a class="has-text-weight-bold" href="/memory/${memory.id()}">${memory.text()}</a><br>
             <span class="is-size-7 has-text-grey" data-memory-scope>${LibraryPresentation.scope(memory.scope())} · ${LibraryPresentation.provenance(memory.provenance().source())}@if(memory.provenance().reference() != null) · ${memory.provenance().reference()}@endif · created <time datetime="${memory.createdAt().toString()}">${LibraryPresentation.date(memory.createdAt())}</time>@if(memory.updatedAt() != null) · revised <time datetime="${memory.updatedAt().toString()}">${LibraryPresentation.date(memory.updatedAt())}</time>@endif</span>
-            <form method="post" action="/memory/${memory.id()}/delete" class="mt-3">
-              <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
-              <input type="hidden" name="confirmed" value="true">
-              <button class="button is-small is-danger is-light" data-action="delete">Delete</button>
-            </form>
+            @template.ui.deleteConfirmation(action = "/memory/" + memory.id() + "/delete", item = memory.text(), csrfName = model.csrf().getParameterName(), csrfValue = model.csrf().getToken(), consequence = "This memory will no longer be available for recall.")
           </li>
         @endfor
         </ul>

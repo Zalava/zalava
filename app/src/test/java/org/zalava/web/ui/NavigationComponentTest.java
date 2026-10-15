@@ -144,10 +144,8 @@ class NavigationComponentTest {
             "aria-controls=\"zalava-product-navigation\"",
             "class=\"zalava-navigation-close\"",
             "data-nav-initial=\"D\"",
-            "closeNavigation()",
-            "event.key === 'Escape'",
-            "form:not([data-repeatable])",
-            "Zalava is working on your request.");
+            "src=\"/zalava-ui.js\"",
+            "href=\"/zalava-tokens.css\"");
   }
 
   private String bodyOf(String path) throws Exception {

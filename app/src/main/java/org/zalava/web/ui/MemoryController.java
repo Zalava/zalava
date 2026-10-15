@@ -148,7 +148,13 @@ public final class MemoryController {
           actors.actor(authentication), MemoryProposalDraft.of(MemoryScope.parse(scope), text));
       redirect.addFlashAttribute("memoryMessage", "Memory proposed for review.");
     } catch (RuntimeException exception) {
-      redirect.addFlashAttribute("memoryError", message(exception));
+      String error = text.isBlank() ? "Enter the memory you want to save." : message(exception);
+      redirect.addFlashAttribute("memoryError", error);
+      redirect.addFlashAttribute("proposalError", error);
+      // Never echo content rejected by the existing credential/secret policy.
+      redirect.addFlashAttribute(
+          "proposalText", error.contains("credentials or secrets") ? "" : text);
+      redirect.addFlashAttribute("proposalScope", scope);
     }
     return "redirect:/memory";
   }

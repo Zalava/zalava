@@ -32,7 +32,7 @@ public final class ModuleConfigurationForm {
       }
       if (value == null || value.isBlank()) {
         if (field.required()) {
-          throw new IllegalArgumentException(field.label() + " is required.");
+          throw new FieldInputException(field.name(), field.label() + " is required.");
         }
         continue;
       }
@@ -75,8 +75,11 @@ public final class ModuleConfigurationForm {
         case "json" -> JSON.readValue(value, Object.class);
         default -> value;
       };
+    } catch (NumberFormatException exception) {
+      throw new FieldInputException(
+          field.name(), "Enter a valid number for " + field.label() + ".");
     } catch (JacksonException exception) {
-      throw new IllegalArgumentException(field.label() + " must be valid JSON.");
+      throw new FieldInputException(field.name(), field.label() + " must be valid JSON.");
     }
   }
 
@@ -142,6 +145,19 @@ public final class ModuleConfigurationForm {
 
   private static String string(Object value) {
     return value instanceof String string ? string : null;
+  }
+
+  public static final class FieldInputException extends IllegalArgumentException {
+    private final String field;
+
+    public FieldInputException(String field, String message) {
+      super(message);
+      this.field = field;
+    }
+
+    public String field() {
+      return field;
+    }
   }
 
   public record Field(

@@ -6,7 +6,9 @@
 @param String loginName = ""
 @param NavigationModel navigation
 <!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Change Zalava password</title><link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-ui.css"></head>
+<title>Change Zalava password</title><link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script></head>
 <body class="${required ? "zalava-auth" : ""}">
 @if(!required)@template.ui.navigation(items = navigation.items(), activePage = "account", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())@endif
 <main class="auth-layout">

@@ -141,9 +141,9 @@ class BrowserChatAcceptanceTest {
         page.getByText("first shell prompt").waitFor();
 
         page.locator("#message").fill("unfinished draft");
-        page.locator("#message").press("ArrowUp");
+        page.locator("#message").press("Alt+ArrowUp");
         assertThat(page.locator("#message").inputValue()).isEqualTo("first shell prompt");
-        page.locator("#message").press("ArrowDown");
+        page.locator("#message").press("Alt+ArrowDown");
         assertThat(page.locator("#message").inputValue()).isEqualTo("unfinished draft");
 
         page.locator("#message").fill("render markdown");
@@ -259,8 +259,7 @@ class BrowserChatAcceptanceTest {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save instructions"))
             .click();
         page.getByText("Workspace instructions cannot be empty.").waitFor();
-        assertThat(page.locator("textarea[name=instructions]").inputValue())
-            .isEqualTo("Browser acceptance instructions.\n");
+        assertThat(page.locator("textarea[name=instructions]").inputValue()).isEqualTo("   ");
       } finally {
         context
             .tracing()
