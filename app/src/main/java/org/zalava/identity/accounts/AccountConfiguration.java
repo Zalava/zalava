@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.zalava.identity.accounts.adapter.out.jdbc.JdbcAccountStore;
 import org.zalava.identity.accounts.adapter.out.security.SpringAccountPasswords;
 import org.zalava.identity.accounts.adapter.out.transaction.TransactionalAccountLifecycle;
@@ -164,7 +165,12 @@ public class AccountConfiguration {
                     .authenticated()
                     .anyRequest()
                     .hasRole("ADMIN"))
-        .csrf(csrf -> csrf.spa())
+        .csrf(
+            csrf -> {
+              var repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+              repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+              csrf.spa().csrfTokenRepository(repository);
+            })
         .formLogin(
             form ->
                 form.loginPage("/login")

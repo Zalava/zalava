@@ -4,7 +4,7 @@ import java.util.List;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.api.ZalavaOperationResult;
-import org.zalava.assistant.agent.DynamicToolActivationPolicy;
+import org.zalava.capabilities.discovery.application.DynamicToolActivationPolicy;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
