@@ -11,6 +11,7 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.SameSiteAttribute;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -98,10 +99,25 @@ class BrowserChatAcceptanceTest {
         Page page = context.newPage();
         List<String> outboundFrames = new CopyOnWriteArrayList<>();
         page.onWebSocket(socket -> socket.onFrameSent(frame -> outboundFrames.add(frame.text())));
-        page.navigate("http://127.0.0.1:" + port + "/login");
+        var loginPage = page.navigate("http://127.0.0.1:" + port + "/login");
+        assertThat(loginPage.headerValue("set-cookie")).contains("XSRF-TOKEN=", "SameSite=Lax");
         page.locator("input[name=username]").fill(LOGIN);
         page.locator("input[name=password]").fill("BrowserTestPassword-123");
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+        var loginResponse =
+            page.waitForResponse(
+                response ->
+                    response.url().endsWith("/login") && response.request().method().equals("POST"),
+                () ->
+                    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
+                        .click());
+        assertThat(
+                loginResponse
+                    .headerValue("set-cookie")
+                    .lines()
+                    .filter(cookie -> cookie.startsWith("JSESSIONID=")))
+            .singleElement()
+            .asString()
+            .contains("SameSite=Lax", "HttpOnly");
         assertThat(page.url()).endsWith("/account/password");
         page.locator("input[name=currentPassword]").fill("BrowserTestPassword-123");
         page.locator("input[name=replacementPassword]").fill("BrowserTestPassword-456");
@@ -111,6 +127,17 @@ class BrowserChatAcceptanceTest {
         assertThat(page.url()).endsWith("/chat");
         page.locator("#message").waitFor();
         page.getByText("Connected").waitFor();
+        assertThat(context.cookies())
+            .filteredOn(
+                cookie -> cookie.name.equals("JSESSIONID") || cookie.name.equals("XSRF-TOKEN"))
+            .hasSize(2)
+            .allSatisfy(cookie -> assertThat(cookie.sameSite).isEqualTo(SameSiteAttribute.LAX));
+        assertThat(context.cookies())
+            .filteredOn(cookie -> cookie.name.equals("JSESSIONID"))
+            .allSatisfy(cookie -> assertThat(cookie.httpOnly).isTrue());
+        assertThat(context.cookies())
+            .filteredOn(cookie -> cookie.name.equals("XSRF-TOKEN"))
+            .allSatisfy(cookie -> assertThat(cookie.httpOnly).isFalse());
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"))
             .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
         page.locator("#message").fill("what time is it now");
@@ -562,6 +589,22 @@ class BrowserChatAcceptanceTest {
                         "build/browser-acceptance/chat-initial-channel-ready-" + width + ".png"))
                 .setFullPage(true));
       }
+    }
+  }
+
+  @Test
+  void signsOutThroughTheCsrfProtectedFormAndInvalidatesTheSession() {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      page.setViewportSize(1440, 900);
+      signInDisposableMember(page);
+      page.locator("form[action='/logout'] button").click();
+      page.waitForURL("**/login?logout");
+      page.navigate("http://127.0.0.1:" + port + "/chat");
+      assertThat(page.url()).endsWith("/login");
     }
   }
 

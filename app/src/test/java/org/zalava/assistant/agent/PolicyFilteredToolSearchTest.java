@@ -12,6 +12,7 @@ import org.springframework.ai.tool.toolsearch.ToolSearchResponse;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolReferences;
+import org.zalava.capabilities.discovery.application.DynamicToolActivationPolicy;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.identity.accounts.domain.AccountRole;
 

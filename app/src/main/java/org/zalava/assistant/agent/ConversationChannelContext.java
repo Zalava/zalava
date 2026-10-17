@@ -2,26 +2,18 @@ package org.zalava.assistant.agent;
 
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.zalava.identity.channels.application.InvocationChannelContext;
 
 /** Carries the Zalava-owned channel identity while a conversational model invokes tools. */
 public final class ConversationChannelContext {
-  private static final ThreadLocal<String> CURRENT = new ThreadLocal<>();
-
   private ConversationChannelContext() {}
 
   public static <T> T call(String conversationId, Supplier<T> operation) {
-    String previous = CURRENT.get();
-    CURRENT.set(channel(conversationId));
-    try {
-      return operation.get();
-    } finally {
-      if (previous == null) CURRENT.remove();
-      else CURRENT.set(previous);
-    }
+    return InvocationChannelContext.call(channel(conversationId), operation);
   }
 
   public static Optional<String> current() {
-    return Optional.ofNullable(CURRENT.get());
+    return InvocationChannelContext.current();
   }
 
   private static String channel(String conversationId) {

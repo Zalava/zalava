@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.zalava.capabilities.discovery.application.DynamicToolActivationPolicy;
 import org.zalava.capabilities.discovery.application.port.in.RegisteredToolCallbacks;
 import org.zalava.capabilities.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;

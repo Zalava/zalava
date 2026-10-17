@@ -54,6 +54,15 @@ class PortsAndAdaptersArchitectureTest {
     "tools.jackson.."
   };
 
+  @ArchTest
+  static final ArchRule provider_agent_adapters_must_not_depend_on_assistant_internals =
+      noClasses()
+          .that()
+          .resideInAPackage("org.zalava.capabilities.operation.adapter.in.agent..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("org.zalava.assistant..");
+
   private static final String[] ADAPTER_PACKAGES = {
     "..adapter..",
     "..infrastructure..",

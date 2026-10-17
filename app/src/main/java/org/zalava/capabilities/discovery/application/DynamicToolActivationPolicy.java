@@ -1,4 +1,4 @@
-package org.zalava.assistant.agent;
+package org.zalava.capabilities.discovery.application;
 
 import java.util.ArrayList;
 import java.util.List;

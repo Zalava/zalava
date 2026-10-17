@@ -13,6 +13,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackCatalog;
+import org.zalava.capabilities.discovery.application.DynamicToolActivationPolicy;
 import org.zalava.capabilities.discovery.application.port.in.RemoteCapabilityDiscovery;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 

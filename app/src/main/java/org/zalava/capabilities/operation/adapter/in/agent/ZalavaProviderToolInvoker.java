@@ -5,11 +5,11 @@ import java.util.Map;
 import java.util.Optional;
 import org.zalava.api.InvocationContext;
 import org.zalava.api.ZalavaOperationResult;
-import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.channels.application.InvocationChannelContext;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.TaskExecutionContext;
 import org.zalava.tasks.domain.TaskReference;
@@ -75,7 +75,7 @@ public final class ZalavaProviderToolInvoker {
       Optional<ActorTaskExecutionReference> actorTaskReference) {
     Map<String, String> attributes = new LinkedHashMap<>();
     attributes.put("source", source);
-    ConversationChannelContext.current()
+    InvocationChannelContext.current()
         .ifPresent(channel -> attributes.put("permissionPolicyChannel", channel));
     taskReference.ifPresent(reference -> attributes.put("taskReference", reference.path()));
     actorTaskReference.ifPresent(
