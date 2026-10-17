@@ -57,11 +57,7 @@ dependencies {
     externalModuleFixtureImplementation project(':module-api')
 
     implementation 'com.anthropic:anthropic-java-client-okhttp'
-    implementation 'com.microsoft.playwright:playwright'
-    implementation 'org.webjars.npm:htmx.org:2.0.11'
-    implementation 'org.webjars.npm:htmx-ext-ws:2.0.4'
     implementation 'com.networknt:json-schema-validator'
-    implementation 'org.apache.commons:commons-lang3'
     implementation 'org.jobrunr:jobrunr-spring-boot-4-starter'
     implementation 'org.springaicommunity:spring-ai-agent-utils'
     implementation 'org.springframework.ai:spring-ai-client-chat'
@@ -73,18 +69,14 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-mistral-ai'
     implementation 'org.springframework.ai:spring-ai-starter-model-deepseek'
     implementation 'org.springframework.ai:spring-ai-starter-model-bedrock-converse'
-    implementation 'org.springframework.ai:spring-ai-tool-search-advisor'
     implementation 'org.springframework.ai:spring-ai-tool-search-tool'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.cloud:spring-cloud-context:5.0.3'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-restclient'
-    implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
-    implementation 'org.springframework.modulith:spring-modulith-starter-core'
     implementation 'org.telegram:telegrambots-client'
     implementation 'org.telegram:telegrambots-springboot-longpolling-starter'
     implementation 'gg.jte:jte-spring-boot-starter-4'
@@ -95,15 +87,12 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'io.netty:netty-resolver-dns-native-macos'
 
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation 'com.microsoft.playwright:playwright'
+    testImplementation 'org.springframework.ai:spring-ai-tool-search-advisor'
     testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     testImplementation 'org.testcontainers:testcontainers-postgresql'
@@ -186,11 +175,11 @@ tasks.named('bootBuildImage') {
 def installPlaywrightChromium = tasks.register('installPlaywrightChromium', JavaExec) {
     group = 'verification'
     description = 'Installs the Chromium headless shell used by browser acceptance.'
-    classpath = configurations.runtimeClasspath
+    classpath = configurations.testRuntimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     def imageVersion = providers.environmentVariable('ZALAVA_CI_PLAYWRIGHT_VERSION')
     def browserCache = providers.environmentVariable('PLAYWRIGHT_BROWSERS_PATH')
-    def playwrightArtifacts = configurations.runtimeClasspath.incoming.artifacts.resolvedArtifacts
+    def playwrightArtifacts = configurations.testRuntimeClasspath.incoming.artifacts.resolvedArtifacts
     def installerLogger = logger
     onlyIf('Chromium is not already supplied by a compatible CI image') {
         if (imageVersion.isPresent()) {
