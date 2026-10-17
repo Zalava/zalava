@@ -41,7 +41,7 @@ def nonSpringManagedDependencies = [
         'org.apache.httpcomponents.core5:httpcore5'             : '5.4.4',
         'org.apache.httpcomponents.core5:httpcore5-h2'          : '5.4.4',
         'com.anthropic:anthropic-java-client-okhttp'             : '2.52.0',
-        'com.microsoft.playwright:playwright'                    : '1.61.0',
+        'com.microsoft.playwright:playwright'                    : '1.63.0',
         'com.networknt:json-schema-validator'                    : '3.0.8',
         'org.jobrunr:jobrunr-spring-boot-4-starter'              : '9.0.1',
         'org.springaicommunity:spring-ai-agent-utils'            : '0.13.0',

@@ -33,7 +33,7 @@ pinned Java/Node bases change only through a reviewed Dockerfile update.
 Local trial:
 
 ```sh
-docker build --build-arg PLAYWRIGHT_VERSION=1.61.0 -t zalava-ci-trial ci/playwright
+docker build --build-arg PLAYWRIGHT_VERSION=1.63.0 -t zalava-ci-trial ci/playwright
 bash ci/playwright/verify-in-image.sh zalava-ci-trial
 ```
 
