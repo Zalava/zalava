@@ -1,7 +1,17 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
     id 'java-library'
     id 'org.springframework.boot'
     id 'gg.jte.gradle' version '3.2.4'
+}
+
+// Deliberately separate from runtimeClasspath, developmentOnly and test runtimes.
+configurations {
+    bootuiRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+    }
 }
 
 sourceSets {
@@ -41,6 +51,8 @@ rootProject.tasks.named('spotlessJava') {
 }
 
 dependencies {
+    bootuiRuntime 'com.julien-dubois.bootui:bootui-spring-boot-starter:2.1.0'
+
     implementation project(':module-api')
     externalModuleFixtureImplementation project(':module-api')
 
@@ -558,4 +570,77 @@ bootRun {
     dependsOn tasks.named('precompileJte')
     workingDir = rootProject.projectDir
     systemProperty 'gg.jte.template-location', 'app/src/main/jte'
+}
+
+tasks.register('bootuiRun', BootRun) {
+    group = 'application'
+    description = 'Runs a loopback-only local host with the optional BootUI console.'
+    dependsOn tasks.named('precompileJte')
+    mainClass = springBoot.mainClass
+    classpath = sourceSets.main.runtimeClasspath + configurations.bootuiRuntime + files('jte-classes')
+    workingDir = rootProject.projectDir
+    systemProperty 'gg.jte.template-location', 'app/src/main/jte'
+    systemProperty 'spring.profiles.include', 'local'
+    systemProperty 'spring.devtools.restart.enabled', 'false'
+    systemProperty 'spring.devtools.livereload.enabled', 'false'
+    systemProperty 'server.port', '18080'
+    systemProperty 'management.server.port', '18082'
+
+    // Command-line properties also take precedence over environment and local overrides.
+    def localOnly = [
+        'server.address': '127.0.0.1',
+        'management.server.address': '127.0.0.1',
+        'jobrunr.dashboard.enabled': 'false',
+        'bootui.allow-non-localhost': 'false',
+        'bootui.enabled': 'AUTO',
+        'bootui.mcp.enabled': 'OFF'
+    ]
+    doFirst { task ->
+        localOnly.each { name, value ->
+            if (task.args.any { it == "--${name}" || it.startsWith("--${name}=") }) {
+                throw new GradleException("bootuiRun fixes ${name}=${value}; remove its --args override")
+            }
+            task.args "--${name}=${value}"
+        }
+    }
+}
+
+tasks.register('verifyBootuiIsolation') {
+    group = 'verification'
+    description = 'Verifies BootUI is available only to bootuiRun and absent from release packaging.'
+    dependsOn tasks.named('bootJar')
+    def ordinaryClasspaths = [
+        runtimeClasspath: configurations.runtimeClasspath,
+        testRuntimeClasspath: configurations.testRuntimeClasspath,
+        bootRun: tasks.named('bootRun').get().classpath,
+        bootJar: tasks.named('bootJar').get().classpath
+    ]
+    def consoleRuntime = configurations.bootuiRuntime
+    def consoleClasspath = tasks.named('bootuiRun').get().classpath
+    def archive = tasks.named('bootJar').flatMap { it.archiveFile }
+    def imageArchive = tasks.named('bootBuildImage').flatMap { it.archiveFile }
+    def packagedBootui = zipTree(archive).matching { include 'BOOT-INF/lib/*bootui*.jar' }
+    doLast {
+        ordinaryClasspaths.each { name, classpath ->
+            if (classpath.files.any { it.name.startsWith('bootui-') && it.name.endsWith('.jar') }) {
+                throw new GradleException("BootUI leaked into ${name}")
+            }
+        }
+        def starter = consoleRuntime.files.find {
+            it.name == 'bootui-spring-boot-starter-2.1.0.jar'
+        }
+        if (starter == null || !consoleClasspath.contains(starter)) {
+            throw new GradleException('BootUI must be present only on bootuiRun')
+        }
+        if (!packagedBootui.isEmpty()) {
+            throw new GradleException('BootUI leaked into the executable archive')
+        }
+        if (imageArchive.get().asFile != archive.get().asFile) {
+            throw new GradleException('bootBuildImage must use the verified production archive')
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyBootuiIsolation')
 }
