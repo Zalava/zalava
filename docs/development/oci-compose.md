@@ -12,7 +12,7 @@ From the repository root, build and verify a retained local image:
 
 ```sh
 ./gradlew :app:ociImageAcceptanceTest -Poci.image=zalava:local
-# Optional tested reduced-JRE/AOT candidate: add -Poci.jlink=true
+# Full-JRE compatibility fallback: add -Poci.jlink=false
 cp .env.example .env
 mkdir -m 0700 .secrets
 (
