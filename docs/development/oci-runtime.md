@@ -9,7 +9,7 @@ deployment credentials or real user data. See [OCI images](oci-images.md).
 | Setting | Phase / default | Example or purpose |
 | --- | --- | --- |
 | `BP_JVM_VERSION` | Build / Java 25 | Change through reviewed Gradle configuration |
-| `oci.aot`, `oci.jlink` | Gradle build / true, false | Archive/JRE variants; not runtime environment variables |
+| `oci.aot`, `oci.jlink` | Gradle build / true, true | Archive/JRE variants; not runtime environment variables |
 | `oci.cache-prefix` | Gradle build / `zalava-local` | Stable CNB cache owner |
 | `JAVA_TOOL_OPTIONS` | Runtime / buildpack contributions | JVM flags and `-D` application properties; avoid secrets because Java prints this value |
 | `BPE_*` | Build-time environment-variables buildpack inputs | Baking values requires that buildpack; no custom BPE policy is configured here. Prefer runtime settings |
