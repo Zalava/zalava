@@ -50,7 +50,7 @@ known vulnerabilities. Base-size selection does not establish a clean scan.
 The image task requires Java 25, Docker access and network access to the pinned
 builder's dependencies. Full OCI acceptance also requires the repository's
 Playwright runtime and immutable released module artifacts. `check` includes
-OCI acceptance; missing prerequisites fail. Use the pinned CI verification image
+both full-JRE/AOT and jlink/AOT acceptance; missing prerequisites fail. Use the pinned CI verification image
 for the complete local gate before pushing. Reports are retained beneath
 `app/build/reports/oci-image` and `released-module-acceptance`.
 
@@ -82,16 +82,53 @@ Ephemeral CI runners start with cold daemon caches; cross-run cache export is
 not configured or claimed. The verification lane uses UUID-scoped caches and
 removes only its own resources.
 
-`-Poci.jlink=true -Poci.aot=false` evaluates Paketo's supported jlink integration. It retains
-Java SE plus explicit crypto, JFR/management, HTTP server, security, DNS,
-filesystem, charset and locale modules required by the host and verification
-fixtures. This opt-in variant must pass the same real-image acceptance lane.
-The pinned buildpack currently creates a jlink AOT cache that is rejected after
-its runtime module image changes. `oci.jlink=true` with `oci.aot=true` is rejected
-before the image build; functional success alone does not prove cache use.
+`-Poci.jlink=true` selects Paketo's supported jlink integration and retains
+JVM AOT by default. It retains Java SE plus explicit crypto, JFR/management, HTTP
+server, security, DNS, filesystem, charset and locale modules required by the
+host and verification fixtures. This opt-in variant passes the same real-image
+acceptance lane. Use `-Poci.jlink=true -Poci.aot=false` for the smallest measured
+sliced variant.
+
+The pinned JVM buildpack does not export `JRE_HOME` for its jlink build layer.
+Without that value the Spring Boot buildpack trains with the full JDK, causing
+the reduced runtime to reject the cache. Gradle explicitly supplies the pinned
+jlink layer's `JRE_HOME` during building so training and assembly use the actual
+reduced JVM. This corrects the mismatch; jlink and AOT are compatible. Review the
+layer path when updating buildpacks. The real-image acceptance lane requires
+`-XX:AOTMode=on` when AOT is enabled: silent cache fallback fails acceptance.
+
 The full JRE remains the supported default for independently installed modules;
 new modules may require additional JDK modules. A flag or successful build alone
-does not prove reflection, native-library, TLS or module compatibility.
+does not prove reflection, native-library, TLS, cache or module compatibility.
+
+## What jlink strips
+
+The measured Java 25.0.4 full JRE contains 49 modules; this reduced runtime
+contains 34. It removes `java.smartcardio`, `jdk.accessibility`,
+`jdk.crypto.cryptoki`, `jdk.dynalink`, `jdk.graal.compiler`,
+`jdk.graal.compiler.management`, `jdk.incubator.vector`, `jdk.internal.vm.ci`,
+`jdk.jdwp.agent`, `jdk.jsobject`, `jdk.management.agent`, `jdk.naming.rmi`,
+`jdk.nio.mapmode`, `jdk.sctp` and `jdk.xml.dom`.
+
+Consequences include absent smart-card/PKCS#11 integrations, JDWP remote debugger,
+built-in remote JMX agent, Graal JVMCI compiler, incubating Vector API, SCTP and
+the additional DOM/RMI-naming APIs. Normal HotSpot JIT, reflection, native
+SQLite, TLS/EC crypto, JDBC, JFR and local management APIs remain and are tested.
+The conservative `java.se` module root retains desktop/AWT and other Java SE
+APIs; this is not the smallest theoretically possible application-specific JRE.
+Adding a future module can require expanding and revalidating the module list.
+
+`--strip-debug --compress=2` removes JVM debug information and compresses the
+module image. The measured `lib/modules` shrank from 99,446,200 to 41,564,899
+bytes. Vendor default CDS archives (119,857,152 bytes across variants) are omitted;
+the application-specific AOT cache is generated separately with the reduced JVM.
+Shared libraries associated with removed modules and remote-management templates
+are omitted. Neither measured JRE includes headers or manual pages already, so
+`--no-header-files --no-man-pages` provides no additional saving against this
+baseline. Both retain the same six executable tools: `java`, `jfr`, `jrunscript`,
+`jwebserver`, `keytool` and `rmiregistry`; JDK tools such as `javac` and `jcmd`
+were absent from the full-JRE baseline too. Runtime file payload falls from
+275,718,599 to 102,205,664 bytes. This is distinct from total OCI image size.
 
 Runtime deployment/diagnostics configuration and Compose operation are documented
 separately as those contracts are delivered. Local test images are not published

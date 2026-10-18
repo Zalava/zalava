@@ -102,18 +102,18 @@ class LeydenImageIntegrationTest {
 
   @Test
   @Timeout(value = 2, unit = TimeUnit.MINUTES)
-  void rejectsJlinkWithAnIncompatibleAotCache() throws Exception {
+  void rejectsInvalidJvmBuildOptions() throws Exception {
     Path log = Files.createTempFile("zalava-invalid-image-options-", ".log");
     try {
       Process rejected =
           new ProcessBuilder(
-                  "./gradlew", ":app:bootBuildImage", "-Poci.jlink=true", "-Poci.aot=true")
+                  "./gradlew", ":app:bootBuildImage", "-Poci.jlink=invalid", "-Poci.aot=true")
               .directory(Path.of("..").toFile())
               .redirectErrorStream(true)
               .redirectOutput(log.toFile())
               .start();
       assertThat(rejected.waitFor()).isNotZero();
-      assertThat(Files.readString(log)).contains("oci.jlink=true requires oci.aot=false");
+      assertThat(Files.readString(log)).contains("oci.aot and oci.jlink must be true or false");
     } finally {
       Files.deleteIfExists(log);
     }

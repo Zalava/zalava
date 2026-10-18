@@ -502,7 +502,14 @@ class ReleasedModuleDistributableAcceptanceTest {
         }
       }
       docker.addAll(
-          List.of("--env", "JAVA_TOOL_OPTIONS=" + String.join(" ", javaOptions), ociImage));
+          List.of(
+              "--env",
+              "JAVA_TOOL_OPTIONS="
+                  + (Boolean.parseBoolean(System.getProperty("oci.aot", "true"))
+                      ? "-XX:AOTMode=on "
+                      : "")
+                  + String.join(" ", javaOptions),
+              ociImage));
       arguments = docker;
     }
     ProcessBuilder builder = new ProcessBuilder(arguments);
