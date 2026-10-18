@@ -55,6 +55,7 @@ dependencies {
 
     implementation project(':module-api')
     externalModuleFixtureImplementation project(':module-api')
+    externalModuleFixtureImplementation 'org.springframework.boot:spring-boot'
 
     implementation 'com.anthropic:anthropic-java-client-okhttp'
     implementation 'com.networknt:json-schema-validator'

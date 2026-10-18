@@ -79,6 +79,7 @@ class LeydenImageIntegrationTest {
                     value.startsWith("SPRING_DATASOURCE_") || value.contains(databasePassword));
         if (Boolean.getBoolean("zalava.test.oci.acceptance")) {
           verifyJvm(imageName, diagnostics);
+          new OciRuntimeAcceptance(imageName, diagnostics).verify();
           var acceptance = new ReleasedModuleDistributableAcceptanceTest();
           acceptance.ociImage = imageName;
           acceptance.uploadsReleasedFleetAndPreservesAuthorizedEffectsAcrossPackagedHostRestarts();
