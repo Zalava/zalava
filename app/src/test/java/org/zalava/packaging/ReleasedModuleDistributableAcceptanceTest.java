@@ -77,6 +77,8 @@ class ReleasedModuleDistributableAcceptanceTest {
       HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
   private Process process;
   String ociImage;
+  boolean ociCompose;
+  private OciComposeFleet ociComposeFleet;
   private String ociContainer;
   private CatalogReleaseProxy catalogProxy;
   private String baseUrl;
@@ -510,19 +512,31 @@ class ReleasedModuleDistributableAcceptanceTest {
                       : "")
                   + String.join(" ", javaOptions),
               ociImage));
+      if (ociCompose) {
+        try {
+          ociComposeFleet = new OciComposeFleet(ociImage, diagnostics, docker);
+          ociContainer = null;
+        } catch (Exception failure) {
+          throw new IllegalStateException(
+              "Unable to prepare the disposable Compose fleet", failure);
+        }
+      }
       arguments = docker;
     }
-    ProcessBuilder builder = new ProcessBuilder(arguments);
-    builder
-        .environment()
-        .keySet()
-        .removeIf(
-            key ->
-                key.startsWith("SPRING_")
-                    || key.startsWith("AGENT_")
-                    || key.startsWith("ZALAVA_")
-                    || key.startsWith("SEA_")
-                    || key.startsWith("JOBRUNR_"));
+    ProcessBuilder builder =
+        ociComposeFleet == null ? new ProcessBuilder(arguments) : ociComposeFleet.processBuilder();
+    if (ociComposeFleet == null) {
+      builder
+          .environment()
+          .keySet()
+          .removeIf(
+              key ->
+                  key.startsWith("SPRING_")
+                      || key.startsWith("AGENT_")
+                      || key.startsWith("ZALAVA_")
+                      || key.startsWith("SEA_")
+                      || key.startsWith("JOBRUNR_"));
+    }
     return builder;
   }
 
@@ -980,6 +994,10 @@ class ReleasedModuleDistributableAcceptanceTest {
 
   private void stop() throws Exception {
     if (process != null) {
+      if (ociComposeFleet != null) {
+        ociComposeFleet.stop();
+        ociComposeFleet = null;
+      }
       if (ociContainer != null) {
         Process stopping =
             new ProcessBuilder("docker", "stop", "--time", "20", ociContainer)

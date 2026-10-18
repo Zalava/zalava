@@ -1,0 +1,10 @@
+# Docker Compose 2.24+; disable the bundled DB and retain state initialization.
+services:
+  postgres:
+    profiles: [bundled-database]
+  zalava:
+    depends_on:
+      postgres: !reset null
+    environment:
+      SPRING_DATASOURCE_URL: ${ZALAVA_EXTERNAL_DATABASE_URL:?Set an external PostgreSQL JDBC URL}
+      SPRING_DATASOURCE_USERNAME: ${ZALAVA_EXTERNAL_DATABASE_USER:?Set the external app database role}

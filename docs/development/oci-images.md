@@ -132,6 +132,6 @@ were absent from the full-JRE baseline too. Runtime file payload falls from
 275,718,599 to 102,205,664 bytes. This is distinct from total OCI image size.
 
 See the [runtime configuration and diagnostics contract](oci-runtime.md).
-Compose operation is documented separately as that contract is delivered. Local test images are not published
+See [PostgreSQL Compose deployment and recovery](oci-compose.md). Local test images are not published
 release artifacts. Multi-platform support requires execution evidence for each
 platform; a multi-platform builder manifest alone does not establish support.

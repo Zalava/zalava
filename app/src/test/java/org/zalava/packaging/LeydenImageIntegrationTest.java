@@ -80,8 +80,12 @@ class LeydenImageIntegrationTest {
         if (Boolean.getBoolean("zalava.test.oci.acceptance")) {
           verifyJvm(imageName, diagnostics);
           new OciRuntimeAcceptance(imageName, diagnostics).verify();
+          if (Boolean.getBoolean("zalava.test.oci.compose")) {
+            new OciComposeAcceptance(imageName, diagnostics).verify();
+          }
           var acceptance = new ReleasedModuleDistributableAcceptanceTest();
           acceptance.ociImage = imageName;
+          acceptance.ociCompose = Boolean.getBoolean("zalava.test.oci.compose");
           acceptance.uploadsReleasedFleetAndPreservesAuthorizedEffectsAcrossPackagedHostRestarts();
         }
       } finally {

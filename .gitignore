@@ -60,3 +60,7 @@ workspace/skills/skill-creator/*
 *.private*
 .worktrees/
 .bootui/
+
+/.env
+/.secrets/
+/backups/

@@ -48,3 +48,9 @@ read-only at `/usr/local/bin/docker`. The host daemon/CLI are explicit runner
 prerequisites; Java, Node and browser dependencies remain supplied by the pinned
 image. Both local verification and GitHub use this same wrapper and mount.
 The application image contains neither the host Docker CLI nor verification tools.
+
+The required Compose deployment lane also uses the host Docker Compose plugin
+(2.24.4+), mounted read-only beside the host CLI by `verify-in-image.sh`. The
+pinned tool image continues to supply Java/Node/Chromium; the host daemon, CLI
+and Compose plugin are explicit prerequisites. Tests start only UUID-owned
+projects and remove their volumes. See `docs/development/oci-compose.md`.
