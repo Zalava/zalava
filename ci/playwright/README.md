@@ -41,3 +41,10 @@ The runner passes its normal Gradle home (or explicit `GRADLE_USER_HOME`),
 uses matching absolute checkout paths, and shares the host network and Docker
 socket so Testcontainers can reach mapped PostgreSQL ports. It runs as the
 runner's UID, keeping build outputs and cached files owned by the runner.
+
+OCI acceptance also invokes the Docker CLI to run the image under test. The
+wrapper mounts the same host CLI that launches the pinned verification image
+read-only at `/usr/local/bin/docker`. The host daemon/CLI are explicit runner
+prerequisites; Java, Node and browser dependencies remain supplied by the pinned
+image. Both local verification and GitHub use this same wrapper and mount.
+The application image contains neither the host Docker CLI nor verification tools.

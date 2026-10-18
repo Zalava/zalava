@@ -27,12 +27,15 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -73,6 +76,8 @@ class ReleasedModuleDistributableAcceptanceTest {
   private final HttpClient http =
       HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
   private Process process;
+  String ociImage;
+  private String ociContainer;
   private CatalogReleaseProxy catalogProxy;
   private String baseUrl;
   private int generation;
@@ -437,6 +442,68 @@ class ReleasedModuleDistributableAcceptanceTest {
           argument ->
               argument.startsWith("-Dhttps.proxy")
                   || argument.startsWith("-Djavax.net.ssl.trustStore"));
+    }
+    if (ociImage != null) {
+      ociContainer = "zalava-oci-fleet-" + UUID.randomUUID();
+      List<String> docker =
+          new ArrayList<>(
+              List.of(
+                  "docker",
+                  "run",
+                  "--rm",
+                  "--name",
+                  ociContainer,
+                  "--network",
+                  "host",
+                  "--memory",
+                  "2g",
+                  "--cpus",
+                  "2",
+                  "--user",
+                  fixtureUser(),
+                  "--group-add",
+                  "1001",
+                  "--volume",
+                  diagnostics + ":" + diagnostics));
+      if (catalogProxy != null) {
+        try {
+          Path bindings =
+              Files.createDirectories(diagnostics.resolve("certificate-bindings/proxy"));
+          Files.writeString(bindings.resolve("type"), "ca-certificates");
+          KeyStore trust = KeyStore.getInstance("PKCS12");
+          try (var input = Files.newInputStream(catalogProxy.trustStore())) {
+            trust.load(input, "fixture".toCharArray());
+          }
+          byte[] certificate = trust.getCertificate(trust.aliases().nextElement()).getEncoded();
+          Files.writeString(
+              bindings.resolve("proxy.pem"),
+              "-----BEGIN CERTIFICATE-----\n"
+                  + Base64.getMimeEncoder(64, new byte[] {'\n'}).encodeToString(certificate)
+                  + "\n-----END CERTIFICATE-----\n");
+          docker.addAll(List.of("--env", "SERVICE_BINDING_ROOT=" + bindings.getParent()));
+        } catch (Exception failure) {
+          throw new IllegalStateException(
+              "Unable to prepare the disposable OCI certificate binding", failure);
+        }
+      }
+      List<String> javaOptions = new ArrayList<>();
+      for (String argument : arguments) {
+        if (argument.startsWith("--")) {
+          int equals = argument.indexOf('=');
+          String key =
+              argument
+                  .substring(2, equals)
+                  .replace('.', '_')
+                  .replace('-', '_')
+                  .toUpperCase(Locale.ROOT);
+          docker.addAll(List.of("--env", key + argument.substring(equals)));
+        } else if (argument.startsWith("-D") || argument.startsWith("-X")) {
+          if (!argument.startsWith("-Djavax.net.ssl.trustStore")) javaOptions.add(argument);
+        }
+      }
+      docker.addAll(
+          List.of("--env", "JAVA_TOOL_OPTIONS=" + String.join(" ", javaOptions), ociImage));
+      arguments = docker;
     }
     ProcessBuilder builder = new ProcessBuilder(arguments);
     builder
@@ -824,8 +891,9 @@ class ReleasedModuleDistributableAcceptanceTest {
       port = socket.getLocalPort();
     }
     baseUrl = "http://127.0.0.1:" + port;
-    Path jar = Path.of(System.getProperty("zalava.test.boot-jar")).toAbsolutePath();
-    assertThat(jar).exists();
+    Path jar =
+        Path.of(System.getProperty("zalava.test.boot-jar", "unused-oci.jar")).toAbsolutePath();
+    if (ociImage == null) assertThat(jar).exists();
     Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
     process =
         hostProcessBuilder(
@@ -873,7 +941,17 @@ class ReleasedModuleDistributableAcceptanceTest {
                         .build(),
                     HttpResponse.BodyHandlers.discarding())
                 .statusCode()
-            == 200) return;
+            == 200) {
+          if (ociImage != null) {
+            assertThat(Files.readString(log))
+                .as("usable AOT cache in image; diagnostics: %s", log)
+                .doesNotContain(
+                    "Unable to map shared spaces",
+                    "An error has occurred while processing the AOT cache",
+                    "size has changed");
+          }
+          return;
+        }
       } catch (IOException ignored) {
         // The packaged server has not bound its random loopback port yet.
       }
@@ -882,8 +960,29 @@ class ReleasedModuleDistributableAcceptanceTest {
     throw new AssertionError("Packaged host startup timed out; diagnostics: " + log);
   }
 
+  private String fixtureUser() {
+    try {
+      return Files.getAttribute(diagnostics, "unix:uid")
+          + ":"
+          + Files.getAttribute(diagnostics, "unix:gid");
+    } catch (IOException failure) {
+      throw new IllegalStateException(
+          "OCI acceptance requires Linux bind-mount ownership", failure);
+    }
+  }
+
   private void stop() throws Exception {
     if (process != null) {
+      if (ociContainer != null) {
+        Process stopping =
+            new ProcessBuilder("docker", "stop", "--time", "20", ociContainer)
+                .redirectErrorStream(true)
+                .redirectOutput(diagnostics.resolve("docker-stop-" + generation + ".log").toFile())
+                .start();
+        assertThat(stopping.waitFor(30, TimeUnit.SECONDS)).isTrue();
+        assertThat(stopping.exitValue()).isZero();
+        ociContainer = null;
+      }
       process.destroy();
       if (!process.waitFor(20, TimeUnit.SECONDS)) {
         process.destroyForcibly();

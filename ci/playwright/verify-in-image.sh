@@ -3,6 +3,7 @@ set -euo pipefail
 
 image=${1:?Usage: verify-in-image.sh <image-reference> [gradle-options...]}
 repository=$(pwd -P)
+docker_cli=$(command -v docker)
 gradle_home=${GRADLE_USER_HOME:-"$HOME/.gradle"}
 mkdir -p "$gradle_home"
 mkdir -p "$HOME/.npm"
@@ -14,6 +15,7 @@ docker run --rm --network host \
     --user "$(id -u):$(id -g)" \
     --group-add "$(stat -c '%g' /var/run/docker.sock)" \
     --volume /var/run/docker.sock:/var/run/docker.sock \
+    --volume "$docker_cli:/usr/local/bin/docker:ro" \
     --volume "$repository:$repository" \
     --volume "$gradle_home:$gradle_home" \
     --volume "$HOME/.npm:$HOME/.npm" \
