@@ -138,7 +138,7 @@ tasks.named('bootBuildImage') {
     runImage = rootProject.file('ci/oci/run-image.txt').text.trim()
     def cachePrefix = providers.gradleProperty('oci.cache-prefix').orElse('zalava-local').get()
     def aotCache = providers.gradleProperty('oci.aot').orElse('true').get()
-    def jlink = providers.gradleProperty('oci.jlink').orElse('false').get()
+    def jlink = providers.gradleProperty('oci.jlink').orElse('true').get()
     buildCache {
         volume {
             name = "${cachePrefix}-build-cache"
@@ -548,7 +548,7 @@ tasks.register('leydenImageIntegrationTest', Test) {
         includeTags 'leyden-image'
     }
     ['oci.jlink', 'oci.aot'].each { option ->
-        systemProperty option, providers.gradleProperty(option).orElse(option == 'oci.aot' ? 'true' : 'false').get()
+        systemProperty option, providers.gradleProperty(option).orElse('true').get()
     }
     outputs.upToDateWhen { false }
     def requestedImageName = providers.gradleProperty('leyden.image-name')
@@ -651,7 +651,7 @@ tasks.named('check') {
 }
 
 // Missing Docker or released artifacts fail the required distributable lane.
-['ociImageAcceptanceTest', 'ociJlinkImageAcceptanceTest'].each { taskName ->
+['ociImageAcceptanceTest', 'ociFullJreImageAcceptanceTest'].each { taskName ->
 tasks.register(taskName, Test) {
     group = 'verification'
     description = 'Builds the pinned OCI image and verifies its JVM and real released-module browser journeys.'
@@ -665,11 +665,11 @@ tasks.register(taskName, Test) {
     systemProperty 'zalava.test.oci.acceptance', 'true'
     systemProperty 'zalava.test.external-module-jar', tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
     systemProperty 'oci.aot', providers.gradleProperty('oci.aot').orElse('true').get()
-    systemProperty 'oci.jlink', taskName == 'ociJlinkImageAcceptanceTest' ? 'true' : providers.gradleProperty('oci.jlink').orElse('false').get()
-    if (taskName == 'ociJlinkImageAcceptanceTest') shouldRunAfter tasks.named('ociImageAcceptanceTest')
+    systemProperty 'oci.jlink', taskName == 'ociFullJreImageAcceptanceTest' ? 'false' : providers.gradleProperty('oci.jlink').orElse('true').get()
+    if (taskName == 'ociFullJreImageAcceptanceTest') shouldRunAfter tasks.named('ociImageAcceptanceTest')
     def requestedImage = providers.gradleProperty('oci.image')
     if (requestedImage.present && taskName == 'ociImageAcceptanceTest') systemProperty 'zalava.leyden.image-name', requestedImage.get()
     outputs.upToDateWhen { false }
 }
 }
-tasks.named('check') { dependsOn tasks.named('ociImageAcceptanceTest'), tasks.named('ociJlinkImageAcceptanceTest') }
+tasks.named('check') { dependsOn tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest') }
