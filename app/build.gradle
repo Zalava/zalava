@@ -55,6 +55,7 @@ dependencies {
 
     implementation project(':module-api')
     externalModuleFixtureImplementation project(':module-api')
+    externalModuleFixtureImplementation 'org.springframework.boot:spring-boot'
 
     implementation 'com.anthropic:anthropic-java-client-okhttp'
     implementation 'com.networknt:json-schema-validator'
@@ -116,6 +117,7 @@ springBoot {
 
 bootJar {
     archiveBaseName = 'zalava'
+    layered { enabled = true }
     dependsOn tasks.named('precompileJte')
     bootInf {
         into('classes') {
@@ -133,14 +135,20 @@ jte {
 
 tasks.named('bootBuildImage') {
     imageName = "ghcr.io/zalava/zalava:${project.version}"
+    builder = rootProject.file('ci/oci/builder.txt').text.trim()
+    runImage = rootProject.file('ci/oci/run-image.txt').text.trim()
+    buildpacks = ['urn:cnb:builder:paketo-buildpacks/java', rootProject.file('ci/oci/health-checker.txt').text.trim()]
+    def cachePrefix = providers.gradleProperty('oci.cache-prefix').orElse('zalava-local').get()
+    def aotCache = providers.gradleProperty('oci.aot').orElse('true').get()
+    def jlink = providers.gradleProperty('oci.jlink').orElse('true').get()
     buildCache {
         volume {
-            name = 'zalava-local-build-cache'
+            name = "${cachePrefix}-build-cache"
         }
     }
     launchCache {
         volume {
-            name = 'zalava-local-launch-cache'
+            name = "${cachePrefix}-launch-cache"
         }
     }
     def leydenTrainingNetwork = providers.gradleProperty('leyden.training.network')
@@ -151,15 +159,21 @@ tasks.named('bootBuildImage') {
     network = leydenTrainingNetwork.orNull
     environment = [
             'BP_JVM_VERSION': '25.*',
-            'BP_JVM_AOTCACHE_ENABLED': 'true',
+            'BP_HEALTH_CHECKER_ENABLED': 'true',
+            'BP_JVM_AOTCACHE_ENABLED': aotCache,
+            'BP_JVM_JLINK_ENABLED': jlink,
+            'BP_JVM_JLINK_ARGS': '--no-man-pages --no-header-files --strip-debug --compress=2 --add-modules java.se,jdk.crypto.ec,jdk.unsupported,jdk.management,jdk.management.jfr,jdk.jfr,jdk.httpserver,jdk.security.auth,jdk.naming.dns,jdk.zipfs,jdk.charsets,jdk.localedata,jdk.net,jdk.security.jgss',
         'SPRING_DATASOURCE_URL': leydenTrainingJdbcUrl.orNull ?: '',
         'SPRING_DATASOURCE_USERNAME': leydenTrainingUsername.orNull ?: '',
         'SPRING_DATASOURCE_PASSWORD': leydenTrainingPassword.orNull ?: '',
             'AGENT_CHANNELS_TELEGRAM_TOKEN': 'false',
             'AGENT_CHANNELS_TELEGRAM_USERNAME': 'false'
-    ]
+    ] + (jlink == 'true' ? ['JRE_HOME': '/layers/paketo-buildpacks_bellsoft-liberica/JLink'] : [:])
     doFirst {
-        [
+        if (!(aotCache in ['true', 'false']) || !(jlink in ['true', 'false'])) {
+            throw new GradleException('oci.aot and oci.jlink must be true or false')
+        }
+        if (aotCache == 'true') [
             'leyden.training.network': leydenTrainingNetwork.orNull,
             'leyden.training.jdbc-url': leydenTrainingJdbcUrl.orNull,
             'leyden.training.username': leydenTrainingUsername.orNull,
@@ -527,14 +541,19 @@ tasks.register('structuredOutputAcceptanceTest', Test) {
 
 tasks.register('leydenImageIntegrationTest', Test) {
     group = 'verification'
-    description = 'Builds a Leyden-trained image against a disposable PostgreSQL Testcontainer.'
+    description = 'Builds a named local image against disposable PostgreSQL without browser acceptance.'
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
     useJUnitPlatform {
         includeTags 'leyden-image'
     }
+    ['oci.jlink', 'oci.aot'].each { option ->
+        systemProperty option, providers.gradleProperty(option).orElse('true').get()
+    }
+    outputs.upToDateWhen { false }
     def requestedImageName = providers.gradleProperty('leyden.image-name')
     if (requestedImageName.present) {
         systemProperty 'zalava.leyden.image-name', requestedImageName.get()
@@ -633,3 +652,31 @@ tasks.register('verifyBootuiIsolation') {
 tasks.named('check') {
     dependsOn tasks.named('verifyBootuiIsolation')
 }
+
+// Missing Docker or released artifacts fail the required distributable lane.
+['ociImageAcceptanceTest', 'ociFullJreImageAcceptanceTest', 'ociComposeAcceptanceTest'].each { taskName ->
+tasks.register(taskName, Test) {
+    group = 'verification'
+    description = 'Builds the pinned OCI image and verifies its JVM and real released-module browser journeys.'
+    dependsOn tasks.named('testClasses'), tasks.named('externalModuleFixtureJar'), tasks.named('precompileJte'), installPlaywrightChromium
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform { includeTags 'leyden-image' }
+    shouldRunAfter tasks.named('test'), tasks.named('architectureTest'), tasks.named('browserAcceptanceTest'), tasks.named('releasedModuleAcceptanceTest')
+    systemProperty 'zalava.test.oci.acceptance', 'true'
+    if (taskName == 'ociComposeAcceptanceTest') {
+        systemProperty 'zalava.test.oci.compose', 'true'
+        shouldRunAfter tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest')
+    }
+    systemProperty 'zalava.test.external-module-jar', tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
+    systemProperty 'oci.aot', providers.gradleProperty('oci.aot').orElse('true').get()
+    systemProperty 'oci.jlink', taskName == 'ociFullJreImageAcceptanceTest' ? 'false' : providers.gradleProperty('oci.jlink').orElse('true').get()
+    if (taskName == 'ociFullJreImageAcceptanceTest') shouldRunAfter tasks.named('ociImageAcceptanceTest')
+    def requestedImage = providers.gradleProperty('oci.image')
+    if (requestedImage.present && taskName == 'ociImageAcceptanceTest') systemProperty 'zalava.leyden.image-name', requestedImage.get()
+    outputs.upToDateWhen { false }
+}
+}
+tasks.named('check') { dependsOn tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest'), tasks.named('ociComposeAcceptanceTest') }

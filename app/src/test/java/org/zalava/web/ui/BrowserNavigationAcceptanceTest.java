@@ -2,6 +2,7 @@ package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.gson.JsonParser;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
@@ -370,6 +371,18 @@ class BrowserNavigationAcceptanceTest {
           .waitFor();
       assertThat(Files.readString(WORKSPACE.resolve("AGENT.private.md")))
           .contains("Browser saved instructions.");
+      // Exercise the post-redirect visual check while resources arrive over a cold, slow
+      // connection.
+      var network = context.newCDPSession(page);
+      network.send("Network.enable");
+      network.send(
+          "Network.setCacheDisabled",
+          JsonParser.parseString("{\"cacheDisabled\":true}").getAsJsonObject());
+      network.send(
+          "Network.emulateNetworkConditions",
+          JsonParser.parseString(
+                  "{\"offline\":false,\"latency\":500,\"downloadThroughput\":50000,\"uploadThroughput\":50000}")
+              .getAsJsonObject());
       page.locator("[data-action=confirm-action]").click();
       page.getByRole(
               AriaRole.BUTTON,
@@ -808,6 +821,11 @@ class BrowserNavigationAcceptanceTest {
   }
 
   private void capture(Page page, String name) {
+    // A form submission can expose its confirmation before stylesheets finish loading.
+    page.waitForLoadState();
+    assertThat(page.evaluate("document.readyState"))
+        .as("Page is fully loaded before measuring %s", name)
+        .isEqualTo("complete");
     page.waitForFunction(
         """
         () => {
@@ -817,10 +835,27 @@ class BrowserNavigationAcceptanceTest {
           return menu.classList.contains('is-active') ? Math.abs(bounds.left) < 0.5 : bounds.right <= 0.5;
         }
         """);
-    assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
-        .isEqualTo(true);
+    var layout =
+        page.evaluate(
+            """
+            () => ({
+              width: window.innerWidth,
+              scrollWidth: document.documentElement.scrollWidth,
+              contained: document.documentElement.scrollWidth <= window.innerWidth,
+              overflowing: [...document.querySelectorAll('body *')].filter(element => {
+                const bounds = element.getBoundingClientRect();
+                return bounds.width > 0 && (bounds.left < -1 || bounds.right > window.innerWidth + 1);
+              }).slice(0, 20).map(element => ({
+                tag: element.tagName, id: element.id, classes: element.className,
+                left: element.getBoundingClientRect().left, right: element.getBoundingClientRect().right
+              }))
+            })
+            """);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(DIAGNOSTICS.resolve(name + ".png")).setFullPage(true));
+    assertThat(((Map<?, ?>) layout).get("contained"))
+        .as("Viewport containment for %s: %s", name, layout)
+        .isEqualTo(true);
   }
 
   private void assertContained(Page page, String container, String controls) {
