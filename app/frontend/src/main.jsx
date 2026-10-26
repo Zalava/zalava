@@ -693,7 +693,7 @@ function Chat() {
               <p>{run.selectedToolCount} tools available · {run.contextCharactersUsed} / {run.contextCharacterBudget} context characters</p>
               <p><strong>Question:</strong> {run.prompt}</p><p><strong>Result:</strong> {run.result}</p>
               {run.error && <p role="alert">{run.error}</p>}
-              {evidence.tools.filter(tool => new Date(tool.at) >= new Date(run.at) && new Date(tool.at) <= new Date(run.completedAt)).map((tool, index) => <details key={index}><summary>{tool.name} · {tool.success ? 'Completed' : 'Failed'} · {tool.durationMillis} ms</summary><p>Provider: {tool.provider}</p><pre>{tool.result}</pre>{tool.error && <p>{tool.error}</p>}</details>)}
+              {evidence.tools.filter(tool => new Date(tool.at) >= new Date(run.at) && new Date(tool.at) <= new Date(run.completedAt)).map((tool, index) => <details key={index}><summary>{tool.name} · {tool.success ? 'Completed' : 'Failed'} · {tool.durationMillis} ms</summary><p>Provider: {tool.provider}</p>{tool.input && <><strong>Input</strong><pre>{tool.input}</pre></>}<strong>Result</strong><pre>{tool.result}</pre>{tool.error && <p>{tool.error}</p>}</details>)}
             </details>)}
             <h2>Recent work for your account</h2>
             <p>Tasks may belong to other conversations.</p>
@@ -703,6 +703,10 @@ function Chat() {
             </section>)}
           </>}
           {inspectorTab === "Tools" && <>
+            <h2>Tool calls</h2>
+            {evidenceError && <p role="alert">{evidenceError} <button type="button" onClick={() => setEvidenceAttempt(value => value + 1)}>Retry details</button></p>}
+            {evidence.tools.length === 0 && !evidenceError && <p>No recorded tool calls for this conversation.</p>}
+            {evidence.tools.map((tool,index) => <details className="conversation-execution" key={index}><summary>{tool.name} · {tool.success ? 'Completed' : 'Failed'}</summary><p>{tool.provider} · {conversationDate(tool.at)} · {tool.durationMillis} ms</p>{tool.input && <><strong>Input</strong><pre>{tool.input}</pre></>}<strong>Result</strong><pre>{tool.result}</pre>{tool.error && <p role="alert">{tool.error}</p>}</details>)}
             <h2>Pending permissions</h2>
             {approvals.length === 0 && <p>No pending permissions.</p>}
             {approvals.map(([requestId, approval]) => <section className="approval" key={requestId} aria-label="Pending permission">

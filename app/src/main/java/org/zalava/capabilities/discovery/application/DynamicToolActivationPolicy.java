@@ -4,11 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.identity.accounts.domain.AccountRole;
 
 public final class DynamicToolActivationPolicy {
+
+  private final BiPredicate<String, String> memberGrant;
+
+  public DynamicToolActivationPolicy() {
+    this(null);
+  }
+
+  public DynamicToolActivationPolicy(BiPredicate<String, String> memberGrant) {
+    this.memberGrant = memberGrant;
+  }
 
   private static final String ZALAVA_BACKED = "zalava_backed";
   private static final Set<String> BLOCKED_TAGS =
@@ -42,8 +53,18 @@ public final class DynamicToolActivationPolicy {
     if (!blocked.isEmpty()) {
       rejections.add("blocked policy tags: " + String.join(",", blocked));
     }
-    if (role == AccountRole.MEMBER && !combinedTags.contains("member-safe")) {
-      rejections.add("missing explicit member-safe capability marker");
+    if (role == AccountRole.MEMBER
+        && !(memberGrant == null
+            ? combinedTags.contains("member-safe")
+            : memberGrant.test(match.providerId(), match.toolName()))) {
+      rejections.add(
+          memberGrant == null
+              ? "missing explicit member-safe capability marker"
+              : "missing administrator grant for this member and tool");
+    }
+    if (role == AccountRole.MEMBER
+        && (combinedTags.contains("admin") || combinedTags.contains("instance-global"))) {
+      rejections.add("administrator-only capability");
     }
     if (role == AccountRole.MEMBER && match.scope().isEmpty()) {
       rejections.add("missing provider scope for member capability");

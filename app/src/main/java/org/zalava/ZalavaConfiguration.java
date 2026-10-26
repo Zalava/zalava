@@ -5,6 +5,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +30,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.assistant.agent.Agent;
 import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.DefaultAgent;
+import org.zalava.assistant.agent.PolicyFilteredToolSearch;
 import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.assistant.agent.adapter.out.springai.WorkspaceAgentPrompt;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
@@ -75,16 +78,24 @@ import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackCatalog;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex;
 import org.zalava.capabilities.discovery.application.DefaultInstalledToolDiscovery;
+import org.zalava.capabilities.discovery.application.DynamicToolActivationPolicy;
 import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderTool;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderToolInvoker;
 import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
+import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcMemberToolAccessStore;
+import org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder;
 import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProviderCatalog;
+import org.zalava.capabilities.operation.application.DefaultMemberToolAccess;
 import org.zalava.capabilities.operation.application.DefaultProviderToolOperations;
+import org.zalava.capabilities.operation.application.MemberProviderCapabilityPolicy;
+import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
+import org.zalava.capabilities.operation.application.port.out.MemberToolAccessStore;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
@@ -666,14 +677,25 @@ public class ZalavaConfiguration {
 
   @Bean
   public CapabilityGapTools capabilityGapTools(
-      ModuleSuggestions suggestions, ActorExecutionContext actors) {
+      ModuleSuggestions suggestions,
+      ActorExecutionContext actors,
+      ZalavaRuntime runtime,
+      ModuleQueries modules) {
     return new CapabilityGapTools(
         suggestions,
         () ->
             actors
                 .currentPrincipal()
                 .map(principal -> principal.role() == AccountRole.ADMIN)
-                .orElse(false));
+                .orElse(false),
+        moduleId ->
+            runtime.activeModules().stream()
+                    .anyMatch(module -> module.descriptor().moduleId().equals(moduleId))
+                ? "RUNNING"
+                : modules.enabledModules().stream()
+                        .anyMatch(module -> module.moduleId().equals(moduleId))
+                    ? "INSTALLED_NOT_RUNNING"
+                    : "NOT_INSTALLED");
   }
 
   @Bean
@@ -794,15 +816,53 @@ public class ZalavaConfiguration {
   }
 
   @Bean
+  public MemberToolAccessStore memberToolAccessStore(JdbcClient jdbc) {
+    return new JdbcMemberToolAccessStore(jdbc);
+  }
+
+  @Bean
+  public MemberToolAccess memberToolAccess(
+      AccountLifecycle accounts, MemberToolAccessStore store, ZalavaRuntime runtime, Clock clock) {
+    return new DefaultMemberToolAccess(
+        accounts, store, new ZalavaRuntimeProviderCatalog(runtime), clock);
+  }
+
+  @Bean
+  public DynamicToolActivationPolicy memberToolActivationPolicy(
+      MemberToolAccess access, ZalavaRuntime runtime, ActorExecutionContext actors) {
+    return new DynamicToolActivationPolicy(
+        (providerId, toolName) ->
+            actors
+                .currentPrincipal()
+                .filter(principal -> principal.role() == AccountRole.MEMBER)
+                .map(
+                    principal ->
+                        runtime
+                            .findProvider(providerId)
+                            .map(
+                                provider ->
+                                    access.allowed(
+                                        principal.actor().accountId().toString(),
+                                        new MemberToolAccess.ToolKey(
+                                            provider.descriptor().moduleId(),
+                                            providerId,
+                                            toolName)))
+                            .orElse(false))
+                .orElse(false));
+  }
+
+  @Bean
   public ProviderToolOperations providerToolOperations(
       ZalavaRuntime zalavaRuntime,
       ZalavaToolApprovalRequests approvalRequests,
-      List<ToolInvocationObserver> observers) {
+      List<ToolInvocationObserver> observers,
+      MemberToolAccess access) {
     return new DefaultProviderToolOperations(
         new ZalavaRuntimeProviderCatalog(zalavaRuntime),
         new ZalavaToolApprovalAdapter(approvalRequests),
         observers,
-        new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
+        new MemberProviderCapabilityPolicy(access),
+        new JacksonToolArgumentDecoder());
   }
 
   @Bean
@@ -820,11 +880,26 @@ public class ZalavaConfiguration {
       ZalavaRuntime zalavaRuntime,
       ProviderToolOperations providerToolOperations,
       TaskExecutionContext taskExecutionContext,
-      ActorExecutionContext actorExecutionContext) {
+      ActorExecutionContext actorExecutionContext,
+      MemberToolAccess access) {
     return new ZalavaToolCallbackCatalog(
         new ZalavaRuntimeProviderCatalog(zalavaRuntime),
         new ZalavaProviderToolInvoker(
-            providerToolOperations, taskExecutionContext, actorExecutionContext));
+            providerToolOperations, taskExecutionContext, actorExecutionContext),
+        (provider, tool) ->
+            actorExecutionContext
+                .currentPrincipal()
+                .map(
+                    principal ->
+                        principal.role() != AccountRole.MEMBER
+                            || (MemberProviderCapabilityPolicy.eligible(provider, tool)
+                                && access.allowed(
+                                    principal.actor().accountId().toString(),
+                                    new MemberToolAccess.ToolKey(
+                                        provider.descriptor().moduleId(),
+                                        provider.descriptor().providerId(),
+                                        tool.name()))))
+                .orElse(true));
   }
 
   @Bean
@@ -845,7 +920,8 @@ public class ZalavaConfiguration {
       ModelBoundary modelBoundary,
       ToolIndex springAiToolIndex,
       @Value("${agent.tool-selection.tool-search.enabled:false}") boolean toolSearchEnabled,
-      List<ToolInvocationObserver> knowledgeObservers)
+      List<ToolInvocationObserver> knowledgeObservers,
+      DynamicToolActivationPolicy activationPolicy)
       throws IOException {
     Path skillsDirectory = skillsDir(workspace);
     List<Object> bootstrapTools =
@@ -858,7 +934,8 @@ public class ZalavaConfiguration {
                     providerToolOperations,
                     toolDiscovery,
                     taskExecutionContext,
-                    actorExecutionContext)));
+                    actorExecutionContext,
+                    activationPolicy)));
     bootstrapTools.add(
         new KnowledgeAgentTools(
             knowledgeEvidence,
@@ -875,8 +952,8 @@ public class ZalavaConfiguration {
         callbackCatalog,
         List.of(capabilityGapTools),
         remoteDiscovery,
-        new org.zalava.assistant.agent.PolicyFilteredToolSearch(
-            springAiToolIndex, toolSearchEnabled));
+        new PolicyFilteredToolSearch(springAiToolIndex, activationPolicy, toolSearchEnabled),
+        activationPolicy);
   }
 
   @Bean

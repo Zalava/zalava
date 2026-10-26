@@ -49,7 +49,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   public ToolInvocationOutcome invoke(ToolInvocationCommand command) {
     ZalavaProvider provider = findProvider(command.providerId());
     ZalavaToolDescriptor tool = findTool(provider, command.toolName());
-    memberCapabilities.requireAllowed(provider, tool, command.context());
+    requireMemberAccess(provider, tool, command.context());
     Map<String, Object> arguments = decoder.decode(command.argumentsJson());
 
     if (!tool.sideEffecting()) {
@@ -181,27 +181,64 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return ToolInvocationOutcome.denied(approval);
   }
 
+  private void requireMemberAccess(
+      ZalavaProvider provider, ZalavaToolDescriptor tool, InvocationContext context) {
+    try {
+      memberCapabilities.requireAllowed(provider, tool, context);
+    } catch (ProviderToolOperationException denied) {
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "permission_denied",
+          denied.getMessage(),
+          null,
+          System.nanoTime());
+      throw denied;
+    }
+  }
+
   private ZalavaOperationResult execute(
       ZalavaProvider provider,
       ZalavaToolDescriptor tool,
       Map<String, Object> arguments,
       InvocationContext context) {
-    memberCapabilities.requireAllowed(provider, tool, context);
+    requireMemberAccess(provider, tool, context);
     long startedAt = System.nanoTime();
     try {
       ZalavaOperationResult result = provider.callTool(tool.name(), arguments, context);
-      observe(provider, tool, context, true, null, null, result, startedAt);
+      observe(provider, tool, context, true, null, null, result, startedAt, arguments);
       return result;
     } catch (UnsupportedOperationException ex) {
-      observe(provider, tool, context, false, "unsupported", ex.getMessage(), null, startedAt);
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "unsupported",
+          ex.getMessage(),
+          null,
+          startedAt,
+          arguments);
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.UNSUPPORTED, ex.getMessage(), ex);
     } catch (IllegalArgumentException ex) {
-      observe(provider, tool, context, false, "validation", ex.getMessage(), null, startedAt);
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "validation",
+          ex.getMessage(),
+          null,
+          startedAt,
+          arguments);
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.VALIDATION, ex.getMessage(), ex);
     } catch (RuntimeException ex) {
-      observe(provider, tool, context, false, "execution", ex.getMessage(), null, startedAt);
+      observe(
+          provider, tool, context, false, "execution", ex.getMessage(), null, startedAt, arguments);
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.EXECUTION, "Zalava operation failed", ex);
     }
@@ -225,6 +262,19 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       String errorMessage,
       ZalavaOperationResult result,
       long startedAt) {
+    observe(provider, tool, context, success, errorType, errorMessage, result, startedAt, Map.of());
+  }
+
+  private void observe(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      InvocationContext context,
+      boolean success,
+      String errorType,
+      String errorMessage,
+      ZalavaOperationResult result,
+      long startedAt,
+      Map<String, Object> arguments) {
     ToolInvocationObservation observation =
         new ToolInvocationObservation(
             provider.descriptor().providerId(),
@@ -239,7 +289,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             errorType,
             errorMessage,
             result,
-            (System.nanoTime() - startedAt) / 1_000_000);
+            (System.nanoTime() - startedAt) / 1_000_000,
+            arguments);
     observers.forEach(observer -> observer.observe(observation));
   }
 

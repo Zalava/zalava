@@ -59,3 +59,8 @@ The newer module-channel host runtime also lives in assistant.channels.runtime; 
 Agent tool selection uses the generic RegisteredToolCallbacks contract. Runtime generation management uses ModuleLifecycleStore and ModuleConfigurations rather than filesystem implementations. The UI reads bootstrap verification through BootstrapVerificationQueries. Provider argument decoding uses ToolArgumentDecoder; Jackson remains in its adapter with the same precision, null and validation behavior. Development artifact execution and schema/assertion evaluation are contract adapters behind CandidateEvaluator.
 
 Architecture checks enforce framework independence in these migrated application contexts and use negative transaction/Jackson fixtures. Existing component and browser journeys cover account authority, knowledge isolation, module generations, control queries and permissioned tool execution. Transaction metadata checks guard isolation and rollback policy.
+
+Per-account provider-tool grants are owned by capabilities.operation, with explicit
+account-lifecycle and provider-catalog ports, a JDBC decision/audit adapter and
+administrator-only UI in web. Discovery and execution share the effective access
+policy. See [Member tool access](tool-access.md).

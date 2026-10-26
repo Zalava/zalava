@@ -18,6 +18,11 @@ public final class RestartableZalavaApplicationContext {
 
   public static ConfigurableApplicationContext start(
       Path workspace, Map<String, String> additionalProperties) {
+    return start(workspace, additionalProperties, new Class<?>[0]);
+  }
+
+  public static ConfigurableApplicationContext start(
+      Path workspace, Map<String, String> additionalProperties, Class<?>... additionalSources) {
     Map<String, String> properties = new LinkedHashMap<>();
     properties.put("agent.workspace", workspace.toUri().toString());
     properties.put("zalava.accounts.security-enabled", "false");
@@ -29,6 +34,7 @@ public final class RestartableZalavaApplicationContext {
     properties.put("spring.datasource.url", PostgreSqlTestDatabase.newJdbcUrl());
     properties.putAll(additionalProperties);
     return new SpringApplicationBuilder(ZalavaApplication.class)
+        .sources(additionalSources)
         .initializers(
             context -> TestPropertyValues.of(properties).applyTo(context.getEnvironment()))
         .run();

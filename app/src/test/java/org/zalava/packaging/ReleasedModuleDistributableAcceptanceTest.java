@@ -574,7 +574,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(version).isNotBlank();
         Files.writeString(diagnostics.resolve("public-release-version.txt"), version);
         page.locator("[data-action=request-installation]").click();
-        page.locator("[data-request-status]")
+        page.navigate(baseUrl + "/monitoring#module-installations");
+        page.locator("[data-installation-history]")
             .filter(new Locator.FilterOptions().setHasText("SUCCEEDED"))
             .waitFor();
         startModule(page, "zalava-module-time");
@@ -755,10 +756,10 @@ class ReleasedModuleDistributableAcceptanceTest {
               .isTrue();
           assertThat(
                   (Boolean)
-                      page.locator("[data-artifact-digest]")
+                      page.locator(".managed-module-row")
                           .first()
                           .evaluate("e => e.scrollWidth<=e.clientWidth"))
-              .as("artifact digest remains readable inside its card at %s", width)
+              .as("installed module remains contained inside its compact row at %s", width)
               .isTrue();
           page.screenshot(
               new Page.ScreenshotOptions()
@@ -805,6 +806,23 @@ class ReleasedModuleDistributableAcceptanceTest {
           Thread.sleep(250);
         }
         assertThat(completed).as("Actuator context restart completes").isTrue();
+        try {
+          page.waitForURL("**/login");
+        } catch (PlaywrightException failure) {
+          Files.writeString(diagnostics.resolve("restart-failure.html"), page.content());
+          Files.writeString(diagnostics.resolve("restart-failure-url.txt"), page.url());
+          page.screenshot(
+              new Page.ScreenshotOptions().setPath(diagnostics.resolve("restart-failure.png")));
+          if (page.locator("[data-restart-previous]").count() > 0) {
+            String previous =
+                page.locator("[data-restart-previous]").getAttribute("data-restart-previous");
+            Files.writeString(
+                diagnostics.resolve("restart-status.json"),
+                admin.request().get(baseUrl + "/restart-status?previous=" + previous).text());
+          }
+          throw failure;
+        }
+        assertThat(page.locator("input[name=username]").isVisible()).isTrue();
         assertThat(process.pid()).isEqualTo(pid);
         assertThat(workspace.resolve("zalava-runtime-restart/request.properties")).doesNotExist();
         admin.clearCookies();
@@ -1055,10 +1073,13 @@ class ReleasedModuleDistributableAcceptanceTest {
     catalogProxy.artifact(release.path());
     prepareCatalogRelease(page, release);
     page.locator("[data-installation-request] [data-action=deny]").click();
-    assertThat(page.locator("[data-request-status]").textContent()).containsIgnoringCase("denied");
+    page.navigate(baseUrl + "/monitoring#module-installations");
+    assertThat(page.locator("[data-installation-history]").textContent())
+        .containsIgnoringCase("denied");
     prepareCatalogRelease(page, release);
     page.locator("[data-installation-request] [data-action=allow]").click();
-    page.locator("[data-request-status]")
+    page.navigate(baseUrl + "/monitoring#module-installations");
+    page.locator("[data-installation-history]")
         .filter(new Locator.FilterOptions().setHasText("SUCCEEDED"))
         .waitFor();
     page.screenshot(

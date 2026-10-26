@@ -18,7 +18,7 @@ public final class ZalavaProviderTool {
   private final ZalavaProviderToolInvoker invoker;
   private final ToolDiscovery discovery;
   private final ActorExecutionContext actorExecution;
-  private final DynamicToolActivationPolicy activationPolicy = new DynamicToolActivationPolicy();
+  private final DynamicToolActivationPolicy activationPolicy;
 
   public ZalavaProviderTool(
       ProviderToolOperations operations,
@@ -32,6 +32,21 @@ public final class ZalavaProviderTool {
       ToolDiscovery discovery,
       TaskExecutionContext taskExecutionContext,
       ActorExecutionContext actorExecution) {
+    this(
+        operations,
+        discovery,
+        taskExecutionContext,
+        actorExecution,
+        new DynamicToolActivationPolicy());
+  }
+
+  public ZalavaProviderTool(
+      ProviderToolOperations operations,
+      ToolDiscovery discovery,
+      TaskExecutionContext taskExecutionContext,
+      ActorExecutionContext actorExecution,
+      DynamicToolActivationPolicy activationPolicy) {
+    this.activationPolicy = activationPolicy;
     this.invoker = new ZalavaProviderToolInvoker(operations, taskExecutionContext, actorExecution);
     this.discovery = discovery;
     this.actorExecution = actorExecution;

@@ -198,7 +198,9 @@ public final class DefaultAgentExecution implements AgentExecution {
       Invocation<T> invocation,
       AgentRequest request) {
     Instant startedAt = clock.now();
-    AgentToolSelection selection = toolSelector.select(conversationId, input);
+    AgentToolSelection selection =
+        ConversationChannelContext.call(
+            conversationId, () -> toolSelector.select(conversationId, input));
     AgentContext context = withAttachments(contextAssembler.assemble(input, selection), request);
     try {
       T result =

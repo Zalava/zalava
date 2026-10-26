@@ -42,6 +42,8 @@ import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
+import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -70,6 +72,7 @@ class JobDetailControllerComponentTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private AccountLifecycle accounts;
+  @Autowired private MemberToolAccess toolAccess;
   @Autowired private ActorTaskStore tasks;
   @Autowired private TaskStore legacyTasks;
   @Autowired private ZalavaToolApprovalRequests approvals;
@@ -311,6 +314,22 @@ class JobDetailControllerComponentTest {
   private ZalavaToolApprovalRequests.Entry actorApproval(
       Account owner, Actor actor, ActorTaskReference reference, String accountRole) {
     ActorTaskExecutionReference execution = new ActorTaskExecutionReference(actor, reference);
+    Account administrator =
+        accounts
+            .findByLoginName("approval-grant-admin")
+            .orElseGet(
+                () ->
+                    accounts.create(
+                        "approval-grant-admin", "GrantAdminPassword-123", AccountRole.ADMIN));
+    ZalavaProvider grantedProvider = scopedProvider();
+    toolAccess.decide(
+        administrator.id().toString(),
+        owner.id().toString(),
+        new ToolKey(
+            grantedProvider.descriptor().moduleId(),
+            grantedProvider.descriptor().providerId(),
+            "write"),
+        true);
     ZalavaProvider provider = scopedProvider();
     ZalavaToolDescriptor tool =
         new ZalavaToolDescriptor("write", "Writes scoped data", true, List.of("member-safe"));

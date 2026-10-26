@@ -10,6 +10,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
+import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -129,6 +130,41 @@ class StreamingToolContextBridgeTest {
 
     assertThatThrownBy(() -> wrapped.call("{}")).isInstanceOf(IllegalStateException.class);
     assertThat(actorExecution.currentPrincipal()).isEmpty();
+  }
+
+  @Test
+  void carriesConversationToAnotherThreadAndRestoresItAfterFailure() throws Exception {
+    var actors = new ActorExecutionContext();
+    var bridge = new StreamingToolContextBridge(actors, new ActorTaskCreationContext());
+    var actor = new Actor(AccountId.newId());
+    var snapshot =
+        ConversationChannelContext.call(
+            "owned-conversation", () -> actors.call(actor, AccountRole.MEMBER, bridge::snapshot));
+    var seen = new AtomicReference<String>();
+    ToolCallback callback =
+        (ToolCallback)
+            bridge
+                .bind(
+                    List.of(
+                        recordingCallback(
+                            "read",
+                            ignored -> {
+                              seen.set(ConversationChannelContext.conversation().orElseThrow());
+                              throw new IllegalStateException("expected");
+                            })),
+                    snapshot)
+                .getFirst();
+    Thread thread =
+        Thread.ofVirtual()
+            .start(
+                () -> {
+                  assertThatThrownBy(() -> callback.call("{}"))
+                      .isInstanceOf(IllegalStateException.class);
+                  assertThat(ConversationChannelContext.conversation()).isEmpty();
+                  assertThat(actors.currentPrincipal()).isEmpty();
+                });
+    thread.join();
+    assertThat(seen.get()).isEqualTo("owned-conversation");
   }
 
   private static ToolCallback recordingCallback(

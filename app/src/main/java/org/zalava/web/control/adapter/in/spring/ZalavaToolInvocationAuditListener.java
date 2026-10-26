@@ -33,6 +33,7 @@ public final class ZalavaToolInvocationAuditListener {
             event.errorMessage(),
             event.resultPreview(),
             event.durationMillis(),
-            ConversationChannelContext.conversation().orElse("")));
+            ConversationChannelContext.conversation().orElse(""),
+            event.attributes().get("inputPreview")));
   }
 }
