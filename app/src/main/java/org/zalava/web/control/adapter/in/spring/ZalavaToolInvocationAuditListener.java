@@ -3,6 +3,7 @@ package org.zalava.web.control.adapter.in.spring;
 import java.time.Instant;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.modules.runtime.ZalavaToolInvocationAuditEvent;
 import org.zalava.web.control.application.InvocationLog;
 import org.zalava.web.control.application.port.in.InvocationLogQueries.Entry;
@@ -31,6 +32,7 @@ public final class ZalavaToolInvocationAuditListener {
             event.errorType(),
             event.errorMessage(),
             event.resultPreview(),
-            event.durationMillis()));
+            event.durationMillis(),
+            ConversationChannelContext.conversation().orElse("")));
   }
 }

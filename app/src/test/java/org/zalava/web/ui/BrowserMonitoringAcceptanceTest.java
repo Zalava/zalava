@@ -104,22 +104,22 @@ class BrowserMonitoringAcceptanceTest {
         assertThat(page.locator(".zalava-navbar .navbar-item.is-active").innerText().trim())
             .isEqualTo("Monitoring");
         assertThat(page.locator("body").innerText()).contains("Monitoring live job");
-        assertThat(page.locator("[data-empty=\"runs\"]").count()).isEqualTo(1);
+        assertThat(page.locator("[data-monitoring-runs]").count()).isZero();
 
         String taskId = UUID.randomUUID().toString();
         String accountId = UUID.randomUUID().toString();
         runStore.record(run("browser-monitoring-run", accountId + ":" + taskId));
 
         page.reload();
-        page.locator("[data-run-id=\"browser-monitoring-run\"]").waitFor();
+        page.getByText("Open a conversation in Chat", new Page.GetByTextOptions().setExact(false))
+            .waitFor();
         assertThat(page.locator("[data-empty=\"runs\"]").count()).isEqualTo(0);
         assertThat(page.locator("[data-run-evidence]").count()).isZero();
         String conversationId = UUID.randomUUID().toString();
         runStore.record(run("browser-chat-run", accountId + ":" + conversationId));
         runStore.record(run("browser-legacy-chat-run", UUID.randomUUID().toString()));
         page.reload();
-        assertThat(page.locator("[data-run-id=browser-chat-run]").innerText())
-            .contains("browser monitoring result", "Recorded run evidence is shown here");
+        assertThat(page.locator("[data-monitoring-runs]").count()).isZero();
         assertThat(page.locator("[data-run-evidence]").count()).isZero();
         for (int width : new int[] {390, 768, 1440}) {
           page.setViewportSize(width, 900);
@@ -132,8 +132,7 @@ class BrowserMonitoringAcceptanceTest {
                 return menu.classList.contains('is-active') ? Math.abs(bounds.left) < .5 : bounds.right <= .5;
               }
               """);
-          page.locator("[data-run-id=browser-chat-run]")
-              .evaluate("node => node.scrollIntoView({block: \"center\"})");
+
           assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
               .isEqualTo(true);
           page.screenshot(

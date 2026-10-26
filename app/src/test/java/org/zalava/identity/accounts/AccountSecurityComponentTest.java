@@ -87,14 +87,16 @@ class AccountSecurityComponentTest {
         .perform(
             post("/account/password")
                 .param("currentPassword", "TestBootstrapPassword-123")
-                .param("replacementPassword", "NewPassword-1234"))
+                .param("replacementPassword", "NewPassword-1234")
+                .param("passwordConfirmation", "NewPassword-1234"))
         .andExpect(status().isForbidden());
     mockMvc
         .perform(
             post("/account/password")
                 .with(csrf())
                 .param("currentPassword", "TestBootstrapPassword-123")
-                .param("replacementPassword", "NewPassword-1234"))
+                .param("replacementPassword", "NewPassword-1234")
+                .param("passwordConfirmation", "NewPassword-1234"))
         .andExpect(status().is3xxRedirection());
   }
 
@@ -196,6 +198,7 @@ class AccountSecurityComponentTest {
                 .with(user("accounts-admin").roles("ADMIN"))
                 .param("loginName", "managed-member")
                 .param("temporaryPassword", "ManagedPassword-123")
+                .param("passwordConfirmation", "ManagedPassword-123")
                 .param("role", "MEMBER"))
         .andExpect(status().isForbidden());
     mockMvc
@@ -205,6 +208,7 @@ class AccountSecurityComponentTest {
                 .with(csrf())
                 .param("loginName", "managed-member")
                 .param("temporaryPassword", "ManagedPassword-123")
+                .param("passwordConfirmation", "ManagedPassword-123")
                 .param("role", "MEMBER"))
         .andExpect(status().is3xxRedirection());
 
@@ -218,7 +222,8 @@ class AccountSecurityComponentTest {
                 .with(user("accounts-admin").roles("ADMIN"))
                 .with(csrf())
                 .param("accountId", managed.id().value().toString())
-                .param("temporaryPassword", "ResetPassword-123"))
+                .param("temporaryPassword", "ResetPassword-123")
+                .param("passwordConfirmation", "ResetPassword-123"))
         .andExpect(status().is3xxRedirection());
     assertThat(accounts.findByLoginName("managed-member").orElseThrow().passwordChangeRequired())
         .isTrue();
@@ -231,7 +236,8 @@ class AccountSecurityComponentTest {
                 .with(user("managed-member").roles("MEMBER"))
                 .with(csrf())
                 .param("currentPassword", "ResetPassword-123")
-                .param("replacementPassword", "ChangedManagedPassword-123"))
+                .param("replacementPassword", "ChangedManagedPassword-123")
+                .param("passwordConfirmation", "ChangedManagedPassword-123"))
         .andExpect(status().is3xxRedirection());
     assertThat(accounts.findByLoginName("managed-member").orElseThrow().passwordChangeRequired())
         .isFalse();

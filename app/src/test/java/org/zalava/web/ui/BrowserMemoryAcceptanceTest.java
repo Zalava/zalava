@@ -57,7 +57,7 @@ class BrowserMemoryAcceptanceTest {
   }
 
   @Test
-  void proposesApprovesEditsAndDeletesAMemory() {
+  void directlySavesEditsAndDeletesAMemory() {
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -67,12 +67,8 @@ class BrowserMemoryAcceptanceTest {
 
       page.navigate(baseUrl() + "/memory");
       page.locator("#proposal-text").fill("browser durable fact");
-      page.locator("[data-action=propose]").click();
-      page.locator("[data-memory-proposal]").waitFor();
-      assertThat(page.locator("[data-memory-proposal]").first().innerText())
-          .contains("browser durable fact");
-
-      page.locator("[data-action=approve]").first().click();
+      page.locator("[data-action=save-memory]").click();
+      assertThat(page.locator("[data-memory-proposal]").count()).isZero();
       page.locator("[data-memory-entry]").waitFor();
       assertThat(page.locator("[data-memory-entry]").first().innerText())
           .contains("browser durable fact");
@@ -108,6 +104,7 @@ class BrowserMemoryAcceptanceTest {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
     page.locator("input[name=currentPassword]").fill(PASSWORD);
     page.locator("input[name=replacementPassword]").fill(PASSWORD + "-changed");
+    page.locator("input[name=passwordConfirmation]").fill(PASSWORD + "-changed");
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
   }
 

@@ -83,6 +83,17 @@ public final class ZalavaMemoryPromotions implements MemoryPromotions {
   }
 
   @Override
+  public synchronized Optional<MemoryProposal> approvedForMemory(Actor actor, String memoryId) {
+    requireActor(actor);
+    return proposals.list(actor).stream()
+        .filter(
+            proposal ->
+                proposal.status() == MemoryProposal.Status.APPROVED
+                    && memoryId.equals(proposal.memoryId()))
+        .findFirst();
+  }
+
+  @Override
   public synchronized MemoryProposal get(Actor actor, String proposalId) {
     requireActor(actor);
     return proposals.find(actor, proposalId).orElseThrow(() -> new NotFoundException(proposalId));

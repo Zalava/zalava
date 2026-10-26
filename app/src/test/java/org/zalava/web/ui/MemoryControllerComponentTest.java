@@ -42,6 +42,72 @@ class MemoryControllerComponentTest {
   @Autowired private ComponentTestAccounts accounts;
 
   @Test
+  void directEntrySavesImmediatelyButModelSuggestionsStayPending() throws Exception {
+    Account owner = accounts.newActivated(AccountRole.MEMBER);
+    Actor actor = new Actor(owner.id());
+    mockMvc
+        .perform(
+            post("/memory/save")
+                .param("text", "Prefer compact answers")
+                .with(accounts.authenticatedAs(owner)))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(flash().attribute("memoryMessage", "Memory saved."));
+    assertThat(memories.recent(actor, 10))
+        .extracting(Memory::text)
+        .containsExactly("Prefer compact answers");
+    assertThat(memories.recent(actor, 10).getFirst().provenance().source()).isEqualTo("user");
+    assertThat(promotions.pending(actor)).isEmpty();
+    MemoryProposal suggestion =
+        promotions.propose(
+            actor, MemoryProposalDraft.of(MemoryScope.USER, "A different suggested fact"));
+    assertThat(memories.recent(actor, 10)).hasSize(1);
+    String pendingPage =
+        mockMvc
+            .perform(get("/memory").with(accounts.authenticatedAs(owner)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertThat(pendingPage).doesNotContain("/" + suggestion.id() + "/revoke");
+    var approved = promotions.approve(actor, suggestion.id());
+    mockMvc
+        .perform(get("/memory/" + approved.memoryId()).with(accounts.authenticatedAs(owner)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Revoke approval")));
+    mockMvc
+        .perform(
+            post("/memory/proposals/" + approved.id() + "/revoke")
+                .with(accounts.authenticatedAs(owner)))
+        .andExpect(flash().attributeExists("memoryError"));
+    assertThat(memories.find(actor, approved.memoryId())).isPresent();
+    Account other = accounts.newActivated(AccountRole.MEMBER);
+    mockMvc
+        .perform(get("/memory/" + approved.memoryId()).with(accounts.authenticatedAs(other)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void directSaveRejectsSecretsAndTransientScopeWithoutPersisting() throws Exception {
+    Account owner = accounts.newActivated(AccountRole.MEMBER);
+    Actor actor = new Actor(owner.id());
+    mockMvc
+        .perform(
+            post("/memory/save")
+                .param("text", "the password is hunter2")
+                .with(accounts.authenticatedAs(owner)))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(flash().attribute("proposalText", ""));
+    mockMvc
+        .perform(
+            post("/memory/save")
+                .param("scope", "EXECUTION")
+                .param("text", "temporary")
+                .with(accounts.authenticatedAs(owner)))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(flash().attributeExists("memoryError"));
+    assertThat(memories.recent(actor, 10)).isEmpty();
+  }
+
+  @Test
   void rendersTheOwnersMemoryWithScopeAndProvenance() throws Exception {
     Account account = accounts.newActivated(AccountRole.MEMBER);
     Actor actor = new Actor(account.id());
@@ -100,6 +166,7 @@ class MemoryControllerComponentTest {
     mockMvc
         .perform(
             post("/memory/proposals/" + proposal.id() + "/revoke")
+                .param("confirmed", "true")
                 .with(accounts.authenticatedAs(account)))
         .andExpect(status().is3xxRedirection())
         .andExpect(flash().attribute("memoryMessage", "Proposal revoked."));

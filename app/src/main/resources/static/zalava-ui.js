@@ -55,3 +55,24 @@
   }
   document.querySelector('[data-error-summary]')?.focus();
 })();
+
+/* File selection and confirmation feedback also survive back/forward restore. */
+(() => {
+  const file = document.getElementById('knowledge-file');
+  const submit = file?.form.querySelector('[data-file-submit]');
+  const hint = file?.form.querySelector('[data-file-hint]');
+  const update = () => {
+    if (!submit) return;
+    submit.disabled = !file.files.length;
+    hint.textContent = file.files.length ? 'Ready to upload: ' + file.files[0].name : 'Select a file to upload.';
+  };
+  file?.addEventListener('change', update);
+  window.addEventListener('pageshow', update);
+  update();
+  document.querySelectorAll('[data-password-confirmation]').forEach(input => {
+    const original = input.form.querySelector('[data-password-original]');
+    const validate = () => input.setCustomValidity(input.value === original.value ? '' : 'Passwords do not match.');
+    input.addEventListener('input', validate);
+    original.addEventListener('input', validate);
+  });
+})();

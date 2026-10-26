@@ -96,6 +96,12 @@ public final class MemoryController {
             .find(actors.actor(authentication), memoryId)
             .orElseThrow(MemoryController::unavailable);
     model.addAttribute("model", MemoryDetailModel.of(memory, csrf));
+    model.addAttribute(
+        "approvedProposal",
+        promotions
+            .approvedForMemory(actors.actor(authentication), memoryId)
+            .map(MemoryProposal::id)
+            .orElse(null));
     return "ui/memory-detail";
   }
 
@@ -117,6 +123,9 @@ public final class MemoryController {
       Memory memory = memories.find(actor, memoryId).orElseThrow(MemoryController::unavailable);
       model.addAttribute(
           "model", new MemoryDetailModel(memory, scope, text, message(exception), csrf));
+      model.addAttribute(
+          "approvedProposal",
+          promotions.approvedForMemory(actor, memoryId).map(MemoryProposal::id).orElse(null));
       return "ui/memory-detail";
     }
   }
@@ -133,6 +142,26 @@ public final class MemoryController {
       redirect.addFlashAttribute("memoryMessage", "Memory deleted.");
     } catch (RuntimeException exception) {
       redirect.addFlashAttribute("memoryError", "Memory deletion could not be completed.");
+    }
+    return "redirect:/memory";
+  }
+
+  @PostMapping("/memory/save")
+  String save(
+      @RequestParam(defaultValue = "USER") String scope,
+      @RequestParam String text,
+      Authentication authentication,
+      RedirectAttributes redirect) {
+    try {
+      management.remember(actors.actor(authentication), MemoryScope.parse(scope), text);
+      redirect.addFlashAttribute("memoryMessage", "Memory saved.");
+    } catch (RuntimeException exception) {
+      String error = text.isBlank() ? "Enter the memory you want to save." : message(exception);
+      redirect.addFlashAttribute("memoryError", error);
+      redirect.addFlashAttribute("proposalError", error);
+      redirect.addFlashAttribute(
+          "proposalText", error.contains("credentials or secrets") ? "" : text);
+      redirect.addFlashAttribute("proposalScope", scope);
     }
     return "redirect:/memory";
   }
@@ -173,7 +202,15 @@ public final class MemoryController {
 
   @PostMapping("/memory/proposals/{proposalId}/revoke")
   String revoke(
-      @PathVariable String proposalId, Authentication authentication, RedirectAttributes redirect) {
+      @PathVariable String proposalId,
+      @RequestParam(defaultValue = "false") boolean confirmed,
+      Authentication authentication,
+      RedirectAttributes redirect) {
+    if (!confirmed) {
+      redirect.addFlashAttribute(
+          "memoryError", "Confirm revocation before removing an approved memory.");
+      return "redirect:/memory";
+    }
     return decide(proposalId, authentication, redirect, Decision.REVOKE);
   }
 

@@ -352,9 +352,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
             .map(
                 proposal ->
                     new UiEvent.MemoryReview(
-                        proposal.id(),
-                        proposal.text().substring(0, Math.min(120, proposal.text().length())),
-                        "/memory#proposal-" + proposal.id()))
+                        proposal.id(), proposal.text(), "/memory#proposal-" + proposal.id()))
             .toList();
     send(session, new UiEvent.MemoryReviews(UiCommandDecoder.VERSION, reviews));
   }

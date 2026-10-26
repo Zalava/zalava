@@ -1,5 +1,6 @@
 package org.zalava.knowledge.memory.application;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.zalava.identity.accounts.domain.Actor;
@@ -7,6 +8,8 @@ import org.zalava.knowledge.memory.application.port.in.MemoryManagement;
 import org.zalava.knowledge.memory.application.port.out.ActorMemoryStore;
 import org.zalava.knowledge.memory.domain.Memory;
 import org.zalava.knowledge.memory.domain.MemoryContentPolicy;
+import org.zalava.knowledge.memory.domain.MemoryDraft;
+import org.zalava.knowledge.memory.domain.MemoryProvenance;
 import org.zalava.knowledge.memory.domain.MemoryScope;
 
 /**
@@ -20,6 +23,14 @@ public final class DefaultMemoryManagement implements MemoryManagement {
 
   public DefaultMemoryManagement(ActorMemoryStore memories) {
     this.memories = Objects.requireNonNull(memories, "memories must not be null");
+  }
+
+  @Override
+  public Memory remember(Actor actor, MemoryScope scope, String text) {
+    Objects.requireNonNull(actor, "actor must not be null");
+    MemoryContentPolicy.validate(scope, text);
+    return memories.remember(
+        actor, new MemoryDraft(scope, text, Map.of(), MemoryProvenance.of("user")));
   }
 
   @Override

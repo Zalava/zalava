@@ -36,6 +36,7 @@
 @for(String key : List.of("assistant", "provider", "modules", "channels", "permissions"))
 <a href="/settings?section=${key}" aria-current="${section.equals(key) ? "page" : null}">${switch(key) { case "assistant" -> "Assistant"; case "provider" -> "Provider & workspace"; case "modules" -> "Modules"; case "channels" -> "Channel links"; default -> "Permissions & interface"; }}</a>
 @endfor
+<a href="/zalava/accounts">Manage accounts</a>
 </nav><div class="settings-content">
 @if(section.equals("assistant"))
 <section class="box settings-card" aria-labelledby="instructions-heading">

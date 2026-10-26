@@ -3,7 +3,6 @@ package org.zalava.web.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -72,7 +71,7 @@ class MonitoringControllerComponentTest {
         .andExpect(content().string(containsString("data-refreshed-at")))
         .andExpect(content().string(containsString("data-empty=\"live-jobs\"")))
         .andExpect(content().string(containsString("data-empty=\"terminal-jobs\"")))
-        .andExpect(content().string(containsString("data-empty=\"runs\"")))
+        .andExpect(content().string(not(containsString("data-monitoring-runs"))))
         .andExpect(content().string(containsString("data-empty=\"provider-calls\"")))
         .andExpect(content().string(containsString("data-empty=\"providers\"")))
         .andExpect(content().string(not(containsString("data-metrics-viewer"))));
@@ -135,12 +134,11 @@ class MonitoringControllerComponentTest {
         .andExpect(content().string(containsString("Finished build")))
         .andExpect(
             content().string(containsString("href=\"/jobs/2026-09-18/081850-Running_build.md\"")))
-        .andExpect(content().string(containsString("data-run-id=\"run-3\"")))
-        .andExpect(content().string(containsString("data-run-failed=\"true\"")))
+        .andExpect(content().string(not(containsString("data-monitoring-runs"))))
         .andExpect(content().string(not(containsString("data-run-evidence"))))
         .andExpect(content().string(containsString("ProviderTimeout")))
         .andExpect(content().string(containsString("Missing tools: browser")))
-        .andExpect(content().string(stringContainsInOrder("run-3", "run-2", "run-1")));
+        .andExpect(content().string(containsString("Open a conversation in Chat")));
   }
 
   @Test
@@ -176,14 +174,9 @@ class MonitoringControllerComponentTest {
             .getResponse()
             .getContentAsString();
     assertThat(body)
-        .contains(
-            "bare-chat-run",
-            "owned-chat-run",
-            "legacy-chat-run",
-            "result-bare-chat-run",
-            "result-owned-chat-run",
-            "result-legacy-chat-run")
-        .doesNotContain("data-run-evidence", "/jobs/" + conversationId, "View in chat");
+        .contains("Open a conversation in Chat")
+        .doesNotContain("data-run-evidence", "data-monitoring-runs", "/jobs/" + conversationId);
+    assertThat(runStore.recent()).hasSize(3);
   }
 
   @Test
@@ -209,7 +202,7 @@ class MonitoringControllerComponentTest {
             .getResponse()
             .getContentAsString();
 
-    assertThat(body.split("data-run-id=", -1)).hasSize(21);
+    assertThat(body).doesNotContain("data-run-id=");
     assertThat(body).contains("R".repeat(200) + "...");
     assertThat(body).doesNotContain("TAIL-MARKER");
   }
@@ -228,7 +221,14 @@ class MonitoringControllerComponentTest {
             .getResponse()
             .getContentAsString();
 
-    assertThat(body).contains("P".repeat(500));
+    assertThat(
+            runStore.recent().stream()
+                .filter(run -> run.id().equals("run-long"))
+                .findFirst()
+                .orElseThrow()
+                .promptPreview())
+        .hasSize(500);
+    assertThat(body).doesNotContain("P".repeat(500));
     assertThat(body).doesNotContain("PROMPT-TAIL");
   }
 

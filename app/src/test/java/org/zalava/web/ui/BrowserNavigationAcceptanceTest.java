@@ -67,9 +67,8 @@ class BrowserNavigationAcceptanceTest {
 
   private static final List<String> ADMIN_MENU =
       List.of(
-          "Dashboard",
           "Chat",
-          "Jobs",
+          "Dashboard",
           "Knowledge",
           "Memory",
           "Monitoring",
@@ -79,7 +78,7 @@ class BrowserNavigationAcceptanceTest {
           "Advanced settings",
           "My account");
   private static final List<String> MEMBER_MENU =
-      List.of("Dashboard", "Chat", "Jobs", "Knowledge", "Memory", "My account");
+      List.of("Chat", "Dashboard", "Knowledge", "Memory", "My account");
   private static final List<String> MEMBER_HIDDEN =
       List.of("/apps", "/modules", "/monitoring", "/settings", "/zalava/control");
 
@@ -333,9 +332,9 @@ class BrowserNavigationAcceptanceTest {
                 .isTrue();
             assertThat(page.locator(".composer-options-toggle").isDisabled()).isTrue();
             var notice = page.locator(".provider-notice").boundingBox();
-            assertThat(page.locator(".conversations").boundingBox().y)
-                .as("Conversation toolbar follows model setup without unused vertical space")
-                .isCloseTo(notice.y + notice.height + 16, Offset.offset(1.0));
+            double gap =
+                page.locator(".conversation-toolbar").boundingBox().y - notice.y - notice.height;
+            assertThat(gap).as("Compact toolbar follows provider setup").isBetween(0.0, 20.0);
             if (width > 1024) {
               assertThat(page.locator(".chat-inspector").boundingBox().height).isGreaterThan(350);
               assertThat(page.locator(".chat-inspector").boundingBox().y)
@@ -431,6 +430,7 @@ class BrowserNavigationAcceptanceTest {
       }
       page.locator("input[name=currentPassword]").fill("WrongCurrentPassword-123");
       page.locator("input[name=replacementPassword]").fill(replacement);
+      page.locator("input[name=passwordConfirmation]").fill(replacement);
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
       page.getByRole(AriaRole.ALERT).waitFor();
@@ -441,6 +441,7 @@ class BrowserNavigationAcceptanceTest {
       }
       page.locator("input[name=currentPassword]").fill(temporary);
       page.locator("input[name=replacementPassword]").fill(replacement);
+      page.locator("input[name=passwordConfirmation]").fill(replacement);
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
       page.waitForURL("**/chat");
@@ -548,6 +549,7 @@ class BrowserNavigationAcceptanceTest {
       page.navigate(baseUrl() + "/zalava/accounts");
       page.locator("#create-login").fill(login);
       page.locator("#create-password").fill("ManagedBrowserPassword-123");
+      page.locator("#confirm-create-password").fill("ManagedBrowserPassword-123");
       page.getByRole(
               AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create account").setExact(true))
           .click();
@@ -574,6 +576,7 @@ class BrowserNavigationAcceptanceTest {
       assertThat(accounts.findById(managed.id()).orElseThrow().enabled()).isTrue();
       page.locator("#create-login").fill(login);
       page.locator("#create-password").fill("ManagedBrowserPassword-123");
+      page.locator("#confirm-create-password").fill("ManagedBrowserPassword-123");
       page.getByRole(
               AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create account").setExact(true))
           .click();
@@ -649,6 +652,10 @@ class BrowserNavigationAcceptanceTest {
         page.setViewportSize(width, 900);
         assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(200);
         capture(page, path.substring(1) + "-search-" + width);
+        if (path.equals("/memory")) {
+          page.getByText("Filter by category", new Page.GetByTextOptions().setExact(true)).click();
+          capture(page, "memory-search-category-expanded-" + width);
+        }
         for (Locator control :
             page.locator(
                     "form[action='"
@@ -793,25 +800,21 @@ class BrowserNavigationAcceptanceTest {
       signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
       page.waitForURL("**/chat");
       page.navigate(baseUrl() + "/memory");
-      page.locator("#proposal-scope").selectOption("USER");
       page.locator("#proposal-text").fill(text);
-      page.locator("[data-action=propose]").click();
-      Locator proposal =
-          page.locator("[data-memory-proposal]")
-              .filter(new Locator.FilterOptions().setHasText(text));
-      proposal.waitFor();
+      page.locator("[data-action=save-memory]").click();
+      page.locator("[data-memory-entry]")
+          .filter(new Locator.FilterOptions().setHasText(text))
+          .waitFor();
       for (int width : List.of(390, 768, 1440)) {
         page.setViewportSize(width, 900);
-        capture(page, "memory-proposal-" + width);
+        capture(page, "memory-saved-" + width);
       }
-      proposal.locator("[data-action=approve]").click();
       page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(text).setExact(true))
           .click();
       for (int width : List.of(390, 768, 1440)) {
         page.setViewportSize(width, 900);
         assertThat(page.locator("body").innerText())
-            .contains(
-                "Private to your account", "Personal preferences", "Approved memory proposal");
+            .contains("Private to your account", "Personal preferences", "Saved by you");
         capture(page, "memory-readable-detail-" + width);
       }
       page.getByText("Stored metadata", new Page.GetByTextOptions().setExact(true)).click();
@@ -900,7 +903,6 @@ class BrowserNavigationAcceptanceTest {
     Map<String, String> pages = new LinkedHashMap<>();
     pages.put("/dashboard", "Dashboard");
     pages.put("/chat", "Chat");
-    pages.put("/jobs", "Jobs");
     pages.put("/knowledge", "Knowledge");
     pages.put("/memory", "Memory");
     pages.put("/monitoring", "Monitoring");

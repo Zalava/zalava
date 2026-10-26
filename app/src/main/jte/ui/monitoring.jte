@@ -47,7 +47,7 @@
             </div>
             <div class="columns is-variable is-4">
                 <div class="column">
-                    <p class="heading">Live jobs</p>
+                    <p class="heading">Live tasks</p>
                     <p class="title is-3" data-metric="live-jobs">${model.snapshot().liveJobs()}</p>
                 </div>
                 <div class="column">
@@ -79,7 +79,7 @@
                 <div class="level-left">
                     <div>
                         <p class="heading mb-1">Live work</p>
-                        <h2 class="title is-4 mb-0">Jobs in progress</h2>
+                        <h2 class="title is-4 mb-0">Tasks in progress</h2>
                     </div>
                 </div>
                 <div class="level-right">
@@ -89,7 +89,7 @@
             @if(model.liveJobs().isEmpty())
                 <div class="notification is-light has-text-centered py-5" data-empty="live-jobs">
                     <p class="has-text-weight-semibold mb-1">Nothing is running right now.</p>
-                    <p class="has-text-grey">Queued, running and waiting jobs appear here.</p>
+                    <p class="has-text-grey">Queued, running and waiting tasks appear here.</p>
                 </div>
             @else
                 <div class="activity-list">
@@ -111,7 +111,7 @@
                 <div class="level-left">
                     <div>
                         <p class="heading mb-1">Terminal work</p>
-                        <h2 class="title is-4 mb-0">Recently finished jobs</h2>
+                        <h2 class="title is-4 mb-0">Recently finished tasks</h2>
                     </div>
                 </div>
                 <div class="level-right">
@@ -120,8 +120,8 @@
             </div>
             @if(model.terminalJobs().isEmpty())
                 <div class="notification is-light has-text-centered py-5" data-empty="terminal-jobs">
-                    <p class="has-text-weight-semibold mb-1">No finished jobs yet.</p>
-                    <p class="has-text-grey">Completed, cancelled and failed jobs appear here.</p>
+                    <p class="has-text-weight-semibold mb-1">No finished tasks yet.</p>
+                    <p class="has-text-grey">Completed, cancelled and failed tasks appear here.</p>
                 </div>
             @else
                 <div class="activity-list">
@@ -138,50 +138,7 @@
             @endif
         </section>
 
-        <section class="box dashboard-activity mb-5" data-monitoring-runs>
-            <div class="level mb-4">
-                <div class="level-left">
-                    <div>
-                        <p class="heading mb-1">Run evidence</p>
-                        <h2 class="title is-4 mb-0">Recent agent runs</h2>
-                    </div>
-                </div>
-                <div class="level-right">
-                    <span class="tag is-rounded">${model.runs().size()} shown</span>
-                </div>
-            </div>
-            @if(model.runs().isEmpty())
-                <div class="notification is-light has-text-centered py-5" data-empty="runs">
-                    <p class="has-text-weight-semibold mb-1">No agent runs recorded yet.</p>
-                    <p class="has-text-grey">Completed and failed runs will appear here.</p>
-                </div>
-            @else
-                <div class="activity-list">
-                    @for(RunEntry run : model.runs())
-                        <article class="activity-entry monitoring-run" data-run-id="${run.id()}" data-run-failed="${run.failed()}">
-                            <div class="activity-copy">
-                                <h3 class="has-text-weight-semibold mb-1">${run.promptTypeLabel()} run · ${run.startedAt()}</h3>
-                                <p class="has-text-grey is-size-7 mb-2">
-                                    ${run.durationLabel()} · context ${run.contextCharactersUsed()} / ${run.contextCharacterBudget()} characters
-                                </p>
-                                @if(run.promptPreview() != null && !run.promptPreview().isBlank())
-                                    <p class="is-size-7"><strong>Prompt:</strong> ${run.promptPreview()}</p>
-                                @endif
-                                @if(run.failed() && run.errorPreview() != null && !run.errorPreview().isBlank())
-                                    <p class="notification is-danger is-light py-2 my-2" data-run-error>${run.errorPreview()}</p>
-                                @endif
-                                @if(run.resultPreview() != null && !run.resultPreview().isBlank())
-                                    <p class="is-size-7"><strong>Result:</strong> ${run.resultPreview()}</p>
-                                @endif
-                                <p class="is-size-7 has-text-grey">Recorded run evidence is shown here. Jobs have their own evidence links above.</p>
-
-                            </div>
-                            <span class="tag ${run.statusClass()}">${run.statusLabel()}</span>
-                        </article>
-                    @endfor
-                </div>
-            @endif
-        </section>
+        <p class="help mb-4">Open a conversation in Chat to inspect its execution and tool details.</p>
 
         <section class="box dashboard-activity mb-5" data-monitoring-providers>
             <div class="level mb-4">

@@ -177,7 +177,7 @@ class MemoryControllerTest {
     assertThat(reject.getFlashAttributes().get("memoryMessage")).isEqualTo("Proposal rejected.");
 
     var revoke = new RedirectAttributesModelMap();
-    controller.revoke("proposal-1", authentication, revoke);
+    controller.revoke("proposal-1", true, authentication, revoke);
     verify(promotions).revoke(actor, "proposal-1");
     assertThat(revoke.getFlashAttributes().get("memoryMessage")).isEqualTo("Proposal revoked.");
   }

@@ -238,3 +238,52 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .conversation-options summary, .uploaded-file-options summary { min-height: 2.75rem; display: flex; align-items: center; }
 
 .chat-inspector [aria-selected="true"]:hover:not(:disabled) { color: white; background: var(--zalava-color-primary-strong); border-color: var(--zalava-color-primary-strong); }
+
+/* Keep secondary controls compact without shrinking touch targets or message padding. */
+.zalava-chat { gap: .65rem; padding: 1rem 1.25rem; }
+.zalava-chat > header { flex-direction: row; align-items: center; gap: .5rem; }
+.zalava-chat h1 { font-size: 1.4rem; margin: 0; }
+.conversation-toolbar { display: flex; flex-wrap: wrap; align-items: start; gap: .5rem; }
+.conversation-toolbar .conversations { flex: 1 1 20rem; min-width: 0; }
+.conversations select { flex: 1 1 12rem; min-width: 0; width: 100%; }
+.conversation-options { margin: 0; position: relative; }
+.conversation-options summary { min-height: 2.75rem; border: 1px solid var(--zalava-color-border); border-radius: var(--zalava-radius-md); padding: .5rem .75rem; background: var(--zalava-color-surface); }
+.conversation-options summary::after { content: '⌄'; margin-left: .5rem; }
+.conversation-options[open] form { position: absolute; right: 0; top: 100%; z-index: 15; width: min(24rem, calc(100vw - 3rem)); padding: 1rem; background: var(--zalava-color-surface); border: 1px solid var(--zalava-color-border); border-radius: var(--zalava-radius-md); box-shadow: var(--zalava-shadow-md); }
+.message > :last-child { margin-bottom: 0; }
+.message ul, .message ol { padding-left: 1.5rem; margin: .5rem 0; }
+.message li > p { margin-block: .25rem; }
+.message pre { max-width: 100%; }
+.chat-primary .messages { overscroll-behavior: contain; }
+.composer { padding: .75rem; }
+.composer-fields { gap: .5rem; }
+.composer-help { font-size: .75rem; }
+.uploaded-file-options[open] { border: 1px solid var(--zalava-color-border); border-radius: var(--zalava-radius-md); padding: .5rem .75rem; }
+.uploaded-file-options summary { gap: .5rem; }
+.uploaded-file-options summary::after { content: '⌄'; }
+.uploaded-file-options p { font-size: .8rem; }
+.memory-review-notice { margin: 0 0 1rem; padding: .75rem; }
+.memory-review-entry { border-top: 1px solid var(--zalava-color-border); padding-top: .5rem; margin-top: .5rem; }
+.memory-review-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.inspector-close { margin-bottom: .75rem; }
+@media (min-width: 1024px) { .inspector-close { display: none; } }
+@media (max-width: 1023px) {
+  .inspector-open .chat-primary { display: none; }
+  .inspector-open .chat-inspector { min-height: 18rem; }
+  .zalava-chat { padding: .75rem; }
+}
+@media (max-width: 640px) {
+  .conversation-toolbar .conversations { flex-basis: 100%; flex-wrap: wrap; }
+  .conversations select { flex-basis: min(100%, 12rem); }
+  .conversations .zalava-button { flex: 0 0 auto; }
+}
+
+@media (max-width: 640px) {
+  .conversation-toolbar { gap: .4rem; }
+  .conversation-toolbar .conversations { display: contents; }
+  .conversation-toolbar .conversations select { flex: 1 1 100%; }
+  .conversation-toolbar .zalava-button, .conversation-options summary { padding-inline: .65rem; }
+}
+.conversation-execution { margin-block: .6rem; padding: .6rem; border: 1px solid var(--zalava-color-border); border-radius: var(--zalava-radius-md); overflow-wrap: anywhere; }
+.conversation-execution summary { cursor: pointer; font-size: .875rem; }
+.conversation-execution pre { white-space: pre-wrap; overflow-wrap: anywhere; }

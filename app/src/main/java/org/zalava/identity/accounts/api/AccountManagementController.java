@@ -20,10 +20,13 @@ import org.zalava.identity.accounts.domain.AccountRole;
 public class AccountManagementController {
   private static final Set<String> SAFE_ERRORS =
       Set.of(
-          "Login name is already in use", "Login name must contain between 1 and 100 characters",
+          "Passwords do not match",
+          "Login name is already in use",
+          "Login name must contain between 1 and 100 characters",
           "Login name contains unsupported characters",
-              "Password must contain between 12 and 256 characters",
-          "At least one enabled administrator is required", "Account does not exist");
+          "Password must contain between 12 and 256 characters",
+          "At least one enabled administrator is required",
+          "Account does not exist");
   private final AccountLifecycle accounts;
 
   public AccountManagementController(AccountLifecycle accounts) {
@@ -44,9 +47,11 @@ public class AccountManagementController {
   String create(
       @RequestParam String loginName,
       @RequestParam String temporaryPassword,
+      @RequestParam(defaultValue = "") String passwordConfirmation,
       @RequestParam AccountRole role,
       RedirectAttributes redirect) {
     try {
+      requireConfirmation(temporaryPassword, passwordConfirmation);
       accounts.create(loginName, temporaryPassword, role);
       redirect.addFlashAttribute(
           "message",
@@ -91,8 +96,10 @@ public class AccountManagementController {
   String resetPassword(
       @RequestParam String accountId,
       @RequestParam String temporaryPassword,
+      @RequestParam(defaultValue = "") String passwordConfirmation,
       RedirectAttributes redirect) {
     try {
+      requireConfirmation(temporaryPassword, passwordConfirmation);
       accounts.resetPassword(accountId(accountId), temporaryPassword);
       redirect.addFlashAttribute(
           "message",
@@ -101,6 +108,11 @@ public class AccountManagementController {
       redirect.addFlashAttribute("error", safeError(exception));
     }
     return "redirect:/zalava/accounts";
+  }
+
+  private static void requireConfirmation(String password, String confirmation) {
+    if (!password.equals(confirmation))
+      throw new IllegalArgumentException("Passwords do not match");
   }
 
   private static String safeError(RuntimeException exception) {

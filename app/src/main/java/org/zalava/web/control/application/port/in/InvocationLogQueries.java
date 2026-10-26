@@ -18,5 +18,37 @@ public interface InvocationLogQueries {
       String errorType,
       String errorMessage,
       String resultPreview,
-      long durationMillis) {}
+      long durationMillis,
+      String conversationId) {
+    public Entry(
+        String timestamp,
+        String providerId,
+        String toolName,
+        String actorId,
+        boolean confirmed,
+        String classification,
+        List<String> policyTags,
+        boolean sideEffecting,
+        boolean success,
+        String errorType,
+        String errorMessage,
+        String resultPreview,
+        long durationMillis) {
+      this(
+          timestamp,
+          providerId,
+          toolName,
+          actorId,
+          confirmed,
+          classification,
+          policyTags,
+          sideEffecting,
+          success,
+          errorType,
+          errorMessage,
+          resultPreview,
+          durationMillis,
+          "");
+    }
+  }
 }

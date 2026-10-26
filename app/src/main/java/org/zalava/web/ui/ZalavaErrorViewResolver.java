@@ -21,6 +21,14 @@ public final class ZalavaErrorViewResolver implements ErrorViewResolver {
           default -> "Something went wrong";
         };
     return new ModelAndView(
-        "ui/error", Map.of("heading", heading, "statusCode", status.value()), status);
+        "ui/error",
+        Map.of(
+            "heading",
+            heading,
+            "statusCode",
+            status.value(),
+            "accountName",
+            request.getUserPrincipal() == null ? "" : request.getUserPrincipal().getName()),
+        status);
   }
 }

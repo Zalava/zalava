@@ -216,8 +216,8 @@ public class MonitoringController {
 
   private static String statusDetail(Task.Status status) {
     return switch (status) {
-      case in_progress -> "Zalava is working on this job now.";
-      case awaiting_human_input -> "Zalava needs input before this job can continue.";
+      case in_progress -> "Zalava is working on this task now.";
+      case awaiting_human_input -> "Zalava needs input before this task can continue.";
       case todo -> "Waiting to start.";
       case completed, cancelled, failed -> "";
     };

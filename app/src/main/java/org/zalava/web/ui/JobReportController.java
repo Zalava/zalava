@@ -43,7 +43,7 @@ public final class JobReportController {
           .header(HttpHeaders.CACHE_CONTROL, "no-store")
           .body(content);
     } catch (TaskNotFoundException | IllegalArgumentException unavailable) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Saved job report is unavailable");
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Saved task report is unavailable");
     }
   }
 }

@@ -1,6 +1,7 @@
 package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,10 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
 import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 
@@ -52,6 +56,32 @@ class NavigationComponentTest {
   @Autowired private MockMvc mockMvc;
 
   @Autowired private ComponentTestAccounts accounts;
+
+  @MockitoBean private ModuleQueries modules;
+
+  @BeforeEach
+  void supportingTaskModule() {
+    when(modules.enabledModules())
+        .thenReturn(
+            List.of(
+                new ModuleQueries.EnabledModule(
+                    "tasks",
+                    "1.0.0",
+                    "https://github.com/Zalava/zalava-module-tasks",
+                    "releases",
+                    List.of())));
+  }
+
+  @Test
+  void chatComesFirstAndTaskNavigationRequiresItsSupportingModule() throws Exception {
+    when(modules.enabledModules()).thenReturn(List.of());
+    String body = bodyOf("/chat");
+    assertThat(body).doesNotContain(href("/jobs"));
+    assertThat(body.indexOf("title=\"Chat\"")).isLessThan(body.indexOf("title=\"Dashboard\""));
+    assertThat(body).contains("aria-label=\"Zalava Chat\"");
+    supportingTaskModule();
+    assertThat(bodyOf("/chat")).contains(href("/jobs"), "title=\"Tasks\"");
+  }
 
   @Test
   void membersCannotSaveOrResetWorkspaceInstructionsOrUseAdvancedActions() throws Exception {

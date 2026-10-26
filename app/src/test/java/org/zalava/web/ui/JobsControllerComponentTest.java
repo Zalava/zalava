@@ -58,7 +58,7 @@ class JobsControllerComponentTest {
     mockMvc
         .perform(get("/jobs"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("<title>Zalava Jobs</title>")))
+        .andExpect(content().string(containsString("<title>Zalava Tasks</title>")))
         .andExpect(content().string(containsString("aria-current=\"page\" href=\"/jobs\"")))
         .andExpect(content().string(containsString("data-group=\"running\" data-count=\"2\"")))
         .andExpect(content().string(containsString("data-group=\"waiting\" data-count=\"1\"")))
@@ -80,7 +80,7 @@ class JobsControllerComponentTest {
     mockMvc
         .perform(get("/jobs"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("No jobs have been created yet.")))
+        .andExpect(content().string(containsString("No tasks have been created yet.")))
         .andExpect(content().string(containsString("href=\"/chat\"")));
   }
 

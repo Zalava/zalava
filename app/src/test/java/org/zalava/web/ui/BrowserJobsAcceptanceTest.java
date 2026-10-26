@@ -203,7 +203,7 @@ class BrowserJobsAcceptanceTest {
             .focus();
         page.keyboard().press("Enter");
         page.waitForURL(baseUrl() + "/jobs/" + report.value());
-        assertThat(page.locator("#artifacts").innerText()).contains("Saved job report");
+        assertThat(page.locator("#artifacts").innerText()).contains("Saved task report");
         page.navigate(baseUrl() + "/dashboard");
         page.locator("[aria-labelledby='upcoming-jobs-title']")
             .getByText("Future browser job")
@@ -224,7 +224,7 @@ class BrowserJobsAcceptanceTest {
         cancelled.delete("Browser fixture cancellation");
         storageProvider.save(cancelled);
         page.reload();
-        page.getByText("No upcoming scheduled jobs.").waitFor();
+        page.getByText("No upcoming scheduled tasks.").waitFor();
         try (BrowserContext foreign = browser.newContext()) {
           Page otherPage = foreign.newPage();
           signIn(otherPage, OTHER_LOGIN);

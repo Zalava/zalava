@@ -83,7 +83,7 @@ class JobEvidenceControllerComponentTest {
             content().string(org.hamcrest.Matchers.not(containsString("Other account secret"))));
     mvc.perform(get("/dashboard").with(user(owner.loginName()).roles("MEMBER")))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("Upcoming scheduled jobs")));
+        .andExpect(content().string(containsString("Upcoming scheduled tasks")));
     mvc.perform(
             get("/jobs/" + report.value() + "/artifacts/report")
                 .with(user(owner.loginName()).roles("MEMBER")))
@@ -118,8 +118,8 @@ class JobEvidenceControllerComponentTest {
     when(schedules.list(actor)).thenReturn(List.of());
     mvc.perform(get("/jobs").with(user(owner.loginName()).roles("MEMBER")))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("No upcoming scheduled jobs.")))
-        .andExpect(content().string(containsString("No saved job reports.")));
+        .andExpect(content().string(containsString("No upcoming scheduled tasks.")))
+        .andExpect(content().string(containsString("No saved task reports.")));
     when(schedules.list(actor))
         .thenThrow(new TaskScheduleUnavailableException(new IllegalStateException("Offline")));
     mvc.perform(get("/jobs").with(user(owner.loginName()).roles("MEMBER")))
@@ -128,7 +128,7 @@ class JobEvidenceControllerComponentTest {
             content().string(containsString("Scheduled work is unavailable. Reload to try again.")))
         .andExpect(
             content()
-                .string(org.hamcrest.Matchers.not(containsString("No upcoming scheduled jobs."))));
+                .string(org.hamcrest.Matchers.not(containsString("No upcoming scheduled tasks."))));
   }
 
   private Account member() {

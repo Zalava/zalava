@@ -30,11 +30,7 @@
         <div class="notification is-info" role="status">No log lines have been recorded yet.</div>
       @else
         <section class="box" aria-label="Recent Zalava log lines">
-          <pre class="zalava-log-output">
-          @for(String line : logs.lines())
-${line}
-          @endfor
-          </pre>
+          <pre class="zalava-log-output">${String.join("\n", logs.lines())}</pre>
         </section>
       @endif
     @endif

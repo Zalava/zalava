@@ -313,7 +313,7 @@
                                 </div>
                             @elseif(request.decision() == Decision.PENDING)
                                 <a class="btn btn-sm btn-primary" href="/jobs/${request.taskReference()}">
-                                    Review job approval
+                                    Review task approval
                                 </a>
                             @endif
                         </div>
