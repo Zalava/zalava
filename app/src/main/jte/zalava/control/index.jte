@@ -28,7 +28,7 @@
 <body class="zalava-advanced">
     @template.ui.navigation(items = navigation.items(), activePage = "advanced", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
 
-  <div class="advanced-destinations px-4 pt-4"><a href="/zalava/accounts">Manage accounts</a>@if(metricsEnabled)<a href="/zalava/control/metrics">Runtime metrics</a>@endif</div>
+  @if(metricsEnabled)<div class="advanced-destinations px-4 pt-3"><a href="/zalava/control/metrics">Runtime metrics</a></div>@endif
   <main id="zalava-control" class="container-fluid px-4 py-4">
         @template.zalava.control.workspace(model = model)
     </main>

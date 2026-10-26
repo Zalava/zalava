@@ -31,7 +31,7 @@ class ProductUiParityComponentTest {
 
     assertProductPage("/dashboard", "Zalava Dashboard");
     assertInteractiveChatPage();
-    assertProductPage("/jobs", "Zalava Jobs");
+    assertProductPage("/jobs", "Zalava Tasks");
     assertProductPage("/modules", "Zalava Modules");
     assertProductPage("/settings", "Zalava Settings");
   }
@@ -43,7 +43,7 @@ class ProductUiParityComponentTest {
         .andExpect(content().string(containsString("<title>" + title + "</title>")))
         .andExpect(content().string(containsString("href=\"/dashboard\"")))
         .andExpect(content().string(containsString("href=\"/chat\"")))
-        .andExpect(content().string(containsString("href=\"/jobs\"")))
+        .andExpect(content().string(containsString("href=\"/knowledge\"")))
         .andExpect(content().string(containsString("href=\"/modules\"")))
         .andExpect(content().string(containsString("href=\"/settings\"")))
         .andExpect(content().string(not(containsString("JobRunr Dashboard"))));
@@ -56,7 +56,7 @@ class ProductUiParityComponentTest {
         .andExpect(content().string(containsString("<title>Zalava Chat</title>")))
         .andExpect(content().string(containsString("id=\"root\"")))
         .andExpect(content().string(containsString("/zalava-chat/assets/zalava-chat.js")))
-        .andExpect(content().string(containsString("href=\"/jobs\"")));
+        .andExpect(content().string(containsString("href=\"/knowledge\"")));
   }
 
   private static Path createWorkspace() {

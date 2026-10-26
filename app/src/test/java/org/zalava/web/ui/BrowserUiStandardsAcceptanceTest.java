@@ -39,6 +39,11 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.knowledge.memory.application.port.in.MemoryPromotions;
+import org.zalava.knowledge.memory.domain.MemoryProposal;
+import org.zalava.knowledge.memory.domain.MemoryProposalDraft;
+import org.zalava.knowledge.memory.domain.MemoryScope;
 import reactor.core.publisher.Flux;
 
 /** Real host/browser regressions for shared UI states and actor-owned library actions. */
@@ -50,6 +55,8 @@ class BrowserUiStandardsAcceptanceTest {
   private static final String PASSWORD = "UiStandardsTestPassword-123";
   @LocalServerPort private int port;
   @Autowired private AccountLifecycle accounts;
+  @Autowired private MemoryPromotions promotions;
+  private Actor actor;
   private Playwright playwright;
   private Browser browser;
   private BrowserContext context;
@@ -57,6 +64,7 @@ class BrowserUiStandardsAcceptanceTest {
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
+    registry.add("logging.file.name", () -> WORKSPACE.resolve("browser.log").toString());
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
     registry.add("agent.onboarding.completed", () -> "true");
     registry.add("zalava.accounts.security-enabled", () -> "true");
@@ -76,6 +84,7 @@ class BrowserUiStandardsAcceptanceTest {
     String login = "ui-standards-" + UUID.randomUUID();
     var account = accounts.create(login, PASSWORD, AccountRole.ADMIN);
     accounts.changePassword(account.id(), PASSWORD, PASSWORD + "-changed");
+    actor = new Actor(account.id());
     playwright = Playwright.create();
     browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
     context = browser.newContext();
@@ -166,14 +175,13 @@ class BrowserUiStandardsAcceptanceTest {
     page.evaluate(
         """
         document.addEventListener('submit', function (event) {
-          sessionStorage.setItem('review-submit-disabled', String(event.target.querySelector('[data-action=propose]').disabled));
+          sessionStorage.setItem('review-submit-disabled', String(event.target.querySelector('[data-action=save-memory]').disabled));
         });
         """);
-    page.locator("[data-action=propose]").click();
-    assertThat(page.getByText("Memory proposed for review.")).isVisible();
+    page.locator("[data-action=save-memory]").click();
+    assertThat(page.getByText("Memory saved.")).isVisible();
     assertThat(page.evaluate("sessionStorage.getItem('review-submit-disabled')")).isEqualTo("true");
-    page.locator("[data-action=approve]").first().click();
-    assertThat(page.getByText("Memory approved and stored.")).isVisible();
+    assertThat(page.locator("[data-memory-proposal]")).hasCount(0);
     var entry = page.locator("[data-memory-entry]").first();
     entry.locator("[data-action=delete]").click();
     assertThat(entry).containsText("Disposable standards preference");
@@ -329,6 +337,236 @@ class BrowserUiStandardsAcceptanceTest {
     assertThat(page.locator("#message")).hasValue("Keep this unsent draft");
   }
 
+  @Test
+  void compactScreensRemainContainedAndUsableAtAllThreeViewports() throws Exception {
+    Path diagnostics =
+        Files.createDirectories(Path.of("build/browser-acceptance/compact-findings"));
+    page.navigate(base() + "/knowledge");
+    var upload =
+        page.getByRole(
+            AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true));
+    assertThat(upload).isDisabled();
+    page.locator("#knowledge-file")
+        .setInputFiles(
+            new FilePayload(
+                "compact-layout.txt",
+                "text/plain",
+                "Disposable compact layout fixture".getBytes(StandardCharsets.UTF_8)));
+    assertThat(upload).isEnabled();
+    upload.click();
+    assertThat(
+            page.getByText(
+                "Source uploaded for processing.", new Page.GetByTextOptions().setExact(true)))
+        .isVisible();
+    page.navigate(base() + "/memory");
+    page.locator("#proposal-text").fill("Compact browser fixture memory");
+    page.locator("[data-action=save-memory]").click();
+    assertThat(page.getByText("Memory saved.")).isVisible();
+    assertThat(page.locator("[data-memory-proposal]")).hasCount(0);
+    String memoryUrl = page.locator("[data-memory-entry] a").first().getAttribute("href");
+    for (int width : List.of(1440, 768, 390)) {
+      page.setViewportSize(width, 900);
+      for (String route :
+          List.of(
+              "/chat",
+              "/knowledge",
+              "/memory",
+              memoryUrl,
+              "/account/password",
+              "/zalava/accounts",
+              "/settings?section=provider",
+              "/monitoring",
+              "/monitoring/logs")) {
+        page.navigate(base() + route);
+        assertThat(page.locator("main h1:visible, main h2:visible").first()).isVisible();
+        page.waitForFunction("document.fonts.status === 'loaded'");
+        if (route.equals("/chat")) assertThat(page.locator("#message")).isEnabled();
+        if (route.equals("/monitoring/logs")) {
+          assertThat(page.locator(".zalava-log-output"))
+              .containsText("Synthetic processing fixture");
+          assertThat(
+                  page.locator(".zalava-log-output")
+                      .textContent()
+                      .lines()
+                      .filter(String::isBlank)
+                      .count())
+              .isZero();
+        }
+        if (width <= 1024)
+          page.waitForFunction(
+              """
+            () => { const menu = document.querySelector('.navbar-menu');
+              return !menu || (getComputedStyle(menu).visibility === 'hidden' && menu.getBoundingClientRect().right <= 1); }
+            """);
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
+        String name = route.replaceAll("[^a-zA-Z0-9]+", "-");
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve(name + "-" + width + ".png"))
+                .setFullPage(true));
+      }
+    }
+    page.navigate(base() + memoryUrl);
+    var save = page.locator("[data-action=save]");
+    save.focus();
+    assertThat(save).isFocused();
+    page.locator("#memory-text").fill("Edited through compact action row");
+    save.click();
+    assertThat(page.locator("[data-memory-text]")).hasText("Edited through compact action row");
+  }
+
+  @Test
+  void narrowWorkspaceDetailsRevealThePanelAndReturnFocusOnClose() {
+    page.setViewportSize(390, 900);
+    page.navigate(base() + "/chat");
+    assertThat(page.locator("#message")).isEnabled();
+    var toggle = page.locator(".inspector-toggle");
+    toggle.click();
+    assertThat(toggle).hasAttribute("aria-expanded", "true");
+    assertThat(page.locator("#chat-inspector")).isInViewport();
+    assertThat(page.locator(".chat-primary")).isHidden();
+    page.getByRole(
+            AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close details").setExact(true))
+        .click();
+    assertThat(toggle).isFocused();
+    assertThat(page.locator("#message")).isVisible();
+  }
+
+  @Test
+  void newQuestionsAndRepliesStayVisibleInLongConversations() {
+    page.setViewportSize(1440, 900);
+    page.navigate(base() + "/chat");
+    var message = page.locator("#message");
+    for (int index = 0; index < 8; index++) {
+      message.fill("Question " + index + "\n" + "A long line of test context. ".repeat(60));
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      assertThat(page.locator(".messages")).hasAttribute("aria-busy", "false");
+      assertThat(page.locator(".message.assistant")).hasCount(index + 1);
+      assertThat(page.locator(".message.assistant").last()).isInViewport();
+      page.waitForFunction(
+          """
+          () => { const panel = document.querySelector('.messages');
+            return panel.scrollHeight - panel.scrollTop - panel.clientHeight < 5; }
+          """);
+    }
+    var execution = page.locator(".conversation-execution").first();
+    assertThat(execution).isVisible();
+    execution.locator("summary").first().click();
+    assertThat(execution).containsText("Question:");
+    page.reload();
+    assertThat(page.locator(".conversation-execution")).hasCount(8);
+  }
+
+  @Test
+  void memorySuggestionsCanBeApprovedAndRejectedBesideChat() throws Exception {
+    var approved =
+        promotions.propose(
+            actor,
+            MemoryProposalDraft.of(
+                MemoryScope.USER,
+                "A pending browser preference " + "Full detail. ".repeat(25) + "Proposal ending"));
+    var rejected =
+        promotions.propose(
+            actor, MemoryProposalDraft.of(MemoryScope.USER, "A second browser preference"));
+    page.setViewportSize(1440, 900);
+    page.navigate(base() + "/chat");
+    page.getByRole(
+            AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review 2 memory proposals"))
+        .click();
+    var first =
+        page.locator(".memory-review-entry")
+            .filter(
+                new Locator.FilterOptions()
+                    .setHasText(
+                        "A pending browser preference "
+                            + "Full detail. ".repeat(25)
+                            + "Proposal ending"));
+    assertThat(first).containsText("Proposal ending");
+    Path pendingDiagnostics =
+        Files.createDirectories(Path.of("build/browser-acceptance/compact-findings"));
+    for (int width : List.of(1440, 768, 390)) {
+      page.setViewportSize(width, 900);
+      assertThat(page.locator("#chat-inspector")).isVisible();
+      if (width <= 1024)
+        page.waitForFunction(
+            """
+          () => { const menu = document.querySelector('.navbar-menu');
+            return getComputedStyle(menu).visibility === 'hidden' && menu.getBoundingClientRect().right <= 1; }
+          """);
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(pendingDiagnostics.resolve("chat-memory-pending-" + width + ".png"))
+              .setFullPage(true));
+    }
+    first
+        .getByRole(
+            AriaRole.BUTTON,
+            new Locator.GetByRoleOptions().setName("Approve memory").setExact(true))
+        .click();
+    assertThat(
+            page.getByText(
+                "Memory approved and stored.", new Page.GetByTextOptions().setExact(true)))
+        .isVisible();
+    assertThat(promotions.get(actor, approved.id()).status())
+        .isEqualTo(MemoryProposal.Status.APPROVED);
+    var second =
+        page.locator(".memory-review-entry")
+            .filter(new Locator.FilterOptions().setHasText("A second browser preference"));
+    second
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Reject").setExact(true))
+        .click();
+    assertThat(page.getByText("Proposal rejected.", new Page.GetByTextOptions().setExact(true)))
+        .isVisible();
+    assertThat(promotions.get(actor, rejected.id()).status())
+        .isEqualTo(MemoryProposal.Status.REJECTED);
+    Path diagnostics =
+        Files.createDirectories(Path.of("build/browser-acceptance/compact-findings"));
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("chat-memory-decisions-390.png")));
+    page.reload();
+    page.locator(".inspector-toggle").click();
+    page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Context").setExact(true))
+        .click();
+    assertThat(page.locator(".memory-review-entry")).hasCount(0);
+    assertThat(page.locator("#message")).isEnabled();
+    String memoryId = promotions.get(actor, approved.id()).memoryId();
+    page.navigate(base() + "/memory/" + memoryId);
+    page.locator("[data-action=confirm-action]").click();
+    assertThat(page.locator("[data-memory-text]")).containsText("Proposal ending");
+    page.locator("[data-cancel-confirmation]").first().click();
+    assertThat(page.locator("[data-action=confirm-action-submit]")).isHidden();
+    page.locator("[data-action=confirm-action]").click();
+    page.locator("[data-action=confirm-action-submit]").click();
+    assertThat(page.getByText("Proposal revoked.", new Page.GetByTextOptions().setExact(true)))
+        .isVisible();
+    assertThat(promotions.get(actor, approved.id()).status())
+        .isEqualTo(MemoryProposal.Status.REVOKED);
+  }
+
+  @Test
+  void authenticatedErrorsShowTheCurrentIdentityAndRecoveryNavigation() throws Exception {
+    String login = accounts.findById(actor.accountId()).orElseThrow().loginName();
+    Path diagnostics =
+        Files.createDirectories(Path.of("build/browser-acceptance/compact-findings"));
+    for (int width : List.of(1440, 768, 390)) {
+      page.setViewportSize(width, 900);
+      var response = page.navigate(base() + "/missing-compact-fixture");
+      assertThat(response.status()).isEqualTo(404);
+      assertThat(page.locator(".zalava-account-identity")).containsText(login);
+      assertThat(
+              page.getByRole(
+                  AriaRole.LINK,
+                  new Page.GetByRoleOptions().setName("Return to Chat").setExact(true)))
+          .isVisible();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("authenticated-error-" + width + ".png"))
+              .setFullPage(true));
+    }
+  }
+
   private String base() {
     return "http://127.0.0.1:" + port;
   }
@@ -337,6 +575,9 @@ class BrowserUiStandardsAcceptanceTest {
     try {
       Path path = Files.createTempDirectory("zalava-ui-standards-");
       Files.writeString(path.resolve("AGENT.md"), "UI standards test workspace.");
+      Files.writeString(
+          path.resolve("browser.log"),
+          "INFO Synthetic processing fixture ready.\nWARN Synthetic failed operation, safe to retry.\n");
       return path;
     } catch (Exception exception) {
       throw new ExceptionInInitializerError(exception);

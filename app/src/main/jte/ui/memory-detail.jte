@@ -6,6 +6,7 @@
 @param NavigationModel navigation
 @param String memoryMessage
 @param String memoryError
+@param String approvedProposal = null
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
@@ -43,7 +44,7 @@
         @for(var entry : model.memory().metadata().entrySet())<dt>${entry.getKey()}</dt><dd>${entry.getValue()}</dd>@endfor
         </dl></details>
       </div>
-      <form method="post" action="/memory/${model.memory().id()}/edit" class="box">
+      <form method="post" action="/memory/${model.memory().id()}/edit" class="box" id="memory-edit-form">
         <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
         <h2 class="title is-5">Edit memory</h2>
         <div class="field">
@@ -67,9 +68,12 @@
           <div class="control"><textarea class="textarea" id="memory-text" name="text" maxlength="2000" required aria-invalid="${model.error() != null ? "true" : null}" aria-describedby="${model.error() != null ? "memory-edit-error" : null}">${model.text()}</textarea></div>
         </div>
         @if(model.error() != null)<p class="field-error" id="memory-edit-error">${model.error()}</p>@endif
-        <button class="button is-primary" data-action="save">Save</button>
+
       </form>
+      <div class="memory-action-row"><button class="button is-primary" data-action="save" type="submit" form="memory-edit-form">Save</button>
+      @if(approvedProposal != null)@template.ui.deleteConfirmation(action = "/memory/proposals/" + approvedProposal + "/revoke", item = model.memory().text(), csrfName = model.csrf().getParameterName(), csrfValue = model.csrf().getToken(), consequence = "This approved suggestion will be removed from recall.", label = "Revoke approval", actionLabel = "Revoke approved memory", deletion = false)@endif
       @template.ui.deleteConfirmation(action = "/memory/" + model.memory().id() + "/delete", item = model.memory().text(), csrfName = model.csrf().getParameterName(), csrfValue = model.csrf().getToken(), consequence = "This memory will no longer be available for recall.")
+      </div>
     </div>
   </main>
 </body>

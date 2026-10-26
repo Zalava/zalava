@@ -148,7 +148,7 @@ class BrowserFileAcceptanceTest {
 
         page.locator("#message").fill("attach these");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
-        page.getByText("Hello from the component test model.").waitFor();
+        page.locator(".messages").getByText("Hello from the component test model.").waitFor();
 
         page.reload();
         page.getByText("Connected").waitFor();

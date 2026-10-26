@@ -136,6 +136,7 @@ class ReleasedModuleDistributableAcceptanceTest {
             .fill("released-member");
         page.locator("form[action='/zalava/accounts/create'] input[name=temporaryPassword]")
             .fill(INITIAL_PASSWORD);
+        page.locator("#confirm-create-password").fill(INITIAL_PASSWORD);
         page.locator("form[action='/zalava/accounts/create'] select[name=role]")
             .selectOption("MEMBER");
         page.locator("form[action='/zalava/accounts/create'] button[type=submit]").click();
@@ -1026,6 +1027,7 @@ class ReleasedModuleDistributableAcceptanceTest {
       page.locator("input[name=currentPassword]").waitFor();
       page.locator("input[name=currentPassword]").fill(password);
       page.locator("input[name=replacementPassword]").fill(password + "-changed");
+      page.locator("input[name=passwordConfirmation]").fill(password + "-changed");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
     }

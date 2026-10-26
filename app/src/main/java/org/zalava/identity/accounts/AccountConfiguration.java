@@ -140,6 +140,7 @@ public class AccountConfiguration {
                     .requestMatchers(
                         "/dashboard",
                         "/chat",
+                        "/chat/**",
                         "/jobs",
                         "/jobs/**",
                         "/knowledge",

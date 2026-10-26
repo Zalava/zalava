@@ -9,7 +9,7 @@
 <nav class="navbar zalava-navbar" role="navigation" aria-label="Zalava navigation">
     <div class="container">
         <div class="navbar-brand">
-            <a class="navbar-item zalava-brand" href="/dashboard" aria-label="Zalava Dashboard">
+            <a class="navbar-item zalava-brand" href="/chat" aria-label="Zalava Chat">
                 <span class="zalava-brand-mark">Z</span>
                 <span>Zalava</span>
             </a>

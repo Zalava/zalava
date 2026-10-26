@@ -163,8 +163,8 @@ public class DashboardController {
 
   private static String currentWorkDetail(Task.Status status) {
     return switch (status) {
-      case in_progress -> "Zalava is working on this job now.";
-      case awaiting_human_input -> "Zalava needs your input before this job can continue.";
+      case in_progress -> "Zalava is working on this task now.";
+      case awaiting_human_input -> "Zalava needs your input before this task can continue.";
       case todo, completed, cancelled, failed -> "";
     };
   }

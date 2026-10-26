@@ -36,7 +36,7 @@
         <section class="columns is-variable is-4 mb-5" aria-label="Workspace summary">
             <div class="column">
                 <article class="box dashboard-metric">
-                    <p class="heading">Running Jobs</p>
+                    <p class="heading">Running Tasks</p>
                     <p class="title is-2" data-metric="running-jobs">${model.runningJobs()}</p>
                     <p class="has-text-grey is-size-7">Work currently in progress</p>
                 </article>
@@ -86,7 +86,7 @@
                 <div class="level-left">
                     <div>
                         <p class="heading mb-1">Current work</p>
-                        <h2 class="title is-4 mb-0">Active jobs</h2>
+                        <h2 class="title is-4 mb-0">Active tasks</h2>
                     </div>
                 </div>
                 <div class="level-right">
@@ -95,8 +95,8 @@
             </div>
             @if(model.currentWork().isEmpty())
                 <div class="notification is-light has-text-centered py-5">
-                    <p class="has-text-weight-semibold mb-1">No active jobs right now.</p>
-                    <p class="has-text-grey">Running and waiting jobs will appear here.</p>
+                    <p class="has-text-weight-semibold mb-1">No active tasks right now.</p>
+                    <p class="has-text-grey">Running and waiting tasks will appear here.</p>
                 </div>
             @else
                 <div class="activity-list">

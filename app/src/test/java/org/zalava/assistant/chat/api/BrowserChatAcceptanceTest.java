@@ -121,6 +121,7 @@ class BrowserChatAcceptanceTest {
         assertThat(page.url()).endsWith("/account/password");
         page.locator("input[name=currentPassword]").fill("BrowserTestPassword-123");
         page.locator("input[name=replacementPassword]").fill("BrowserTestPassword-456");
+        page.locator("input[name=passwordConfirmation]").fill("BrowserTestPassword-456");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
             .click();
         page.navigate("http://127.0.0.1:" + port + "/chat");
@@ -145,18 +146,18 @@ class BrowserChatAcceptanceTest {
         assertThat(outboundFrames)
             .anySatisfy(frame -> assertThat(frame).contains("chat.send", "what time is it now"));
 
-        page.getByText("12:34:56Z").waitFor();
+        page.locator(".messages").getByText("12:34:56Z").waitFor();
         assertThat(page.locator("body").innerText()).contains("what time is it now", "12:34:56Z");
 
         page.reload();
-        page.getByText("12:34:56Z").waitFor();
+        page.locator(".messages").getByText("12:34:56Z").waitFor();
         assertThat(page.locator("body").innerText()).contains("what time is it now");
 
         String originalConversation =
             page.locator("select[aria-label='Select conversation']").inputValue();
         page.locator("#message").fill("first shell prompt");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
-        page.getByText("first shell prompt").waitFor();
+        page.locator(".messages").getByText("first shell prompt").waitFor();
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
             .click();
         page.waitForFunction(
@@ -165,7 +166,7 @@ class BrowserChatAcceptanceTest {
             page.locator("select[aria-label='Select conversation']").inputValue();
         assertThat(newConversation).isNotEqualTo(originalConversation);
         page.locator("select[aria-label='Select conversation']").selectOption(originalConversation);
-        page.getByText("first shell prompt").waitFor();
+        page.locator(".messages").getByText("first shell prompt").waitFor();
 
         page.locator("#message").fill("unfinished draft");
         page.locator("#message").press("Alt+ArrowUp");
@@ -175,13 +176,13 @@ class BrowserChatAcceptanceTest {
 
         page.locator("#message").fill("render markdown");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
-        page.getByText("Bold result").waitFor();
+        page.locator(".messages").getByText("Bold result").waitFor();
         assertThat(page.locator("pre code").innerText()).contains("System.out.println");
 
         page.locator("#message").fill("slow response");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
         page.getByText("Zalava is responding…").waitFor();
-        page.getByText("Eventually complete.").waitFor();
+        page.locator(".messages").getByText("Eventually complete.").waitFor();
         assertThat(page.getByText("Zalava is responding…").isHidden()).isTrue();
 
         page.locator("#message").fill("fail chat");
@@ -228,14 +229,14 @@ class BrowserChatAcceptanceTest {
         page.locator("#message").waitFor();
         String targetId = page.locator("select[aria-label='Select conversation']").inputValue();
         assertThat(targetId).isNotEqualTo(source.value());
-        page.getByText("Channel source answer").waitFor();
+        page.locator(".messages").getByText("Channel source answer").waitFor();
         page.locator("#message").fill("what time is it now");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
-        page.getByText("12:34:56Z").waitFor();
+        page.locator(".messages").getByText("12:34:56Z").waitFor();
         page.reload();
         page.getByText("Connected").waitFor();
         page.locator("select[aria-label='Select conversation']").selectOption(targetId);
-        page.getByText("12:34:56Z").waitFor();
+        page.locator(".messages").getByText("12:34:56Z").waitFor();
         assertThat(conversations.findByReference(actor, source)).isEqualTo(sourceMessages);
         var targetMessages =
             conversations.findByReference(actor, new ConversationReference(targetId));
@@ -367,8 +368,11 @@ class BrowserChatAcceptanceTest {
               new Page.GetByTextOptions().setExact(true))
           .waitFor();
       page.getByRole(
-              AriaRole.LINK,
-              new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+              AriaRole.BUTTON,
+              new Page.GetByRoleOptions().setName("Review 1 memory proposal").setExact(true))
+          .click();
+      page.getByRole(
+              AriaRole.LINK, new Page.GetByRoleOptions().setName("Full proposal").setExact(true))
           .waitFor();
       for (int width : List.of(390, 768, 1440)) {
         page.setViewportSize(width, 900);
@@ -383,11 +387,10 @@ class BrowserChatAcceptanceTest {
       String href =
           page.getByRole(
                   AriaRole.LINK,
-                  new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+                  new Page.GetByRoleOptions().setName("Full proposal").setExact(true))
               .getAttribute("href");
       page.getByRole(
-              AriaRole.LINK,
-              new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+              AriaRole.LINK, new Page.GetByRoleOptions().setName("Full proposal").setExact(true))
           .click();
       page.locator(href.substring(href.indexOf('#'))).waitFor();
       assertThat(page.locator(href.substring(href.indexOf('#'))).innerText())
@@ -399,7 +402,7 @@ class BrowserChatAcceptanceTest {
       assertThat(
               page.getByRole(
                       AriaRole.LINK,
-                      new Page.GetByRoleOptions().setName("Review memory proposal").setExact(true))
+                      new Page.GetByRoleOptions().setName("Full proposal").setExact(true))
                   .count())
           .isZero();
       page.locator("#message").fill("What greeting do I prefer?");

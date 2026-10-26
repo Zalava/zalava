@@ -43,8 +43,14 @@ public class AccountLoginController {
       Authentication authentication,
       @RequestParam String currentPassword,
       @RequestParam String replacementPassword,
+      @RequestParam(defaultValue = "") String passwordConfirmation,
       Model model,
       CsrfToken csrf) {
+    if (!replacementPassword.equals(passwordConfirmation)) {
+      model.addAttribute("error", "Passwords do not match");
+      passwordModel(model, csrf, authentication);
+      return "accounts/password";
+    }
     try {
       var account = accounts.findByLoginName(authentication.getName()).orElseThrow();
       accounts.changePassword(account.id(), currentPassword, replacementPassword);

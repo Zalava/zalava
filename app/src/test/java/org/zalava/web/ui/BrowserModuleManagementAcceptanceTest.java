@@ -296,6 +296,7 @@ class BrowserModuleManagementAcceptanceTest {
     String replacement = password + "-changed";
     page.locator("input[name=currentPassword]").fill(password);
     page.locator("input[name=replacementPassword]").fill(replacement);
+    page.locator("input[name=passwordConfirmation]").fill(replacement);
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
     CURRENT_PASSWORD.compareAndSet(password, replacement);
   }
@@ -308,6 +309,7 @@ class BrowserModuleManagementAcceptanceTest {
     page.locator("input[name=currentPassword]").waitFor();
     page.locator("input[name=currentPassword]").fill(LOCAL_MODULE_PASSWORD);
     page.locator("input[name=replacementPassword]").fill(LOCAL_MODULE_PASSWORD + "-changed");
+    page.locator("input[name=passwordConfirmation]").fill(LOCAL_MODULE_PASSWORD + "-changed");
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
   }
 

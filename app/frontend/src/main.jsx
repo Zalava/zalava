@@ -78,6 +78,8 @@ function AttachmentErrorReporter({ onError }) {
 function ZalavaRuntime({ children }) {
   const [messages, setMessages] = useState([]);
   const [memoryReviews, setMemoryReviews] = useState([]);
+  const [memoryDecision, setMemoryDecision] = useState(null);
+  const [memoryFeedback, setMemoryFeedback] = useState("");
   const [documentProcessing, setDocumentProcessing] = useState(null);
   const [conversationId, setConversationId] = useState(null);
   const [conversationIds, setConversationIds] = useState([]);
@@ -349,7 +351,21 @@ function ZalavaRuntime({ children }) {
   const value = useMemo(
     () => ({
       messages,
-      memoryReviews,
+      memoryReviews, memoryDecision, memoryFeedback,
+      decideMemory: async (proposalId, decision) => {
+        if (memoryDecision) return;
+        setMemoryDecision(proposalId); setMemoryFeedback("");
+        try {
+          const token = document.cookie.split('; ').find(value => value.startsWith('XSRF-TOKEN='))?.slice('XSRF-TOKEN='.length);
+          const response = await fetch(`/api/memory-proposals/${encodeURIComponent(proposalId)}/${decision}`, {
+            method: 'POST', headers: token ? { 'X-XSRF-TOKEN': decodeURIComponent(token) } : {},
+          });
+          if (!response.ok) throw new Error('Memory decision could not be saved. Refresh proposals and try again.');
+          setMemoryReviews(reviews => reviews.filter(review => review.proposalId !== proposalId));
+          setMemoryFeedback(decision === 'approve' ? 'Memory approved and stored.' : 'Proposal rejected.');
+        } catch (error) { setMemoryFeedback(error.message); }
+        finally { setMemoryDecision(null); }
+      },
       documentProcessing,
       origin, canSend, canContinue, continuing, commandError,
       status,
@@ -386,7 +402,7 @@ function ZalavaRuntime({ children }) {
       createConversation: () => changeConversation("create", { type: "chat.create" }, "Creating conversation…"),
       renameConversation: (title) => changeConversation("rename", { type: "chat.rename", conversationId, title }, "Saving conversation name…"),
     }),
-    [messages, memoryReviews, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice],
+    [messages, memoryReviews, memoryDecision, memoryFeedback, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice],
   );
 
   return (
@@ -426,7 +442,7 @@ function Chat() {
     origin, canSend, canContinue, continuing, commandError, continueConversation,
     conversationAction, conversationNotice, reconnect,
     messages,
-    memoryReviews,
+    memoryReviews, memoryDecision, memoryFeedback, decideMemory,
     documentProcessing,
     status,
     conversationId,
@@ -444,6 +460,9 @@ function Chat() {
     createConversation,
     renameConversation,
   } = useContext(ZalavaChatContext);
+  const [evidence, setEvidence] = useState({ runs: [], tools: [] });
+  const [evidenceError, setEvidenceError] = useState("");
+  const [evidenceAttempt, setEvidenceAttempt] = useState(0);
   const selectedSummary = conversationSummaries.find((entry) => entry.id === conversationId);
   const [conversationName, setConversationName] = useState("");
   useEffect(() => setConversationName(selectedSummary?.title ?? "New conversation"), [conversationId, selectedSummary?.title]);
@@ -472,16 +491,44 @@ function Chat() {
     }
   };
 
+  const messagesRef = useRef(null);
+  const followLatest = useRef(true);
+  useEffect(() => {
+    followLatest.current = true;
+    const panel = messagesRef.current;
+    if (panel) panel.scrollTop = panel.scrollHeight;
+  }, [conversationId]);
+  useEffect(() => {
+    const panel = messagesRef.current;
+    if (!panel) return;
+    // A new authored question resumes following; scrolling up while streaming pauses it.
+    if (messages.at(-2)?.role === 'user' && messages.at(-1)?.streaming && !messages.at(-1)?.content) followLatest.current = true;
+    if (followLatest.current) panel.scrollTop = panel.scrollHeight;
+  }, [messages]);
+  useEffect(() => {
+    if (inspectorOpen && window.matchMedia('(max-width: 1023px)').matches) {
+      document.getElementById('chat-inspector')?.scrollIntoView({ block: 'start' });
+      document.getElementById(`inspector-tab-${inspectorTab}`)?.focus({ preventScroll: true });
+    }
+  }, [inspectorOpen]);
   const pending = messages.some((message) => message.streaming);
   const failure = messages.findLast((message) => message.failure);
+  useEffect(() => {
+    if (!conversationId || pending) return;
+    const controller = new AbortController();
+    setEvidence({ runs: [], tools: [] }); setEvidenceError("");
+    fetch(`/chat/${encodeURIComponent(conversationId)}/evidence`, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error(); return response.json(); })
+      .then(setEvidence).catch(error => { if (error.name !== 'AbortError') setEvidenceError('Execution details could not be loaded.'); });
+    return () => controller.abort();
+  }, [conversationId, pending, evidenceAttempt]);
+
 
   return (
     <main className="zalava-chat" aria-label="Zalava conversation">
       <header>
         <div>
-          <p className="eyebrow">Default workspace</p>
           <h1>Chat</h1>
-          <p>Ask Zalava a question or start work that will be tracked as a job.</p>
         </div>
         <output className="zalava-status" data-state={status === "Connected" ? "success" : status === "Connecting" ? "connecting" : "error"} aria-label="Chat connection" aria-live="polite">{status}</output>
       </header>
@@ -497,6 +544,7 @@ function Chat() {
         {providerSetupAllowed ? <a className="zalava-button" href="/settings?section=provider">Set up a provider</a> : <p>Ask your workspace administrator to configure a provider.</p>}
       </section>}
       {providerConfigured && !conversationId && status === "Connected" && <p role="status">Loading your conversations…</p>}
+      <div className="conversation-toolbar">
       <nav className="conversations" aria-label="Conversations">
         <select className="zalava-field" value={conversationId ?? ""} onChange={(event) => selectConversation(event.target.value)} aria-label="Select conversation" disabled={!providerConfigured || !conversationId || pending || continuing || Boolean(conversationAction) || status !== "Connected"}>
           {!conversationId && <option value="">Start a conversation</option>}
@@ -505,24 +553,19 @@ function Chat() {
             return <option key={id} value={id}>{summary?.title ?? "Saved conversation"} · {conversationDate(summary?.updatedAt ?? summary?.createdAt)}</option>;
           })}
         </select>
-        <button className="zalava-button" type="button" onClick={createConversation} disabled={!providerConfigured || !conversationId || status !== "Connected" || pending || continuing || Boolean(conversationAction)}>New conversation</button>
+        <button className="zalava-button" type="button" aria-label="New conversation" onClick={createConversation} disabled={!providerConfigured || !conversationId || status !== "Connected" || pending || continuing || Boolean(conversationAction)}>New chat</button>
       </nav>
-      {selectedSummary && <p className="conversation-meta"><strong>{selectedSummary.title}</strong> · Updated <time dateTime={selectedSummary.updatedAt ?? selectedSummary.createdAt}>{conversationDate(selectedSummary.updatedAt ?? selectedSummary.createdAt)}</time></p>}
       {conversationId && <details className="conversation-options">
-        <summary>Conversation options</summary>
+        <summary aria-label="Conversation options">Options</summary>
         <form onSubmit={(event) => { event.preventDefault(); if (conversationName.trim()) renameConversation(conversationName.trim()); }}>
           <label htmlFor="conversation-name">Conversation name</label>
           <input id="conversation-name" className="zalava-field" value={conversationName} maxLength={120} onChange={(event) => setConversationName(event.target.value)} disabled={pending || Boolean(conversationAction) || status !== "Connected"} />
           <button className="zalava-button zalava-button--secondary" type="submit" disabled={!conversationName.trim() || pending || Boolean(conversationAction) || status !== "Connected"}>Save name</button>
         </form>
       </details>}
-      {memoryReviews.length > 0 && <section className="memory-review-notice" aria-label="Memory review" role="status">
-        <strong>Memory proposals need your review.</strong>
-        <p>These are pending preferences or facts, separate from tool permissions.</p>
-        <ul>{memoryReviews.slice(0, 3).map((review) => <li key={review.proposalId}><a href={review.reviewUrl}>Review memory proposal</a><span> — {review.summary}</span></li>)}</ul>
-        {memoryReviews.length > 3 && <a href="/memory">Open all pending memory proposals</a>}
-      </section>}
-      <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>Workspace details</button>
+      <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-label="Workspace details" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>{inspectorOpen ? "Hide details" : "Details"}</button>
+      </div>
+      {memoryReviews.length > 0 && <p className="memory-review-shortcut"><button className="zalava-button zalava-button--secondary" type="button" onClick={() => { setInspectorOpen(true); setInspectorTab("Context"); }}>Review {memoryReviews.length} memory proposal{memoryReviews.length === 1 ? "" : "s"}</button></p>}
       {approvals.length > 0 && <div className="permission-shortcut" role="status">
         <span>{approvals.length} pending permission{approvals.length === 1 ? "" : "s"}</span>
         <button className="zalava-button" type="button" onClick={() => { setInspectorOpen(true); setInspectorTab("Tools"); }}>Review permissions</button>
@@ -542,7 +585,7 @@ function Chat() {
         <p>{commandError}</p>
         <button className="zalava-button" type="button" onClick={reconnect} disabled={status === "Connecting"}>Reconnect</button>
       </section>}
-      <section className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
+      <section ref={messagesRef} onScroll={(event) => { const el = event.currentTarget; followLatest.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }} className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
         {messages.length === 0 && <div className="chat-empty"><h2>What would you like to work on?</h2><p>{providerConfigured ? "Ask a question, explore your knowledge or start a task. Work and permissions will appear in workspace details." : "Set up a model to start your first conversation. Your workspace is ready for you to explore."}</p></div>}
         {messages.map((message, index) => (
           <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
@@ -557,7 +600,7 @@ function Chat() {
             {message.attachmentNames?.map((name) => (
               <span className="attachment-chip" key={name}>{name}</span>
             ))}
-            {message.jobIds?.map((jobId) => <a href={`/jobs/${jobId}`} key={jobId}>View job</a>)}
+            {message.jobIds?.map((jobId) => <a href={`/jobs/${jobId}`} key={jobId}>View task</a>)}
           </article>
         ))}
       </section>
@@ -566,7 +609,7 @@ function Chat() {
       {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
         <fieldset className="composer-fields" disabled={!providerConfigured} aria-describedby={!providerConfigured ? "model-setup" : undefined}>
         <label htmlFor="message">Message Zalava</label>
-        <p className="composer-help" id="composer-help">Alt+Up and Alt+Down recall sent messages. Arrow keys move within your draft.</p>
+        <p className="composer-help" id="composer-help">Alt+↑/↓ recalls sent messages.</p>
         <ComposerPrimitive.AttachmentDropzone data-testid="attachment-dropzone" className="composer-dropzone">
           <ComposerPrimitive.Attachments>
             {({ attachment }) => (
@@ -628,6 +671,7 @@ function Chat() {
       </ComposerPrimitive.Root>}
       </div>
       <aside id="chat-inspector" className="chat-inspector" aria-label="Workspace inspector">
+        <button className="zalava-button zalava-button--secondary inspector-close" type="button" onClick={() => { setInspectorOpen(false); document.querySelector(".inspector-toggle")?.focus(); }}>Close details</button>
         <div role="tablist" aria-label="Workspace details">
           {["Run", "Tools", "Context"].map((tab) => <button className="zalava-button zalava-button--secondary" type="button" key={tab} id={`inspector-tab-${tab}`} role="tab" tabIndex={inspectorTab === tab ? 0 : -1} aria-selected={inspectorTab === tab} onKeyDown={(event) => {
             const tabs = ["Run", "Tools", "Context"];
@@ -641,11 +685,21 @@ function Chat() {
         </div>
         <div id="inspector-panel" role="tabpanel" aria-labelledby={`inspector-tab-${inspectorTab}`}>
           {inspectorTab === "Run" && <>
+            <h2>This conversation</h2>
+            {evidenceError && <p role="alert">{evidenceError} <button className="zalava-button zalava-button--secondary" type="button" onClick={() => setEvidenceAttempt(value => value + 1)}>Retry details</button></p>}
+            {evidence.runs.length === 0 && !evidenceError && <p>No recorded executions for this conversation.</p>}
+            {evidence.runs.map(run => <details className="conversation-execution" key={run.id}>
+              <summary>{run.status === 'SUCCEEDED' ? 'Completed' : 'Failed'} · {run.durationMillis} ms · {conversationDate(run.at)}</summary>
+              <p>{run.selectedToolCount} tools available · {run.contextCharactersUsed} / {run.contextCharacterBudget} context characters</p>
+              <p><strong>Question:</strong> {run.prompt}</p><p><strong>Result:</strong> {run.result}</p>
+              {run.error && <p role="alert">{run.error}</p>}
+              {evidence.tools.filter(tool => new Date(tool.at) >= new Date(run.at) && new Date(tool.at) <= new Date(run.completedAt)).map((tool, index) => <details key={index}><summary>{tool.name} · {tool.success ? 'Completed' : 'Failed'} · {tool.durationMillis} ms</summary><p>Provider: {tool.provider}</p><pre>{tool.result}</pre>{tool.error && <p>{tool.error}</p>}</details>)}
+            </details>)}
             <h2>Recent work for your account</h2>
-            <p>Jobs may belong to other conversations.</p>
-            {Object.keys(jobs).length === 0 && <p>No recent jobs.</p>}
+            <p>Tasks may belong to other conversations.</p>
+            {Object.keys(jobs).length === 0 && <p>No recent tasks.</p>}
             {Object.entries(jobs).map(([jobId, job]) => <section className="execution" key={jobId} aria-label={`Execution ${jobId}`}>
-              <strong>Execution {job.status.replaceAll("_", " ")}</strong><p>{job.summary}</p><a href={`/jobs/${jobId}`}>View job evidence</a>
+              <strong>Execution {job.status.replaceAll("_", " ")}</strong><p>{job.summary}</p><a href={`/jobs/${jobId}`}>View task evidence</a>
             </section>)}
           </>}
           {inspectorTab === "Tools" && <>
@@ -659,6 +713,19 @@ function Chat() {
             </section>)}
           </>}
           {inspectorTab === "Context" && <>
+            <section className="memory-review-notice" aria-label="Memory review">
+              <h2>Memory proposals</h2><p>Only approved suggestions are saved for recall.</p>
+              {memoryReviews.length === 0 && <p>No pending proposals.</p>}
+              {memoryReviews.map(review => <section key={review.proposalId} className="memory-review-entry">
+                <p>{review.summary}</p><div className="memory-review-actions">
+                  <button className="zalava-button" type="button" disabled={Boolean(memoryDecision)} onClick={() => decideMemory(review.proposalId, 'approve')}>Approve memory</button>
+                  <button className="zalava-button zalava-button--secondary" type="button" disabled={Boolean(memoryDecision)} onClick={() => decideMemory(review.proposalId, 'reject')}>Reject</button>
+                  <a href={review.reviewUrl}>Full proposal</a>
+                </div>{memoryDecision === review.proposalId && <p role="status">Saving decision…</p>}
+              </section>)}
+              {memoryFeedback && <p role="status">{memoryFeedback}</p>}
+            </section>
+
             <h2>Available knowledge sources</h2><p>These sources are available to your account. This list does not show what the model used.</p>
             {imports.length === 0 ? <p>No sources imported in this session.</p> : <ul>{imports.map((entry) => <li key={entry.sourceId}><a href={`/knowledge/${entry.sourceId}`}>{entry.name}</a></li>)}</ul>}
             <p>Composer attachments apply to the next message. Knowledge imports remain available separately.</p>

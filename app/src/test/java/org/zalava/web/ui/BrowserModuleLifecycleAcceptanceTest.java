@@ -98,6 +98,7 @@ class BrowserModuleLifecycleAcceptanceTest {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
     page.locator("input[name=currentPassword]").fill(PASSWORD);
     page.locator("input[name=replacementPassword]").fill(PASSWORD + "-changed");
+    page.locator("input[name=passwordConfirmation]").fill(PASSWORD + "-changed");
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
   }
 

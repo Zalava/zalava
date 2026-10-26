@@ -14,7 +14,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${model.name()} - Zalava Job</title>
+    <title>${model.name()} - Zalava Task</title>
     <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
     <link rel="stylesheet" href="/zalava-tokens.css">
 <link rel="stylesheet" href="/zalava-ui.css">
@@ -27,7 +27,7 @@
     <div class="container">
         <nav class="breadcrumb mb-5" aria-label="breadcrumbs">
             <ul>
-                <li><a href="/jobs">Jobs</a></li>
+                <li><a href="/jobs">Tasks</a></li>
                 <li class="is-active"><a href="#" aria-current="page">${model.name()}</a></li>
             </ul>
         </nav>
@@ -61,7 +61,7 @@
                     <p class="heading mb-2">Overview</p>
                     <h2 class="title is-4">Goal and context</h2>
                     @if(model.goalDescription() == null || model.goalDescription().isBlank())
-                        <p class="has-text-grey">No description was recorded for this job.</p>
+                        <p class="has-text-grey">No description was recorded for this task.</p>
                     @else
                         <div class="job-detail-description">${model.goalDescription()}</div>
                     @endif
@@ -188,7 +188,7 @@
                     <p class="heading mb-2">Artifacts</p>
                     <h2 class="title is-4">Produced files and results</h2>
                 @if(model.agentFeedback() != null && !model.agentFeedback().isBlank() && !model.referencePath().contains("/"))
-                    <p>Saved job report</p>
+                    <p>Saved task report</p>
                     <a class="button is-link is-light mb-3" href="/jobs/${model.referencePath()}/artifacts/report">Download saved report</a>
                 @endif
                     @if(model.artifactEntries().isEmpty())
@@ -237,11 +237,11 @@
 
             <div class="column">
                 <aside class="box job-detail-card job-detail-summary">
-                    <p class="heading mb-3">Job status</p>
+                    <p class="heading mb-3">Task status</p>
                     <span class="tag is-medium ${model.statusClass()}">${model.statusLabel()}</span>
                     <p class="mt-4">${model.statusGuidance()}</p>
                     <hr>
-                    <a class="button is-light is-fullwidth" href="/jobs">Back to Jobs</a>
+                    <a class="button is-light is-fullwidth" href="/jobs">Back to Tasks</a>
                 </aside>
             </div>
         </div>

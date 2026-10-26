@@ -95,6 +95,7 @@ class BrowserModuleConfigurationAcceptanceTest {
           .click();
       page.locator("input[name=currentPassword]").fill("ModuleBrowserPassword-123");
       page.locator("input[name=replacementPassword]").fill("ModuleBrowserPassword-456");
+      page.locator("input[name=passwordConfirmation]").fill("ModuleBrowserPassword-456");
       page.getByRole(
               com.microsoft.playwright.options.AriaRole.BUTTON,
               new Page.GetByRoleOptions().setName("Change password"))

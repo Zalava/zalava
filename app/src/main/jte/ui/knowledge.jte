@@ -35,14 +35,14 @@
         @if(model.administrator())<a href="/modules">Browse modules</a>@else<p>Ask your workspace administrator to install and activate a document processing module.</p>@endif
         </aside>
       @endif
-      <form method="post" action="/knowledge/upload" enctype="multipart/form-data" class="box">
+      <form method="post" action="/knowledge/upload" enctype="multipart/form-data" class="box knowledge-upload">
         <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
         <div class="field">
           <label class="label" for="knowledge-file">Upload source</label>
           <div class="control"><input id="knowledge-file" type="file" name="file" accept=".txt,.md,.markdown,.html,.htm,.pdf,.docx,text/plain,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required aria-describedby="knowledge-upload-help"></div>
           <p class="help" id="knowledge-upload-help">Upload plain text, HTML, PDF or a Word document. A processing module is needed to read the contents.</p>
         </div>
-        <button class="button is-primary">Upload</button>
+        <button class="button is-primary" data-file-submit>Upload</button><p class="help" data-file-hint role="status">Select a file to upload.</p>
       </form>
       <form method="get" action="/knowledge" class="library-search">
         <div class="field"><label class="label" for="knowledge-query">Search knowledge</label><input class="input" id="knowledge-query" type="search" name="query" value="${model.query()}" maxlength="256"></div>
@@ -71,9 +71,9 @@
       @else
         <ul>
         @for(SourceSummary source : model.sources())
-          <li class="box">
-            <a class="has-text-weight-bold" href="/knowledge/${source.id().value().toString()}">${source.displayName()}</a><br>
-            <span class="is-size-7 has-text-grey">${source.contentType()} · ${LibraryPresentation.state(source.processingState())}</span>
+          <li class="box knowledge-row">
+            <a class="has-text-weight-bold" href="/knowledge/${source.id().value().toString()}">${source.displayName()}</a>
+            <span class="is-size-7 has-text-grey">${LibraryPresentation.fileType(source.contentType())} · ${LibraryPresentation.state(source.processingState())}</span>
             @if(source.owned())
             <div class="library-actions">
             <form method="post" action="/knowledge/${source.id().value().toString()}/retry" class="mt-3">
