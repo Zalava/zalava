@@ -1,3 +1,5 @@
+@import java.util.List
+@import org.zalava.modules.catalog.ModuleReleaseInstallRequest
 @import org.zalava.web.ui.navigation.NavigationModel
 @import org.zalava.web.ui.MonitoringController.CallEntry
 @import org.zalava.web.ui.MonitoringController.JobEntry
@@ -5,6 +7,7 @@
 @import org.zalava.web.ui.MonitoringController.ProviderEntry
 @import org.zalava.web.ui.MonitoringController.RunEntry
 
+@param List<ModuleReleaseInstallRequest> installationHistory = List.of()
 @param MonitoringModel model
 @param NavigationModel navigation
 
@@ -222,6 +225,19 @@
                 </div>
             @endif
         </section>
+<section class="box" id="module-installations" aria-labelledby="installation-history-heading">
+<h2 class="title is-5" id="installation-history-heading">Module installation history</h2>
+@if(installationHistory.isEmpty())<p>No installation requests recorded.</p>@else
+<div class="activity-list">@for(var request : installationHistory)
+<article class="activity-entry" data-installation-history="${request.requestId()}"><div class="activity-copy">
+<h3 class="has-text-weight-semibold">${request.module().moduleId()} · ${request.module().version()}</h3>
+<p>Requested <time datetime="${request.createdAt().toString()}" data-local-time>${request.createdAt().toString()}</time>
+@if(request.decidedAt() != null) · Decided <time datetime="${request.decidedAt().toString()}" data-local-time>${request.decidedAt().toString()}</time>@endif</p>
+@if(request.message() != null)<p>${request.message()}</p>@endif
+<details><summary>Artifact details</summary><p class="is-size-7">${request.artifactDigest()} · ${request.repositoryId()}</p></details>
+</div><span class="tag is-light">${request.status()}</span></article>
+@endfor</div>@endif
+</section>
     </div>
 </main>
 </body>

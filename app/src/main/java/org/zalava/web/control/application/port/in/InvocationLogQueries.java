@@ -19,7 +19,41 @@ public interface InvocationLogQueries {
       String errorMessage,
       String resultPreview,
       long durationMillis,
-      String conversationId) {
+      String conversationId,
+      String inputPreview) {
+    public Entry(
+        String timestamp,
+        String providerId,
+        String toolName,
+        String actorId,
+        boolean confirmed,
+        String classification,
+        List<String> policyTags,
+        boolean sideEffecting,
+        boolean success,
+        String errorType,
+        String errorMessage,
+        String resultPreview,
+        long durationMillis,
+        String conversationId) {
+      this(
+          timestamp,
+          providerId,
+          toolName,
+          actorId,
+          confirmed,
+          classification,
+          policyTags,
+          sideEffecting,
+          success,
+          errorType,
+          errorMessage,
+          resultPreview,
+          durationMillis,
+          conversationId,
+          null);
+    }
+
     public Entry(
         String timestamp,
         String providerId,
@@ -48,7 +82,8 @@ public interface InvocationLogQueries {
           errorMessage,
           resultPreview,
           durationMillis,
-          "");
+          "",
+          null);
     }
   }
 }

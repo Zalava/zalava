@@ -81,7 +81,8 @@ public final class ConversationEvidenceController {
                         tool.success(),
                         tool.durationMillis(),
                         boundary.redact(tool.errorMessage()),
-                        boundary.redact(tool.resultPreview())))
+                        boundary.redact(tool.resultPreview()),
+                        boundary.redact(tool.inputPreview())))
             .toList());
   }
 
@@ -107,5 +108,6 @@ public final class ConversationEvidenceController {
       boolean success,
       long durationMillis,
       String error,
-      String result) {}
+      String result,
+      String input) {}
 }

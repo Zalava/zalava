@@ -1101,3 +1101,14 @@ body:not(.zalava-auth) > .auth-layout .auth-card { padding: 1.25rem; }
 .library-search > details { width: 100%; }
 .library-search details::details-content { min-inline-size: 0; }
 .library-search details .select, .library-search details select { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+
+.tool-access-row { display:flex; align-items:center; gap:1rem; padding:1rem; }
+.tool-access-copy { flex:1; min-width:0; overflow-wrap:anywhere; }
+.tool-access-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:.5rem; }
+@media(max-width: 600px) { .tool-access-row { flex-direction:column; align-items:stretch; } .tool-access-actions { justify-content:flex-start; } }
+
+/* Current modules share a compact row; metadata must not reserve vertical flex space. */
+.managed-module-row { align-items:center; flex-direction:row; gap:1rem; }
+.managed-module-row .module-copy { flex:1; }
+.managed-module-row .module-meta { flex:0 0 auto; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+@media(max-width:640px) { .managed-module-row { display:flex; flex-direction:column; align-items:stretch; } .managed-module-row .module-meta { margin-top:0; } }

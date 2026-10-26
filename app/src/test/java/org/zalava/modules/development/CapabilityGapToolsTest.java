@@ -3,6 +3,7 @@ package org.zalava.modules.development;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.modules.development.adapter.in.agent.CapabilityGapTools;
@@ -38,6 +39,28 @@ class CapabilityGapToolsTest {
     JsonNode result = JSON.readTree(new CapabilityGapTools().recommend("jobs", "Create a job"));
     assertThat(result.path("status").asString()).isEqualTo("CATALOG_DISABLED");
     assertThat(result.toString()).doesNotContain("manual_module_development");
+  }
+
+  @Test
+  void distinguishesStoppedInstalledAndAbsentModulesForBothRoles() throws Exception {
+    for (boolean administrator : List.of(true, false)) {
+      for (String state : List.of("INSTALLED_NOT_RUNNING", "RUNNING", "NOT_INSTALLED", "UNKNOWN")) {
+        var tools =
+            new CapabilityGapTools(
+                capability ->
+                    new ModuleSuggestions.Outcome(
+                        ModuleSuggestions.Status.MATCH,
+                        List.of(new ModuleSuggestions.Module("time", "Time", "Clock tools"))),
+                () -> administrator,
+                moduleId -> state);
+        JsonNode result = JSON.readTree(tools.recommend("clock", "What time is it?"));
+        assertThat(result.path("modules").get(0).path("installationState").asString())
+            .isEqualTo(state);
+        assertThat(result.path("nextAction").asString())
+            .contains("INSTALLED_NOT_RUNNING", "RUNNING", "NOT_INSTALLED", "UNKNOWN")
+            .doesNotContain("Installation and loading have not happened");
+      }
+    }
   }
 
   @Test

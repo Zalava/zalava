@@ -126,6 +126,8 @@ public class AccountConfiguration {
                     .permitAll()
                     .requestMatchers(
                         "/login",
+                        "/restart-progress",
+                        "/restart-status",
                         "/zalava-ui.css",
                         "/zalava-tokens.css",
                         "/zalava-ui.js",

@@ -145,7 +145,7 @@
         @if(model.enabledExternal())
                 <form method="post" action="/modules/${model.moduleId()}/disable" class="mt-4">
                     <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-                    <button class="button is-small is-danger is-light" type="submit" data-action="disable">Disable module</button>
+                    <button class="button is-small is-danger is-light" type="submit" data-action="disable">Uninstall module</button>
                     <span class="has-text-grey is-size-7 ml-3">Restart Zalava to unload it from this running process.</span>
                 </form>
             @endif

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,9 +82,9 @@ class ActuatorRestartComponentTest {
         .andExpect(content().string(containsString("Ready to restart the Zalava application")))
         .andExpect(content().string(containsString("data-action=\"restart-zalava\"")));
     mvc.perform(post("/modules/restart"))
-        .andExpect(status().is3xxRedirection())
-        .andExpect(flash().attribute("marketplaceMessage", containsString("Restart requested")));
-    mvc.perform(post("/modules/restart")).andExpect(status().is3xxRedirection());
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Restarting Zalava")));
+    mvc.perform(post("/modules/restart")).andExpect(status().isOk());
     verify(endpoint, times(1)).restart();
     assertThat(WORKSPACE.resolve("zalava-runtime-restart/request.properties")).doesNotExist();
     mvc.perform(get("/modules"))
@@ -109,7 +110,8 @@ class ActuatorRestartComponentTest {
     mvc.perform(get("/modules"))
         .andExpect(content().string(containsString("data-zalava-restart-status=\"FAILED\"")));
     doReturn(Map.of("message", "Restarting")).when(endpoint).restart();
-    mvc.perform(post("/modules/restart")).andExpect(flash().attributeExists("marketplaceMessage"));
+    mvc.perform(post("/modules/restart"))
+        .andExpect(content().string(containsString("Restarting Zalava")));
     verify(endpoint, times(2)).restart();
   }
 
@@ -131,6 +133,20 @@ class ActuatorRestartComponentTest {
         .perform(post("/actuator/restart").with(accounts.authenticatedAs(admin)).with(csrf()))
         .andExpect(status().isOk());
     verify(endpoint).restart();
+  }
+
+  @Test
+  void publicReadinessRemainsAvailableAfterTheRestartInvalidatesTheSession() throws Exception {
+    MockMvc secured = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+    secured
+        .perform(get("/restart-status").param("previous", UUID.randomUUID().toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ready").isBoolean())
+        .andExpect(jsonPath("$.failed").value(false));
+    secured
+        .perform(get("/restart-status").param("previous", "invalid"))
+        .andExpect(status().isBadRequest());
+    verify(endpoint, never()).restart();
   }
 
   private static Path workspace() {

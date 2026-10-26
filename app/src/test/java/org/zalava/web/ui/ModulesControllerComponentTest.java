@@ -136,11 +136,11 @@ class ModulesControllerComponentTest {
                 .string(
                     containsString(
                         "class=\"navbar-item is-active\" aria-current=\"page\" href=\"/modules\"")))
-        .andExpect(content().string(containsString("Loaded modules")))
+        .andExpect(content().string(containsString("Installed modules")))
         .andExpect(content().string(containsString("Built in")))
         .andExpect(content().string(containsString("Bundled with Zalava")))
-        .andExpect(content().string(containsString("data-metric=\"loaded-modules\"")))
-        .andExpect(content().string(containsString("No external modules are enabled yet.")));
+        .andExpect(content().string(containsString("data-module=")))
+        .andExpect(content().string(containsString("Source and permissions")));
   }
 
   @Test
@@ -282,8 +282,8 @@ class ModulesControllerComponentTest {
                 .with(
                     org.springframework.security.test.web.servlet.request
                         .SecurityMockMvcRequestPostProcessors.csrf()))
-        .andExpect(status().is3xxRedirection())
-        .andExpect(flash().attribute("marketplaceMessage", containsString("Restart requested")));
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Restarting Zalava")));
 
     mockMvc
         .perform(get("/modules"))
@@ -369,14 +369,14 @@ class ModulesControllerComponentTest {
     mockMvc
         .perform(get("/modules"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("Enabled external modules")))
-        .andExpect(content().string(containsString("data-metric=\"enabled-modules\">1<")))
+        .andExpect(content().string(containsString("Installed modules")))
+        .andExpect(content().string(containsString("Installed · not loaded")))
         .andExpect(content().string(containsString("zalava-module-example")))
         .andExpect(content().string(containsString("1.2.3")))
         .andExpect(
             content().string(containsString("https://github.com/Zalava/zalava-module-example")))
-        .andExpect(content().string(containsString("Permissions")))
-        .andExpect(content().string(containsString(">1</p>")));
+        .andExpect(content().string(containsString("permissions")))
+        .andExpect(content().string(containsString("1 permissions")));
   }
 
   @Test

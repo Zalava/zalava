@@ -7,6 +7,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.tasks.capture.ActorTaskCreationContext;
 import org.zalava.tasks.domain.ActorTaskReference;
@@ -49,7 +50,8 @@ public final class StreamingToolContextBridge {
     if (references == null) {
       references = new ArrayList<>();
     }
-    return new Snapshot(principal, references);
+    return new Snapshot(
+        principal, references, ConversationChannelContext.conversation().orElse(null));
   }
 
   /**
@@ -80,7 +82,13 @@ public final class StreamingToolContextBridge {
     taskCreation.installReferences(snapshot.taskReferences());
     try {
       ActorExecutionContext.Principal principal = snapshot.principal();
-      return actorExecution.call(principal.actor(), principal.role(), operation::get);
+      return actorExecution.call(
+          principal.actor(),
+          principal.role(),
+          () ->
+              snapshot.conversationId == null
+                  ? operation.get()
+                  : ConversationChannelContext.call(snapshot.conversationId, operation));
     } finally {
       taskCreation.installReferences(previous);
     }
@@ -90,10 +98,14 @@ public final class StreamingToolContextBridge {
   public static final class Snapshot {
     private final ActorExecutionContext.Principal principal;
     private final List<ActorTaskReference> taskReferences;
+    private final String conversationId;
 
     private Snapshot(
-        ActorExecutionContext.Principal principal, List<ActorTaskReference> taskReferences) {
+        ActorExecutionContext.Principal principal,
+        List<ActorTaskReference> taskReferences,
+        String conversationId) {
       this.principal = principal;
+      this.conversationId = conversationId;
       this.taskReferences = taskReferences;
     }
 

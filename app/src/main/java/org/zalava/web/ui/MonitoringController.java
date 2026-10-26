@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.zalava.assistant.agent.application.port.in.AgentRunQueries;
 import org.zalava.assistant.agent.domain.AgentRun;
+import org.zalava.modules.catalog.install.application.port.in.ModuleReleaseInstallation;
 import org.zalava.tasks.application.port.in.TaskQueries;
 import org.zalava.tasks.domain.Task;
 import org.zalava.tasks.domain.TaskReference;
@@ -38,6 +39,7 @@ public class MonitoringController {
       DateTimeFormatter.ofPattern("MMM d, HH:mm:ss", Locale.ENGLISH);
 
   private final TaskQueries taskQueries;
+  private final ModuleReleaseInstallation installations;
   private final AgentRunQueries agentRuns;
   private final InvocationLogQueries invocationLog;
   private final BootstrapVerificationQueries bootstrapVerification;
@@ -48,8 +50,10 @@ public class MonitoringController {
       AgentRunQueries agentRuns,
       InvocationLogQueries invocationLog,
       BootstrapVerificationQueries bootstrapVerification,
-      ObservabilitySettings observability) {
+      ObservabilitySettings observability,
+      ModuleReleaseInstallation installations) {
     this.taskQueries = taskQueries;
+    this.installations = installations;
     this.agentRuns = agentRuns;
     this.invocationLog = invocationLog;
     this.bootstrapVerification = bootstrapVerification;
@@ -95,6 +99,7 @@ public class MonitoringController {
             allCalls.size(),
             (int) allCalls.stream().filter(call -> !call.success()).count());
 
+    model.addAttribute("installationHistory", installations.recent(20));
     model.addAttribute(
         "model",
         new MonitoringModel(

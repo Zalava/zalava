@@ -3,6 +3,7 @@ package org.zalava.capabilities.discovery.adapter.out.springai;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.BiPredicate;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.toolsearch.ToolReference;
@@ -22,15 +23,31 @@ public final class ZalavaToolCallbackCatalog
     return entries().stream().map(Entry::callback).toList();
   }
 
+  @Override
+  public boolean sameCallback(Object first, Object second) {
+    return first instanceof ToolCallback left
+        && second instanceof ToolCallback right
+        && left.getToolDefinition().name().equals(right.getToolDefinition().name());
+  }
+
   private static final ObjectMapper JSON = new ObjectMapper();
   private static final ParameterizedTypeReference<Map<String, Object>> ARGUMENTS_TYPE =
       new ParameterizedTypeReference<>() {};
 
   private final ProviderCatalog providerCatalog;
   private final ZalavaProviderToolInvoker invoker;
+  private final BiPredicate<ZalavaProvider, ZalavaToolDescriptor> allowed;
 
   public ZalavaToolCallbackCatalog(
       ProviderCatalog providerCatalog, ZalavaProviderToolInvoker invoker) {
+    this(providerCatalog, invoker, (provider, tool) -> true);
+  }
+
+  public ZalavaToolCallbackCatalog(
+      ProviderCatalog providerCatalog,
+      ZalavaProviderToolInvoker invoker,
+      BiPredicate<ZalavaProvider, ZalavaToolDescriptor> allowed) {
+    this.allowed = allowed;
     this.providerCatalog = providerCatalog;
     this.invoker = invoker;
   }
@@ -41,6 +58,7 @@ public final class ZalavaToolCallbackCatalog
         .flatMap(
             provider ->
                 provider.listTools().stream()
+                    .filter(tool -> allowed.test(provider, tool))
                     .map(tool -> entry(provider.descriptor(), tool, invoker)))
         .toList();
   }

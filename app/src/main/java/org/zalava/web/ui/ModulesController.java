@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -61,6 +62,7 @@ public class ModulesController {
   private static final int MAX_ERROR_LENGTH = 300;
 
   private final ZalavaRuntime zalavaRuntime;
+  private final RestartProgressController restartProgress;
   private final ModuleQueries moduleQueries;
   private final FileSystemModuleConfigurationStore moduleConfigurationStore;
   private final ModuleMarketplace marketplace;
@@ -87,8 +89,10 @@ public class ModulesController {
       ManagedServiceQueries managedServiceQueries,
       DeclaredManagedServices declaredManagedServices,
       ModuleManagedServiceInstallation moduleManagedServiceInstallation,
-      ManagedZalavaRestart managedZalavaRestart) {
+      ManagedZalavaRestart managedZalavaRestart,
+      RestartProgressController restartProgress) {
     this.zalavaRuntime = zalavaRuntime;
+    this.restartProgress = restartProgress;
     this.moduleQueries = moduleQueries;
     this.moduleConfigurationStore = moduleConfigurationStore;
     this.marketplace = marketplace;
@@ -117,9 +121,14 @@ public class ModulesController {
   }
 
   @PostMapping("/modules/restart")
-  public String restartSea(RedirectAttributes redirectAttributes) {
+  public String restartSea(Model model, RedirectAttributes redirectAttributes) {
+    model.addAttribute("previous", restartProgress.generation());
     try {
       ManagedZalavaRestart.Status status = managedZalavaRestart.request();
+      if (status.availability() == ManagedZalavaRestart.Availability.AVAILABLE
+          && (status.phase() == ManagedZalavaRestart.Phase.REQUESTED
+              || status.phase() == ManagedZalavaRestart.Phase.COMPLETED))
+        return "ui/restart-progress";
       redirectAttributes.addFlashAttribute("marketplaceMessage", status.message());
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
@@ -271,8 +280,10 @@ public class ModulesController {
       redirectAttributes.addFlashAttribute(
           "marketplaceMessage",
           result.changed()
-              ? "Disabled " + requested + ". Restart Zalava to unload it from this running process."
-              : requested + " is not enabled; nothing changed.");
+              ? "Uninstalled "
+                  + requested
+                  + ". Restart Zalava to unload it from this running process. Saved configuration is retained."
+              : requested + " is not installed; nothing changed.");
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
     }
@@ -496,6 +507,11 @@ public class ModulesController {
     List<CatalogModuleEntry> catalogModules =
         marketplace.snapshot().modules().stream()
             .filter(module -> matches(module, query))
+            .filter(
+                module ->
+                    !enabled.containsKey(module.moduleId())
+                        && loadedModules.stream()
+                            .noneMatch(loaded -> loaded.moduleId().equals(module.moduleId())))
             .map(
                 module ->
                     new CatalogModuleEntry(
@@ -656,7 +672,9 @@ public class ModulesController {
       boolean external,
       ConfigurationHealth configuration) {
     String statusLabel =
-        enabled != null ? "Enabled external" : external ? "Disabled external" : "Built in";
+        enabled != null
+            ? "Installed external"
+            : external ? "Uninstalled · restart required" : "Built in";
     String statusClass =
         enabled != null ? "is-info is-light" : external ? "is-warning is-light" : "is-light";
     String provenance =
@@ -701,6 +719,7 @@ public class ModulesController {
         request.status().name(),
         statusClass(request.status()),
         request.message(),
+        request.createdAt().toString(),
         request.decidedAt() == null ? null : request.decidedAt().toString(),
         request.status() == ModuleReleaseInstallRequest.Status.PENDING);
   }
@@ -942,7 +961,63 @@ public class ModulesController {
       List<CatalogModuleEntry> catalogModules,
       String catalogRefreshedAt,
       List<InstallationRequestEntry> installationRequests,
-      RestartEntry restart) {}
+      RestartEntry restart) {
+    public List<ManagedModuleRow> modules() {
+      Map<String, ManagedModuleRow> rows = new TreeMap<>();
+      loadedModules.forEach(
+          module ->
+              rows.put(
+                  module.moduleId(),
+                  new ManagedModuleRow(
+                      module.moduleId(),
+                      module.displayName(),
+                      module.version(),
+                      module.description(),
+                      module.statusLabel(),
+                      module.providerCount(),
+                      true,
+                      enabledModules.stream()
+                          .anyMatch(value -> value.moduleId().equals(module.moduleId())),
+                      module.provenance(),
+                      enabledModules.stream()
+                          .filter(value -> value.moduleId().equals(module.moduleId()))
+                          .mapToInt(value -> value.declaredPermissions().size())
+                          .findFirst()
+                          .orElse(0))));
+      enabledModules.forEach(
+          module ->
+              rows.putIfAbsent(
+                  module.moduleId(),
+                  new ManagedModuleRow(
+                      module.moduleId(),
+                      module.moduleId(),
+                      module.version(),
+                      "Restart Zalava to load this module.",
+                      "Installed · not loaded",
+                      0,
+                      false,
+                      true,
+                      module.sourceRepository(),
+                      module.declaredPermissions().size())));
+      return List.copyOf(rows.values());
+    }
+
+    public List<InstallationRequestEntry> pendingInstallations() {
+      return installationRequests.stream().filter(InstallationRequestEntry::pending).toList();
+    }
+  }
+
+  public record ManagedModuleRow(
+      String moduleId,
+      String displayName,
+      String version,
+      String description,
+      String state,
+      long providerCount,
+      boolean loaded,
+      boolean installed,
+      String source,
+      int permissionCount) {}
 
   public record RestartEntry(String availability, String phase, String message) {
     public boolean available() {
@@ -991,6 +1066,7 @@ public class ModulesController {
       String status,
       String statusClass,
       String message,
+      String createdAt,
       String decidedAt,
       boolean pending) {}
 

@@ -76,3 +76,9 @@
     original.addEventListener('input', validate);
   });
 })();
+
+// Keep machine-readable timestamps while displaying the user's local date and time.
+document.querySelectorAll('time[data-local-time]').forEach(element => {
+  const value = new Date(element.dateTime);
+  if (!Number.isNaN(value.getTime())) element.textContent = new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(value);
+});

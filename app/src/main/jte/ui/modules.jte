@@ -45,7 +45,20 @@
 
 
 
-  <section class="box module-list mt-5" aria-labelledby="marketplace-heading">
+  <section class="box module-list" aria-labelledby="managed-modules-heading">
+<h2 id="managed-modules-heading" class="title is-5 mb-3">Installed modules</h2>
+@if(model.modules().isEmpty())<p class="notification is-light">No modules are installed or loaded.</p>@else
+<div class="module-entries">
+@for(var module : model.modules())
+<article class="module-entry managed-module-row" data-module="${module.moduleId()}" data-enabled-module="${module.installed() ? module.moduleId() : null}"><div class="module-copy">
+<div class="module-heading"><h3 class="title is-6 mb-1">${module.displayName()}</h3><span class="tag is-light">${module.state()}</span><span class="tag is-light">${module.loaded() ? "Loaded" : "Not loaded"}</span></div>
+<p class="is-size-7 has-text-grey">${module.moduleId()} · ${module.version()}</p><p>${module.description()}</p><details><summary>Source and permissions</summary><p class="is-size-7">${module.source()} · ${module.permissionCount()} permissions</p></details></div>
+<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span><a class="button is-link is-light is-small" href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">Open module</a></div></article>
+@endfor
+</div>@endif
+</section>
+
+<section class="box module-list mt-5" aria-labelledby="marketplace-heading">
             <div class="level is-mobile mb-4">
                 <div class="level-left">
                     <div>
@@ -106,100 +119,7 @@
                 </div>
             @endif
         </section>
-<section class="box module-list" aria-labelledby="loaded-modules-heading">
-            <div class="level is-mobile mb-4">
-                <div class="level-left">
-                    <div>
-                        <h2 id="loaded-modules-heading" class="title is-5 mb-1">Loaded modules</h2>
-                        <p class="has-text-grey is-size-7">Runtime modules active in this process.</p>
-                    </div>
-                </div>
-                <div class="level-right">
-                    <span class="tag is-light" data-metric="loaded-modules">${model.loadedModules().size()}</span>
-                </div>
-            </div>
-
-            @if(model.loadedModules().isEmpty())
-                <div class="notification is-light">No modules are loaded.</div>
-            @else
-                <div class="module-entries">
-                    @for(ModuleEntry module : model.loadedModules())
-                        <article class="module-entry" data-module="${module.moduleId()}">
-                            <div class="module-copy">
-                                <div class="module-heading">
-                                    <h3 class="title is-6 mb-1">${module.displayName()}</h3>
-                                    <span class="tag ${module.statusClass()}">${module.statusLabel()}</span>
-                                </div>
-                                <p class="has-text-grey is-size-7 mb-2">${module.moduleId()} · ${module.version()}</p>
-                                <p class="module-description">${module.description()}</p>
-                                <p class="has-text-grey is-size-7 mt-2">${module.provenance()}</p>
-                                <p class="mt-3">
-                                    <a class="tag is-link is-light" href="/modules/${module.moduleId()}"
-                                        data-module-detail-link="${module.moduleId()}">Open module</a>
-                                </p>
-                            </div>
-                            <div class="module-meta has-text-right">
-                                <p class="heading mb-1">Providers</p>
-                                <p class="title is-5 mb-0" data-provider-count="${module.moduleId()}">${module.providerCount()}</p>
-                            </div>
-                        </article>
-                    @endfor
-                </div>
-            @endif
-        </section>
-
-        <section class="box module-list mt-5" aria-labelledby="enabled-modules-heading">
-            <div class="level is-mobile mb-4">
-                <div class="level-left">
-                    <div>
-                        <h2 id="enabled-modules-heading" class="title is-5 mb-1">Enabled external modules</h2>
-                        <p class="has-text-grey is-size-7">Persisted enablement and provenance records.</p>
-                    </div>
-                </div>
-                <div class="level-right">
-                    <span class="tag is-light" data-metric="enabled-modules">${model.enabledModules().size()}</span>
-                </div>
-            </div>
-
-            @if(model.enabledModules().isEmpty())
-                <div class="notification is-light">No external modules are enabled yet.</div>
-            @else
-                <div class="module-entries">
-                    @for(EnabledModuleEntry module : model.enabledModules())
-                        <article class="module-entry" data-enabled-module="${module.moduleId()}">
-                            <div class="module-copy">
-                                <div class="module-heading">
-                                    <h3 class="title is-6 mb-1">${module.moduleId()}</h3>
-                                    <span class="tag is-info is-light">Enabled</span>
-                                </div>
-                                <p class="has-text-grey is-size-7 mb-2">${module.version()}</p>
-                                @if(module.sourceRepository() != null && !module.sourceRepository().isBlank())
-                                    <p class="module-description">${module.sourceRepository()}</p>
-                                @else
-                                    @if(module.binaryRepositoryId() != null && !module.binaryRepositoryId().isBlank())
-                                        <p class="module-description">${module.binaryRepositoryId()}</p>
-                                    @else
-                                        <p class="module-description">Local artifact</p>
-                                    @endif
-                                @endif
-                                <p class="mt-3">
-                                    <a class="tag is-link is-light" href="/modules/${module.moduleId()}"
-                                       data-module-detail-link="${module.moduleId()}">Open module</a>
-                                </p>
-                            </div>
-                            <div class="module-meta has-text-right">
-                                <p class="heading mb-1">Permissions</p>
-                                <p class="title is-5 mb-0">${module.declaredPermissions().size()}</p>
-                            </div>
-                        </article>
-                    @endfor
-                </div>
-            @endif
-        </section>
-
-
-
-        <section class="box module-list mb-5" aria-labelledby="zalava-restart-heading">
+<section class="box module-list mb-5" aria-labelledby="zalava-restart-heading">
       <h2 id="zalava-restart-heading" class="title is-5 mb-1">Load installed modules</h2>
       <p class="has-text-grey is-size-7 mb-3" data-zalava-restart-status="${model.restart().phase()}">${model.restart().message()}</p>
       @if(model.restart().available())
@@ -219,27 +139,28 @@
             <div class="level is-mobile mb-4">
                 <div class="level-left">
                     <div>
-                        <h2 id="installation-requests-heading" class="title is-5 mb-1">Installation requests</h2>
+                        <h2 id="installation-requests-heading" class="title is-5 mb-1">Pending installations</h2>
                         <p class="has-text-grey is-size-7">Prepared releases awaiting an explicit decision.</p>
                     </div>
                 </div>
                 <div class="level-right">
-                    <span class="tag is-light" data-metric="installation-requests">${model.installationRequests().size()}</span>
+                    <span class="tag is-light" data-metric="installation-requests">${model.pendingInstallations().size()}</span>
                 </div>
             </div>
 
-            @if(model.installationRequests().isEmpty())
-                <div class="notification is-light">No installation requests yet.</div>
+            @if(model.pendingInstallations().isEmpty())
+                <div class="notification is-light">No pending installations. <a href="/monitoring#module-installations">View installation history in Monitoring</a>.</div>
             @else
                 <div class="module-entries">
-                    @for(InstallationRequestEntry request : model.installationRequests())
+                    @for(InstallationRequestEntry request : model.pendingInstallations())
                         <article class="module-entry" data-installation-request="${request.requestId()}">
                             <div class="module-copy">
                                 <div class="module-heading">
                                     <h3 class="title is-6 mb-1">${request.moduleId()} ${request.version()}</h3>
                                     <span class="tag ${request.statusClass()}" data-request-status>${request.status()}</span>
                                 </div>
-                                <p class="has-text-grey is-size-7 mb-1" data-artifact-digest>${request.artifactDigest()}</p>
+                                <p class="is-size-7">Requested <time datetime="${request.createdAt()}" data-local-time>${request.createdAt()}</time></p>
+<p class="has-text-grey is-size-7 mb-1" data-artifact-digest>${request.artifactDigest()}</p>
                                 <p class="has-text-grey is-size-7 mb-2">Repository ${request.repositoryId()}</p>
                                 @if(request.message() != null && !request.message().isBlank())
                                     <p class="module-description" data-request-message>${request.message()}</p>

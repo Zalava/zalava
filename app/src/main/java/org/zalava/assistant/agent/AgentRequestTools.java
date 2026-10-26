@@ -89,6 +89,25 @@ public final class AgentRequestTools {
         toolSearch);
   }
 
+  public AgentRequestTools(
+      List<Object> bootstrapTools,
+      ToolDiscovery discovery,
+      RegisteredToolCallbacks<?> callbacks,
+      List<Object> noMatchTools,
+      RemoteCapabilityDiscovery remoteDiscovery,
+      PolicyFilteredToolSearch search,
+      DynamicToolActivationPolicy policy) {
+    this(
+        bootstrapTools,
+        discovery,
+        callbacks,
+        policy,
+        new SessionToolActivations(MAX_ZALAVA_TOOLS),
+        noMatchTools,
+        remoteDiscovery,
+        search);
+  }
+
   AgentRequestTools(
       List<Object> bootstrapTools,
       ToolDiscovery toolDiscovery,
@@ -200,7 +219,7 @@ public final class AgentRequestTools {
     }
     List<Object> requestTools = new ArrayList<>(bootstrapTools);
     callbackCatalog.callbacks().stream()
-        .filter(callback -> !requestTools.contains(callback))
+        .filter(callback -> !containsCallback(requestTools, callback))
         .forEach(requestTools::add);
     List<ToolDiscovery.ToolMatch> newlyActivated = new ArrayList<>();
     List<ToolDiscovery.ToolMatch> selectedMatches = new ArrayList<>();
@@ -212,7 +231,7 @@ public final class AgentRequestTools {
           .limit(MAX_ZALAVA_TOOLS)
           .peek(selectedMatches::add)
           .map(match -> callbackCatalog.callback(match.providerId(), match.toolName()))
-          .filter(callback -> !requestTools.contains(callback))
+          .filter(callback -> !containsCallback(requestTools, callback))
           .forEach(requestTools::add);
     }
     int remainingToolSlots = Math.max(0, MAX_ZALAVA_TOOLS - selectedToolKeys.size());
@@ -235,7 +254,7 @@ public final class AgentRequestTools {
           .peek(selectedMatches::add)
           .peek(newlyActivated::add)
           .map(match -> callbackCatalog.callback(match.providerId(), match.toolName()))
-          .filter(callback -> !requestTools.contains(callback))
+          .filter(callback -> !containsCallback(requestTools, callback))
           .forEach(requestTools::add);
     }
     if (discoveredMatches.isEmpty()) {
@@ -249,6 +268,12 @@ public final class AgentRequestTools {
         requestTools,
         selectedMatches.stream().map(ToolSummary::from).toList(),
         selectedMatches.stream().map(this::definition).toList());
+  }
+
+  private boolean containsCallback(List<Object> callbacks, Object candidate) {
+    return callbacks.contains(candidate)
+        || callbacks.stream()
+            .anyMatch(existing -> callbackCatalog.sameCallback(existing, candidate));
   }
 
   private void recordRemoteGapBestEffort(String input, int eligibleInstalledMatches) {
