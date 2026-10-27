@@ -335,11 +335,8 @@ class BrowserNavigationAcceptanceTest {
             double gap =
                 page.locator(".conversation-toolbar").boundingBox().y - notice.y - notice.height;
             assertThat(gap).as("Compact toolbar follows provider setup").isBetween(0.0, 20.0);
-            if (width > 1024) {
-              assertThat(page.locator(".chat-inspector").boundingBox().height).isGreaterThan(350);
-              assertThat(page.locator(".chat-inspector").boundingBox().y)
-                  .isEqualTo(page.locator(".chat-primary").boundingBox().y);
-            }
+            assertThat(page.locator(".chat-inspector").isVisible()).isFalse();
+            assertThat(page.locator(".inspector-toggle").isVisible()).isTrue();
           } else if (path.startsWith("/settings")) {
             assertContained(
                 page,

@@ -121,6 +121,7 @@ class BrowserUiInteractAcceptanceTest {
         signIn(page);
         page.navigate(baseUrl() + "/chat");
         page.getByText("Connected").waitFor();
+        page.locator(".inspector-toggle").click();
 
         page.getByText("Execution completed").waitFor();
         page.getByText("Completed report").waitFor();
@@ -131,6 +132,7 @@ class BrowserUiInteractAcceptanceTest {
         page.getByText("Permission needed").waitFor();
         page.reload();
         page.getByText("Connected").waitFor();
+        page.locator(".inspector-toggle").click();
         page.getByText("Completed report").waitFor();
         page.getByRole(
                 com.microsoft.playwright.options.AriaRole.BUTTON,
@@ -151,6 +153,7 @@ class BrowserUiInteractAcceptanceTest {
 
         page.reload();
         page.getByText("Connected").waitFor();
+        page.locator(".inspector-toggle").click();
         page.getByText("Execution todo").waitFor();
         String body = page.locator("body").innerText();
         assertThat(body).contains("Completed report", "Awaiting report approval");

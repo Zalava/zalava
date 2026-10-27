@@ -1,5 +1,9 @@
 import {
   AssistantRuntimeProvider,
+  ThreadPrimitive,
+  MessagePrimitive,
+  useAuiState,
+  useMessageTiming,
   AttachmentPrimitive,
   ComposerPrimitive,
   useAui,
@@ -154,7 +158,7 @@ function ZalavaRuntime({ children }) {
         setCanContinue(event.canContinue === true);
         setContinuing(false);
         setCommandError(null);
-        setMessages(event.messages.map((message) => ({ role: message.role, content: message.text, attachmentNames: message.attachmentNames ?? [] })));
+        setMessages(event.messages.map((message) => ({ role: message.role, content: message.text, attachmentNames: message.attachmentNames ?? [], runId: message.runId })));
       } else if (event.type === "document.processing") {
         setDocumentProcessing(event.available);
       } else if (event.type === "memory.reviews") {
@@ -172,7 +176,7 @@ function ZalavaRuntime({ children }) {
         if (event.conversationId !== selectedConversation.current) return;
         setMessages((current) => [
           ...current.filter((message) => !message.streaming),
-          { role: "assistant", content: event.text, jobIds: event.jobIds },
+          { role: "assistant", content: event.text, jobIds: event.jobIds, runId: event.runId },
         ]);
       } else if (event.type === "job.updated") {
         setApprovals((current) => Object.fromEntries(Object.entries(current).map(([id, entry]) =>
@@ -221,7 +225,7 @@ function ZalavaRuntime({ children }) {
         pendingAttachments.current.clear();
         if (event.operation === "chat.send") setMessages((current) => [
           ...current.filter((message) => !message.streaming),
-          { role: "assistant", content: event.message, failure: true },
+          { role: "assistant", content: event.message, failure: true, runId:event.runId },
         ]);
       }
     };
@@ -336,13 +340,37 @@ function ZalavaRuntime({ children }) {
     sendCommand({ type: "chat.send", conversationId, message: text.trim(), attachmentIds });
   };
 
+  const [evidence, setEvidence] = useState({ runs: [], tools: [] });
+  const [evidenceError, setEvidenceError] = useState("");
+  const [evidenceAttempt, setEvidenceAttempt] = useState(0);
+  const pending = messages.some(message => message.streaming);
+  useEffect(() => {
+    if (!conversationId || pending) return;
+    const controller = new AbortController();
+    setEvidence({ runs: [], tools: [] }); setEvidenceError("");
+    fetch(`/chat/${encodeURIComponent(conversationId)}/evidence`, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error(); return response.json(); })
+      .then(setEvidence).catch(error => { if (error.name !== 'AbortError') setEvidenceError('Execution details could not be loaded.'); });
+    return () => controller.abort();
+  }, [conversationId, pending, evidenceAttempt]);
+  const runtimeMessages = useMemo(() => messages.map((message,index) => {
+    const run = message.runId ? evidence.runs.find(run => run.id === message.runId) : null;
+    const tools = run ? evidence.tools.filter(tool => tool.runId === run.id) : [];
+    return { ...message, id: message.runId ?? `${conversationId}-${index}`, execution: run, tools };
+  }), [messages,evidence,conversationId]);
   const runtime = useExternalStoreRuntime({
-    messages,
+    messages: runtimeMessages,
     isRunning: messages.at(-1)?.streaming === true,
     isSendDisabled: !providerConfigured || status !== "Connected" || !conversationId || !canSend || continuing || Boolean(conversationAction),
     convertMessage: (message) => ({
+      id: message.id,
       role: message.role,
-      content: [{ type: "text", text: message.content }],
+      content: [{ type: "text", text: message.content }, ...message.tools.map((tool,index) => ({
+        type: "tool-call", toolCallId: `${message.runId}-${index}`, toolName: tool.name,
+        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis }, isError: !tool.success,
+      }))],
+      metadata: { custom: { original: message, execution:message.execution },
+        ...(message.execution ? { timing: { streamStartTime:Date.parse(message.execution.at), totalStreamTime:message.execution.durationMillis, totalChunks:0,toolCallCount:message.tools.length } } : {}) },
     }),
     adapters: { attachments: attachmentAdapter },
     onNew,
@@ -350,7 +378,7 @@ function ZalavaRuntime({ children }) {
 
   const value = useMemo(
     () => ({
-      messages,
+      messages, evidenceError, retryEvidence: () => setEvidenceAttempt(value => value+1),
       memoryReviews, memoryDecision, memoryFeedback,
       decideMemory: async (proposalId, decision) => {
         if (memoryDecision) return;
@@ -402,7 +430,7 @@ function ZalavaRuntime({ children }) {
       createConversation: () => changeConversation("create", { type: "chat.create" }, "Creating conversation…"),
       renameConversation: (title) => changeConversation("rename", { type: "chat.rename", conversationId, title }, "Saving conversation name…"),
     }),
-    [messages, memoryReviews, memoryDecision, memoryFeedback, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice],
+    [messages, evidenceError, memoryReviews, memoryDecision, memoryFeedback, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice],
   );
 
   return (
@@ -413,6 +441,42 @@ function ZalavaRuntime({ children }) {
       </ZalavaChatContext.Provider>
     </AssistantRuntimeProvider>
   );
+}
+
+function formatDuration(value) {
+  if (!Number.isFinite(value) || value < 0) return "Timing unavailable";
+  const ms = Math.round(value); const minutes = Math.floor(ms / 60000); const seconds = Math.floor(ms % 60000 / 1000); const remainder = ms % 1000;
+  return [minutes && `${minutes} min`, seconds && `${seconds} s`, (remainder || !ms) && `${remainder} ms`].filter(Boolean).join(" ");
+}
+function MessageText({text}) {
+  return <Markdown allowedElements={["p","strong","em","code","pre","ul","ol","li","blockquote","a","h1","h2","h3","h4","h5","h6"]} components={{a:({href,children}) => <a href={href} rel="noopener noreferrer">{children}</a>}}>{text}</Markdown>;
+}
+function ToolEvidence({toolName,argsText,result,isError}) {
+  return <details className="answer-tool"><summary>{toolName} · {isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && <p role="alert">{result.error}</p>}</details>;
+}
+const HIDDEN_TEXT = () => null;
+function ConversationAnswer() {
+  const state = useAuiState(s => s.message);
+  const original = state.metadata.custom.original ?? {role:state.role,content:state.content.filter(part => part.type === "text").map(part => part.text).join(""),streaming:state.status?.type === "running",tools:[]};
+  const timing = useMessageTiming();
+  const run = original.execution;
+  return <MessagePrimitive.Root asChild><article className={`message ${original.role} ${original.failure ? "failure" : ""}`}>
+    <header className="answer-heading"><strong>{original.role === "user" ? "You" : "Zalava"}</strong>{original.role === "assistant" && <span className="answer-timing">{original.streaming ? "Responding…" : formatDuration(timing?.totalStreamTime)}</span>}</header>
+    {original.streaming && !original.content && <p className="assistant-pending" role="status">Zalava is responding…</p>}
+    <div className="answer-content"><MessagePrimitive.Parts components={{Text:MessageText,tools:{Fallback:HIDDEN_TEXT}}}/></div>
+    {original.attachmentNames?.map(name => <span className="attachment-chip" key={name}>{name}</span>)}
+    {original.jobIds?.map(id => <a href={`/jobs/${id}`} key={id}>View task</a>)}
+    {original.role === "assistant" && !original.streaming && <details className="answer-execution" data-run-id={run?.id}><summary>Execution details</summary>
+      {!run ? <p>No execution details are available for this answer.</p> : <>
+        <p>{run.status === "SUCCEEDED" ? "Completed" : "Failed"} · {conversationDate(run.at)}</p>
+        <h3>Context used</h3><p>{run.contextCharactersUsed} / {run.contextCharacterBudget} characters · {run.selectedToolCount} tools available</p>
+        <ul>{run.contextSources?.map((source,index) => <li key={index}>{source.sourceType.replaceAll("_"," ")}: {source.charactersUsed} / {source.charactersAvailable} characters</li>)}</ul>
+        {run.error && <p role="alert">{run.error}</p>}
+        <h3>Tool calls</h3>{original.tools.length === 0 && <p>No recorded tool calls for this answer.</p>}
+        <MessagePrimitive.Parts components={{Text:HIDDEN_TEXT,tools:{Fallback:ToolEvidence}}}/>
+      </>}
+    </details>}
+  </article></MessagePrimitive.Root>;
 }
 
 function Chat() {
@@ -441,7 +505,7 @@ function Chat() {
   const {
     origin, canSend, canContinue, continuing, commandError, continueConversation,
     conversationAction, conversationNotice, reconnect,
-    messages,
+    messages, evidenceError, retryEvidence,
     memoryReviews, memoryDecision, memoryFeedback, decideMemory,
     documentProcessing,
     status,
@@ -460,9 +524,6 @@ function Chat() {
     createConversation,
     renameConversation,
   } = useContext(ZalavaChatContext);
-  const [evidence, setEvidence] = useState({ runs: [], tools: [] });
-  const [evidenceError, setEvidenceError] = useState("");
-  const [evidenceAttempt, setEvidenceAttempt] = useState(0);
   const selectedSummary = conversationSummaries.find((entry) => entry.id === conversationId);
   const [conversationName, setConversationName] = useState("");
   useEffect(() => setConversationName(selectedSummary?.title ?? "New conversation"), [conversationId, selectedSummary?.title]);
@@ -493,6 +554,7 @@ function Chat() {
 
   const messagesRef = useRef(null);
   const followLatest = useRef(true);
+  const lastScrollTop = useRef(0);
   useEffect(() => {
     followLatest.current = true;
     const panel = messagesRef.current;
@@ -506,6 +568,14 @@ function Chat() {
     if (followLatest.current) panel.scrollTop = panel.scrollHeight;
   }, [messages]);
   useEffect(() => {
+    const panel=messagesRef.current;
+    const list=panel?.querySelector(".message-list");
+    if (!list) return;
+    const observer=new ResizeObserver(() => { if (followLatest.current) panel.scrollTop=panel.scrollHeight; });
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
     if (inspectorOpen && window.matchMedia('(max-width: 1023px)').matches) {
       document.getElementById('chat-inspector')?.scrollIntoView({ block: 'start' });
       document.getElementById(`inspector-tab-${inspectorTab}`)?.focus({ preventScroll: true });
@@ -513,15 +583,7 @@ function Chat() {
   }, [inspectorOpen]);
   const pending = messages.some((message) => message.streaming);
   const failure = messages.findLast((message) => message.failure);
-  useEffect(() => {
-    if (!conversationId || pending) return;
-    const controller = new AbortController();
-    setEvidence({ runs: [], tools: [] }); setEvidenceError("");
-    fetch(`/chat/${encodeURIComponent(conversationId)}/evidence`, { signal: controller.signal })
-      .then(response => { if (!response.ok) throw new Error(); return response.json(); })
-      .then(setEvidence).catch(error => { if (error.name !== 'AbortError') setEvidenceError('Execution details could not be loaded.'); });
-    return () => controller.abort();
-  }, [conversationId, pending, evidenceAttempt]);
+
 
 
   return (
@@ -563,7 +625,7 @@ function Chat() {
           <button className="zalava-button zalava-button--secondary" type="submit" disabled={!conversationName.trim() || pending || Boolean(conversationAction) || status !== "Connected"}>Save name</button>
         </form>
       </details>}
-      <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-label="Workspace details" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>{inspectorOpen ? "Hide details" : "Details"}</button>
+      <button className="zalava-button zalava-button--secondary inspector-toggle" type="button" aria-label="Workspace details" aria-expanded={inspectorOpen} aria-controls="chat-inspector" onClick={() => setInspectorOpen((open) => !open)}>{inspectorOpen ? "Hide workspace" : "Workspace"}</button>
       </div>
       {memoryReviews.length > 0 && <p className="memory-review-shortcut"><button className="zalava-button zalava-button--secondary" type="button" onClick={() => { setInspectorOpen(true); setInspectorTab("Context"); }}>Review {memoryReviews.length} memory proposal{memoryReviews.length === 1 ? "" : "s"}</button></p>}
       {approvals.length > 0 && <div className="permission-shortcut" role="status">
@@ -585,24 +647,10 @@ function Chat() {
         <p>{commandError}</p>
         <button className="zalava-button" type="button" onClick={reconnect} disabled={status === "Connecting"}>Reconnect</button>
       </section>}
-      <section ref={messagesRef} onScroll={(event) => { const el = event.currentTarget; followLatest.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }} className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
+      <section ref={messagesRef} onScroll={(event) => { const el = event.currentTarget; if(el.scrollTop < lastScrollTop.current - 2) followLatest.current=false; if(el.scrollHeight-el.scrollTop-el.clientHeight<80) followLatest.current=true; lastScrollTop.current=el.scrollTop; }} onToggleCapture={() => { followLatest.current=false; }} className="messages" aria-live="polite" aria-label="Conversation messages" aria-busy={pending}>
         {messages.length === 0 && <div className="chat-empty"><h2>What would you like to work on?</h2><p>{providerConfigured ? "Ask a question, explore your knowledge or start a task. Work and permissions will appear in workspace details." : "Set up a model to start your first conversation. Your workspace is ready for you to explore."}</p></div>}
-        {messages.map((message, index) => (
-          <article className={`message ${message.role} ${message.failure ? "failure" : ""}`} key={index}>
-            <strong>{message.role === "user" ? "You" : "Zalava"}</strong>
-            {message.streaming && !message.content && <p className="assistant-pending" role="status"><span className="pending-dots" aria-hidden="true"><i></i><i></i><i></i></span>Zalava is responding…</p>}
-            <Markdown
-              allowedElements={["p", "strong", "em", "code", "pre", "ul", "ol", "li", "blockquote", "a", "h1", "h2", "h3", "h4", "h5", "h6"]}
-              components={{ a: ({ href, children }) => <a href={href} rel="noopener noreferrer">{children}</a> }}
-            >
-              {message.content}
-            </Markdown>
-            {message.attachmentNames?.map((name) => (
-              <span className="attachment-chip" key={name}>{name}</span>
-            ))}
-            {message.jobIds?.map((jobId) => <a href={`/jobs/${jobId}`} key={jobId}>View task</a>)}
-          </article>
-        ))}
+        <div className="message-list"><ThreadPrimitive.Messages>{() => <ConversationAnswer />}</ThreadPrimitive.Messages>
+        {evidenceError && <p role="alert">{evidenceError} <button type="button" onClick={retryEvidence}>Retry details</button></p>}</div>
       </section>
 
       {failure && <p role="alert">{failure.content}</p>}
@@ -685,16 +733,6 @@ function Chat() {
         </div>
         <div id="inspector-panel" role="tabpanel" aria-labelledby={`inspector-tab-${inspectorTab}`}>
           {inspectorTab === "Run" && <>
-            <h2>This conversation</h2>
-            {evidenceError && <p role="alert">{evidenceError} <button className="zalava-button zalava-button--secondary" type="button" onClick={() => setEvidenceAttempt(value => value + 1)}>Retry details</button></p>}
-            {evidence.runs.length === 0 && !evidenceError && <p>No recorded executions for this conversation.</p>}
-            {evidence.runs.map(run => <details className="conversation-execution" key={run.id}>
-              <summary>{run.status === 'SUCCEEDED' ? 'Completed' : 'Failed'} · {run.durationMillis} ms · {conversationDate(run.at)}</summary>
-              <p>{run.selectedToolCount} tools available · {run.contextCharactersUsed} / {run.contextCharacterBudget} context characters</p>
-              <p><strong>Question:</strong> {run.prompt}</p><p><strong>Result:</strong> {run.result}</p>
-              {run.error && <p role="alert">{run.error}</p>}
-              {evidence.tools.filter(tool => new Date(tool.at) >= new Date(run.at) && new Date(tool.at) <= new Date(run.completedAt)).map((tool, index) => <details key={index}><summary>{tool.name} · {tool.success ? 'Completed' : 'Failed'} · {tool.durationMillis} ms</summary><p>Provider: {tool.provider}</p>{tool.input && <><strong>Input</strong><pre>{tool.input}</pre></>}<strong>Result</strong><pre>{tool.result}</pre>{tool.error && <p>{tool.error}</p>}</details>)}
-            </details>)}
             <h2>Recent work for your account</h2>
             <p>Tasks may belong to other conversations.</p>
             {Object.keys(jobs).length === 0 && <p>No recent tasks.</p>}
@@ -703,10 +741,6 @@ function Chat() {
             </section>)}
           </>}
           {inspectorTab === "Tools" && <>
-            <h2>Tool calls</h2>
-            {evidenceError && <p role="alert">{evidenceError} <button type="button" onClick={() => setEvidenceAttempt(value => value + 1)}>Retry details</button></p>}
-            {evidence.tools.length === 0 && !evidenceError && <p>No recorded tool calls for this conversation.</p>}
-            {evidence.tools.map((tool,index) => <details className="conversation-execution" key={index}><summary>{tool.name} · {tool.success ? 'Completed' : 'Failed'}</summary><p>{tool.provider} · {conversationDate(tool.at)} · {tool.durationMillis} ms</p>{tool.input && <><strong>Input</strong><pre>{tool.input}</pre></>}<strong>Result</strong><pre>{tool.result}</pre>{tool.error && <p role="alert">{tool.error}</p>}</details>)}
             <h2>Pending permissions</h2>
             {approvals.length === 0 && <p>No pending permissions.</p>}
             {approvals.map(([requestId, approval]) => <section className="approval" key={requestId} aria-label="Pending permission">

@@ -32,12 +32,7 @@
 @if(settingsMessage != null)<article class="message is-success" role="status"><div class="message-body">${settingsMessage}</div></article>@endif
 @if(settingsError != null)<article class="message is-danger" role="alert" tabindex="-1" data-error-summary><div class="message-body">${settingsError}</div></article>@endif
 <div class="settings-layout">
-<nav class="settings-sections" aria-label="Settings sections">
-@for(String key : List.of("assistant", "provider", "modules", "channels", "permissions"))
-<a href="/settings?section=${key}" aria-current="${section.equals(key) ? "page" : null}">${switch(key) { case "assistant" -> "Assistant"; case "provider" -> "Provider & workspace"; case "modules" -> "Modules"; case "channels" -> "Channel links"; default -> "Permissions & interface"; }}</a>
-@endfor
-<a href="/zalava/accounts">Manage accounts</a>
-</nav><div class="settings-content">
+@template.ui.settingsSections(current = section)<div class="settings-content">
 @if(section.equals("assistant"))
 <section class="box settings-card" aria-labelledby="instructions-heading">
 <div class="settings-actions mb-3"><h2 id="instructions-heading" class="title is-4 mb-0">Workspace instructions</h2><span class="tag is-light">${model.instructionsCustomized() ? "Customized" : "Default"}</span></div>

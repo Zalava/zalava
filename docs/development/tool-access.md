@@ -1,8 +1,10 @@
 # Member tool access
 
 Administrators manage individual Member tool grants from Settings → Manage accounts →
-Manage tool access. Each grant identifies an account, module, provider and tool; it does
-not grant other tools from the same provider. Tools without a grant are denied to Members.
+Manage tool access. Tool access defaults define Administrators only or All Members per
+module/provider/tool. Each Member can inherit the role default or have an explicit Allow
+or Deny override. Resetting an override restores inheritance. Existing overrides are
+preserved on upgrade; tools with no configured default or override remain administrators-only.
 Existing administrator access is unchanged. Start a module to discover its available tools.
 Saved grants for stopped providers remain visible and can be revoked.
 
@@ -17,9 +19,12 @@ Side-effecting operations still require the existing execution approval. Provide
 argument validation and module-owned root/scope enforcement remain in force. The legacy
 member-safe marker alone does not grant access in the configured host.
 
-Conversation-owned tool evidence is visible in Chat's Tools panel and relevant Run details.
-It contains bounded input/result previews; sensitive argument keys and configured secrets
-are redacted. Discovery availability and assistant prose are not proof of execution.
+Each new Chat answer has always-visible elapsed timing and collapsed Execution details.
+The assistant-ui message runtime carries host-measured timing and typed tool-call parts;
+expanded details show context character metrics and bounded input/result/error previews.
+Sensitive argument keys and configured secrets are redacted. Host-generated run IDs bind
+answers and tool calls; identical answers remain distinct after reload. Older messages
+without a stored run ID show unavailable details rather than guessed associations. Discovery availability and assistant prose are not proof of execution.
 The current invocation log is bounded and process-local; installation history and Member
 grants are persisted separately.
 
@@ -31,3 +36,10 @@ operation and leaves saved configuration intact; a restart unloads existing clas
 Restart uses a self-contained progress response, tolerates temporary disconnects and
 redirects to sign-in only after a different host generation is accepting traffic.
 Failures and prolonged unavailability offer recovery without falsely reporting readiness.
+
+Native provider provenance is established by the host catalog from actual loaded module
+ownership, rather than requiring modules to self-declare the host's `zalava_backed` marker.
+Existing unsafe/trust tags and missing provider scopes still prevent Member grants.
+The optional Workspace drawer retains permissions, Memory proposals and background work;
+run/tool transcripts belong to individual answers. Settings sections remain present across
+account and tool-access screens.

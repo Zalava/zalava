@@ -43,6 +43,7 @@ public final class UiEventJson {
         json.put("conversationId", completed.conversationId());
         json.put("text", completed.text());
         json.put("jobIds", completed.jobIds());
+        if (completed.runId() != null) json.put("runId", completed.runId());
       }
       case UiEvent.ToolProgress progress -> {
         json.put("type", "tool.progress");
@@ -94,6 +95,7 @@ public final class UiEventJson {
         json.put("type", "failure");
         json.put("operation", failure.operation());
         json.put("message", failure.message());
+        if (failure.runId() != null) json.put("runId", failure.runId());
       }
       case UiEvent.Cancelled cancelled -> {
         json.put("type", "cancelled");

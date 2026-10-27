@@ -3,6 +3,7 @@ package org.zalava.web.control.adapter.in.spring;
 import java.time.Instant;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.zalava.assistant.agent.AgentRunContext;
 import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.modules.runtime.ZalavaToolInvocationAuditEvent;
 import org.zalava.web.control.application.InvocationLog;
@@ -34,6 +35,7 @@ public final class ZalavaToolInvocationAuditListener {
             event.resultPreview(),
             event.durationMillis(),
             ConversationChannelContext.conversation().orElse(""),
-            event.attributes().get("inputPreview")));
+            event.attributes().get("inputPreview"),
+            AgentRunContext.current().orElse(null)));
   }
 }

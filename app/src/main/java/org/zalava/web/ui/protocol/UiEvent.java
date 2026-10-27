@@ -57,9 +57,13 @@ public sealed interface UiEvent
     }
   }
 
-  record ConversationMessage(String role, String text, List<String> attachmentNames) {
+  record ConversationMessage(String role, String text, List<String> attachmentNames, String runId) {
+    public ConversationMessage(String role, String text, List<String> names) {
+      this(role, text, names, null);
+    }
+
     public ConversationMessage(String role, String text) {
-      this(role, text, List.of());
+      this(role, text, List.of(), null);
     }
 
     public ConversationMessage {
@@ -80,8 +84,12 @@ public sealed interface UiEvent
   record ChatDelta(String protocolVersion, String conversationId, String text) implements UiEvent {}
 
   record ChatCompleted(
-      String protocolVersion, String conversationId, String text, List<String> jobIds)
+      String protocolVersion, String conversationId, String text, List<String> jobIds, String runId)
       implements UiEvent {
+    public ChatCompleted(String version, String conversationId, String text, List<String> jobIds) {
+      this(version, conversationId, text, jobIds, null);
+    }
+
     public ChatCompleted {
       jobIds = List.copyOf(jobIds);
     }
@@ -116,7 +124,12 @@ public sealed interface UiEvent
   record JobUpdated(String protocolVersion, String jobId, String status, String summary)
       implements UiEvent {}
 
-  record Failure(String protocolVersion, String operation, String message) implements UiEvent {}
+  record Failure(String protocolVersion, String operation, String message, String runId)
+      implements UiEvent {
+    public Failure(String version, String operation, String message) {
+      this(version, operation, message, null);
+    }
+  }
 
   record Cancelled(String protocolVersion, String operationId, String reason) implements UiEvent {}
 }

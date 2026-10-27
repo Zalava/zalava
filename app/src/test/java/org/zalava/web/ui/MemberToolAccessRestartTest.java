@@ -48,12 +48,18 @@ class MemberToolAccessRestartTest {
               .create("restart-member", "RestartMemberPassword-123", AccountRole.MEMBER)
               .id()
               .toString();
-      first.getBean(MemberToolAccess.class).decide(administratorId, memberId, key, true);
+      first.getBean(MemberToolAccess.class).defaultAccess(administratorId, key, true);
     }
     try (var second =
         RestartableZalavaApplicationContext.start(
             workspace, properties, MemberToolAccessFixture.class)) {
       assertThat(second.getBean(MemberToolAccess.class).allowed(memberId, key)).isTrue();
+      assertThat(
+              second
+                  .getBean(MemberToolAccess.class)
+                  .effective(administratorId, memberId, key)
+                  .source())
+          .isEqualTo("Role default");
       assertThat(
               second
                   .getBean(ProviderToolOperations.class)
@@ -71,6 +77,15 @@ class MemberToolAccessRestartTest {
         RestartableZalavaApplicationContext.start(
             workspace, properties, MemberToolAccessFixture.class)) {
       assertThat(third.getBean(MemberToolAccess.class).allowed(memberId, key)).isFalse();
+      assertThat(
+              third
+                  .getBean(MemberToolAccess.class)
+                  .effective(administratorId, memberId, key)
+                  .override())
+          .isEqualTo("DENY");
+      third.getBean(MemberToolAccess.class).inherit(administratorId, memberId, key);
+      assertThat(third.getBean(MemberToolAccess.class).allowed(memberId, key)).isTrue();
+      third.getBean(MemberToolAccess.class).defaultAccess(administratorId, key, false);
       assertThatThrownBy(
               () ->
                   third

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.zalava.assistant.agent.AgentRunContext;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.port.out.AgentModel;
 import org.zalava.assistant.agent.application.port.out.AgentModelInput;
@@ -273,6 +274,7 @@ public final class SpringAiAgentModel implements AgentModel {
             a -> {
               a.param(ChatMemory.CONVERSATION_ID, conversationId);
               a.param(AgentModelInput.ADVISOR_KEY, input);
+              AgentRunContext.current().ifPresent(id -> a.param(AgentRunContext.KEY, id));
             });
   }
 }
