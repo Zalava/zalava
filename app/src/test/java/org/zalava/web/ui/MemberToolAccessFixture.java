@@ -39,7 +39,7 @@ public class MemberToolAccessFixture {
                             "Read-only time fixture",
                             "1.0.0",
                             capabilities(),
-                            List.of("zalava_backed", "read-only"),
+                            List.of("read-only"),
                             Map.of("clock", "system"));
                       }
 

@@ -3,15 +3,20 @@ package org.zalava.assistant.conversation.domain;
 import java.util.List;
 import java.util.Objects;
 
-public record ConversationMessage(Role role, String text, List<String> attachmentNames) {
+public record ConversationMessage(
+    Role role, String text, List<String> attachmentNames, String runId) {
   public enum Role {
     USER,
     ASSISTANT,
     SYSTEM
   }
 
+  public ConversationMessage(Role role, String text, List<String> attachmentNames) {
+    this(role, text, attachmentNames, null);
+  }
+
   public ConversationMessage(Role role, String text) {
-    this(role, text, List.of());
+    this(role, text, List.of(), null);
   }
 
   public ConversationMessage {

@@ -146,11 +146,11 @@ class BrowserChatAcceptanceTest {
         assertThat(outboundFrames)
             .anySatisfy(frame -> assertThat(frame).contains("chat.send", "what time is it now"));
 
-        page.locator(".messages").getByText("12:34:56Z").waitFor();
+        page.locator(".messages .answer-content").getByText("12:34:56Z").waitFor();
         assertThat(page.locator("body").innerText()).contains("what time is it now", "12:34:56Z");
 
         page.reload();
-        page.locator(".messages").getByText("12:34:56Z").waitFor();
+        page.locator(".messages .answer-content").getByText("12:34:56Z").waitFor();
         assertThat(page.locator("body").innerText()).contains("what time is it now");
 
         String originalConversation =
@@ -232,11 +232,11 @@ class BrowserChatAcceptanceTest {
         page.locator(".messages").getByText("Channel source answer").waitFor();
         page.locator("#message").fill("what time is it now");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
-        page.locator(".messages").getByText("12:34:56Z").waitFor();
+        page.locator(".messages .answer-content").getByText("12:34:56Z").waitFor();
         page.reload();
         page.getByText("Connected").waitFor();
         page.locator("select[aria-label='Select conversation']").selectOption(targetId);
-        page.locator(".messages").getByText("12:34:56Z").waitFor();
+        page.locator(".messages .answer-content").getByText("12:34:56Z").waitFor();
         assertThat(conversations.findByReference(actor, source)).isEqualTo(sourceMessages);
         var targetMessages =
             conversations.findByReference(actor, new ConversationReference(targetId));
@@ -411,7 +411,8 @@ class BrowserChatAcceptanceTest {
       // Wait for this turn's response, not an idle state that can precede dispatch.
       PlaywrightAssertions.assertThat(page.locator(".message.user").last())
           .containsText("What greeting do I prefer?");
-      PlaywrightAssertions.assertThat(page.locator(".message.assistant").last().locator("p"))
+      PlaywrightAssertions.assertThat(
+              page.locator(".message.assistant").last().locator(".answer-content p"))
           .hasText("Hello from the component test model.");
       PlaywrightAssertions.assertThat(page.locator(".messages")).hasAttribute("aria-busy", "false");
       page.reload();

@@ -18,7 +18,10 @@ final class ConversationYamlSerializer {
             entry -> {
               var item =
                   entry.entrySet().stream()
-                      .filter(value -> !value.getKey().equals("attachments"))
+                      .filter(
+                          value ->
+                              !value.getKey().equals("attachments")
+                                  && !value.getKey().equals("runId"))
                       .findFirst()
                       .orElseThrow();
               Object stored = entry.get("attachments");
@@ -29,7 +32,8 @@ final class ConversationYamlSerializer {
               return new ConversationMessage(
                   ConversationMessage.Role.valueOf(item.getKey().toUpperCase(Locale.ROOT)),
                   (String) item.getValue(),
-                  names);
+                  names,
+                  (String) entry.get("runId"));
             })
         .toList();
   }
@@ -43,6 +47,7 @@ final class ConversationYamlSerializer {
                   entry.put(message.role().name().toLowerCase(Locale.ROOT), message.text());
                   if (!message.attachmentNames().isEmpty())
                     entry.put("attachments", message.attachmentNames());
+                  if (message.runId() != null) entry.put("runId", message.runId());
                   return entry;
                 })
             .toList();

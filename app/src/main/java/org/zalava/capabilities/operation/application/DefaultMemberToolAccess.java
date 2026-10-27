@@ -28,13 +28,37 @@ public final class DefaultMemberToolAccess implements MemberToolAccess {
   }
 
   @Override
+  public List<ToolChoice> availableTools(String administratorId) {
+    requireAdministrator(administratorId);
+    return catalog.providers().stream()
+        .flatMap(
+            provider ->
+                provider.listTools().stream()
+                    .map(
+                        tool ->
+                            new ToolChoice(
+                                new ToolKey(
+                                    provider.descriptor().moduleId(),
+                                    provider.descriptor().providerId(),
+                                    tool.name()),
+                                provider.descriptor().displayName(),
+                                tool.description(),
+                                MemberProviderCapabilityPolicy.eligible(provider, tool))))
+        .toList();
+  }
+
+  @Override
   public boolean allowed(String memberId, ToolKey key) {
     try {
       return accounts
               .findById(id(memberId))
               .filter(account -> account.enabled() && account.role() == AccountRole.MEMBER)
               .isPresent()
-          && store.allowed(memberId, key);
+          && store.decisions(memberId).stream()
+              .filter(value -> value.key().equals(key))
+              .map(Decision::allowed)
+              .findFirst()
+              .orElseGet(() -> store.defaultAllowed(key));
     } catch (IllegalArgumentException invalid) {
       return false;
     }
@@ -51,6 +75,11 @@ public final class DefaultMemberToolAccess implements MemberToolAccess {
   public void decide(String administratorId, String memberId, ToolKey key, boolean allowed) {
     requireAdministrator(administratorId);
     requireMember(memberId);
+    validateAvailable(key, allowed);
+    store.decide(administratorId, memberId, key, allowed, clock.instant());
+  }
+
+  private void validateAvailable(ToolKey key, boolean allowed) {
     if (allowed) {
       var provider =
           catalog
@@ -65,7 +94,40 @@ public final class DefaultMemberToolAccess implements MemberToolAccess {
       if (!MemberProviderCapabilityPolicy.eligible(provider, tool))
         throw new IllegalArgumentException("This tool is restricted by mandatory host policy");
     }
-    store.decide(administratorId, memberId, key, allowed, clock.instant());
+  }
+
+  @Override
+  public List<Decision> defaults(String administratorId) {
+    requireAdministrator(administratorId);
+    return store.defaults();
+  }
+
+  @Override
+  public void defaultAccess(String administratorId, ToolKey key, boolean membersAllowed) {
+    requireAdministrator(administratorId);
+    validateAvailable(key, membersAllowed);
+    store.defaultAccess(administratorId, key, membersAllowed, clock.instant());
+  }
+
+  @Override
+  public void inherit(String administratorId, String memberId, ToolKey key) {
+    requireAdministrator(administratorId);
+    requireMember(memberId);
+    store.inherit(administratorId, memberId, key, clock.instant());
+  }
+
+  @Override
+  public Effective effective(String administratorId, String memberId, ToolKey key) {
+    requireAdministrator(administratorId);
+    requireMember(memberId);
+    var override =
+        store.decisions(memberId).stream().filter(value -> value.key().equals(key)).findFirst();
+    boolean roleAllowed = store.defaultAllowed(key);
+    return new Effective(
+        override.map(Decision::allowed).orElse(roleAllowed),
+        override.isPresent() ? "User override" : "Role default",
+        override.map(value -> value.allowed() ? "ALLOW" : "DENY").orElse("INHERIT"),
+        roleAllowed);
   }
 
   private void requireAdministrator(String administratorId) {

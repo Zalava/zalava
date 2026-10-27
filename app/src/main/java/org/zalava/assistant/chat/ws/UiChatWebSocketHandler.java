@@ -303,13 +303,19 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
 
           @Override
           public void onComplete(String fullText, List<ActorTaskReference> jobs) {
+            onComplete(fullText, jobs, null);
+          }
+
+          @Override
+          public void onComplete(String fullText, List<ActorTaskReference> jobs, String runId) {
             send(
                 session,
                 new UiEvent.ChatCompleted(
                     UiCommandDecoder.VERSION,
                     conversation.value(),
                     fullText,
-                    jobs.stream().map(job -> job.value()).toList()));
+                    jobs.stream().map(job -> job.value()).toList(),
+                    runId));
             sendConversationList(session, actor);
             sendMemoryReviews(session, actor);
             sendDocumentProcessingStatus(session);
@@ -321,8 +327,19 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
 
           @Override
           public void onError(RuntimeException failure) {
+            onError(failure, null);
+          }
+
+          @Override
+          public void onError(RuntimeException failure, String runId) {
             log.warn("UI chat stream failed", failure);
-            sendFailure(session, "chat.send", "Zalava could not complete that request");
+            send(
+                session,
+                new UiEvent.Failure(
+                    UiCommandDecoder.VERSION,
+                    "chat.send",
+                    "Zalava could not complete that request",
+                    runId));
           }
         });
   }
@@ -427,7 +444,8 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
                     new UiEvent.ConversationMessage(
                         message.role().name().toLowerCase(Locale.ROOT),
                         message.text(),
-                        message.attachmentNames()))
+                        message.attachmentNames(),
+                        message.runId()))
             .toList();
     send(
         session,

@@ -6,6 +6,14 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.De
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 
 public interface MemberToolAccessStore {
+  boolean defaultAllowed(ToolKey key);
+
+  List<Decision> defaults();
+
+  void defaultAccess(String administratorId, ToolKey key, boolean allowed, Instant at);
+
+  void inherit(String administratorId, String memberId, ToolKey key, Instant at);
+
   boolean allowed(String memberId, ToolKey key);
 
   List<Decision> decisions(String memberId);

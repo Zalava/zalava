@@ -106,6 +106,7 @@ class BrowserUiStandardsAcceptanceTest {
   void secondaryHoverHasReadableContrastAndSharedTokens() {
     page.setViewportSize(1440, 900);
     page.navigate(base() + "/chat");
+    page.locator(".inspector-toggle").click();
     var tools = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Tools"));
     tools.hover();
     page.waitForFunction(
@@ -451,12 +452,12 @@ class BrowserUiStandardsAcceptanceTest {
             return panel.scrollHeight - panel.scrollTop - panel.clientHeight < 5; }
           """);
     }
-    var execution = page.locator(".conversation-execution").first();
+    var execution = page.locator(".message.assistant .answer-execution").last();
     assertThat(execution).isVisible();
     execution.locator("summary").first().click();
-    assertThat(execution).containsText("Question:");
+    assertThat(execution).containsText("Context used");
     page.reload();
-    assertThat(page.locator(".conversation-execution")).hasCount(8);
+    assertThat(page.locator(".message.assistant .answer-execution")).hasCount(8);
   }
 
   @Test

@@ -287,3 +287,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .conversation-execution { margin-block: .6rem; padding: .6rem; border: 1px solid var(--zalava-color-border); border-radius: var(--zalava-radius-md); overflow-wrap: anywhere; }
 .conversation-execution summary { cursor: pointer; font-size: .875rem; }
 .conversation-execution pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Answer-owned evidence; the workspace is an optional action drawer. */
+.answer-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:.75rem; }
+.answer-timing { font-size:.8rem; color:var(--zalava-color-text-muted,#526175); }
+.answer-execution { margin-top:.75rem; border-top:1px solid var(--zalava-color-border); padding-top:.5rem; }
+.answer-execution summary { cursor:pointer; min-height:24px; }
+.answer-execution h3 { font-size:.95rem; margin:.6rem 0; }
+.answer-tool { margin:.5rem 0; padding:.5rem; border:1px solid var(--zalava-color-border); border-radius:.5rem; }
+.answer-tool pre { overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
+.chat-workspace { grid-template-columns:minmax(0,1fr); }
+.chat-inspector { display:none; }
+.inspector-toggle,.inspector-close { display:inline-flex; }
+.inspector-open .chat-inspector { display:block; }
+@media(min-width:1024px) { .chat-workspace.inspector-open { grid-template-columns:minmax(0,1fr) minmax(18rem,24rem); } }
+
+.message-list { display:flex; flex-direction:column; gap:1rem; flex:0 0 auto; min-width:0; width:100%; }

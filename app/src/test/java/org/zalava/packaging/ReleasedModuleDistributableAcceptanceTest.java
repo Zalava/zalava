@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Timeout;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.support.DigitalPdfFixture;
@@ -658,6 +659,18 @@ class ReleasedModuleDistributableAcceptanceTest {
         BrowserContext admin = browser.newContext()) {
       postgres.start();
       Page page = admin.newPage();
+      page.onPageError(
+          error -> {
+            try {
+              Files.writeString(
+                  diagnostics.resolve("browser-errors.private.txt"),
+                  error + "\n",
+                  StandardOpenOption.CREATE,
+                  StandardOpenOption.APPEND);
+            } catch (Exception ignored) {
+            }
+          });
+
       try {
         start(postgres, workspace, "test");
         signIn(page, LOGIN, INITIAL_PASSWORD, true);
@@ -882,9 +895,21 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.locator("#message").fill("What code does my PDF contain?");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
             .click();
-        page.getByText(
-                "Your PDF code is amber-larch-1013.", new Page.GetByTextOptions().setExact(true))
-            .waitFor();
+        try {
+          page.getByText(
+                  "Your PDF code is amber-larch-1013.", new Page.GetByTextOptions().setExact(true))
+              .waitFor();
+        } catch (PlaywrightException failure) {
+          Files.writeString(diagnostics.resolve("pdf-failure.html"), page.content());
+          page.screenshot(
+              new Page.ScreenshotOptions().setPath(diagnostics.resolve("pdf-failure.png")));
+          Files.writeString(
+              diagnostics.resolve("model-requests.private.txt"),
+              modelServer.getAllServeEvents().stream()
+                  .map(event -> event.getRequest().getBodyAsString())
+                  .reduce("", (left, right) -> left + "\n" + right));
+          throw failure;
+        }
         modelServer.verify(
             postRequestedFor(urlEqualTo("/v1/chat/completions"))
                 .withRequestBody(
@@ -916,6 +941,107 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(page.locator("input[name=model]").inputValue())
             .isEqualTo("updated-fixture-model");
         assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
+        Release timeRelease = downloadReleases(Set.of("time")).getFirst();
+        page.navigate(baseUrl + "/modules");
+        page.locator("[data-module-developer-options] summary").click();
+        page.locator("input[name=moduleJar]").setInputFiles(timeRelease.path());
+        page.locator("[data-action=upload-module]").click();
+        page.getByText(
+                "Uploaded " + timeRelease.moduleId() + " " + timeRelease.version() + " installed")
+            .waitFor();
+        stop();
+        admin.clearCookies();
+        start(postgres, workspace, "dev");
+        signIn(page, LOGIN, PASSWORD, false);
+        startModule(page, "zalava-module-time");
+        page.navigate(baseUrl + "/zalava/accounts");
+        String clockMember = "released-clock-member";
+        page.locator("#create-login").fill(clockMember);
+        page.locator("#create-password").fill(INITIAL_PASSWORD);
+        page.locator("#confirm-create-password").fill(INITIAL_PASSWORD);
+        page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Create account").setExact(true))
+            .click();
+        page.navigate(baseUrl + "/zalava/accounts/tool-defaults");
+        var clockDefault = page.locator("[data-tool-access='jdk-time:current_time']");
+        assertThat(
+                clockDefault
+                    .getByRole(
+                        AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+                    .isVisible())
+            .isTrue();
+        clockDefault.locator("select[name=membersAllowed]").selectOption("true");
+        clockDefault
+            .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+            .click();
+        String clockCallback = ZalavaToolCallbackNames.forTool("jdk-time", "current_time");
+        String clockCall =
+            """
+            data: {"id":"clock","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"released-clock-call","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+            data: {"id":"clock","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+            data: [DONE]
+
+            """
+                .formatted(
+                    clockCallback,
+                    JSON.writeValueAsString(JSON.writeValueAsString(Map.of("zoneId", "UTC"))));
+        modelServer.stubFor(
+            WireMock.post(urlEqualTo("/v1/chat/completions"))
+                .atPriority(2)
+                .withRequestBody(
+                    matchingJsonPath(
+                        "$.messages[?(@.role == 'user')].content",
+                        containing("Released Time UTC check")))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "text/event-stream")
+                        .withBody(clockCall)));
+        modelServer.stubFor(
+            WireMock.post(urlEqualTo("/v1/chat/completions"))
+                .atPriority(1)
+                .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "text/event-stream")
+                        .withBody(
+                            """
+            data: {"id":"clock-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Released Time call completed"},"finish_reason":null}]}
+
+            data: {"id":"clock-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """)));
+        try (var memberContext = browser.newContext()) {
+          Page memberPage = memberContext.newPage();
+          signIn(memberPage, clockMember, INITIAL_PASSWORD, true);
+          memberPage.navigate(baseUrl + "/chat");
+          memberPage.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+          memberPage.locator("#message").fill("Released Time UTC check");
+          memberPage
+              .getByRole(
+                  AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+              .click();
+          memberPage
+              .getByText("Released Time call completed", new Page.GetByTextOptions().setExact(true))
+              .waitFor();
+          var answer = memberPage.locator(".message.assistant").last();
+          answer.locator(".answer-execution > summary").click();
+          answer.locator(".answer-tool > summary").click();
+          assertThat(answer.innerText())
+              .contains("jdk-time", "current_time", "zoneId", "UTC", "instant");
+          memberPage.reload();
+          memberPage.locator(".message.assistant .answer-execution > summary").last().click();
+          memberPage.locator(".message.assistant .answer-tool > summary").last().click();
+          assertThat(memberPage.locator(".message.assistant").last().innerText())
+              .contains("jdk-time", "instant");
+          memberPage.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(diagnostics.resolve("released-time-member-inline.png")));
+        }
       } finally {
         stop();
       }

@@ -64,7 +64,8 @@ public final class ConversationEvidenceController {
                         run.contextCharacterBudget(),
                         boundary.redact(run.promptPreview()),
                         boundary.redact(run.resultPreview()),
-                        boundary.redact(run.errorPreview())))
+                        boundary.redact(run.errorPreview()),
+                        run.contextSourceMetrics()))
             .toList(),
         tools.recentEntries().stream()
             .filter(
@@ -82,7 +83,8 @@ public final class ConversationEvidenceController {
                         tool.durationMillis(),
                         boundary.redact(tool.errorMessage()),
                         boundary.redact(tool.resultPreview()),
-                        boundary.redact(tool.inputPreview())))
+                        boundary.redact(tool.inputPreview()),
+                        tool.runId()))
             .toList());
   }
 
@@ -99,7 +101,8 @@ public final class ConversationEvidenceController {
       int contextCharacterBudget,
       String prompt,
       String result,
-      String error) {}
+      String error,
+      List<AgentRun.ContextSourceMetric> contextSources) {}
 
   public record Tool(
       String at,
@@ -109,5 +112,6 @@ public final class ConversationEvidenceController {
       long durationMillis,
       String error,
       String result,
-      String input) {}
+      String input,
+      String runId) {}
 }

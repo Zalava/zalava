@@ -18,8 +18,11 @@
 <script src="/zalava-ui.js" defer></script></head>
 <body>
 @template.ui.navigation(items = navigation.items(), activePage = "settings", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
-<main class="section"><div class="container accounts-layout">
-<header><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Administration</p><h1 class="title is-3">Accounts</h1><p class="has-text-grey">Manage workspace access. Only administrators can change account roles and reset passwords.</p></header>
+<main class="section"><div class="container settings-layout">
+@template.ui.settingsSections(current = "accounts")
+<div class="settings-content accounts-layout">
+<header><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Administration</p><p><a class="button is-link is-light" href="/zalava/accounts/tool-defaults">Tool access defaults</a></p>
+<h1 class="title is-3">Accounts</h1><p class="has-text-grey">Manage workspace access. Only administrators can change account roles and reset passwords.</p></header>
 @if(error != null)<p class="notification is-danger is-light" role="alert">${error}</p>@endif
 @if(message != null)<p class="notification is-success is-light" role="status">${message}</p>@endif
 <section class="box" aria-labelledby="create-account-heading"><h2 class="title is-4" id="create-account-heading">Create account</h2>
@@ -40,4 +43,4 @@
 <details class="account-password-reset"><summary>Reset password</summary><form method="post" action="/zalava/accounts/password"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="accountId" value="${account.id()}"><label class="label" for="reset-${account.id()}">Temporary password</label><input class="input" id="reset-${account.id()}" data-password-original type="password" name="temporaryPassword" required minlength="12" maxlength="256" autocomplete="new-password"><label class="label" for="confirm-reset-${account.id()}">Confirm temporary password</label><input class="input" id="confirm-reset-${account.id()}" data-password-confirmation type="password" name="passwordConfirmation" autocomplete="new-password" required minlength="12" maxlength="256"><button class="button is-light mt-3" type="submit">Reset password</button></form></details>
 </article>
 @endfor
-</div></section></div></main></body></html>
+</div></section></div></div></main></body></html>

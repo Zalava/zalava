@@ -8,6 +8,7 @@ import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,6 +40,8 @@ import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -82,7 +85,8 @@ class BrowserMemberToolAccessAcceptanceTest {
           .click();
       var row = page.locator("[data-tool-access='member-clock:current_time']");
       assertThat(row).containsText("Not allowed");
-      row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Grant access"))
+      row.locator("select[name=decision]").selectOption("ALLOW");
+      row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save override"))
           .click();
       assertThat(page.getByRole(AriaRole.STATUS)).containsText("Tool access granted");
       assertThat(row).containsText("Allowed");
@@ -95,6 +99,12 @@ class BrowserMemberToolAccessAcceptanceTest {
       for (int width : new int[] {1440, 768, 390}) {
         page.setViewportSize(width, 900);
         settleLayout(page);
+        assertThat((Boolean) row.evaluate("e => e.getBoundingClientRect().height < 360")).isTrue();
+        assertThat(
+                (Boolean)
+                    row.locator(".tool-access-copy")
+                        .evaluate("e => e.clientWidth>=Math.min(240,innerWidth-80)"))
+            .isTrue();
         page.screenshot(
             new Page.ScreenshotOptions()
                 .setPath(Path.of("build/browser-acceptance/module-access/tools-" + width + ".png"))
@@ -104,40 +114,94 @@ class BrowserMemberToolAccessAcceptanceTest {
       }
       try (var clockContext = browser.newContext()) {
         var clockPage = clockContext.newPage();
+        List<String> browserErrors = new ArrayList<>();
+        clockPage.onPageError(browserErrors::add);
+        // Only elapsed metrics use fixed values here; call identity/input/result come from the real
+        // host.
+        clockPage.route(
+            "**/chat/*/evidence",
+            route -> {
+              var response = route.fetch();
+              var body = new ObjectMapper().readTree(response.text());
+              body.path("runs").forEach(run -> ((ObjectNode) run).put("durationMillis", 123045));
+              body.path("tools").forEach(tool -> ((ObjectNode) tool).put("durationMillis", 12285));
+              route.fulfill(
+                  new Route.FulfillOptions()
+                      .setStatus(response.status())
+                      .setContentType("application/json")
+                      .setBody(body.toString()));
+              response.dispose();
+            });
         signIn(clockPage, member);
         clockPage.locator("#message").fill("Use current time in UTC");
         clockPage
             .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
             .click();
         assertThat(clockPage.locator(".messages")).containsText("Clock result verified");
-        clockPage
-            .getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Tools").setExact(true))
-            .click();
-        var toolCall =
-            clockPage
-                .locator("#inspector-panel details")
-                .filter(new Locator.FilterOptions().setHasText("current_time"));
+        var answer = clockPage.locator(".message.assistant").last();
+        assertThat(answer.locator(".answer-timing")).hasText("2 min 3 s 45 ms");
+        assertThat(answer.locator(".answer-execution")).not().hasAttribute("open", "");
+        answer.locator(".answer-execution > summary").click();
+        var toolCall = answer.locator(".answer-tool");
         assertThat(toolCall).hasCount(1);
+        assertThat(toolCall.locator("summary")).containsText("12 s 285 ms");
         toolCall.locator("summary").click();
         assertThat(toolCall).containsText("UTC");
         assertThat(toolCall).containsText("2026-10-26T12:00:00Z");
+        String firstRun = answer.locator("[data-run-id]").getAttribute("data-run-id");
+        clockPage.locator("#message").fill("Use current time in UTC");
+        clockPage
+            .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        assertThat(clockPage.locator(".message.assistant")).hasCount(2);
+        assertThat(clockPage.locator(".message.assistant").last().locator(".answer-timing"))
+            .not()
+            .containsText("unavailable");
+        String secondRun =
+            clockPage
+                .locator(".message.assistant")
+                .last()
+                .locator("[data-run-id]")
+                .getAttribute("data-run-id");
+        assertThat(secondRun).isNotBlank().isNotEqualTo(firstRun);
+        clockPage.reload();
+        assertThat(clockPage.locator(".message.assistant")).hasCount(2);
+        assertThat(clockPage.locator(".message.assistant").first().locator("[data-run-id]"))
+            .hasAttribute("data-run-id", firstRun);
+        assertThat(clockPage.locator(".message.assistant").last().locator("[data-run-id]"))
+            .hasAttribute("data-run-id", secondRun);
+        clockPage
+            .locator(".message.assistant")
+            .last()
+            .locator(".answer-execution > summary")
+            .click();
+        clockPage.locator(".message.assistant").last().locator(".answer-tool > summary").click();
         for (int width : new int[] {1440, 768, 390}) {
           clockPage.setViewportSize(width, 900);
           settleLayout(clockPage);
-          if (width <= 768
-              && clockPage.locator(".inspector-toggle").isVisible()
-              && "false"
-                  .equals(clockPage.locator(".inspector-toggle").getAttribute("aria-expanded")))
-            clockPage.locator(".inspector-toggle").click();
-          assertThat(clockPage.locator("#inspector-panel")).isVisible();
+          assertThat(clockPage.locator("#chat-inspector")).not().isVisible();
+          assertThat(
+                  (Boolean) clockPage.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+              .isTrue();
           clockPage.screenshot(
               new Page.ScreenshotOptions()
                   .setPath(
                       Path.of(
                           "build/browser-acceptance/module-access/chat-tools-" + width + ".png")));
         }
+        clockPage.locator("#message").fill("Trigger a scripted provider failure");
+        clockPage
+            .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        var failedAnswer = clockPage.locator(".message.failure").last();
+        assertThat(failedAnswer).containsText("could not complete");
+        assertThat(failedAnswer.locator(".answer-timing")).not().containsText("unavailable");
+        failedAnswer.locator(".answer-execution > summary").click();
+        assertThat(failedAnswer).containsText("Failed");
+        assertThat(browserErrors).isEmpty();
       }
-      row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Revoke access"))
+      row.locator("select[name=decision]").selectOption("DENY");
+      row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save override"))
           .focus();
       page.keyboard().press("Enter");
       assertThat(page.getByRole(AriaRole.STATUS)).containsText("Tool access revoked");
@@ -152,6 +216,39 @@ class BrowserMemberToolAccessAcceptanceTest {
         assertThat(memberPage.getByText("Error 403", new Page.GetByTextOptions().setExact(true)))
             .isVisible();
       }
+      page.navigate(base() + "/zalava/accounts/tool-defaults");
+      var defaultRow = page.locator("[data-tool-access='member-clock:current_time']");
+      defaultRow.locator("select[name=membersAllowed]").selectOption("true");
+      defaultRow
+          .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+          .click();
+      assertThat(invoke(other).status())
+          .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
+      assertThatThrownBy(() -> invoke(member)).hasMessageContaining("denied");
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        settleLayout(page);
+        assertThat((Boolean) defaultRow.evaluate("e => e.getBoundingClientRect().height < 360"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(
+                    Path.of("build/browser-acceptance/module-access/defaults-" + width + ".png"))
+                .setFullPage(true));
+      }
+      page.navigate(base() + "/zalava/accounts/" + member.id() + "/tools");
+      row.locator("select[name=decision]").selectOption("INHERIT");
+      row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save override"))
+          .click();
+      assertThat(row).containsText("Role default");
+      assertThat(invoke(member).status())
+          .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
+      page.navigate(base() + "/zalava/accounts/tool-defaults");
+      defaultRow.locator("select[name=membersAllowed]").selectOption("false");
+      defaultRow
+          .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+          .click();
+      assertThatThrownBy(() -> invoke(member)).hasMessageContaining("denied");
       page.navigate(base() + "/modules");
       assertThat(page.locator("[data-module='member-access-fixture']")).hasCount(1);
       assertThat(
@@ -285,6 +382,12 @@ class BrowserMemberToolAccessAcceptanceTest {
         }
 
         public ChatResponse call(Prompt prompt) {
+          if (prompt
+              .getInstructions()
+              .getLast()
+              .getText()
+              .contains("Trigger a scripted provider failure"))
+            throw new IllegalStateException("Scripted provider failure");
           AssistantMessage response;
           if (prompt.getInstructions().getLast() instanceof ToolResponseMessage) {
             response = new AssistantMessage("Clock result verified");

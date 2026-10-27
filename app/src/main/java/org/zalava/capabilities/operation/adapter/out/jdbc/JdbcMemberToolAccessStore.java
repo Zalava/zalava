@@ -77,6 +77,73 @@ public class JdbcMemberToolAccessStore implements MemberToolAccessStore {
         .update();
   }
 
+  @Override
+  public boolean defaultAllowed(ToolKey key) {
+    return roleQuery(
+            "SELECT allowed FROM zalava_tool_role_access WHERE module_id=:module AND provider_id=:provider AND tool_name=:tool",
+            key)
+        .query(Boolean.class)
+        .optional()
+        .orElse(false);
+  }
+
+  @Override
+  public List<Decision> defaults() {
+    return jdbc.sql(
+            "SELECT * FROM zalava_tool_role_access ORDER BY module_id, provider_id, tool_name")
+        .query(JdbcMemberToolAccessStore::decision)
+        .list();
+  }
+
+  @Override
+  @Transactional
+  public void defaultAccess(String admin, ToolKey key, boolean allowed, Instant at) {
+    roleQuery(
+            "INSERT INTO zalava_tool_role_access(module_id,provider_id,tool_name,allowed,changed_by,changed_at) VALUES(:module,:provider,:tool,:allowed,:admin,:at) ON CONFLICT(module_id,provider_id,tool_name) DO UPDATE SET allowed=EXCLUDED.allowed,changed_by=EXCLUDED.changed_by,changed_at=EXCLUDED.changed_at",
+            key)
+        .param("allowed", allowed)
+        .param("admin", UUID.fromString(admin))
+        .param("at", at.atOffset(ZoneOffset.UTC))
+        .update();
+    roleQuery(
+            "INSERT INTO zalava_tool_role_access_audit(id,module_id,provider_id,tool_name,allowed,changed_by,changed_at) VALUES(:id,:module,:provider,:tool,:allowed,:admin,:at)",
+            key)
+        .param("id", UUID.randomUUID())
+        .param("allowed", allowed)
+        .param("admin", UUID.fromString(admin))
+        .param("at", at.atOffset(ZoneOffset.UTC))
+        .update();
+  }
+
+  @Override
+  @Transactional
+  public void inherit(String admin, String member, ToolKey key, Instant at) {
+    jdbc.sql("SELECT id FROM zalava_account WHERE id=:member FOR UPDATE")
+        .param("member", UUID.fromString(member))
+        .query(UUID.class)
+        .single();
+    keyQuery(
+            "DELETE FROM zalava_member_tool_access WHERE member_id=:member AND module_id=:module AND provider_id=:provider AND tool_name=:tool",
+            member,
+            key)
+        .update();
+    keyQuery(
+            "INSERT INTO zalava_member_tool_access_audit(id,member_id,module_id,provider_id,tool_name,allowed,changed_by,changed_at) VALUES(:id,:member,:module,:provider,:tool,NULL,:admin,:at)",
+            member,
+            key)
+        .param("id", UUID.randomUUID())
+        .param("admin", UUID.fromString(admin))
+        .param("at", at.atOffset(ZoneOffset.UTC))
+        .update();
+  }
+
+  private JdbcClient.StatementSpec roleQuery(String sql, ToolKey key) {
+    return jdbc.sql(sql)
+        .param("module", key.moduleId())
+        .param("provider", key.providerId())
+        .param("tool", key.toolName());
+  }
+
   private JdbcClient.StatementSpec keyQuery(String sql, String member, ToolKey key) {
     return jdbc.sql(sql)
         .param("member", UUID.fromString(member))

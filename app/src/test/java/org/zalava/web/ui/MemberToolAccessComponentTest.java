@@ -83,6 +83,62 @@ class MemberToolAccessComponentTest {
   }
 
   @Test
+  void roleDefaultsAndOverridesArePersistentAuditedAndProtected() throws Exception {
+    var key = key("current_time");
+    assertThat(access.effective(id(admin), id(first), key).source()).isEqualTo("Role default");
+    mvc.perform(
+            post("/zalava/accounts/tool-defaults")
+                .with(user(admin.loginName()).roles("ADMIN"))
+                .with(csrf())
+                .param("moduleId", key.moduleId())
+                .param("providerId", key.providerId())
+                .param("toolName", key.toolName())
+                .param("membersAllowed", "true"))
+        .andExpect(status().is3xxRedirection());
+    assertThat(invoke(first, "current_time").status())
+        .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
+    assertThat(invoke(second, "current_time").status())
+        .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
+    assertThatThrownBy(() -> invoke(first, "convert_time")).hasMessageContaining("denied");
+    assertThat(invoke(account(AccountRole.MEMBER), "current_time").status())
+        .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
+    access.decide(id(admin), id(first), key, false);
+    assertThatThrownBy(() -> invoke(first, "current_time")).hasMessageContaining("denied");
+    assertThat(access.effective(id(admin), id(first), key).override()).isEqualTo("DENY");
+    access.defaultAccess(id(admin), key, false);
+    access.decide(id(admin), id(second), key, true);
+    assertThat(invoke(second, "current_time").status())
+        .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
+    access.inherit(id(admin), id(second), key);
+    assertThatThrownBy(() -> invoke(second, "current_time")).hasMessageContaining("denied");
+    var reloaded =
+        new DefaultMemberToolAccess(
+            accounts,
+            new JdbcMemberToolAccessStore(jdbc),
+            new ZalavaRuntimeProviderCatalog(runtime),
+            Clock.systemUTC());
+    assertThat(reloaded.effective(id(admin), id(second), key).override()).isEqualTo("INHERIT");
+    assertThat(reloaded.effective(id(admin), id(first), key).override()).isEqualTo("DENY");
+    assertThatThrownBy(() -> access.defaultAccess(id(first), key, true))
+        .isInstanceOf(SecurityException.class);
+    assertThatThrownBy(() -> access.defaultAccess(id(admin), key("unsafe_shell"), true))
+        .hasMessageContaining("mandatory");
+    mvc.perform(get("/zalava/accounts/tool-defaults").with(user(first.loginName()).roles("MEMBER")))
+        .andExpect(status().isForbidden());
+    mvc.perform(
+            post("/zalava/accounts/tool-defaults")
+                .with(user(admin.loginName()).roles("ADMIN"))
+                .param("moduleId", key.moduleId())
+                .param("providerId", key.providerId())
+                .param("toolName", key.toolName())
+                .param("membersAllowed", "true"))
+        .andExpect(status().isForbidden());
+    mvc.perform(get(url()).with(user(admin.loginName()).roles("ADMIN")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("Settings sections")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("Role default")));
+  }
+
+  @Test
   void htmlGrantIsExactPersistentRevocableAndEnforcedForEveryCall() throws Exception {
     assertThatThrownBy(() -> invoke(first, "current_time")).hasMessageContaining("denied");
     mvc.perform(
@@ -217,7 +273,7 @@ class MemberToolAccessComponentTest {
             .getResponse()
             .getContentAsString();
     assertThat(html)
-        .contains("Tool access for", "Grant access", "Restricted by host policy", "Not allowed");
+        .contains("Tool access for", "Save override", "Restricted by host policy", "Not allowed");
     mvc.perform(
             post(url())
                 .with(user(admin.loginName()).roles("ADMIN"))

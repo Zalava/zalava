@@ -97,7 +97,8 @@ public final class SpringAiChatMemoryRepository implements AppendableChatMemoryR
                   "Unsupported persisted chat message: " + message.getMessageType());
         },
         message.getText(),
-        attachmentNames(message));
+        attachmentNames(message),
+        (String) message.getMetadata().get("zalava.runId"));
   }
 
   private static List<String> attachmentNames(Message message) {
@@ -115,7 +116,13 @@ public final class SpringAiChatMemoryRepository implements AppendableChatMemoryR
                   .text(message.text())
                   .metadata(Map.of("zalava.attachmentNames", message.attachmentNames()))
                   .build();
-      case ASSISTANT -> new AssistantMessage(message.text());
+      case ASSISTANT ->
+          message.runId() == null
+              ? new AssistantMessage(message.text())
+              : AssistantMessage.builder()
+                  .content(message.text())
+                  .properties(Map.of("zalava.runId", message.runId()))
+                  .build();
       case SYSTEM -> new SystemMessage(message.text());
     };
   }
