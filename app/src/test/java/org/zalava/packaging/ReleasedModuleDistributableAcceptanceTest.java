@@ -13,6 +13,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.RequestOptions;
@@ -949,11 +950,23 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.getByText(
                 "Uploaded " + timeRelease.moduleId() + " " + timeRelease.version() + " installed")
             .waitFor();
+        Release shoppingRelease = downloadReleases(Set.of("shopping-list")).getFirst();
+        page.locator("[data-module-developer-options] summary").click();
+        page.locator("input[name=moduleJar]").setInputFiles(shoppingRelease.path());
+        page.locator("[data-action=upload-module]").click();
+        page.getByText(
+                "Uploaded "
+                    + shoppingRelease.moduleId()
+                    + " "
+                    + shoppingRelease.version()
+                    + " installed")
+            .waitFor();
         stop();
         admin.clearCookies();
         start(postgres, workspace, "dev");
         signIn(page, LOGIN, PASSWORD, false);
         startModule(page, "zalava-module-time");
+        startModule(page, "zalava-module-shopping-list");
         page.navigate(baseUrl + "/zalava/accounts");
         String clockMember = "released-clock-member";
         page.locator("#create-login").fill(clockMember);
@@ -1042,12 +1055,123 @@ class ReleasedModuleDistributableAcceptanceTest {
               new Page.ScreenshotOptions()
                   .setPath(diagnostics.resolve("released-time-member-inline.png")));
         }
+        proveDirectShoppingApprovals(page, modelServer);
       } finally {
         stop();
       }
     } finally {
       modelServer.stop();
     }
+  }
+
+  private void proveDirectShoppingApprovals(Page page, WireMockServer modelServer)
+      throws Exception {
+    page.setViewportSize(1440, 900);
+    String marker = "Released Shopping direct approval check";
+    String callback = ZalavaToolCallbackNames.forTool("shopping-list-household", "add_item");
+    String calls =
+        """
+        data: {"id":"shopping","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"shopping-milk","type":"function","function":{"name":"%s","arguments":%s}},{"index":1,"id":"shopping-denied","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"shopping","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                callback,
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("name", "Released approval milk"))),
+                callback,
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("name", "Released denied bread"))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(calls)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"shopping-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Shopping operations await permission."},"finish_reason":null}]}
+
+        data: {"id":"shopping-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText(
+            "Shopping operations await permission.", new Page.GetByTextOptions().setExact(true))
+        .waitFor();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .waitFor();
+    page.reload();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var cards =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    var answer = page.locator(".message.assistant").last();
+    answer.locator(".answer-execution > summary").click();
+    PlaywrightAssertions.assertThat(answer.locator(".answer-tool > summary")).hasCount(2);
+    PlaywrightAssertions.assertThat(answer.locator(".answer-tool > summary").first())
+        .containsText("Awaiting permission");
+    answer.locator(".answer-tool > summary").first().click();
+    PlaywrightAssertions.assertThat(answer).containsText("pending_approval");
+    // Sections with accessible names are exposed as regions by the browser.
+    PlaywrightAssertions.assertThat(cards).hasCount(2);
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      assertThat((Boolean) cards.first().evaluate("e => e.scrollWidth<=e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("shopping-direct-pending-" + width + ".png")));
+    }
+    page.setViewportSize(1440, 900);
+    var milk = cards.filter(new Locator.FilterOptions().setHasText("Released approval milk"));
+    var bread = cards.filter(new Locator.FilterOptions().setHasText("Released denied bread"));
+    milk.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).focus();
+    page.keyboard().press("Enter");
+    page.getByText("Permission allowed once; operation completed.").waitFor();
+    PlaywrightAssertions.assertThat(cards).hasCount(1);
+    bread
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny").setExact(true))
+        .click();
+    page.getByText("Permission denied; operation was not run.").waitFor();
+    PlaywrightAssertions.assertThat(cards).hasCount(0);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("shopping-direct-decided.png")));
+    page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+    PlaywrightAssertions.assertThat(
+            page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    assertThat(page.content()).doesNotContain("Released denied bread");
+    page.reload();
+    PlaywrightAssertions.assertThat(
+            page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("shopping-direct-persisted.png")));
   }
 
   private void start(PostgreSQLContainer postgres, Path workspace, String profile)

@@ -62,6 +62,11 @@ public final class UiEventJson {
         json.put("requestId", request.requestId());
         json.put("summary", request.summary());
       }
+      case UiEvent.DirectPermissions permissions -> {
+        json.put("type", "permission.direct");
+        json.put("requests", permissions.requests());
+        json.put("feedback", permissions.feedback());
+      }
       case UiEvent.ArtifactAvailable artifact -> {
         json.put("type", "artifact.available");
         json.put("artifactId", artifact.artifactId());

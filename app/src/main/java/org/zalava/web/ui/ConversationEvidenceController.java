@@ -84,7 +84,8 @@ public final class ConversationEvidenceController {
                         boundary.redact(tool.errorMessage()),
                         boundary.redact(tool.resultPreview()),
                         boundary.redact(tool.inputPreview()),
-                        tool.runId()))
+                        tool.runId(),
+                        "pending_approval".equals(tool.errorType())))
             .toList());
   }
 
@@ -113,5 +114,6 @@ public final class ConversationEvidenceController {
       String error,
       String result,
       String input,
-      String runId) {}
+      String runId,
+      boolean pendingApproval) {}
 }

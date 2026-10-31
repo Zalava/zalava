@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,17 @@ public class ZalavaToolApprovalRequests {
       TaskReference taskReference) {
     String argumentsJson = json(arguments);
     return entries.stream()
+        .filter(entry -> entry.actorId().equals(context.actorId()))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get(ACTOR_TASK_REFERENCE),
+                    context.attributes().get(ACTOR_TASK_REFERENCE)))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("accountRole"), context.attributes().get("accountRole")))
+        .filter(entry -> channel(entry.attributes()).equals(channel(context.attributes())))
         .filter(entry -> entry.decision() == Decision.PENDING)
         .filter(
             entry ->

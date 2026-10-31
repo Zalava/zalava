@@ -3,7 +3,9 @@ package org.zalava.capabilities.operation.application;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.zalava.api.InvocationContext;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
@@ -13,12 +15,13 @@ import org.zalava.capabilities.operation.application.port.in.ProviderToolOperati
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
+import org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 
 public final class DefaultProviderToolOperations implements ProviderToolOperations {
 
-  private final org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder;
+  private final ToolArgumentDecoder decoder;
   private final ProviderCatalog providerCatalog;
   private final ToolApprovalPort approvalPort;
   private final List<ToolInvocationObserver> observers;
@@ -28,7 +31,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       ProviderCatalog providerCatalog,
       ToolApprovalPort approvalPort,
       List<ToolInvocationObserver> observers,
-      org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder) {
+      ToolArgumentDecoder decoder) {
     this(providerCatalog, approvalPort, observers, new MemberProviderCapabilityPolicy(), decoder);
   }
 
@@ -37,8 +40,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       ToolApprovalPort approvalPort,
       List<ToolInvocationObserver> observers,
       MemberProviderCapabilityPolicy memberCapabilities,
-      org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder) {
-    this.decoder = java.util.Objects.requireNonNull(decoder);
+      ToolArgumentDecoder decoder) {
+    this.decoder = Objects.requireNonNull(decoder);
     this.providerCatalog = providerCatalog;
     this.approvalPort = approvalPort;
     this.observers = List.copyOf(observers);
@@ -88,7 +91,11 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     }
 
     if (command.approvalMode() == ApprovalMode.OPERATOR) {
-      return ToolInvocationOutcome.pending(
+      return pending(
+          provider,
+          tool,
+          arguments,
+          command,
           approvalPort.create(provider, tool, command.context(), command.argumentsJson(), null));
     }
 
@@ -107,9 +114,33 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       }
     }
 
-    return ToolInvocationOutcome.pending(
+    return pending(
+        provider,
+        tool,
+        arguments,
+        command,
         approvalPort.create(
             provider, tool, command.context(), command.argumentsJson(), command.taskReference()));
+  }
+
+  private ToolInvocationOutcome pending(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      Map<String, Object> arguments,
+      ToolInvocationCommand command,
+      ToolApproval approval) {
+    observe(
+        provider,
+        tool,
+        command.context(),
+        false,
+        "pending_approval",
+        "Awaiting permission",
+        ZalavaOperationResult.failure(
+            Map.of("status", "pending_approval", "approvalRequestId", approval.requestId())),
+        System.nanoTime(),
+        arguments);
+    return ToolInvocationOutcome.pending(approval);
   }
 
   @Override
@@ -326,7 +357,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return "zalava_backed";
   }
 
-  private static ToolApproval approvalDecision(java.util.function.Supplier<ToolApproval> decision) {
+  private static ToolApproval approvalDecision(Supplier<ToolApproval> decision) {
     try {
       return decision.get();
     } catch (ToolApprovalPort.ApprovalNotFoundException ex) {

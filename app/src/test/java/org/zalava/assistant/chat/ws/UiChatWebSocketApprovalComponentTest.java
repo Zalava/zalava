@@ -30,6 +30,7 @@ import org.zalava.api.InvocationContext;
 import org.zalava.api.ModuleDescriptor;
 import org.zalava.api.ProviderCapabilities;
 import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ProviderFactory;
 import org.zalava.api.ProviderFactoryDescriptor;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaOperationResult;
@@ -38,12 +39,14 @@ import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
+import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.modules.runtime.LoadedZalavaProvider;
 import org.zalava.modules.runtime.ZalavaRuntime;
+import org.zalava.support.PostgreSqlTestDatabase;
 import org.zalava.tasks.application.port.out.ActorTaskStore;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
@@ -61,17 +64,154 @@ import tools.jackson.databind.node.JsonNodeFactory;
 class UiChatWebSocketApprovalComponentTest {
   private static final Path WORKSPACE = createWorkspace();
   private static final AtomicInteger LOGINS = new AtomicInteger();
+  private static final AtomicInteger WRITES = new AtomicInteger();
 
   @Autowired private UiChatWebSocketHandler handler;
   @Autowired private AccountLifecycle accounts;
   @Autowired private MemberToolAccess toolAccess;
   @Autowired private ActorTaskStore tasks;
   @Autowired private ZalavaToolApprovalRequests approvals;
+  @Autowired private ProviderToolOperations operations;
+
+  @Test
+  void directWebRequestIsRestoredOnConnectAndCanExecuteOnlyOnce() throws Exception {
+    Account owner = member();
+    int before = WRITES.get();
+    var outcome = directRequest(owner, "milk");
+    assertThat(WRITES.get()).isEqualTo(before);
+    assertThat(outcome.status().name()).isEqualTo("PENDING_APPROVAL");
+    String id = outcome.approval().requestId();
+    WebSocketSession session = session(owner.loginName());
+    handler.afterConnectionEstablished(session);
+    assertThat(payloads(session))
+        .contains("permission.direct", id, "ui-interact-provider/write", "milk");
+    handler.handleTextMessage(session, directCommand(id, "allow-once"));
+    assertThat(approvals.get(id).decision()).isEqualTo(ZalavaToolApprovalRequests.Decision.ALLOWED);
+    assertThat(payloads(session)).contains("Permission allowed once; operation completed.");
+    WebSocketSession replay = session(owner.loginName());
+    handler.handleTextMessage(replay, directCommand(id, "allow-once"));
+    assertThat(payloads(replay)).contains("failure");
+    WebSocketSession reconnect = session(owner.loginName());
+    handler.afterConnectionEstablished(reconnect);
+    assertThat(payloads(reconnect)).doesNotContain(id);
+    assertThat(WRITES.get()).isEqualTo(before + 1);
+  }
+
+  @Test
+  void directDenyIsOwnerScopedAndDoesNotExecuteOrExposeAnotherActorsRequest() throws Exception {
+    Account owner = member();
+    Account other = member();
+    int before = WRITES.get();
+    String id = directRequest(owner, "bread").approval().requestId();
+    WebSocketSession outsider = session(other.loginName());
+    handler.afterConnectionEstablished(outsider);
+    assertThat(payloads(outsider)).doesNotContain(id, "bread");
+    handler.handleTextMessage(outsider, directCommand(id, "allow-once"));
+    assertThat(payloads(outsider)).contains("failure");
+    assertThat(approvals.get(id).decision()).isEqualTo(ZalavaToolApprovalRequests.Decision.PENDING);
+    WebSocketSession session = session(owner.loginName());
+    handler.handleTextMessage(session, directCommand(id, "deny"));
+    assertThat(approvals.get(id).decision()).isEqualTo(ZalavaToolApprovalRequests.Decision.DENIED);
+    assertThat(payloads(session)).contains("Permission denied; operation was not run.");
+    assertThat(WRITES.get()).isEqualTo(before);
+  }
+
+  @Test
+  void pendingRequestsWithIdenticalArgumentsStaySeparateForDifferentActors() {
+    Account first = member();
+    Account second = member();
+    String firstId = directRequest(first, "same").approval().requestId();
+    String secondId = directRequest(second, "same").approval().requestId();
+    assertThat(secondId).isNotEqualTo(firstId);
+    assertThat(approvals.get(firstId).actorId()).isEqualTo(first.id().toString());
+    assertThat(approvals.get(secondId).actorId()).isEqualTo(second.id().toString());
+  }
+
+  @Test
+  void memberCannotDecideDirectRequestCreatedUnderAdministratorRole() throws Exception {
+    Account owner = member();
+    var entry =
+        approvals.create(
+            scopedProvider(),
+            scopedProvider().listTools().getFirst(),
+            new InvocationContext(
+                owner.id().toString(),
+                false,
+                Map.of("accountRole", "ADMIN", "permissionPolicyChannel", "web")),
+            JsonNodeFactory.instance.objectNode().put("name", "restricted"));
+    WebSocketSession session = session(owner.loginName());
+    handler.afterConnectionEstablished(session);
+    assertThat(payloads(session)).doesNotContain(entry.requestId());
+    handler.handleTextMessage(session, directCommand(entry.requestId(), "allow-once"));
+    assertThat(payloads(session)).contains("failure");
+    assertThat(approvals.get(entry.requestId()).decision())
+        .isEqualTo(ZalavaToolApprovalRequests.Decision.PENDING);
+  }
+
+  private ProviderToolOperations.ToolInvocationOutcome directRequest(Account owner, String name) {
+    Account administrator =
+        accounts
+            .findByLoginName("approval-grant-admin")
+            .orElseGet(
+                () ->
+                    accounts.create(
+                        "approval-grant-admin", "GrantAdminPassword-123", AccountRole.ADMIN));
+    toolAccess.decide(
+        administrator.id().toString(),
+        owner.id().toString(),
+        new ToolKey("test-module", "ui-interact-provider", "write"),
+        true);
+    return operations.invoke(
+        ProviderToolOperations.ToolInvocationCommand.task(
+            "ui-interact-provider",
+            "write",
+            "{\"name\":\"" + name + "\"}",
+            new InvocationContext(
+                owner.id().toString(),
+                false,
+                Map.of("accountRole", "MEMBER", "permissionPolicyChannel", "web")),
+            null));
+  }
+
+  @Test
+  void directPreviewRedactsSensitiveNestedFieldsAndBoundsThePayload() throws Exception {
+    Account owner = member();
+    var arguments = JsonNodeFactory.instance.objectNode();
+    arguments.set(
+        "nested",
+        JsonNodeFactory.instance
+            .arrayNode()
+            .add(JsonNodeFactory.instance.objectNode().put("apiKey", "do-not-show-this")));
+    arguments.put("name", "long-preview-" + "x".repeat(1500));
+    var entry =
+        approvals.create(
+            scopedProvider(),
+            scopedProvider().listTools().getFirst(),
+            new InvocationContext(
+                owner.id().toString(),
+                false,
+                Map.of("accountRole", "MEMBER", "permissionPolicyChannel", "web")),
+            arguments);
+    WebSocketSession session = session(owner.loginName());
+    handler.afterConnectionEstablished(session);
+    assertThat(payloads(session))
+        .contains("permission.direct", entry.requestId(), "[REDACTED]")
+        .doesNotContain("do-not-show-this", "x".repeat(1500));
+  }
+
+  private static TextMessage directCommand(String requestId, String decision) {
+    return new TextMessage(
+        "{\"protocol\":\"zalava.ui/v1\",\"type\":\"permission.decide\",\"requestId\":\""
+            + requestId
+            + "\",\"decision\":\""
+            + decision
+            + "\"}");
+  }
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
     registry.add("agent.workspace", () -> WORKSPACE.toUri().toString());
-    org.zalava.support.PostgreSqlTestDatabase.register(registry);
+    PostgreSqlTestDatabase.register(registry);
     registry.add("zalava.accounts.security-enabled", () -> "true");
     registry.add("zalava.accounts.bootstrap-login", () -> "ui-interact-component-admin");
     registry.add("agent.onboarding.completed", () -> "true");
@@ -290,7 +430,11 @@ class UiChatWebSocketApprovalComponentTest {
             org.mockito.ArgumentMatchers.eq("write"),
             org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.any()))
-        .thenReturn(ZalavaOperationResult.success(Map.of("written", true)));
+        .thenAnswer(
+            invocation -> {
+              WRITES.incrementAndGet();
+              return ZalavaOperationResult.success(Map.of("written", true));
+            });
     return provider;
   }
 
@@ -319,7 +463,7 @@ class UiChatWebSocketApprovalComponentTest {
             }
 
             @Override
-            public List<org.zalava.api.ProviderFactory> providerFactories() {
+            public List<ProviderFactory> providerFactories() {
               return List.of();
             }
           };
@@ -327,7 +471,7 @@ class UiChatWebSocketApprovalComponentTest {
           new ProviderFactoryDescriptor("local-factory", "test-module", "test", "Test", "Test.");
       return new ZalavaRuntime() {
         @Override
-        public List<org.zalava.api.ZalavaModule> modules() {
+        public List<ZalavaModule> modules() {
           return List.of(module);
         }
 

@@ -91,6 +91,7 @@ function ZalavaRuntime({ children }) {
   const ownedConversationIds = useRef([]);
   const [jobs, setJobs] = useState({});
   const [approvals, setApprovals] = useState({});
+  const [permissionFeedback, setPermissionFeedback] = useState("");
   const [imports, setImports] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [pendingImports, setPendingImports] = useState([]);
@@ -187,6 +188,12 @@ function ZalavaRuntime({ children }) {
           ...current,
           [event.requestId]: { jobId: event.jobId, summary: event.summary, pending: true },
         }));
+      } else if (event.type === "permission.direct") {
+        setApprovals((current) => ({
+          ...Object.fromEntries(Object.entries(current).filter(([, entry]) => !entry.direct)),
+          ...Object.fromEntries(event.requests.map((request) => [request.requestId, { ...request, direct: true, pending: true }])),
+        }));
+        setPermissionFeedback(event.feedback ?? "");
       } else if (event.type === "attachment.available") {
         if (event.attachmentId) {
           setUploadedFiles((current) => [...current.filter((entry) => entry.attachmentId !== event.attachmentId), event]);
@@ -367,7 +374,7 @@ function ZalavaRuntime({ children }) {
       role: message.role,
       content: [{ type: "text", text: message.content }, ...message.tools.map((tool,index) => ({
         type: "tool-call", toolCallId: `${message.runId}-${index}`, toolName: tool.name,
-        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis }, isError: !tool.success,
+        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis,pendingApproval:tool.pendingApproval }, isError: !tool.success,
       }))],
       metadata: { custom: { original: message, execution:message.execution },
         ...(message.execution ? { timing: { streamStartTime:Date.parse(message.execution.at), totalStreamTime:message.execution.durationMillis, totalChunks:0,toolCallCount:message.tools.length } } : {}) },
@@ -416,8 +423,10 @@ function ZalavaRuntime({ children }) {
       saveUploadedFile,
       uploadedFiles,
       pendingImports,
+      permissionFeedback,
       decideApproval: (jobId, requestId, decision) => {
-        if (sendCommand({ type: "approval.decide", jobId, requestId, decision })) {
+        setPermissionFeedback("");
+        if (sendCommand({ type: approvals[requestId]?.direct ? "permission.decide" : "approval.decide", jobId, requestId, decision })) {
           setApprovals((current) => ({ ...current, [requestId]: { ...current[requestId], submitting: true } }));
         } else setCommandError("Zalava is not connected");
       },
@@ -430,7 +439,7 @@ function ZalavaRuntime({ children }) {
       createConversation: () => changeConversation("create", { type: "chat.create" }, "Creating conversation…"),
       renameConversation: (title) => changeConversation("rename", { type: "chat.rename", conversationId, title }, "Saving conversation name…"),
     }),
-    [messages, evidenceError, memoryReviews, memoryDecision, memoryFeedback, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice],
+    [messages, evidenceError, memoryReviews, memoryDecision, memoryFeedback, documentProcessing, status, conversationId, conversationIds, conversationSummaries, jobs, approvals, imports, uploadedFiles, pendingImports, uploadError, origin, canSend, canContinue, continuing, commandError, conversationAction, conversationNotice, permissionFeedback],
   );
 
   return (
@@ -452,7 +461,7 @@ function MessageText({text}) {
   return <Markdown allowedElements={["p","strong","em","code","pre","ul","ol","li","blockquote","a","h1","h2","h3","h4","h5","h6"]} components={{a:({href,children}) => <a href={href} rel="noopener noreferrer">{children}</a>}}>{text}</Markdown>;
 }
 function ToolEvidence({toolName,argsText,result,isError}) {
-  return <details className="answer-tool"><summary>{toolName} · {isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && <p role="alert">{result.error}</p>}</details>;
+  return <details className="answer-tool"><summary>{toolName} · {result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && <p role="alert">{result.error}</p>}</details>;
 }
 const HIDDEN_TEXT = () => null;
 function ConversationAnswer() {
@@ -520,6 +529,7 @@ function Chat() {
     uploadedFiles,
     pendingImports,
     decideApproval,
+    permissionFeedback,
     selectConversation,
     createConversation,
     renameConversation,
@@ -742,9 +752,11 @@ function Chat() {
           </>}
           {inspectorTab === "Tools" && <>
             <h2>Pending permissions</h2>
+            {permissionFeedback && <p role="status">{permissionFeedback}</p>}
             {approvals.length === 0 && <p>No pending permissions.</p>}
             {approvals.map(([requestId, approval]) => <section className="approval" key={requestId} aria-label="Pending permission">
               <strong>Permission needed</strong><p>Zalava requests approval for {approval.summary}.</p>
+              {approval.arguments && <><strong>Requested input</strong><pre className="permission-input">{approval.arguments}</pre></>}
               <button className="zalava-button" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
               <button className="zalava-button zalava-button--danger" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
               {approval.submitting && <p role="status">Submitting decision…</p>}

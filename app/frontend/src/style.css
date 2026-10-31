@@ -93,6 +93,7 @@ h1, p { margin: var(--zalava-space-1) 0; }
 .message.failure { border-color: var(--zalava-color-danger); background: var(--zalava-color-danger-soft); }
 .execution, .approval { padding: var(--zalava-space-3) var(--zalava-space-4); border-left: .3rem solid var(--zalava-color-primary); }
 .approval { border-left-color: var(--zalava-color-warning); }
+.permission-input { max-width:100%; white-space:pre-wrap; overflow-wrap:anywhere; }
 .approval .zalava-button { margin-right: var(--zalava-space-2); }
 
 .composer { display: grid; gap: var(--zalava-space-3); padding: var(--zalava-space-4); }

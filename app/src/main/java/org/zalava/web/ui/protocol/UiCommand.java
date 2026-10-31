@@ -17,6 +17,7 @@ public sealed interface UiCommand
         UiCommand.CreateConversation,
         UiCommand.ContinueConversation,
         UiCommand.DecideApproval,
+        UiCommand.DecideDirectApproval,
         UiCommand.PutAttachment,
         UiCommand.ImportAttachment,
         UiCommand.DeleteAttachment {
@@ -49,6 +50,11 @@ public sealed interface UiCommand
       DENY
     }
   }
+
+  /** Decides an authenticated actor's direct conversational request, without a fabricated job. */
+  record DecideDirectApproval(
+      String protocolVersion, String requestId, DecideApproval.Decision decision)
+      implements UiCommand {}
 
   /** Uploads one bounded file with an explicit retention intent. */
   record PutAttachment(
