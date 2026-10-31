@@ -1056,6 +1056,7 @@ class ReleasedModuleDistributableAcceptanceTest {
                   .setPath(diagnostics.resolve("released-time-member-inline.png")));
         }
         proveDirectShoppingApprovals(page, modelServer);
+        proveChatConfirmationSettings(page, browser, modelServer);
       } finally {
         stop();
       }
@@ -1172,6 +1173,175 @@ class ReleasedModuleDistributableAcceptanceTest {
         .hasCount(1);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(diagnostics.resolve("shopping-direct-persisted.png")));
+  }
+
+  private void proveChatConfirmationSettings(Page page, Browser browser, WireMockServer modelServer)
+      throws Exception {
+    page.setViewportSize(1440, 900);
+    page.navigate(baseUrl + "/zalava/accounts/chat-confirmations");
+    var row = page.locator("[data-confirmation-tool='shopping-list-household:add_item']");
+    PlaywrightAssertions.assertThat(row).containsText("Existing policy");
+    row.locator("form[action$='/role']")
+        .first()
+        .locator("select[name=choice]")
+        .selectOption("AUTO");
+    row.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save administrator default"))
+        .focus();
+    page.keyboard().press("Enter");
+    page.getByText("Role confirmation default saved.").waitFor();
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      assertThat((Boolean) row.evaluate("e => e.scrollWidth<=e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("chat-confirmation-role-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    page.reload();
+    assertThat(
+            row.locator("form[action$='/role']")
+                .first()
+                .locator("select[name=choice]")
+                .inputValue())
+        .isEqualTo("AUTO");
+    String account =
+        page.locator("#confirmation-account option")
+            .filter(new Locator.FilterOptions().setHasText(LOGIN))
+            .getAttribute("value");
+    page.locator("#confirmation-account").selectOption(account);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show individual settings"))
+        .click();
+    PlaywrightAssertions.assertThat(row).containsText("Run without confirmation");
+    PlaywrightAssertions.assertThat(row).containsText("Role default");
+    row.locator("form[action$='/user'] select[name=choice]").selectOption("REQUIRE");
+    row.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual setting"))
+        .click();
+    PlaywrightAssertions.assertThat(row).containsText("Require confirmation · User override");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      assertThat((Boolean) row.evaluate("e => e.scrollWidth<=e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("chat-confirmation-individual-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    sendShoppingPolicyTurn(
+        page, modelServer, "Confirmation-required bread", "Policy guarded bread");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("Policy guarded bread");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny").setExact(true))
+        .click();
+    page.getByText("Permission denied; operation was not run.").waitFor();
+    page.navigate(baseUrl + "/zalava/accounts/chat-confirmations?accountId=" + account);
+    row.locator("form[action$='/user'] select[name=choice]").selectOption("INHERIT");
+    row.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual setting"))
+        .click();
+    PlaywrightAssertions.assertThat(row).containsText("Run without confirmation · Role default");
+    sendShoppingPolicyTurn(page, modelServer, "Confirmation-auto milk", "Policy automatic milk");
+    PlaywrightAssertions.assertThat(
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+        .hasCount(0);
+    page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+    PlaywrightAssertions.assertThat(
+            page.getByText("Policy automatic milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    assertThat(page.content()).doesNotContain("Policy guarded bread");
+    page.reload();
+    PlaywrightAssertions.assertThat(
+            page.getByText("Policy automatic milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    page.navigate(baseUrl + "/zalava/accounts/tool-defaults");
+    var access = page.locator("[data-tool-access='shopping-list-household:add_item']");
+    access.locator("select[name=membersAllowed]").selectOption("true");
+    access
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+        .click();
+    page.navigate(baseUrl + "/zalava/accounts/chat-confirmations");
+    row.locator("form[action$='/role']").nth(1).locator("select[name=choice]").selectOption("AUTO");
+    row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save member default"))
+        .click();
+    try (var memberContext = browser.newContext()) {
+      Page member = memberContext.newPage();
+      signIn(member, "released-clock-member", PASSWORD, false);
+      sendShoppingPolicyTurn(
+          member, modelServer, "Member confirmation-auto", "Member automatic milk");
+      PlaywrightAssertions.assertThat(
+              member.getByRole(
+                  AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+          .hasCount(0);
+      page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+      PlaywrightAssertions.assertThat(
+              page.getByText("Member automatic milk", new Page.GetByTextOptions().setExact(true)))
+          .hasCount(1);
+    }
+  }
+
+  private void sendShoppingPolicyTurn(
+      Page page, WireMockServer modelServer, String marker, String item) {
+    String callback = ZalavaToolCallbackNames.forTool("shopping-list-household", "add_item");
+    String call =
+        """
+        data: {"id":"policy","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"policy-call","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"policy","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                callback, JSON.writeValueAsString(JSON.writeValueAsString(Map.of("name", item))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"policy-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Policy tool call completed."},"finish_reason":null}]}
+
+        data: {"id":"policy-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Policy tool call completed.", new Page.GetByTextOptions().setExact(true))
+        .waitFor();
   }
 
   private void start(PostgreSQLContainer postgres, Path workspace, String profile)

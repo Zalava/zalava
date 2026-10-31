@@ -7,6 +7,8 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.zalava.api.InvocationContext;
+import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
+import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation.Choice;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
@@ -34,6 +36,8 @@ class MemberToolAccessRestartTest {
     var key =
         new ToolKey(
             MemberToolAccessFixture.MODULE, MemberToolAccessFixture.PROVIDER, "current_time");
+    var write =
+        new ToolKey(MemberToolAccessFixture.MODULE, MemberToolAccessFixture.PROVIDER, "write_time");
     try (var first =
         RestartableZalavaApplicationContext.start(
             workspace, properties, MemberToolAccessFixture.class)) {
@@ -49,11 +53,26 @@ class MemberToolAccessRestartTest {
               .id()
               .toString();
       first.getBean(MemberToolAccess.class).defaultAccess(administratorId, key, true);
+      first
+          .getBean(ChatToolConfirmation.class)
+          .setRole(administratorId, AccountRole.MEMBER, write, Choice.AUTO);
+      first
+          .getBean(ChatToolConfirmation.class)
+          .setUser(administratorId, memberId, write, Choice.REQUIRE);
     }
     try (var second =
         RestartableZalavaApplicationContext.start(
             workspace, properties, MemberToolAccessFixture.class)) {
       assertThat(second.getBean(MemberToolAccess.class).allowed(memberId, key)).isTrue();
+      assertThat(
+              second
+                  .getBean(ChatToolConfirmation.class)
+                  .effective(administratorId, memberId, write)
+                  .effective())
+          .isEqualTo(Choice.REQUIRE);
+      second
+          .getBean(ChatToolConfirmation.class)
+          .setUser(administratorId, memberId, write, Choice.INHERIT);
       assertThat(
               second
                   .getBean(MemberToolAccess.class)
@@ -77,6 +96,12 @@ class MemberToolAccessRestartTest {
         RestartableZalavaApplicationContext.start(
             workspace, properties, MemberToolAccessFixture.class)) {
       assertThat(third.getBean(MemberToolAccess.class).allowed(memberId, key)).isFalse();
+      assertThat(
+              third
+                  .getBean(ChatToolConfirmation.class)
+                  .effective(administratorId, memberId, write)
+                  .effective())
+          .isEqualTo(Choice.AUTO);
       assertThat(
               third
                   .getBean(MemberToolAccess.class)

@@ -11,6 +11,7 @@ import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
+import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
@@ -26,6 +27,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   private final ToolApprovalPort approvalPort;
   private final List<ToolInvocationObserver> observers;
   private final MemberProviderCapabilityPolicy memberCapabilities;
+  private final ChatToolConfirmation confirmation;
 
   public DefaultProviderToolOperations(
       ProviderCatalog providerCatalog,
@@ -41,6 +43,17 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       List<ToolInvocationObserver> observers,
       MemberProviderCapabilityPolicy memberCapabilities,
       ToolArgumentDecoder decoder) {
+    this(providerCatalog, approvalPort, observers, memberCapabilities, decoder, null);
+  }
+
+  public DefaultProviderToolOperations(
+      ProviderCatalog providerCatalog,
+      ToolApprovalPort approvalPort,
+      List<ToolInvocationObserver> observers,
+      MemberProviderCapabilityPolicy memberCapabilities,
+      ToolArgumentDecoder decoder,
+      ChatToolConfirmation confirmation) {
+    this.confirmation = confirmation;
     this.decoder = Objects.requireNonNull(decoder);
     this.providerCatalog = providerCatalog;
     this.approvalPort = approvalPort;
@@ -79,8 +92,24 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       }
     }
 
+    Optional<Boolean> setting =
+        confirmation == null || command.taskReference() != null
+            ? Optional.empty()
+            : confirmation.requireFor(command.context(), provider, tool);
+    if (setting.isPresent() && !setting.get()) {
+      Map<String, String> attributes = new LinkedHashMap<>(command.context().attributes());
+      attributes.put("approvalPolicy", "chat-confirmation-setting");
+      return ToolInvocationOutcome.executed(
+          execute(
+              provider,
+              tool,
+              arguments,
+              new InvocationContext(command.context().actorId(), true, Map.copyOf(attributes))));
+    }
     Optional<ToolApproval> policy =
-        approvalPort.findAllowedToolPolicy(command.context(), provider, tool);
+        setting.orElse(false)
+            ? Optional.empty()
+            : approvalPort.findAllowedToolPolicy(command.context(), provider, tool);
     if (policy.isPresent()) {
       return ToolInvocationOutcome.executed(
           execute(
@@ -99,7 +128,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
           approvalPort.create(provider, tool, command.context(), command.argumentsJson(), null));
     }
 
-    if (command.approvalMode() == ApprovalMode.TASK) {
+    if (command.approvalMode() == ApprovalMode.TASK && setting.isEmpty()) {
       Optional<ToolApproval> decision =
           approvalPort.findUnscopedDecision(
               command.context().actorId(),
