@@ -139,9 +139,13 @@ import org.zalava.modules.runtime.ZalavaModuleProperties;
 import org.zalava.modules.runtime.ZalavaModuleRegistry;
 import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
+import org.zalava.modules.web.adapter.out.jdbc.JdbcModulePageAccessStore;
 import org.zalava.modules.web.adapter.out.runtime.ZalavaRuntimeWebExtensionModuleCatalog;
+import org.zalava.modules.web.application.DefaultModulePageAccess;
 import org.zalava.modules.web.application.DefaultWebExtensionRoutes;
+import org.zalava.modules.web.application.port.in.ModulePageAccess;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
+import org.zalava.modules.web.application.port.out.ModulePageAccessStore;
 import org.zalava.platform.configuration.adapter.out.filesystem.FileSystemConfigurationStore;
 import org.zalava.platform.configuration.adapter.out.spring.SpringConfigurationChangePublisher;
 import org.zalava.platform.configuration.application.DefaultConfigurationManagement;
@@ -801,6 +805,17 @@ public class ZalavaConfiguration {
         lifecycle,
         configurations,
         zalavaProviderFactoryContext);
+  }
+
+  @Bean
+  public ModulePageAccessStore modulePageAccessStore(JdbcClient jdbc) {
+    return new JdbcModulePageAccessStore(jdbc);
+  }
+
+  @Bean
+  public ModulePageAccess modulePageAccess(
+      AccountLifecycle accounts, WebExtensionRoutes routes, ModulePageAccessStore store) {
+    return new DefaultModulePageAccess(accounts, routes, store);
   }
 
   @Bean

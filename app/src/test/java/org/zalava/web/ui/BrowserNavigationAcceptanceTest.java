@@ -78,9 +78,9 @@ class BrowserNavigationAcceptanceTest {
           "Advanced settings",
           "My account");
   private static final List<String> MEMBER_MENU =
-      List.of("Chat", "Dashboard", "Knowledge", "Memory", "My account");
+      List.of("Chat", "Dashboard", "Knowledge", "Memory", "Apps", "My account");
   private static final List<String> MEMBER_HIDDEN =
-      List.of("/apps", "/modules", "/monitoring", "/settings", "/zalava/control");
+      List.of("/modules", "/monitoring", "/settings", "/zalava/control");
 
   private static final Map<String, String> PAGES = pages();
 
@@ -263,7 +263,8 @@ class BrowserNavigationAcceptanceTest {
       try {
         Page page = context.newPage();
         signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
-        for (String path : List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/memory")) {
+        for (String path :
+            List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/memory", "/apps")) {
           var response = page.navigate(baseUrl() + path);
           assertThat(response.status()).isEqualTo(200);
           page.locator(".zalava-navbar").waitFor();

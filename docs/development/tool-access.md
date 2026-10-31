@@ -50,3 +50,8 @@ Existing unsafe/trust tags and missing provider scopes still prevent Member gran
 The optional Workspace drawer retains permissions, Memory proposals and background work;
 run/tool transcripts belong to individual answers. Settings sections remain present across
 account and tool-access screens.
+
+
+## Module app access
+
+Module app screens are controlled separately from provider tools and Chat confirmation. Administrators can open **Manage accounts → App access** to set the Member default for each registered page and an individual Member override. Members are denied by default; administrators retain access. Allowed pages appear in Apps, and the same policy applies to direct page requests and form submissions. Granting access to a page permits its registered page actions and exposes the data that page provides; it does not imply per-person data isolation. Existing CSRF protection applies. Changes are persisted and audited, and saved permissions remain visible for stopped apps so they can be revoked.

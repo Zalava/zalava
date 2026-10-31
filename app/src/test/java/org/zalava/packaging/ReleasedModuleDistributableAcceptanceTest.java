@@ -1288,10 +1288,117 @@ class ReleasedModuleDistributableAcceptanceTest {
               member.getByRole(
                   AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
           .hasCount(0);
-      page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+      member.navigate(baseUrl + "/apps");
       PlaywrightAssertions.assertThat(
-              page.getByText("Member automatic milk", new Page.GetByTextOptions().setExact(true)))
+              member.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Shopping List")))
+          .hasCount(0);
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(403);
+      page.navigate(baseUrl + "/zalava/accounts/app-access");
+      var app = page.locator("[data-app-access='zalava-module-shopping-list:shopping-list']");
+      PlaywrightAssertions.assertThat(app).containsText("Not allowed");
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("app-access-" + width + ".png"))
+                .setFullPage(true));
+      }
+      page.setViewportSize(1440, 900);
+      app.locator("select[name=allowed]").selectOption("true");
+      app.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save member default"))
+          .focus();
+      page.keyboard().press("Enter");
+      page.getByText("Member default saved.").waitFor();
+      page.reload();
+      assertThat(app.locator("select[name=allowed]").inputValue()).isEqualTo("true");
+      member.navigate(baseUrl + "/apps");
+      member.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Shopping List")).click();
+      PlaywrightAssertions.assertThat(
+              member.getByText("Member automatic milk", new Page.GetByTextOptions().setExact(true)))
           .hasCount(1);
+      for (int width : new int[] {1440, 768, 390}) {
+        member.setViewportSize(width, 900);
+        if (width <= 1024)
+          member.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) member.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        member.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("member-shopping-" + width + ".png"))
+                .setFullPage(true));
+      }
+      member.setViewportSize(1440, 900);
+      member
+          .locator("form:has(input[name=name][value='Member automatic milk']) input[type=checkbox]")
+          .check();
+      member.getByText("Bought Member automatic milk").waitFor();
+      member.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+      PlaywrightAssertions.assertThat(
+              member.getByText("Member automatic milk", new Page.GetByTextOptions().setExact(true)))
+          .hasCount(0);
+      page.navigate(baseUrl + "/zalava/accounts/app-access");
+      app.locator("select[name=allowed]").selectOption("false");
+      app.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save member default"))
+          .click();
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(403);
+      String memberId =
+          page.locator("#member option")
+              .filter(new Locator.FilterOptions().setHasText("released-clock-member"))
+              .getAttribute("value");
+      page.locator("#member").selectOption(memberId);
+      page.getByRole(
+              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show individual settings"))
+          .click();
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("app-access-individual-" + width + ".png"))
+                .setFullPage(true));
+      }
+      page.setViewportSize(1440, 900);
+      app.locator("select[name=decision]").selectOption("ALLOW");
+      app.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual access"))
+          .click();
+      page.getByText("Individual access saved.").waitFor();
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(200);
+      app.locator("select[name=decision]").selectOption("DENY");
+      app.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual access"))
+          .click();
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(403);
     }
   }
 
