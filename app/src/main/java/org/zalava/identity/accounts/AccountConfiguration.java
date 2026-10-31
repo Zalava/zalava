@@ -140,6 +140,8 @@ public class AccountConfiguration {
                     .requestMatchers("/zalava/accounts/**")
                     .hasRole("ADMIN")
                     .requestMatchers(
+                        "/apps",
+                        "/apps/**",
                         "/dashboard",
                         "/chat",
                         "/chat/**",

@@ -38,9 +38,9 @@ class NavigationComponentTest {
           "/settings",
           "/zalava/control");
   private static final List<String> MEMBER_LINKS =
-      List.of("/dashboard", "/chat", "/jobs", "/knowledge");
+      List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/apps");
   private static final List<String> MEMBER_HIDDEN_LINKS =
-      List.of("/apps", "/modules", "/settings", "/zalava/control");
+      List.of("/modules", "/settings", "/zalava/control");
 
   private static final Map<String, String> PAGES =
       Map.of(

@@ -27,8 +27,8 @@
         </header>
         @if(pages.isEmpty())
             <section class="box dashboard-activity">
-                <p class="has-text-weight-semibold mb-1">No module apps are installed.</p>
-                <p class="has-text-grey">Install and start a module with an app screen to use it here.</p><p class="mt-3"><a class="button is-light" href="/modules">Browse modules</a></p>
+                <p class="has-text-weight-semibold mb-1">No module apps are available to your account.</p>
+                <p class="has-text-grey">Ask an administrator if you need access to an app.</p>
             </section>
         @else
             <section class="box dashboard-activity">
