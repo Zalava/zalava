@@ -1,7 +1,12 @@
 package org.zalava.modules.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.Mockito.mock;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -11,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +31,12 @@ import org.zalava.api.ModuleDescriptor;
 import org.zalava.api.ProviderFactory;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.extensions.web.*;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.modules.web.application.DefaultModulePageAccess;
+import org.zalava.modules.web.application.port.in.ModulePageAccess;
+import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
+import org.zalava.modules.web.application.port.out.ModulePageAccessStore;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,6 +48,9 @@ class ZalavaWebExtensionControllerComponentTest {
   private static final Path WORKSPACE = createWorkspace();
 
   @Autowired private MockMvc mockMvc;
+  @Autowired private AccountLifecycle accounts;
+  @Autowired private ModulePageAccess access;
+  @Autowired private ModulePageAccessStore store;
 
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {
@@ -117,6 +132,118 @@ class ZalavaWebExtensionControllerComponentTest {
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("<title>Zalava Chat</title>")))
         .andExpect(content().string(not(containsString("Fixture Shopping List"))));
+  }
+
+  @Test
+  void memberPageAccessControlsDiscoveryAndEveryRouteWithOverrides() throws Exception {
+    String password = "ModuleWebTestPassword-123";
+    var admin = accounts.create("page-admin-" + UUID.randomUUID(), password, AccountRole.ADMIN);
+    var member = accounts.create("page-member-" + UUID.randomUUID(), password, AccountRole.MEMBER);
+    accounts.changePassword(admin.id(), password, password + "x");
+    accounts.changePassword(member.id(), password, password + "x");
+    String administrator = admin.id().toString();
+    String individual = member.id().toString();
+    String module = "test-web-module", page = "shopping-list";
+    var memberUser = user(member.loginName()).roles("MEMBER");
+    var adminUser = user(admin.loginName()).roles("ADMIN");
+    mockMvc
+        .perform(get("/apps").with(memberUser))
+        .andExpect(status().isOk())
+        .andExpect(content().string(not(containsString("Fixture Shopping List"))));
+    mockMvc
+        .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/apps/test-web-module/shopping-list/items/eggs/bought")
+                .with(memberUser)
+                .with(csrf()))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/zalava/accounts/app-access/default")
+                .with(memberUser)
+                .with(csrf())
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("allowed", "true"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/zalava/accounts/app-access/default")
+                .with(adminUser)
+                .with(csrf().useInvalidToken())
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("allowed", "true"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/zalava/accounts/app-access/default")
+                .with(adminUser)
+                .with(csrf())
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("allowed", "true"))
+        .andExpect(status().is3xxRedirection());
+    mockMvc
+        .perform(get("/apps").with(memberUser))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Fixture Shopping List")));
+    mockMvc
+        .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/apps/test-web-module/shopping-list/items/eggs/bought")
+                .with(memberUser)
+                .with(csrf())
+                .param("checked", "true"))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/apps/test-web-module/shopping-list/items/eggs/bought")
+                .with(memberUser)
+                .with(csrf().useInvalidToken()))
+        .andExpect(status().isForbidden());
+    access.setOverride(administrator, individual, module, page, "DENY");
+    mockMvc
+        .perform(
+            get("/apps/test-web-module/shopping-list")
+                .with(memberUser)
+                .with(csrf().useInvalidToken()))
+        .andExpect(status().isForbidden());
+    access.setOverride(administrator, individual, module, page, "INHERIT");
+    mockMvc
+        .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
+        .andExpect(status().isOk());
+    access.setDefault(administrator, module, page, false);
+    access.setOverride(administrator, individual, module, page, "ALLOW");
+    mockMvc
+        .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
+        .andExpect(status().isOk());
+    var unavailable = new DefaultModulePageAccess(accounts, mock(WebExtensionRoutes.class), store);
+    assertThat(unavailable.pages(administrator))
+        .anyMatch(
+            p ->
+                p.moduleId().equals(module)
+                    && p.pageId().equals(page)
+                    && p.description().contains("unavailable"));
+    assertThatThrownBy(() -> unavailable.setDefault(administrator, module, page, true))
+        .isInstanceOf(IllegalArgumentException.class);
+    unavailable.setDefault(administrator, module, page, false);
+    unavailable.setOverride(administrator, individual, module, page, "DENY");
+    assertThatThrownBy(() -> access.setOverride(administrator, individual, module, page, "BAD"))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> access.setDefault(administrator, "../bad", page, false))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> access.setDefault(individual, module, page, true))
+        .isInstanceOf(SecurityException.class);
+    accounts.setEnabled(member.id(), false);
+    mockMvc
+        .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
+        .andExpect(status().is3xxRedirection());
+    access.setOverride(administrator, individual, module, page, "INHERIT");
   }
 
   @TestConfiguration(proxyBeanMethods = false)
