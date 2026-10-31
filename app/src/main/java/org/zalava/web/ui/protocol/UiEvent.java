@@ -16,6 +16,7 @@ public sealed interface UiEvent
         UiEvent.ToolProgress,
         UiEvent.ToolResult,
         UiEvent.PermissionRequested,
+        UiEvent.DirectPermissions,
         UiEvent.ArtifactAvailable,
         UiEvent.AttachmentAvailable,
         UiEvent.AttachmentRemoved,
@@ -103,6 +104,15 @@ public sealed interface UiEvent
 
   record PermissionRequested(String protocolVersion, String jobId, String requestId, String summary)
       implements UiEvent {}
+
+  record DirectPermissions(String protocolVersion, List<DirectPermission> requests, String feedback)
+      implements UiEvent {
+    public DirectPermissions {
+      requests = List.copyOf(requests);
+    }
+  }
+
+  record DirectPermission(String requestId, String summary, String arguments) {}
 
   record ArtifactAvailable(String protocolVersion, String artifactId, String name)
       implements UiEvent {}

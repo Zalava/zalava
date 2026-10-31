@@ -170,6 +170,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
     sendSnapshot(session, selected);
     sendMemoryReviews(session, actor);
     sendDocumentProcessingStatus(session);
+    sendDirectPermissions(session, "");
     if (executionStates != null) {
       executionStates.states(actor).forEach(state -> publishExecutionState(session, state));
     }
@@ -215,6 +216,13 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         }
         case UiCommand.SendChat send -> streamChat(session, actor, send);
         case UiCommand.DecideApproval decide -> decideApproval(session, decide);
+        case UiCommand.DecideDirectApproval decide -> {
+          if (approvalDecisions == null)
+            throw new IllegalStateException("UI permissions unavailable");
+          String feedback =
+              approvalDecisions.decideDirect(session.getPrincipal().getName(), decide);
+          sendDirectPermissions(session, feedback);
+        }
         case UiCommand.PutAttachment put -> putAttachment(session, actor, put);
         case UiCommand.ImportAttachment save -> {
           sendDocumentProcessingStatus(session);
@@ -229,6 +237,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
     } catch (RuntimeException exception) {
       log.warn("UI chat command failed", exception);
       sendFailure(session, "command", "Zalava could not complete that request");
+      sendDirectPermissions(session, "");
     }
   }
 
@@ -318,6 +327,7 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
                     runId));
             sendConversationList(session, actor);
             sendMemoryReviews(session, actor);
+            sendDirectPermissions(session, "");
             sendDocumentProcessingStatus(session);
             if (executionStates != null) {
               jobs.forEach(
@@ -359,6 +369,16 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
         session,
         new UiEvent.DocumentProcessingStatus(
             UiCommandDecoder.VERSION, attachments != null && attachments.readingAvailable()));
+  }
+
+  private void sendDirectPermissions(WebSocketSession session, String feedback) {
+    if (approvalDecisions == null || session.getPrincipal() == null) return;
+    send(
+        session,
+        new UiEvent.DirectPermissions(
+            UiCommandDecoder.VERSION,
+            approvalDecisions.pendingDirect(session.getPrincipal().getName()),
+            feedback));
   }
 
   private void sendMemoryReviews(WebSocketSession session, Actor actor) {

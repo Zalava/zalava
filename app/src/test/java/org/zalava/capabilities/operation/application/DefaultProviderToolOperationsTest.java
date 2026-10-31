@@ -72,7 +72,20 @@ class DefaultProviderToolOperationsTest {
         .isEqualTo(ProviderToolOperations.ToolInvocationStatus.PENDING_APPROVAL);
     assertThat(outcome.approval().taskReference()).isNull();
     assertThat(provider.calls).hasValue(0);
-    assertThat(observer.observations).isEmpty();
+    assertThat(observer.observations)
+        .singleElement()
+        .satisfies(
+            observation -> {
+              assertThat(observation.errorType()).isEqualTo("pending_approval");
+              assertThat(observation.arguments()).containsEntry("path", "notes/a.txt");
+              assertThat(observation.result().content())
+                  .isEqualTo(
+                      Map.of(
+                          "status",
+                          "pending_approval",
+                          "approvalRequestId",
+                          outcome.approval().requestId()));
+            });
   }
 
   @Test
@@ -91,9 +104,8 @@ class DefaultProviderToolOperationsTest {
     assertThat(outcome.result().content())
         .isEqualTo(Map.of("path", "notes/a.txt", "confirmed", true));
     assertThat(provider.calls).hasValue(1);
-    assertThat(observer.observations)
-        .singleElement()
-        .satisfies(observation -> assertThat(observation.confirmed()).isTrue());
+    assertThat(observer.observations).hasSize(2);
+    assertThat(observer.observations.getLast().confirmed()).isTrue();
   }
 
   @Test
@@ -135,8 +147,8 @@ class DefaultProviderToolOperationsTest {
     assertThat(outcome.status()).isEqualTo(ProviderToolOperations.ToolInvocationStatus.DENIED);
     assertThat(outcome.approval().requestId()).isEqualTo(requestId);
     assertThat(provider.calls).hasValue(0);
-    assertThat(observer.observations)
-        .singleElement()
+    assertThat(observer.observations).hasSize(2);
+    assertThat(observer.observations.getLast())
         .satisfies(
             observation -> {
               assertThat(observation.success()).isFalse();
