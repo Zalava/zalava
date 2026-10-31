@@ -22,6 +22,7 @@
 @template.ui.settingsSections(current = "accounts")
 <div class="settings-content accounts-layout">
 <header><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Administration</p><p><a class="button is-link is-light" href="/zalava/accounts/tool-defaults">Tool access defaults</a></p>
+<p><a class="button is-link is-light" href="/zalava/accounts/chat-confirmations">Chat tool confirmation</a></p>
 <h1 class="title is-3">Accounts</h1><p class="has-text-grey">Manage workspace access. Only administrators can change account roles and reset passwords.</p></header>
 @if(error != null)<p class="notification is-danger is-light" role="alert">${error}</p>@endif
 @if(message != null)<p class="notification is-success is-light" role="status">${message}</p>@endif

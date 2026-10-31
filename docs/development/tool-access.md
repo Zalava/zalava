@@ -15,7 +15,14 @@ Revocation prevents future invocations; it does not undo completed work or cance
 already executing. Disabling an account also denies Member provider calls.
 
 A grant cannot bypass mandatory scope, trust or administrator-only capability restrictions.
-Side-effecting operations still require the existing execution approval. Provider-side
+Side-effecting operations use the existing execution approval by default. Administrators
+can choose Chat confirmation per action and role under Settings → Manage accounts →
+Chat tool confirmation, with individual overrides taking precedence. “Existing
+policy” retains prior actor/tool approval policies. Explicit “Require confirmation”
+overrides an older always-allow policy; “Run without confirmation” applies only to
+direct Chat actions and does not grant access or change other channels. Pending
+requests still need a decision. Changes are audited and apply to subsequent calls.
+Provider-side
 argument validation and module-owned root/scope enforcement remain in force. The legacy
 member-safe marker alone does not grant access in the configured host.
 

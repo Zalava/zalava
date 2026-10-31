@@ -84,14 +84,18 @@ import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderTool;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderToolInvoker;
 import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
+import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcChatToolConfirmationStore;
 import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcMemberToolAccessStore;
 import org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder;
 import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProviderCatalog;
+import org.zalava.capabilities.operation.application.DefaultChatToolConfirmation;
 import org.zalava.capabilities.operation.application.DefaultMemberToolAccess;
 import org.zalava.capabilities.operation.application.DefaultProviderToolOperations;
 import org.zalava.capabilities.operation.application.MemberProviderCapabilityPolicy;
+import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
+import org.zalava.capabilities.operation.application.port.out.ChatToolConfirmationStore;
 import org.zalava.capabilities.operation.application.port.out.MemberToolAccessStore;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
@@ -816,6 +820,21 @@ public class ZalavaConfiguration {
   }
 
   @Bean
+  public ChatToolConfirmationStore chatToolConfirmationStore(JdbcClient jdbc) {
+    return new JdbcChatToolConfirmationStore(jdbc);
+  }
+
+  @Bean
+  public ChatToolConfirmation chatToolConfirmation(
+      AccountLifecycle accounts,
+      ChatToolConfirmationStore store,
+      ZalavaRuntime runtime,
+      Clock clock) {
+    return new DefaultChatToolConfirmation(
+        accounts, store, new ZalavaRuntimeProviderCatalog(runtime), clock);
+  }
+
+  @Bean
   public MemberToolAccessStore memberToolAccessStore(JdbcClient jdbc) {
     return new JdbcMemberToolAccessStore(jdbc);
   }
@@ -856,13 +875,15 @@ public class ZalavaConfiguration {
       ZalavaRuntime zalavaRuntime,
       ZalavaToolApprovalRequests approvalRequests,
       List<ToolInvocationObserver> observers,
-      MemberToolAccess access) {
+      MemberToolAccess access,
+      ChatToolConfirmation confirmation) {
     return new DefaultProviderToolOperations(
         new ZalavaRuntimeProviderCatalog(zalavaRuntime),
         new ZalavaToolApprovalAdapter(approvalRequests),
         observers,
         new MemberProviderCapabilityPolicy(access),
-        new JacksonToolArgumentDecoder());
+        new JacksonToolArgumentDecoder(),
+        confirmation);
   }
 
   @Bean
