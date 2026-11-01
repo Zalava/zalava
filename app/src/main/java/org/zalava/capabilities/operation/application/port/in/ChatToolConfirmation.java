@@ -22,7 +22,7 @@ public interface ChatToolConfirmation {
       String description,
       boolean available,
       Boolean sideEffecting,
-      boolean hostRead) {}
+      String hostAccessNote) {}
 
   record Effective(Choice override, Choice roleDefault, Choice effective, String source) {}
 

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
@@ -165,6 +167,29 @@ class StreamingToolContextBridgeTest {
                 });
     thread.join();
     assertThat(seen.get()).isEqualTo("owned-conversation");
+  }
+
+  @Test
+  void policyCanDeferAHostCallbackWithoutRunningIt() {
+    var actors = new ActorExecutionContext();
+    var actor = new Actor(AccountId.newId());
+    var allow = new AtomicBoolean(false);
+    var seen = new AtomicReference<String>();
+    var bridge =
+        new StreamingToolContextBridge(
+            actors,
+            new ActorTaskCreationContext(),
+            (name, input) -> allow.get() ? Optional.empty() : Optional.of("pending"));
+    var snapshot = actors.call(actor, AccountRole.ADMIN, bridge::snapshot);
+    var provider =
+        (ToolCallbackProvider)
+            bridge.bind(List.of(new AnnotatedTool(seen, actors)), snapshot).getFirst();
+    var callback = provider.getToolCallbacks()[0];
+    assertThat(callback.call("{\"input\":\"value\"}")).isEqualTo("pending");
+    assertThat(seen.get()).isNull();
+    allow.set(true);
+    assertThat(callback.call("{\"input\":\"value\"}")).isEqualTo("\"ok\"");
+    assertThat(seen.get()).contains(actor.accountId().value().toString());
   }
 
   private static ToolCallback recordingCallback(

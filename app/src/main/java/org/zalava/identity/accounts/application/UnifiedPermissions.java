@@ -113,7 +113,7 @@ public final class UnifiedPermissions {
               tool.eligible(),
               available,
               sideEffecting,
-              ct != null && ct.hostRead(),
+              ct == null ? null : ct.hostAccessNote(),
               accessChoice,
               accessEffective,
               accessSource,
@@ -224,7 +224,12 @@ public final class UnifiedPermissions {
   }
 
   private static String friendly(String name) {
-    String text = name.replace('_', ' ').replace('-', ' ').replace('.', ' ').strip();
+    String text =
+        name.replaceAll("([a-z])([A-Z])", "$1 $2")
+            .replace('_', ' ')
+            .replace('-', ' ')
+            .replace('.', ' ')
+            .strip();
     return text.isEmpty() ? name : Character.toUpperCase(text.charAt(0)) + text.substring(1);
   }
 
@@ -248,7 +253,7 @@ public final class UnifiedPermissions {
       boolean eligible,
       boolean available,
       Boolean sideEffecting,
-      boolean hostRead,
+      String hostAccessNote,
       String accessChoice,
       String accessEffective,
       String accessSource,

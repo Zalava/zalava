@@ -82,3 +82,26 @@ document.querySelectorAll('time[data-local-time]').forEach(element => {
   const value = new Date(element.dateTime);
   if (!Number.isNaN(value.getTime())) element.textContent = new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(value);
 });
+
+// Filter the already-authorized permissions without hiding them when JavaScript is unavailable.
+(() => {
+  const input = document.querySelector('[data-permission-filter]');
+  const container = document.querySelector('[data-permission-filter-container]');
+  const status = document.querySelector('[data-permission-filter-status]');
+  if (!input || !container || !status) return;
+  const rows = Array.from(document.querySelectorAll('[data-permission-app], [data-permission-tool]'));
+  const update = () => {
+    const query = input.value.trim().toLocaleLowerCase();
+    let count = 0;
+    rows.forEach(row => {
+      const matches = !query || row.textContent.toLocaleLowerCase().includes(query);
+      row.hidden = !matches;
+      row.style.display = matches ? '' : 'none';
+      if (matches) count++;
+    });
+    status.textContent = query ? `${count} matching ${count === 1 ? 'app or tool' : 'apps or tools'}.` : '';
+  };
+  container.hidden = false;
+  input.addEventListener('input', update);
+  update();
+})();
