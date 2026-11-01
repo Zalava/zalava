@@ -224,7 +224,7 @@ public final class UnifiedPermissions {
   }
 
   private static String friendly(String name) {
-    String text = name.replace('_', ' ').replace('-', ' ').strip();
+    String text = name.replace('_', ' ').replace('-', ' ').replace('.', ' ').strip();
     return text.isEmpty() ? name : Character.toUpperCase(text.charAt(0)) + text.substring(1);
   }
 

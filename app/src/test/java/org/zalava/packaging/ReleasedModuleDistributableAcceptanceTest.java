@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -1058,6 +1059,11 @@ class ReleasedModuleDistributableAcceptanceTest {
         proveDirectShoppingApprovals(page, modelServer);
         proveChatConfirmationSettings(page, browser, modelServer);
         proveUnifiedPermissions(page, modelServer);
+        stop();
+        start(postgres, workspace, "local-control", true);
+        page.context().clearCookies();
+        signIn(page, LOGIN, PASSWORD, false);
+        proveKnowledgeReadConfirmation(page, modelServer);
       } finally {
         stop();
       }
@@ -1493,6 +1499,114 @@ class ReleasedModuleDistributableAcceptanceTest {
         .hasCount(0);
   }
 
+  private void proveKnowledgeReadConfirmation(Page page, WireMockServer modelServer) {
+    String marker = "Knowledge approval test rarecedar";
+    String fact = "rarecedar-8392 is the private fixture fact.";
+    page.navigate(baseUrl + "/knowledge");
+    page.locator("#knowledge-file")
+        .setInputFiles(
+            new FilePayload(
+                "confirmation-note.txt", "text/plain", fact.getBytes(StandardCharsets.UTF_8)));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true))
+        .click();
+    page.getByText("Source uploaded for processing.").waitFor();
+    Locator document =
+        page.locator("li.box")
+            .filter(new Locator.FilterOptions().setHasText("confirmation-note.txt"));
+    for (int attempt = 0; attempt < 100 && !document.innerText().contains("Ready"); attempt++) {
+      page.waitForTimeout(300);
+      page.reload();
+    }
+    PlaywrightAssertions.assertThat(document).containsText("Ready");
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    Locator read = page.locator("[data-permission-tool='zalava-knowledge:knowledge.search']");
+    PlaywrightAssertions.assertThat(read).containsText("Governed by document permissions");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("knowledge-permission-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    read.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    read.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    page.getByText("Chat confirmation saved.").waitFor();
+    String call =
+        """
+        data: {"id":"knowledge","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"knowledge-call","type":"function","function":{"name":"zalava_knowledge_search_f2405c6159c995e8","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"knowledge","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("query", "rarecedar", "limit", 2))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"knowledge-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Knowledge tool call completed."},"finish_reason":null}]}
+
+        data: {"id":"knowledge-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Knowledge tool call completed.").waitFor();
+    assertThat(
+            modelServer.getAllServeEvents().stream()
+                .map(event -> event.getRequest().getBodyAsString())
+                .filter(body -> body.contains(marker)))
+        .allMatch(body -> !body.contains("rarecedar-8392"));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("knowledge.search");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Read approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(page.getByText("Knowledge tool call completed.")).hasCount(2);
+    modelServer.verify(
+        WireMock.postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(marker))
+            .withRequestBody(containing("rarecedar-8392")));
+  }
+
   private void sendShoppingPolicyTurn(
       Page page, WireMockServer modelServer, String marker, String item) {
     sendShoppingToolTurn(page, modelServer, marker, "add_item", Map.of("name", item));
@@ -1552,6 +1666,12 @@ class ReleasedModuleDistributableAcceptanceTest {
 
   private void start(PostgreSQLContainer postgres, Path workspace, String profile)
       throws Exception {
+    start(postgres, workspace, profile, false);
+  }
+
+  private void start(
+      PostgreSQLContainer postgres, Path workspace, String profile, boolean jobsEnabled)
+      throws Exception {
     int port;
     try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
       port = socket.getLocalPort();
@@ -1590,7 +1710,7 @@ class ReleasedModuleDistributableAcceptanceTest {
                 "--spring.ai.model.chat=unknown",
                 "--agent.channels.telegram.token=false",
                 "--agent.channels.telegram.username=false",
-                "--jobrunr.background-job-server.enabled=false",
+                "--jobrunr.background-job-server.enabled=" + jobsEnabled,
                 "--jobrunr.dashboard.enabled=false")
             .directory(workspace.toFile())
             .redirectErrorStream(true)

@@ -39,6 +39,7 @@ public final class MemberProviderCapabilityPolicy {
   }
 
   public static boolean eligible(ZalavaProvider provider, ZalavaToolDescriptor tool) {
+    if (reservedHostTool(provider, tool)) return false;
     Set<String> tags =
         Stream.concat(provider.descriptor().policyTags().stream(), tool.policyTags().stream())
             .map(value -> value.strip().toLowerCase(Locale.ROOT))
@@ -51,6 +52,11 @@ public final class MemberProviderCapabilityPolicy {
 
   public void requireAllowed(
       ZalavaProvider provider, ZalavaToolDescriptor tool, InvocationContext context) {
+    if (reservedHostTool(provider, tool)) {
+      throw new ProviderToolOperationException(
+          ProviderToolOperationException.Code.UNSUPPORTED,
+          "Provider operation uses a reserved host tool identity");
+    }
     if (!"MEMBER".equals(context.attributes().get("accountRole"))) return;
     Set<String> tags =
         Stream.concat(provider.descriptor().policyTags().stream(), tool.policyTags().stream())
@@ -77,5 +83,11 @@ public final class MemberProviderCapabilityPolicy {
               + "/"
               + tool.name());
     }
+  }
+
+  private static boolean reservedHostTool(ZalavaProvider provider, ZalavaToolDescriptor tool) {
+    return HostReadToolCatalog.contains(
+        new ToolKey(
+            provider.descriptor().moduleId(), provider.descriptor().providerId(), tool.name()));
   }
 }

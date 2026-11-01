@@ -19,6 +19,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.api.InvocationContext;
+import org.zalava.assistant.agent.AgentRequestTools;
+import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.application.HostReadToolCatalog;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation.Choice;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
@@ -26,9 +30,12 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.To
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations.ToolInvocationCommand;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations.ToolInvocationStatus;
+import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
 import org.zalava.support.SecureZalavaComponentTest;
 
 @SecureZalavaComponentTest
@@ -40,6 +47,9 @@ class ChatConfirmationComponentTest {
   @Autowired MemberToolAccess access;
   @Autowired ProviderToolOperations operations;
   @Autowired JdbcClient jdbc;
+  @Autowired AgentRequestTools agentTools;
+  @Autowired ActorExecutionContext actorContext;
+  @Autowired ZalavaToolApprovalRequests approvals;
   Account admin, first, second;
   ToolKey write =
       new ToolKey(MemberToolAccessFixture.MODULE, MemberToolAccessFixture.PROVIDER, "write_time");
@@ -53,6 +63,66 @@ class ChatConfirmationComponentTest {
     confirmation.setRole(id(admin), AccountRole.MEMBER, write, Choice.INHERIT);
     confirmation.setRole(id(admin), AccountRole.ADMIN, write, Choice.INHERIT);
     access.defaultAccess(id(admin), write, false);
+  }
+
+  @Test
+  void knowledgeReadConfirmationUsesApplicationWiringAndPersonOverride() throws Exception {
+    ToolKey key =
+        new ToolKey(HostReadToolCatalog.MODULE, HostReadToolCatalog.PROVIDER, "knowledge.search");
+    var knowledge =
+        agentTools.bootstrapTools().stream()
+            .filter(KnowledgeAgentTools.class::isInstance)
+            .map(KnowledgeAgentTools.class::cast)
+            .findFirst()
+            .orElseThrow();
+    try {
+      mvc.perform(get("/zalava/accounts/permissions").with(user(admin.loginName()).roles("ADMIN")))
+          .andExpect(status().isOk())
+          .andExpect(content().string(containsString("knowledge.search")))
+          .andExpect(content().string(containsString("Governed by document permissions")));
+      mvc.perform(
+              post("/zalava/accounts/permissions/confirmation")
+                  .with(user(admin.loginName()).roles("ADMIN"))
+                  .with(csrf())
+                  .param("subject", id(first))
+                  .param("moduleId", key.moduleId())
+                  .param("providerId", key.providerId())
+                  .param("toolName", key.toolName())
+                  .param("decision", "REQUIRE"))
+          .andExpect(status().is3xxRedirection());
+      String pending =
+          actorContext.call(
+              new Actor(first.id()),
+              AccountRole.MEMBER,
+              () ->
+                  ConversationChannelContext.call(
+                      "chat-knowledge", () -> knowledge.search("unique-regression-query", 2)));
+      assertThat(pending).contains("pending_approval").doesNotContain("NO_MATCH");
+      var entry =
+          approvals.recentEntries().stream()
+              .filter(e -> e.actorId().equals(id(first)) && e.toolName().equals(key.toolName()))
+              .findFirst()
+              .orElseThrow();
+      operations.approveChatRead(entry.requestId());
+      String result =
+          actorContext.call(
+              new Actor(first.id()),
+              AccountRole.MEMBER,
+              () ->
+                  ConversationChannelContext.call(
+                      "chat-knowledge", () -> knowledge.search("unique-regression-query", 2)));
+      assertThat(result).contains("NO_MATCH");
+      String defaultResult =
+          actorContext.call(
+              new Actor(second.id()),
+              AccountRole.MEMBER,
+              () ->
+                  ConversationChannelContext.call(
+                      "chat-other", () -> knowledge.search("unique-regression-query", 2)));
+      assertThat(defaultResult).contains("NO_MATCH");
+    } finally {
+      confirmation.setUser(id(admin), id(first), key, Choice.INHERIT);
+    }
   }
 
   private Account account(AccountRole role) {

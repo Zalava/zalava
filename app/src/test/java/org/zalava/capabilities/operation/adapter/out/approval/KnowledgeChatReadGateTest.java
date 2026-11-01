@@ -23,6 +23,7 @@ import org.zalava.knowledge.application.KnowledgeEvidenceQueries;
 import org.zalava.knowledge.application.KnowledgeToolObservation;
 import org.zalava.knowledge.application.port.out.KnowledgeEvidenceStore;
 import org.zalava.tasks.domain.TaskExecutionContext;
+import org.zalava.tasks.domain.TaskReference;
 
 class KnowledgeChatReadGateTest {
   private final ActorExecutionContext actors = new ActorExecutionContext();
@@ -97,6 +98,36 @@ class KnowledgeChatReadGateTest {
     assertThat(selected).isEmpty();
     verifyNoInteractions(store);
     assertThat(approvals.recentEntries()).isEmpty();
+  }
+
+  @Test
+  void otherChannelsAndJobsRetainTheirExistingReadPolicy() {
+    String telegram = call(member, "telegram-123", () -> tools.search("warranty", 2));
+    String job =
+        call(
+            member,
+            "chat-a",
+            () ->
+                tasks.call(
+                    TaskReference.parse("2026-11-01", "120000-example.md"),
+                    () -> tools.search("warranty", 2)));
+    assertThat(telegram).contains("NO_MATCH");
+    assertThat(job).contains("NO_MATCH");
+    verify(store, times(2)).search(member, "warranty", 2);
+    verifyNoInteractions(confirmation);
+    assertThat(approvals.recentEntries()).isEmpty();
+  }
+
+  @Test
+  void deniedReadCannotConsumeAnApproval() {
+    when(confirmation.requireFor(any(), any(), any())).thenReturn(Optional.of(true));
+    when(confirmation.mayConsumeReadApproval(any())).thenReturn(true);
+    assertThat(call(member, "chat-a", () -> tools.search("private", 2)))
+        .contains("pending_approval");
+    approvals.denyUnscoped(approvals.recentEntries().getFirst().requestId());
+    assertThat(call(member, "chat-a", () -> tools.search("private", 2)))
+        .contains("pending_approval");
+    verifyNoInteractions(store);
   }
 
   private String call(Actor actor, String conversation, Supplier<String> action) {

@@ -58,7 +58,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                                   provider.descriptor().displayName(),
                                   tool.description(),
                                   true,
-                                  tool.sideEffecting(), false));
+                                  tool.sideEffecting(),
+                                  false));
                         }));
     var host = HostReadToolCatalog.provider();
     host.listTools()
@@ -69,7 +70,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                       host.descriptor().moduleId(), host.descriptor().providerId(), tool.name());
               tools.put(
                   key,
-                  new Tool(key, host.descriptor().displayName(), tool.description(), true, false, true));
+                  new Tool(
+                      key, host.descriptor().displayName(), tool.description(), true, false, true));
             });
     store
         .savedTools()
@@ -82,7 +84,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                         key.providerId(),
                         "Provider unavailable. Saved settings remain active when it starts; you can require confirmation or restore the existing policy now.",
                         false,
-                        null, false)));
+                        null,
+                        false)));
     return List.copyOf(tools.values());
   }
 
