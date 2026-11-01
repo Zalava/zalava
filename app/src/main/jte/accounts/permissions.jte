@@ -1,7 +1,7 @@
 @import java.util.List
-@import org.zalava.web.ui.UnifiedPermissionsController.Person
-@import org.zalava.web.ui.UnifiedPermissionsController.ToolRow
-@import org.zalava.web.ui.UnifiedPermissionsController.PageRow
+@import org.zalava.identity.accounts.application.UnifiedPermissions.Person
+@import org.zalava.identity.accounts.application.UnifiedPermissions.ToolRow
+@import org.zalava.identity.accounts.application.UnifiedPermissions.PageRow
 @import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation.Choice
 @import org.zalava.web.ui.navigation.NavigationModel
 @import org.springframework.security.web.csrf.CsrfToken

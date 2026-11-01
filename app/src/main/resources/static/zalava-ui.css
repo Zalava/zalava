@@ -1105,9 +1105,10 @@ body:not(.zalava-auth) > .auth-layout .auth-card { padding: 1.25rem; }
 .tool-access-row { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:1rem; }
 .tool-access-copy { flex:1 1 16rem; min-width:0; overflow-wrap:anywhere; }
 .tool-access-actions { display:flex; flex:1 1 22rem; min-width:0; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:.5rem; }
-.tool-access-actions form { display:flex; flex-wrap:wrap; align-items:end; gap:.5rem; }
+.tool-access-actions form { display:flex; flex-wrap:wrap; align-items:end; gap:.5rem; min-width:0; max-width:100%; }
 .tool-access-actions form .label { flex-basis:100%; margin:0; }
-.tool-access-actions .select { max-width:100%; }
+.tool-access-actions .select, .tool-access-actions .select select { min-width:0; max-width:100%; }
+.tool-access-actions .button { max-width:100%; height:auto; min-height:2.75rem; white-space:normal; }
 @media(max-width: 600px) { .tool-access-row { flex-direction:column; align-items:stretch; } .tool-access-actions { justify-content:flex-start; } .tool-access-copy, .tool-access-actions { flex:0 1 auto; } }
 
 /* Current modules share a compact row; metadata must not reserve vertical flex space. */

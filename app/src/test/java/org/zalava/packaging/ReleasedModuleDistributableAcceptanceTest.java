@@ -275,7 +275,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true)).waitFor();
         assertThat(admin.request().get(baseUrl + "/api/zalava/modules").status()).isEqualTo(404);
         page.locator("form:has(input[name=name][value='SDK acceptance milk']) input[type=checkbox]")
-            .check();
+            .click();
         page.waitForURL(baseUrl + "/apps/zalava-module-shopping-list/shopping-list/items/bought");
         assertThat(page.locator("main").textContent()).contains("Bought SDK acceptance milk");
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true))
