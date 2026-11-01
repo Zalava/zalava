@@ -83,6 +83,7 @@ import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderTool;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderToolInvoker;
+import org.zalava.capabilities.operation.adapter.out.approval.KnowledgeChatReadGate;
 import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
 import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcChatToolConfirmationStore;
 import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcMemberToolAccessStore;
@@ -104,6 +105,7 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
+import org.zalava.knowledge.application.KnowledgeToolObservation;
 import org.zalava.knowledge.memory.adapter.in.agent.MemoryPromotionTools;
 import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryProposalStore;
 import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryStore;
@@ -389,6 +391,9 @@ public class ZalavaConfiguration {
       org.zalava.knowledge.application.KnowledgeEvidenceQueries knowledgeEvidenceQueries,
       SkillActivations skillActivations,
       ActorExecutionContext actorExecutionContext,
+      TaskExecutionContext taskExecutionContext,
+      ChatToolConfirmation chatToolConfirmation,
+      ZalavaToolApprovalRequests approvalRequests,
       ModelBoundary modelBoundary) {
     return new DefaultAgentContextAssembler(
         characterBudget,
@@ -398,7 +403,12 @@ public class ZalavaConfiguration {
             knowledgeEvidenceQueries,
             actorExecutionContext,
             modelBoundary,
-            knowledgeEnrichmentEnabled),
+            knowledgeEnrichmentEnabled,
+            new KnowledgeChatReadGate(
+                actorExecutionContext,
+                taskExecutionContext,
+                chatToolConfirmation,
+                approvalRequests)),
         new SkillContextEnrichment(
             skillActivations, actorExecutionContext, modelBoundary, skillEnrichmentEnabled),
         new org.zalava.assistant.agent.application.ContextSourceBudgets(
@@ -967,6 +977,8 @@ public class ZalavaConfiguration {
       ToolIndex springAiToolIndex,
       @Value("${agent.tool-selection.tool-search.enabled:false}") boolean toolSearchEnabled,
       List<ToolInvocationObserver> knowledgeObservers,
+      ChatToolConfirmation chatToolConfirmation,
+      ZalavaToolApprovalRequests approvalRequests,
       DynamicToolActivationPolicy activationPolicy)
       throws IOException {
     Path skillsDirectory = skillsDir(workspace);
@@ -987,7 +999,12 @@ public class ZalavaConfiguration {
             knowledgeEvidence,
             actorExecutionContext,
             modelBoundary,
-            new org.zalava.knowledge.application.KnowledgeToolObservation(knowledgeObservers)));
+            new KnowledgeToolObservation(knowledgeObservers),
+            new KnowledgeChatReadGate(
+                actorExecutionContext,
+                taskExecutionContext,
+                chatToolConfirmation,
+                approvalRequests)));
     if (hasConfiguredSkills(skillsDirectory)) {
       bootstrapTools.add(
           SkillsTool.builder().addSkillsDirectory(skillsDirectory.toString()).build());

@@ -21,7 +21,8 @@ public interface ChatToolConfirmation {
       String providerName,
       String description,
       boolean available,
-      Boolean sideEffecting) {}
+      Boolean sideEffecting,
+      boolean hostRead) {}
 
   record Effective(Choice override, Choice roleDefault, Choice effective, String source) {}
 

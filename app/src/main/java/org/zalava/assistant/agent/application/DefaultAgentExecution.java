@@ -214,7 +214,11 @@ public final class DefaultAgentExecution implements AgentExecution {
     AgentToolSelection selection =
         ConversationChannelContext.call(
             conversationId, () -> toolSelector.select(conversationId, input));
-    AgentContext context = withAttachments(contextAssembler.assemble(input, selection), request);
+    AgentContext context =
+        withAttachments(
+            ConversationChannelContext.call(
+                conversationId, () -> contextAssembler.assemble(input, selection)),
+            request);
     try {
       T result =
           ConversationChannelContext.call(

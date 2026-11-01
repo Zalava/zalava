@@ -58,8 +58,21 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                                   provider.descriptor().displayName(),
                                   tool.description(),
                                   true,
-                                  tool.sideEffecting()));
+                                  tool.sideEffecting(),
+                                  false));
                         }));
+    var host = HostReadToolCatalog.provider();
+    host.listTools()
+        .forEach(
+            tool -> {
+              var key =
+                  new ToolKey(
+                      host.descriptor().moduleId(), host.descriptor().providerId(), tool.name());
+              tools.put(
+                  key,
+                  new Tool(
+                      key, host.descriptor().displayName(), tool.description(), true, false, true));
+            });
     store
         .savedTools()
         .forEach(
@@ -71,7 +84,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                         key.providerId(),
                         "Provider unavailable. Saved settings remain active when it starts; you can require confirmation or restore the existing policy now.",
                         false,
-                        null)));
+                        null,
+                        false)));
     return List.copyOf(tools.values());
   }
 
@@ -152,6 +166,7 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
     if (choice == null) throw new IllegalArgumentException("Choose a confirmation policy");
     if (choice == Choice.INHERIT || (choice == Choice.REQUIRE && store.savedTools().contains(key)))
       return;
+    if (HostReadToolCatalog.contains(key)) return;
     var provider =
         catalog
             .findProvider(key.providerId())
