@@ -59,7 +59,7 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                                   tool.description(),
                                   true,
                                   tool.sideEffecting(),
-                                  false));
+                                  null));
                         }));
     var host = HostReadToolCatalog.provider();
     host.listTools()
@@ -71,7 +71,32 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
               tools.put(
                   key,
                   new Tool(
-                      key, host.descriptor().displayName(), tool.description(), true, false, true));
+                      key,
+                      host.descriptor().displayName(),
+                      tool.description(),
+                      true,
+                      false,
+                      "Governed by document permissions. Each read still checks whether the person can access the document. Requiring confirmation for a Knowledge read also turns off automatic Knowledge context for that person."));
+            });
+    var callbacks = HostCallbackCatalog.provider();
+    callbacks
+        .listTools()
+        .forEach(
+            tool -> {
+              var key =
+                  new ToolKey(
+                      callbacks.descriptor().moduleId(),
+                      callbacks.descriptor().providerId(),
+                      tool.name());
+              tools.put(
+                  key,
+                  new Tool(
+                      key,
+                      callbacks.descriptor().displayName(),
+                      tool.description(),
+                      true,
+                      tool.sideEffecting(),
+                      "This built-in tool follows its own access rules and safeguards."));
             });
     store
         .savedTools()
@@ -85,7 +110,7 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                         "Provider unavailable. Saved settings remain active when it starts; you can require confirmation or restore the existing policy now.",
                         false,
                         null,
-                        false)));
+                        null)));
     return List.copyOf(tools.values());
   }
 
@@ -166,7 +191,7 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
     if (choice == null) throw new IllegalArgumentException("Choose a confirmation policy");
     if (choice == Choice.INHERIT || (choice == Choice.REQUIRE && store.savedTools().contains(key)))
       return;
-    if (HostReadToolCatalog.contains(key)) return;
+    if (HostReadToolCatalog.contains(key) || HostCallbackCatalog.contains(key)) return;
     var provider =
         catalog
             .findProvider(key.providerId())

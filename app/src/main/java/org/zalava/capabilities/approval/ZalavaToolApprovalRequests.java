@@ -193,7 +193,7 @@ public class ZalavaToolApprovalRequests {
         .filter(
             entry ->
                 entry.decision() == Decision.ALLOWED && entry.approvalScope() == ApprovalScope.ONCE)
-        .filter(entry -> isFreshReadDecision(entry, oldest, now))
+        .filter(entry -> isFreshDecision(entry, oldest, now))
         .filter(
             entry ->
                 entry.matchesUnscoped(
@@ -215,7 +215,65 @@ public class ZalavaToolApprovalRequests {
         .map(entry -> replace(entry, entry.withConsumed(Instant.now().toString())));
   }
 
-  private static boolean isFreshReadDecision(Entry entry, Instant oldest, Instant now) {
+  /** Consume an approved host callback only for the original authenticated Chat invocation. */
+  public synchronized Optional<Entry> consumeChatHostDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      JsonNode arguments) {
+    String conversation = context.attributes().get("conversationId");
+    String role = context.attributes().get("accountRole");
+    if (conversation == null
+        || conversation.isBlank()
+        || role == null
+        || !"web".equals(context.attributes().get("permissionPolicyChannel")))
+      return Optional.empty();
+    String argumentsJson = json(arguments);
+    Instant now = Instant.now();
+    Map<String, String> scope =
+        provider.descriptor().scope() == null ? Map.of() : provider.descriptor().scope();
+    return entries.stream()
+        .filter(
+            entry ->
+                entry.taskReference() == null
+                    && entry.consumedAt() == null
+                    && entry.sideEffecting() == tool.sideEffecting())
+        .filter(
+            entry ->
+                entry.decision() == Decision.ALLOWED && entry.approvalScope() == ApprovalScope.ONCE)
+        .filter(entry -> isFreshDecision(entry, now.minusSeconds(300), now))
+        .filter(
+            entry ->
+                entry.matchesUnscoped(
+                    context.actorId(),
+                    provider.descriptor().providerId(),
+                    tool.name(),
+                    argumentsJson))
+        .filter(entry -> "true".equals(entry.attributes().get("hostCallbackRetry")))
+        .filter(
+            entry ->
+                provider.descriptor().moduleId().equals(entry.attributes().get("approvedModuleId"))
+                    && entry.scope().equals(scope))
+        .filter(
+            entry ->
+                conversation.equals(entry.attributes().get("conversationId"))
+                    && role.equals(entry.attributes().get("accountRole")))
+        .filter(entry -> "web".equals(entry.attributes().get("permissionPolicyChannel")))
+        .findFirst()
+        .map(entry -> replace(entry, entry.withConsumed(Instant.now().toString())));
+  }
+
+  public synchronized Entry approveChatHostOperation(String requestId) {
+    Entry existing = find(requestId);
+    if (!"true".equals(existing.attributes().get("hostCallbackRetry"))
+        || existing.taskReference() != null
+        || existing.attributes().getOrDefault("conversationId", "").isBlank()
+        || !"web".equals(existing.attributes().get("permissionPolicyChannel")))
+      throw new WrongScopeException(requestId);
+    return decideUnscoped(requestId, Decision.ALLOWED, ApprovalScope.ONCE);
+  }
+
+  private static boolean isFreshDecision(Entry entry, Instant oldest, Instant now) {
     try {
       if (entry.decidedAt() == null) return false;
       Instant decided = Instant.parse(entry.decidedAt());

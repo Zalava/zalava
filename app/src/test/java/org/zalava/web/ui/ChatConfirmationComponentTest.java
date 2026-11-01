@@ -10,10 +10,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -21,7 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.api.InvocationContext;
 import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.assistant.agent.adapter.out.policy.StreamingToolContextBridge;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.application.HostCallbackCatalog;
 import org.zalava.capabilities.operation.application.HostReadToolCatalog;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation.Choice;
@@ -36,6 +40,7 @@ import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
+import org.zalava.knowledge.memory.adapter.in.agent.MemoryPromotionTools;
 import org.zalava.support.SecureZalavaComponentTest;
 
 @SecureZalavaComponentTest
@@ -48,6 +53,7 @@ class ChatConfirmationComponentTest {
   @Autowired ProviderToolOperations operations;
   @Autowired JdbcClient jdbc;
   @Autowired AgentRequestTools agentTools;
+  @Autowired StreamingToolContextBridge streamBridge;
   @Autowired ActorExecutionContext actorContext;
   @Autowired ZalavaToolApprovalRequests approvals;
   Account admin, first, second;
@@ -120,6 +126,61 @@ class ChatConfirmationComponentTest {
                   ConversationChannelContext.call(
                       "chat-other", () -> knowledge.search("unique-regression-query", 2)));
       assertThat(defaultResult).contains("NO_MATCH");
+    } finally {
+      confirmation.setUser(id(admin), id(first), key, Choice.INHERIT);
+    }
+  }
+
+  @Test
+  void hostActionConfirmationCanBeSetForOnePerson() throws Exception {
+    ToolKey key =
+        new ToolKey(HostCallbackCatalog.MODULE, HostCallbackCatalog.PROVIDER, "proposeMemory");
+    var memory =
+        agentTools.bootstrapTools().stream()
+            .filter(MemoryPromotionTools.class::isInstance)
+            .map(MemoryPromotionTools.class::cast)
+            .findFirst()
+            .orElseThrow();
+    String input =
+        "{\"proposal\":{\"scope\":\"USER\",\"text\":\"Unique app permission regression "
+            + UUID.randomUUID()
+            + "\",\"metadata\":{}}}";
+    try {
+      mvc.perform(
+              post("/zalava/accounts/permissions/confirmation")
+                  .with(user(admin.loginName()).roles("ADMIN"))
+                  .with(csrf())
+                  .param("subject", id(first))
+                  .param("moduleId", key.moduleId())
+                  .param("providerId", key.providerId())
+                  .param("toolName", key.toolName())
+                  .param("decision", "REQUIRE"))
+          .andExpect(status().is3xxRedirection());
+      var firstSnapshot =
+          actorContext.call(
+              new Actor(first.id()),
+              AccountRole.MEMBER,
+              () -> ConversationChannelContext.call("host-first", streamBridge::snapshot));
+      var callback =
+          ((ToolCallbackProvider) streamBridge.bind(List.of(memory), firstSnapshot).getFirst())
+              .getToolCallbacks()[0];
+      assertThat(callback.call(input)).contains("pending_approval");
+      var entry =
+          approvals.recentEntries().stream()
+              .filter(e -> e.actorId().equals(id(first)) && e.toolName().equals("proposeMemory"))
+              .findFirst()
+              .orElseThrow();
+      approvals.approveChatHostOperation(entry.requestId());
+      assertThat(callback.call(input)).contains("proposalId");
+      var secondSnapshot =
+          actorContext.call(
+              new Actor(second.id()),
+              AccountRole.MEMBER,
+              () -> ConversationChannelContext.call("host-second", streamBridge::snapshot));
+      var other =
+          ((ToolCallbackProvider) streamBridge.bind(List.of(memory), secondSnapshot).getFirst())
+              .getToolCallbacks()[0];
+      assertThat(other.call(input)).contains("proposalId");
     } finally {
       confirmation.setUser(id(admin), id(first), key, Choice.INHERIT);
     }

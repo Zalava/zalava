@@ -8,6 +8,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.zalava.assistant.agent.application.ModelBoundary;
+import org.zalava.assistant.chat.application.DirectChatApprovals;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -29,6 +30,7 @@ final class UiApprovalDecisions {
   private final ZalavaToolApprovalRequests approvals;
   private final ProviderToolOperations operations;
   private final ModelBoundary boundary;
+  private final DirectChatApprovals directApprovals;
   private static final ObjectMapper JSON = new ObjectMapper();
 
   UiApprovalDecisions(
@@ -51,14 +53,13 @@ final class UiApprovalDecisions {
     this.tasks = tasks;
     this.approvals = approvals;
     this.operations = operations;
+    this.directApprovals = new DirectChatApprovals(approvals, operations);
   }
 
   List<UiEvent.DirectPermission> pendingDirect(String loginName) {
     Actor actor = actors.actorForLogin(loginName);
     AccountRole role = actors.roleForLogin(loginName);
-    return approvals.recentEntries().stream()
-        .filter(entry -> directFor(entry, actor, role))
-        .filter(entry -> entry.decision() == ZalavaToolApprovalRequests.Decision.PENDING)
+    return directApprovals.pending(actor, role).stream()
         .map(
             entry ->
                 new UiEvent.DirectPermission(
@@ -70,37 +71,11 @@ final class UiApprovalDecisions {
 
   synchronized String decideDirect(String loginName, UiCommand.DecideDirectApproval command) {
     Actor actor = actors.actorForLogin(loginName);
-    var entry = approvals.get(command.requestId());
-    if (!directFor(entry, actor, actors.roleForLogin(loginName)))
-      throw new ZalavaToolApprovalRequests.NotFoundException(command.requestId());
-    return switch (command.decision()) {
-      case ALLOW_ONCE -> {
-        if (!entry.sideEffecting()) {
-          if (entry.attributes().getOrDefault("conversationId", "").isBlank())
-            throw new IllegalStateException(
-                "This read request cannot be continued safely; please deny it and try again.");
-          operations.approveChatRead(command.requestId());
-          yield "Read approved. Ask the same question again in this conversation within five minutes.";
-        }
-        var outcome = operations.allowUnscoped(command.requestId());
-        yield outcome.result().success()
-            ? "Permission allowed once; operation completed."
-            : "Permission allowed once, but the operation returned an error. Check the result before retrying.";
-      }
-      case DENY -> {
-        operations.denyUnscoped(command.requestId());
-        yield "Permission denied; operation was not run.";
-      }
-    };
-  }
-
-  private static boolean directFor(
-      ZalavaToolApprovalRequests.Entry entry, Actor actor, AccountRole role) {
-    return actor.accountId().toString().equals(entry.actorId())
-        && entry.taskReference() == null
-        && !entry.attributes().containsKey(ZalavaToolApprovalRequests.ACTOR_TASK_REFERENCE)
-        && "web".equals(entry.attributes().get("permissionPolicyChannel"))
-        && (role != AccountRole.MEMBER || "MEMBER".equals(entry.attributes().get("accountRole")));
+    return directApprovals.decide(
+        actor,
+        actors.roleForLogin(loginName),
+        command.requestId(),
+        command.decision() == UiCommand.DecideApproval.Decision.ALLOW_ONCE);
   }
 
   private String safeArguments(JsonNode arguments) {

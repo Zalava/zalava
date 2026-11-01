@@ -86,8 +86,9 @@ public final class MemberProviderCapabilityPolicy {
   }
 
   private static boolean reservedHostTool(ZalavaProvider provider, ZalavaToolDescriptor tool) {
-    return HostReadToolCatalog.contains(
+    var key =
         new ToolKey(
-            provider.descriptor().moduleId(), provider.descriptor().providerId(), tool.name()));
+            provider.descriptor().moduleId(), provider.descriptor().providerId(), tool.name());
+    return HostReadToolCatalog.contains(key) || HostCallbackCatalog.contains(key);
   }
 }
