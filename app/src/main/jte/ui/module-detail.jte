@@ -115,7 +115,13 @@
                                 @if(field.type().equals("boolean"))
                                     <label class="checkbox"><input id="${field.name()}" aria-invalid="${configurationFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="${(field.description() != null ? "help-" + field.name() + " " : "") + (configurationFieldErrors.containsKey(field.name()) ? "error-" + field.name() : "")}" name="${field.name()}" type="checkbox" value="true" checked="${configurationValues.getOrDefault(field.name(), field.value()).equals("true")}"> Enabled</label>
                                 @else
-                                    <input id="${field.name()}" aria-invalid="${configurationFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="${(field.description() != null ? "help-" + field.name() + " " : "") + (configurationFieldErrors.containsKey(field.name()) ? "error-" + field.name() : "")}" class="input" name="${field.name()}" type="${field.type().equals("number") || field.type().equals("integer") ? "number" : "text"}" value="${configurationValues.getOrDefault(field.name(), field.value())}" required="${field.required()}">
+                                    <input id="${field.name()}" aria-invalid="${configurationFieldErrors.containsKey(field.name()) ? "true" : null}" aria-describedby="${(field.description() != null ? "help-" + field.name() + " " : "") + (field.type().equals("string") && !field.examples().isEmpty() ? "examples-help-" + field.name() + " " : "") + (configurationFieldErrors.containsKey(field.name()) ? "error-" + field.name() : "")}" class="input" name="${field.name()}" type="${field.type().equals("number") || field.type().equals("integer") ? "number" : "text"}" value="${configurationValues.getOrDefault(field.name(), field.value())}" required="${field.required()}" list="${field.type().equals("string") && !field.examples().isEmpty() ? "examples-" + field.name() : null}">
+                                    @if(field.type().equals("string") && !field.examples().isEmpty())
+                                        <datalist id="examples-${field.name()}">
+                                            @for(var example : field.examples())<option value="${example}"></option>@endfor
+                                        </datalist>
+                                        <p class="help" id="examples-help-${field.name()}">Example: @for(var example : field.examples())<span class="is-family-monospace">${example}</span> @endfor Suggestions are not checked automatically.</p>
+                                    @endif
                                 @endif
                             @endif
                         </div>

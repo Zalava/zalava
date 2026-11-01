@@ -502,6 +502,8 @@ class ModulesControllerComponentTest {
             content()
                 .string(containsString("<legend class=\"title is-6\">Search connection</legend>")))
         .andExpect(content().string(containsString("Connect the search provider.")))
+        .andExpect(content().string(containsString("<option value=\"https://example.test\">")))
+        .andExpect(content().string(containsString("examples-help-configuration.search.endpoint")))
         .andExpect(content().string(containsString("https://old.example.test")))
         .andExpect(content().string(containsString("Replace stored secret")))
         .andExpect(content().string(containsString("1 stored secret reference(s)")))
@@ -742,7 +744,14 @@ class ModulesControllerComponentTest {
                               "description", "Connect the search provider.",
                               "properties",
                                   Map.of(
-                                      "endpoint", Map.of("type", "string", "title", "Endpoint"),
+                                      "endpoint",
+                                          Map.of(
+                                              "type",
+                                              "string",
+                                              "title",
+                                              "Endpoint",
+                                              "examples",
+                                              List.of("https://example.test")),
                                       "credentialRef",
                                           Map.of(
                                               "type", "string", "title", "Credential reference")),
