@@ -1,3 +1,4 @@
+@import org.zalava.web.ui.ModuleConfigurationForm
 @import java.util.Map
 @import org.zalava.web.ui.navigation.NavigationModel
 @import org.springframework.security.web.csrf.CsrfToken
@@ -97,7 +98,11 @@
         @if(!model.configurationFields().isEmpty())
             <form method="post" action="/modules/${model.moduleId()}/configuration" class="mt-5" id="configuration">
                 <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-                @for(var field : model.configurationFields())
+                @for(var section : ModuleConfigurationForm.sections(model.configurationFields()))
+                    <fieldset class="mb-5">
+                        <legend class="title is-6">${section.title() != null ? section.title() : "Other settings"}</legend>
+                        @if(section.description() != null)<p class="help mb-3">${section.description()}</p>@endif
+                @for(var field : section.fields())
                     <div class="field">
                         <label class="label" for="${field.name()}">${field.label()} <span class="field-requirement">${field.required() ? "(required)" : "(optional)"}</span></label>
                         @if(field.description() != null)
@@ -123,6 +128,8 @@
                             </div>
                         @endif
                     </div>
+                @endfor
+                    </fieldset>
                 @endfor
                 <div class="field is-grouped mt-5">
                     <div class="control"><button class="button is-primary" type="submit">Save configuration</button></div>

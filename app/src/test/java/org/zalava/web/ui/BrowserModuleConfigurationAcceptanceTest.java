@@ -103,6 +103,18 @@ class BrowserModuleConfigurationAcceptanceTest {
       page.navigate(baseUrl() + "/modules/configured-search");
       assertThat(page.url()).endsWith("/modules/configured-search");
       assertThat(page.locator("body").innerText()).doesNotContain("old-secret");
+      assertThat(page.locator("fieldset legend").allTextContents()).contains("Search connection");
+      assertThat(page.getByText("Connect the search provider.").isVisible()).isTrue();
+      Path screenshots = Path.of("/tmp/zalava-configuration-grouping-screenshots");
+      Files.createDirectories(screenshots);
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        page.navigate(baseUrl() + "/modules/configured-search");
+        assertThat(page.locator("fieldset legend").allTextContents()).contains("Search connection");
+        page.screenshot(new Page.ScreenshotOptions().setPath(screenshots.resolve(width + ".png")));
+        assertThat(page.locator("fieldset").first().isVisible()).isTrue();
+      }
+
       page.locator("input[name='configuration.search.endpoint']").fill("https://new.example.test");
       page.locator("input[name='replacement-secret.search.credentialRef']").fill("new-secret");
       page.locator("form[action='/modules/configured-search/configuration'] button[type=submit]")
