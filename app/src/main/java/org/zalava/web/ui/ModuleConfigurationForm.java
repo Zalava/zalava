@@ -19,8 +19,24 @@ public final class ModuleConfigurationForm {
   public static List<Field> fields(
       ModuleConfigurationDescriptor descriptor, Map<String, Object> values) {
     List<Field> fields = new ArrayList<>();
-    addFields(fields, "", descriptor.jsonSchema(), values);
+    addFields(fields, "", descriptor.jsonSchema(), values, null, null, null);
     return List.copyOf(fields);
+  }
+
+  public static List<Section> sections(List<Field> fields) {
+    Map<String, List<Field>> groups = new LinkedHashMap<>();
+    for (Field field : fields) {
+      String key = field.sectionPath() == null ? "" : field.sectionPath();
+      groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(field);
+    }
+    return groups.values().stream()
+        .map(
+            group ->
+                new Section(
+                    group.getFirst().sectionTitle(),
+                    group.getFirst().sectionDescription(),
+                    List.copyOf(group)))
+        .toList();
   }
 
   public static Map<String, Object> document(List<Field> fields, Map<String, String> submitted) {
@@ -42,7 +58,13 @@ public final class ModuleConfigurationForm {
   }
 
   private static void addFields(
-      List<Field> fields, String path, Map<String, Object> schema, Map<String, Object> values) {
+      List<Field> fields,
+      String path,
+      Map<String, Object> schema,
+      Map<String, Object> values,
+      String sectionPath,
+      String sectionTitle,
+      String sectionDescription) {
     Map<String, Object> properties = map(schema.get("properties"));
     List<String> requiredProperties = strings(schema.get("required"));
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
@@ -51,7 +73,15 @@ public final class ModuleConfigurationForm {
       String propertyPath = path.isEmpty() ? name : path + "." + name;
       Object value = values.get(name);
       if ("object".equals(property.get("type")) || property.containsKey("properties")) {
-        addFields(fields, propertyPath, property, map(value));
+        String title = string(property.get("title"));
+        addFields(
+            fields,
+            propertyPath,
+            property,
+            map(value),
+            title == null ? sectionPath : propertyPath,
+            title == null ? sectionTitle : title,
+            title == null ? sectionDescription : string(property.get("description")));
         continue;
       }
       fields.add(
@@ -62,7 +92,10 @@ public final class ModuleConfigurationForm {
               requiredProperties.contains(name),
               secretReference(name, property),
               displayValue(type(property), value),
-              string(property.get("description"))));
+              string(property.get("description")),
+              sectionPath,
+              sectionTitle,
+              sectionDescription));
     }
   }
 
@@ -160,6 +193,8 @@ public final class ModuleConfigurationForm {
     }
   }
 
+  public record Section(String title, String description, List<Field> fields) {}
+
   public record Field(
       String path,
       String label,
@@ -167,7 +202,10 @@ public final class ModuleConfigurationForm {
       boolean required,
       boolean secretReference,
       String value,
-      String description) {
+      String description,
+      String sectionPath,
+      String sectionTitle,
+      String sectionDescription) {
     public String name() {
       return "configuration." + path;
     }

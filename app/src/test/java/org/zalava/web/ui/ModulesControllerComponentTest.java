@@ -498,6 +498,10 @@ class ModulesControllerComponentTest {
     mockMvc
         .perform(get("/modules/configured-search"))
         .andExpect(status().isOk())
+        .andExpect(
+            content()
+                .string(containsString("<legend class=\"title is-6\">Search connection</legend>")))
+        .andExpect(content().string(containsString("Connect the search provider.")))
         .andExpect(content().string(containsString("https://old.example.test")))
         .andExpect(content().string(containsString("Replace stored secret")))
         .andExpect(content().string(containsString("1 stored secret reference(s)")))
@@ -734,6 +738,8 @@ class ModulesControllerComponentTest {
                           "search",
                           Map.of(
                               "type", "object",
+                              "title", "Search connection",
+                              "description", "Connect the search provider.",
                               "properties",
                                   Map.of(
                                       "endpoint", Map.of("type", "string", "title", "Endpoint"),
