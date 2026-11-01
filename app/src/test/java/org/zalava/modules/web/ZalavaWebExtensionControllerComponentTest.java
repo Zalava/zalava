@@ -206,7 +206,41 @@ class ZalavaWebExtensionControllerComponentTest {
                 .with(memberUser)
                 .with(csrf().useInvalidToken()))
         .andExpect(status().isForbidden());
-    access.setOverride(administrator, individual, module, page, "DENY");
+    mockMvc
+        .perform(get("/zalava/accounts/permissions").with(adminUser).param("subject", individual))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Fixture Shopping List")))
+        .andExpect(content().string(containsString("Role default")));
+    mockMvc
+        .perform(
+            post("/zalava/accounts/permissions/app-access")
+                .with(memberUser)
+                .with(csrf())
+                .param("subject", individual)
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("decision", "DENY"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/zalava/accounts/permissions/app-access")
+                .with(adminUser)
+                .with(csrf().useInvalidToken())
+                .param("subject", individual)
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("decision", "DENY"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            post("/zalava/accounts/permissions/app-access")
+                .with(adminUser)
+                .with(csrf())
+                .param("subject", individual)
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("decision", "DENY"))
+        .andExpect(status().is3xxRedirection());
     mockMvc
         .perform(
             get("/apps/test-web-module/shopping-list")

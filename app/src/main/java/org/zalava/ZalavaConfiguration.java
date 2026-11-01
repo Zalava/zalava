@@ -99,6 +99,7 @@ import org.zalava.capabilities.operation.application.port.out.ChatToolConfirmati
 import org.zalava.capabilities.operation.application.port.out.MemberToolAccessStore;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.application.UnifiedPermissions;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -832,6 +833,15 @@ public class ZalavaConfiguration {
   @Bean
   public InvocationLog invocationLog() {
     return new InvocationLog();
+  }
+
+  @Bean
+  public UnifiedPermissions unifiedPermissions(
+      MemberToolAccess tools,
+      ChatToolConfirmation confirmation,
+      ModulePageAccess pages,
+      AccountLifecycle accounts) {
+    return new UnifiedPermissions(tools, confirmation, pages, accounts);
   }
 
   @Bean

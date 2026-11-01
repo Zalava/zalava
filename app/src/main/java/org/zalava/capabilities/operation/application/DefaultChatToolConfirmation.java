@@ -44,7 +44,6 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
         .forEach(
             provider ->
                 provider.listTools().stream()
-                    .filter(ZalavaToolDescriptor::sideEffecting)
                     .forEach(
                         tool -> {
                           ToolKey key =
@@ -58,7 +57,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                                   key,
                                   provider.descriptor().displayName(),
                                   tool.description(),
-                                  true));
+                                  true,
+                                  tool.sideEffecting()));
                         }));
     store
         .savedTools()
@@ -70,7 +70,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                         key,
                         key.providerId(),
                         "Provider unavailable. Saved settings remain active when it starts; you can require confirmation or restore the existing policy now.",
-                        false)));
+                        false,
+                        null)));
     return List.copyOf(tools.values());
   }
 
@@ -114,12 +115,14 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
   @Override
   public Optional<Boolean> requireFor(
       InvocationContext context, ZalavaProvider provider, ZalavaToolDescriptor tool) {
-    if (!tool.sideEffecting()
-        || !"web".equals(context.attributes().get("permissionPolicyChannel"))
+    if (!"web".equals(context.attributes().get("permissionPolicyChannel"))
         || context.attributes().containsKey("taskReference")
         || context.attributes().containsKey("actorTaskReference")
         || !List.of("spring-ai-callback", "zalava-provider-tool")
             .contains(context.attributes().getOrDefault("source", ""))) return Optional.empty();
+    if (!tool.sideEffecting()
+        && "agent".equals(context.actorId())
+        && !context.attributes().containsKey("accountRole")) return Optional.empty();
     Account actor;
     try {
       actor = account(context.actorId());
@@ -135,6 +138,16 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
     return user.isPresent() ? user : store.role(actor.role(), key);
   }
 
+  @Override
+  public boolean mayConsumeReadApproval(InvocationContext context) {
+    try {
+      Account actor = account(context.actorId());
+      return actor.enabled() && actor.role().name().equals(context.attributes().get("accountRole"));
+    } catch (IllegalArgumentException invalid) {
+      return false;
+    }
+  }
+
   private void validate(ToolKey key, Choice choice) {
     if (choice == null) throw new IllegalArgumentException("Choose a confirmation policy");
     if (choice == Choice.INHERIT || (choice == Choice.REQUIRE && store.savedTools().contains(key)))
@@ -144,9 +157,8 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
             .findProvider(key.providerId())
             .filter(p -> p.descriptor().moduleId().equals(key.moduleId()))
             .orElseThrow(() -> new IllegalArgumentException("Tool is unavailable"));
-    if (provider.listTools().stream()
-        .noneMatch(tool -> tool.name().equals(key.toolName()) && tool.sideEffecting()))
-      throw new IllegalArgumentException("Side-effecting tool is unavailable");
+    if (provider.listTools().stream().noneMatch(tool -> tool.name().equals(key.toolName())))
+      throw new IllegalArgumentException("Tool is unavailable");
   }
 
   private void requireAdmin(String id) {

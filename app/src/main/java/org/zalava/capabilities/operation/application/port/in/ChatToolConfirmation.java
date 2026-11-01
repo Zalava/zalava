@@ -16,7 +16,12 @@ public interface ChatToolConfirmation {
     AUTO
   }
 
-  record Tool(ToolKey key, String providerName, String description, boolean available) {}
+  record Tool(
+      ToolKey key,
+      String providerName,
+      String description,
+      boolean available,
+      Boolean sideEffecting) {}
 
   record Effective(Choice override, Choice roleDefault, Choice effective, String source) {}
 
@@ -29,6 +34,11 @@ public interface ChatToolConfirmation {
   void setRole(String administratorId, AccountRole role, ToolKey key, Choice choice);
 
   void setUser(String administratorId, String accountId, ToolKey key, Choice choice);
+
+  /** Revalidate the current account before consuming a read approval. */
+  default boolean mayConsumeReadApproval(InvocationContext context) {
+    return false;
+  }
 
   /** Empty means preserve the previous approval policy. Present true requires a confirmation. */
   Optional<Boolean> requireFor(

@@ -75,6 +75,13 @@ final class UiApprovalDecisions {
       throw new ZalavaToolApprovalRequests.NotFoundException(command.requestId());
     return switch (command.decision()) {
       case ALLOW_ONCE -> {
+        if (!entry.sideEffecting()) {
+          if (entry.attributes().getOrDefault("conversationId", "").isBlank())
+            throw new IllegalStateException(
+                "This read request cannot be continued safely; please deny it and try again.");
+          operations.approveChatRead(command.requestId());
+          yield "Read approved. Ask the same question again in this conversation within five minutes.";
+        }
         var outcome = operations.allowUnscoped(command.requestId());
         yield outcome.result().success()
             ? "Permission allowed once; operation completed."
