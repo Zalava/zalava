@@ -14,6 +14,15 @@ public final class HostCallbackCatalog {
   public static final String PROVIDER = "zalava-internal";
   private static final List<ZalavaToolDescriptor> TOOLS =
       List.of(
+          new ZalavaToolDescriptor("Skill", "Read a configured skill by name.", false),
+          new ZalavaToolDescriptor(
+              "searchZalavaProviderTools", "Search available provider tools.", false),
+          new ZalavaToolDescriptor(
+              "loadZalavaProviderTool", "Read a provider tool definition.", false),
+          new ZalavaToolDescriptor(
+              "invokeZalavaProviderTool",
+              "Invoke a provider tool under its own access and confirmation rules.",
+              true),
           new ZalavaToolDescriptor(
               "proposeMemory", "Propose a memory for the owner to review.", true),
           new ZalavaToolDescriptor("requestClarification", "Ask the job owner a question.", true),

@@ -1,6 +1,8 @@
 package org.zalava.assistant.agent.application;
 
 import java.util.List;
+import java.util.Optional;
+import org.zalava.assistant.agent.application.port.out.HostCallbackPolicy;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.skills.application.port.in.SkillActivations;
@@ -21,6 +23,7 @@ public final class SkillContextEnrichment {
   private final ActorExecutionContext actors;
   private final ModelBoundary boundary;
   private final boolean enabled;
+  private final HostCallbackPolicy policy;
 
   public SkillContextEnrichment(
       SkillActivations activations, ActorExecutionContext actors, ModelBoundary boundary) {
@@ -32,14 +35,24 @@ public final class SkillContextEnrichment {
       ActorExecutionContext actors,
       ModelBoundary boundary,
       boolean enabled) {
+    this(activations, actors, boundary, enabled, (name, input) -> Optional.empty());
+  }
+
+  public SkillContextEnrichment(
+      SkillActivations activations,
+      ActorExecutionContext actors,
+      ModelBoundary boundary,
+      boolean enabled,
+      HostCallbackPolicy policy) {
     this.activations = activations;
     this.actors = actors;
     this.boundary = boundary;
     this.enabled = enabled;
+    this.policy = policy;
   }
 
   public List<SkillActivation> select() {
-    if (!enabled) {
+    if (!enabled || policy.blockAutomaticContent("Skill")) {
       return List.of();
     }
     return actors

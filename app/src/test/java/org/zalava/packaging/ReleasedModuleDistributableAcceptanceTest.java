@@ -1059,12 +1059,24 @@ class ReleasedModuleDistributableAcceptanceTest {
         proveDirectShoppingApprovals(page, modelServer);
         proveChatConfirmationSettings(page, browser, modelServer);
         proveUnifiedPermissions(page, modelServer);
+        Path skillDirectory = Files.createDirectories(workspace.resolve("skills/qa-private-skill"));
+        Files.writeString(
+            skillDirectory.resolve("SKILL.md"),
+            """
+            ---
+            name: qa-private-skill
+            description: confidential-description-451
+            version: 1.0.0
+            ---
+            Private skill body: confidential-skill-body-672.
+            """);
         stop();
         start(postgres, workspace, "local-control", true);
         page.context().clearCookies();
         signIn(page, LOGIN, PASSWORD, false);
         proveKnowledgeReadConfirmation(page, modelServer);
         proveHostCallbackConfirmation(page, modelServer);
+        proveSkillConfirmation(page, modelServer);
       } finally {
         stop();
       }
@@ -1749,6 +1761,108 @@ class ReleasedModuleDistributableAcceptanceTest {
     deniedCard.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny")).click();
     page.getByText("Permission denied; operation was not run.").waitFor();
     assertThat(page.context().request().get(baseUrl + "/memory").text()).doesNotContain(deniedFact);
+  }
+
+  private void proveSkillConfirmation(Page page, WireMockServer modelServer) {
+    String marker = "Skill approval fixture question";
+    String secretBody = "confidential-skill-body-672";
+    String secretDescription = "confidential-description-451";
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    var skill = page.locator("[data-permission-tool='zalava-internal:Skill']");
+    PlaywrightAssertions.assertThat(skill).containsText("automatic skill context");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("skill-permission-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    skill.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    skill
+        .getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    page.getByText("Chat confirmation saved.").waitFor();
+    assertThat(
+            post(
+                    page.context(),
+                    page,
+                    "/api/skills/qa-private-skill/activate",
+                    Map.of("version", "1.0.0"))
+                .status())
+        .isEqualTo(200);
+    String call =
+        """
+        data: {"id":"skill","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"skill-call","type":"function","function":{"name":"Skill","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"skill","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("command", "qa-private-skill"))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"skill-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Skill callback completed."},"finish_reason":null}]}
+
+        data: {"id":"skill-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Skill callback completed.").waitFor();
+    assertThat(
+            modelServer.getAllServeEvents().stream()
+                .map(event -> event.getRequest().getBodyAsString())
+                .filter(body -> body.contains(marker)))
+        .allMatch(body -> !body.contains(secretBody) && !body.contains(secretDescription));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("Skill");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Action approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(page.getByText("Skill callback completed.")).hasCount(2);
+    modelServer.verify(
+        WireMock.postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(marker))
+            .withRequestBody(containing(secretBody)));
   }
 
   private void sendShoppingPolicyTurn(

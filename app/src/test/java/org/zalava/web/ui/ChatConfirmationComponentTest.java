@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.assistant.agent.adapter.out.policy.StreamingToolContextBridge;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderTool;
 import org.zalava.capabilities.operation.application.HostCallbackCatalog;
 import org.zalava.capabilities.operation.application.HostReadToolCatalog;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
@@ -183,6 +185,56 @@ class ChatConfirmationComponentTest {
       assertThat(other.call(input)).contains("proposalId");
     } finally {
       confirmation.setUser(id(admin), id(first), key, Choice.INHERIT);
+    }
+  }
+
+  @Test
+  void dispatcherApprovalDoesNotBypassTargetToolConfirmation() {
+    ToolKey dispatcher =
+        new ToolKey(
+            HostCallbackCatalog.MODULE, HostCallbackCatalog.PROVIDER, "invokeZalavaProviderTool");
+    var invoker =
+        agentTools.bootstrapTools().stream()
+            .filter(ZalavaProviderTool.class::isInstance)
+            .map(ZalavaProviderTool.class::cast)
+            .findFirst()
+            .orElseThrow();
+    String input =
+        "{\"providerId\":\"member-clock\",\"toolName\":\"write_time\",\"argumentsJson\":\"{}\"}";
+    try {
+      confirmation.setUser(id(admin), id(admin), dispatcher, Choice.REQUIRE);
+      confirmation.setUser(id(admin), id(admin), write, Choice.REQUIRE);
+      var snapshot =
+          actorContext.call(
+              new Actor(admin.id()),
+              AccountRole.ADMIN,
+              () -> ConversationChannelContext.call("dispatcher-chat", streamBridge::snapshot));
+      var provider =
+          (ToolCallbackProvider) streamBridge.bind(List.of(invoker), snapshot).getFirst();
+      var callback =
+          Arrays.stream(provider.getToolCallbacks())
+              .filter(t -> t.getToolDefinition().name().equals("invokeZalavaProviderTool"))
+              .findFirst()
+              .orElseThrow();
+      assertThat(callback.call(input)).contains("pending_approval");
+      var firstRequest =
+          approvals.recentEntries().stream()
+              .filter(
+                  e -> e.actorId().equals(id(admin)) && e.toolName().equals(dispatcher.toolName()))
+              .findFirst()
+              .orElseThrow();
+      approvals.approveChatHostOperation(firstRequest.requestId());
+      assertThat(callback.call(input)).contains("pending_approval");
+      assertThat(approvals.recentEntries())
+          .anyMatch(
+              e ->
+                  e.actorId().equals(id(admin))
+                      && e.providerId().equals(write.providerId())
+                      && e.toolName().equals(write.toolName())
+                      && e.decision() == ZalavaToolApprovalRequests.Decision.PENDING);
+    } finally {
+      confirmation.setUser(id(admin), id(admin), dispatcher, Choice.INHERIT);
+      confirmation.setUser(id(admin), id(admin), write, Choice.INHERIT);
     }
   }
 
