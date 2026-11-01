@@ -38,6 +38,7 @@ import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.DefaultAgent;
 import org.zalava.assistant.agent.PolicyFilteredToolSearch;
 import org.zalava.assistant.agent.WorkspaceInstructions;
+import org.zalava.assistant.agent.adapter.out.policy.HostManagedToolCallback;
 import org.zalava.assistant.agent.adapter.out.springai.WorkspaceAgentPrompt;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.DefaultAgentContextAssembler;
@@ -83,6 +84,7 @@ import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderTool;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderToolInvoker;
+import org.zalava.capabilities.operation.adapter.out.approval.HostCallbackChatPolicy;
 import org.zalava.capabilities.operation.adapter.out.approval.KnowledgeChatReadGate;
 import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
 import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcChatToolConfirmationStore;
@@ -410,7 +412,15 @@ public class ZalavaConfiguration {
                 chatToolConfirmation,
                 approvalRequests)),
         new SkillContextEnrichment(
-            skillActivations, actorExecutionContext, modelBoundary, skillEnrichmentEnabled),
+            skillActivations,
+            actorExecutionContext,
+            modelBoundary,
+            skillEnrichmentEnabled,
+            new HostCallbackChatPolicy(
+                actorExecutionContext,
+                taskExecutionContext,
+                chatToolConfirmation,
+                approvalRequests)),
         new org.zalava.assistant.agent.application.ContextSourceBudgets(
             toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget));
   }
@@ -1007,7 +1017,8 @@ public class ZalavaConfiguration {
                 approvalRequests)));
     if (hasConfiguredSkills(skillsDirectory)) {
       bootstrapTools.add(
-          SkillsTool.builder().addSkillsDirectory(skillsDirectory.toString()).build());
+          new HostManagedToolCallback(
+              SkillsTool.builder().addSkillsDirectory(skillsDirectory.toString()).build()));
     }
     return new AgentRequestTools(
         bootstrapTools,

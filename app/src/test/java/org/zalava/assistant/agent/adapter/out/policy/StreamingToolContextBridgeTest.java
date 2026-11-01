@@ -13,6 +13,7 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.assistant.agent.application.port.out.HostCallbackPolicy;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -190,6 +191,34 @@ class StreamingToolContextBridgeTest {
     allow.set(true);
     assertThat(callback.call("{\"input\":\"value\"}")).isEqualTo("\"ok\"");
     assertThat(seen.get()).contains(actor.accountId().value().toString());
+  }
+
+  @Test
+  void protectedHostCallbackDoesNotExposeItsDescriptionBeforeApproval() {
+    var actors = new ActorExecutionContext();
+    var actor = new Actor(AccountId.newId());
+    var policy =
+        new HostCallbackPolicy() {
+          @Override
+          public Optional<String> beforeCall(String name, String input) {
+            return Optional.of("pending");
+          }
+
+          @Override
+          public boolean blockAutomaticContent(String name) {
+            return "Skill".equals(name);
+          }
+        };
+    var bridge = new StreamingToolContextBridge(actors, new ActorTaskCreationContext(), policy);
+    var original = recordingCallback("Skill", ignored -> {});
+    var snapshot = actors.call(actor, AccountRole.ADMIN, bridge::snapshot);
+    var callback =
+        (ToolCallback)
+            bridge.bind(List.of(new HostManagedToolCallback(original)), snapshot).getFirst();
+    assertThat(callback.getToolDefinition().description())
+        .contains("configured skill")
+        .doesNotContain("test");
+    assertThat(callback.call("{}")).isEqualTo("pending");
   }
 
   private static ToolCallback recordingCallback(

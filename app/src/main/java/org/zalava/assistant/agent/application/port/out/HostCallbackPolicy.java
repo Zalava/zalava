@@ -6,4 +6,9 @@ import java.util.Optional;
 @FunctionalInterface
 public interface HostCallbackPolicy {
   Optional<String> beforeCall(String name, String input);
+
+  /** Whether automatic content or identifying metadata must be withheld before confirmation. */
+  default boolean blockAutomaticContent(String name) {
+    return false;
+  }
 }

@@ -96,7 +96,11 @@ public final class DefaultChatToolConfirmation implements ChatToolConfirmation {
                       tool.description(),
                       true,
                       tool.sideEffecting(),
-                      "This built-in tool follows its own access rules and safeguards."));
+                      tool.name().equals("Skill")
+                          ? "Available when skills are configured. Requiring confirmation also turns off automatic skill context for that person."
+                          : tool.name().equals("invokeZalavaProviderTool")
+                              ? "This dispatcher also follows the selected provider tool's own access and confirmation rules."
+                              : "This built-in tool follows its own access rules and safeguards."));
             });
     store
         .savedTools()

@@ -88,7 +88,8 @@ public final class StreamingToolContextBridge {
 
   private Object wrap(Object tool, Snapshot snapshot) {
     if (tool instanceof ToolCallback callback) {
-      return new ContextRestoringToolCallback(callback, this, snapshot, false);
+      return new ContextRestoringToolCallback(
+          callback, this, snapshot, callback instanceof HostManagedToolCallback);
     }
     return new ContextRestoringToolCallbackProvider(tool, this, snapshot);
   }
@@ -159,7 +160,18 @@ public final class StreamingToolContextBridge {
 
     @Override
     public ToolDefinition getToolDefinition() {
-      return delegate.getToolDefinition();
+      return bridge.withinContext(
+          snapshot,
+          () -> {
+            var definition = delegate.getToolDefinition();
+            if (!hostCandidate || !bridge.hostPolicy.blockAutomaticContent(definition.name()))
+              return definition;
+            return ToolDefinition.builder()
+                .name(definition.name())
+                .inputSchema(definition.inputSchema())
+                .description("Load a configured skill by name after a user request.")
+                .build();
+          });
     }
 
     @Override

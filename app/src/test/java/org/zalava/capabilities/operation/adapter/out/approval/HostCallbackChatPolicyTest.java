@@ -139,6 +139,16 @@ class HostCallbackChatPolicyTest {
     assertThat(call(first, "chat-a", () -> policy.beforeCall("proposeMemory", "{}"))).isEmpty();
   }
 
+  @Test
+  void skillConfirmationSuppressesAutomaticContentWithoutCreatingAnApproval() {
+    when(confirmation.requireFor(any(), any(), any())).thenReturn(Optional.of(true));
+    assertThat(call(first, "chat-a", () -> policy.blockAutomaticContent("Skill"))).isTrue();
+    assertThat(call(first, "telegram-1", () -> policy.blockAutomaticContent("Skill"))).isFalse();
+    assertThat(call(first, "chat-a", () -> policy.blockAutomaticContent("proposeMemory")))
+        .isFalse();
+    assertThat(approvals.recentEntries()).isEmpty();
+  }
+
   private <T> T call(Actor actor, String conversation, Supplier<T> action) {
     return actors.call(
         actor, AccountRole.MEMBER, () -> ConversationChannelContext.call(conversation, action));

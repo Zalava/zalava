@@ -36,6 +36,36 @@ public final class HostCallbackChatPolicy implements HostCallbackPolicy {
   public Optional<String> beforeCall(String name, String input) {
     var tool = HostCallbackCatalog.tool(name);
     if (tool == null) return Optional.empty();
+    var context = currentContext();
+    if (context.isEmpty()) return Optional.empty();
+    var invocation = context.get();
+    var provider = HostCallbackCatalog.provider();
+    if (!confirmation.requireFor(invocation, provider, tool).orElse(false)) return Optional.empty();
+    var arguments = JSON.readTree(input);
+    if (confirmation.mayConsumeReadApproval(invocation)
+        && approvals.consumeChatHostDecision(invocation, provider, tool, arguments).isPresent())
+      return Optional.empty();
+    var request = approvals.create(provider, tool, invocation, arguments);
+    return Optional.of(
+        JSON.writeValueAsString(
+            Map.of("status", "pending_approval", "approvalRequestId", request.requestId())));
+  }
+
+  @Override
+  public boolean blockAutomaticContent(String name) {
+    var tool = HostCallbackCatalog.tool(name);
+    return "Skill".equals(name)
+        && tool != null
+        && currentContext()
+            .map(
+                context ->
+                    confirmation
+                        .requireFor(context, HostCallbackCatalog.provider(), tool)
+                        .orElse(false))
+            .orElse(false);
+  }
+
+  private Optional<InvocationContext> currentContext() {
     var principal = actors.currentPrincipal();
     var conversation = InvocationChannelContext.conversation();
     if (principal.isEmpty()
@@ -50,17 +80,7 @@ public final class HostCallbackChatPolicy implements HostCallbackPolicy {
     attributes.put("accountRole", principal.get().role().name());
     attributes.put("approvedModuleId", HostCallbackCatalog.MODULE);
     attributes.put("hostCallbackRetry", "true");
-    var context =
-        new InvocationContext(principal.get().actor().accountId().toString(), false, attributes);
-    var provider = HostCallbackCatalog.provider();
-    if (!confirmation.requireFor(context, provider, tool).orElse(false)) return Optional.empty();
-    var arguments = JSON.readTree(input);
-    if (confirmation.mayConsumeReadApproval(context)
-        && approvals.consumeChatHostDecision(context, provider, tool, arguments).isPresent())
-      return Optional.empty();
-    var request = approvals.create(provider, tool, context, arguments);
     return Optional.of(
-        JSON.writeValueAsString(
-            Map.of("status", "pending_approval", "approvalRequestId", request.requestId())));
+        new InvocationContext(principal.get().actor().accountId().toString(), false, attributes));
   }
 }
