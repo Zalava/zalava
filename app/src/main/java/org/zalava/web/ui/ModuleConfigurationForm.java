@@ -93,6 +93,7 @@ public final class ModuleConfigurationForm {
               secretReference(name, property),
               displayValue(type(property), value),
               string(property.get("description")),
+              strings(property.get("examples")),
               sectionPath,
               sectionTitle,
               sectionDescription));
@@ -203,6 +204,7 @@ public final class ModuleConfigurationForm {
       boolean secretReference,
       String value,
       String description,
+      List<String> examples,
       String sectionPath,
       String sectionTitle,
       String sectionDescription) {

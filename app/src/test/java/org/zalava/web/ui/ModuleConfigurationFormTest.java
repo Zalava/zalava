@@ -58,6 +58,27 @@ class ModuleConfigurationFormTest {
   }
 
   @Test
+  void offersStringExamplesWithoutApplyingThem() {
+    var descriptor =
+        new ModuleConfigurationDescriptor(
+            Map.of(
+                "type",
+                "object",
+                "properties",
+                Map.of(
+                    "connection",
+                    Map.of(
+                        "type",
+                        "string",
+                        "examples",
+                        List.of("unix:///var/run/docker.sock", 17)))));
+    var fields = ModuleConfigurationForm.fields(descriptor, Map.of());
+    assertThat(fields.getFirst().examples()).containsExactly("unix:///var/run/docker.sock");
+    assertThat(fields.getFirst().value()).isEmpty();
+    assertThat(ModuleConfigurationForm.document(fields, Map.of())).isEmpty();
+  }
+
+  @Test
   void preservesARequiredBooleanFieldWhenTheCheckboxIsNotSelected() {
     ModuleConfigurationDescriptor descriptor =
         new ModuleConfigurationDescriptor(
