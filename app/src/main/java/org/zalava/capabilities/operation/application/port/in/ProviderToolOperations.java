@@ -12,6 +12,11 @@ public interface ProviderToolOperations {
 
   ToolInvocationOutcome allowUnscoped(String requestId);
 
+  /** Approve a read without executing it until the same conversational request is retried. */
+  default ToolApproval approveChatRead(String requestId) {
+    throw new UnsupportedOperationException("Read approval unavailable");
+  }
+
   ToolInvocationOutcome allowUnscopedTool(String requestId);
 
   ToolApproval denyUnscoped(String requestId);

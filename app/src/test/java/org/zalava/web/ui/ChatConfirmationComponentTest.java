@@ -188,11 +188,207 @@ class ChatConfirmationComponentTest {
   }
 
   @Test
+  void readOnlyToolsDefaultToAutomaticButCanRequireChatApproval() throws Exception {
+    ToolKey read = new ToolKey(write.moduleId(), write.providerId(), "current_time");
+    access.defaultAccess(id(admin), read, true);
+    confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.INHERIT);
+    var context =
+        new InvocationContext(
+            id(first),
+            false,
+            Map.of(
+                "accountRole",
+                "MEMBER",
+                "permissionPolicyChannel",
+                "web",
+                "source",
+                "spring-ai-callback"));
+    var chat = ToolInvocationCommand.task(read.providerId(), read.toolName(), "{}", context, null);
+    assertThat(operations.invoke(chat).status()).isEqualTo(ToolInvocationStatus.EXECUTED);
+    confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.REQUIRE);
+    var pending = operations.invoke(chat);
+    assertThat(pending.status()).isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+    assertThat(pending.result()).isNull();
+    assertThat(operations.allowUnscoped(pending.approval().requestId()).status())
+        .isEqualTo(ToolInvocationStatus.EXECUTED);
+    confirmation.setUser(id(admin), id(first), read, Choice.AUTO);
+    assertThat(operations.invoke(chat).status()).isEqualTo(ToolInvocationStatus.EXECUTED);
+    confirmation.setUser(id(admin), id(first), read, Choice.INHERIT);
+    var denied = operations.invoke(chat);
+    assertThat(denied.status()).isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+    assertThat(denied.result()).isNull();
+    assertThat(operations.denyUnscoped(denied.approval().requestId()).decision().name())
+        .isEqualTo("DENIED");
+    var revoked = operations.invoke(chat);
+    access.decide(id(admin), id(first), read, false);
+    assertThatThrownBy(() -> operations.allowUnscoped(revoked.approval().requestId()))
+        .hasMessageContaining("denied");
+    access.inherit(id(admin), id(first), read);
+    var telegram =
+        ToolInvocationCommand.task(
+            read.providerId(),
+            read.toolName(),
+            "{}",
+            new InvocationContext(
+                id(first),
+                false,
+                Map.of(
+                    "accountRole",
+                    "MEMBER",
+                    "permissionPolicyChannel",
+                    "telegram",
+                    "source",
+                    "spring-ai-callback")),
+            null);
+    assertThat(operations.invoke(telegram).status()).isEqualTo(ToolInvocationStatus.EXECUTED);
+    mvc.perform(
+            get("/zalava/accounts/chat-confirmations").with(user(admin.loginName()).roles("ADMIN")))
+        .andExpect(content().string(containsString("current_time")));
+    confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.INHERIT);
+  }
+
+  @Test
+  void approvedReadMayBeUsedOnceOnlyForSameConversationAndArguments() {
+    ToolKey read = new ToolKey(write.moduleId(), write.providerId(), "current_time");
+    access.defaultAccess(id(admin), read, true);
+    confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.REQUIRE);
+    var context =
+        new InvocationContext(
+            id(first),
+            false,
+            Map.of(
+                "accountRole",
+                "MEMBER",
+                "permissionPolicyChannel",
+                "web",
+                "source",
+                "spring-ai-callback",
+                "conversationId",
+                "web-conversation-a"));
+    var same = ToolInvocationCommand.task(read.providerId(), read.toolName(), "{}", context, null);
+    var pending = operations.invoke(same);
+    assertThat(pending.status()).isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+    operations.approveChatRead(pending.approval().requestId());
+    var otherContext =
+        new InvocationContext(
+            id(first),
+            false,
+            Map.of(
+                "accountRole",
+                "MEMBER",
+                "permissionPolicyChannel",
+                "web",
+                "source",
+                "spring-ai-callback",
+                "conversationId",
+                "web-conversation-b"));
+    var other =
+        ToolInvocationCommand.task(read.providerId(), read.toolName(), "{}", otherContext, null);
+    assertThat(operations.invoke(other).status()).isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+    var otherArgs =
+        ToolInvocationCommand.task(
+            read.providerId(), read.toolName(), "{\"timezone\":\"UTC\"}", context, null);
+    assertThat(operations.invoke(otherArgs).status())
+        .isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+    var result = operations.invoke(same);
+    assertThat(result.status()).isEqualTo(ToolInvocationStatus.EXECUTED);
+    assertThat(result.result().content().toString()).contains("2026-10-26T12:00:00Z");
+    assertThat(operations.invoke(same).status()).isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+    confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.INHERIT);
+    confirmation.setUser(id(admin), id(admin), read, Choice.REQUIRE);
+    var adminContext =
+        new InvocationContext(
+            id(admin),
+            false,
+            Map.of(
+                "accountRole",
+                "ADMIN",
+                "permissionPolicyChannel",
+                "web",
+                "source",
+                "spring-ai-callback",
+                "conversationId",
+                "web-admin"));
+    var adminRead =
+        ToolInvocationCommand.task(read.providerId(), read.toolName(), "{}", adminContext, null);
+    var adminPending = operations.invoke(adminRead);
+    operations.approveChatRead(adminPending.approval().requestId());
+    accounts.setEnabled(admin.id(), false);
+    assertThat(operations.invoke(adminRead).status())
+        .isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+  }
+
+  @Test
+  void unifiedPermissionsManageRoleAndIndividualWithoutGrantingToolAccessImplicitly()
+      throws Exception {
+    ToolKey read = new ToolKey(write.moduleId(), write.providerId(), "current_time");
+    var adminUser = user(admin.loginName()).roles("ADMIN");
+    var memberUser = user(first.loginName()).roles("MEMBER");
+    mvc.perform(get("/zalava/accounts/permissions").with(memberUser))
+        .andExpect(status().isForbidden());
+    mvc.perform(get("/zalava/accounts/permissions").with(adminUser))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Read time")))
+        .andExpect(content().string(containsString("Current time")))
+        .andExpect(content().string(containsString("Default: no confirmation")));
+    mvc.perform(
+            post("/zalava/accounts/permissions/confirmation")
+                .with(adminUser)
+                .param("subject", "member")
+                .param("moduleId", read.moduleId())
+                .param("providerId", read.providerId())
+                .param("toolName", read.toolName())
+                .param("decision", "REQUIRE"))
+        .andExpect(status().isForbidden());
+    mvc.perform(
+            post("/zalava/accounts/permissions/confirmation")
+                .with(adminUser)
+                .with(csrf())
+                .param("subject", "member")
+                .param("moduleId", read.moduleId())
+                .param("providerId", read.providerId())
+                .param("toolName", read.toolName())
+                .param("decision", "REQUIRE"))
+        .andExpect(status().is3xxRedirection());
+    assertThat(confirmation.roleDefault(id(admin), AccountRole.MEMBER, read))
+        .isEqualTo(Choice.REQUIRE);
+    assertThat(access.allowed(id(first), read)).isFalse();
+    mvc.perform(
+            post("/zalava/accounts/permissions/tool-access")
+                .with(adminUser)
+                .with(csrf())
+                .param("subject", id(first))
+                .param("moduleId", read.moduleId())
+                .param("providerId", read.providerId())
+                .param("toolName", read.toolName())
+                .param("decision", "ALLOW"))
+        .andExpect(status().is3xxRedirection());
+    assertThat(access.allowed(id(first), read)).isTrue();
+    mvc.perform(
+            post("/zalava/accounts/permissions/confirmation")
+                .with(adminUser)
+                .with(csrf())
+                .param("subject", id(first))
+                .param("moduleId", read.moduleId())
+                .param("providerId", read.providerId())
+                .param("toolName", read.toolName())
+                .param("decision", "AUTO"))
+        .andExpect(status().is3xxRedirection());
+    mvc.perform(get("/zalava/accounts/permissions").with(adminUser).param("subject", id(first)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Run without confirmation")))
+        .andExpect(content().string(containsString("User override")));
+    assertThat(confirmation.effective(id(admin), id(first), read).effective())
+        .isEqualTo(Choice.AUTO);
+    confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.INHERIT);
+  }
+
+  @Test
   void invalidAndUnauthorisedSettingsNeverGrantExecution() throws Exception {
     assertThatThrownBy(
             () -> confirmation.setRole(id(first), AccountRole.MEMBER, write, Choice.AUTO))
         .isInstanceOf(SecurityException.class);
-    ToolKey read = new ToolKey(write.moduleId(), write.providerId(), "current_time");
+    ToolKey read = new ToolKey(write.moduleId(), write.providerId(), "missing_tool");
     assertThatThrownBy(() -> confirmation.setRole(id(admin), AccountRole.MEMBER, read, Choice.AUTO))
         .isInstanceOf(IllegalArgumentException.class);
     mvc.perform(

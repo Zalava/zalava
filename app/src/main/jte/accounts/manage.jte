@@ -21,9 +21,7 @@
 <main class="section"><div class="container settings-layout">
 @template.ui.settingsSections(current = "accounts")
 <div class="settings-content accounts-layout">
-<header><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Administration</p><p><a class="button is-link is-light" href="/zalava/accounts/tool-defaults">Tool access defaults</a></p>
-<p><a class="button is-link is-light" href="/zalava/accounts/chat-confirmations">Chat tool confirmation</a></p>
-<p><a class="button is-link is-light" href="/zalava/accounts/app-access">App access</a></p>
+<header><p class="has-text-primary has-text-weight-bold is-uppercase is-size-7">Administration</p>
 <h1 class="title is-3">Accounts</h1><p class="has-text-grey">Manage workspace access. Only administrators can change account roles and reset passwords.</p></header>
 @if(error != null)<p class="notification is-danger is-light" role="alert">${error}</p>@endif
 @if(message != null)<p class="notification is-success is-light" role="status">${message}</p>@endif
@@ -41,7 +39,7 @@
 <header class="account-card-heading"><h3 class="title is-5">${account.loginName()}</h3><div class="tags"><span class="tag">${account.role() == AccountRole.ADMIN ? "Administrator" : "Member"}</span><span class="tag ${account.enabled() ? "is-success is-light" : "is-light"}">${account.enabled() ? "Enabled" : "Disabled"}</span><span class="tag is-light">${account.passwordChangeRequired() ? "Password change required" : "Password set"}</span></div></header>
 <div class="account-actions"><form method="post" action="/zalava/accounts/role"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="accountId" value="${account.id()}"><input type="hidden" name="role" value="${account.role() == AccountRole.ADMIN ? "MEMBER" : "ADMIN"}"><button class="button is-light" type="submit">${account.role() == AccountRole.ADMIN ? "Make member" : "Make administrator"}</button></form>
 <form method="post" action="/zalava/accounts/enabled"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="accountId" value="${account.id()}"><input type="hidden" name="enabled" value="${account.enabled() ? "false" : "true"}"><button class="button is-light" type="submit">${account.enabled() ? "Disable" : "Enable"}</button></form></div>
-@if(account.role() == AccountRole.MEMBER)<p class="mb-3"><a class="button is-link is-light" href="/zalava/accounts/${account.id()}/tools">Manage tool access</a></p>@endif
+@if(account.role() == AccountRole.MEMBER)<p class="mb-3"><a class="button is-link is-light" href="/zalava/accounts/permissions?subject=${account.id()}">Manage permissions</a></p>@endif
 <details class="account-password-reset"><summary>Reset password</summary><form method="post" action="/zalava/accounts/password"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="accountId" value="${account.id()}"><label class="label" for="reset-${account.id()}">Temporary password</label><input class="input" id="reset-${account.id()}" data-password-original type="password" name="temporaryPassword" required minlength="12" maxlength="256" autocomplete="new-password"><label class="label" for="confirm-reset-${account.id()}">Confirm temporary password</label><input class="input" id="confirm-reset-${account.id()}" data-password-confirmation type="password" name="passwordConfirmation" autocomplete="new-password" required minlength="12" maxlength="256"><button class="button is-light mt-3" type="submit">Reset password</button></form></details>
 </article>
 @endfor

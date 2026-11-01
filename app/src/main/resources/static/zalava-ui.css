@@ -1115,3 +1115,5 @@ body:not(.zalava-auth) > .auth-layout .auth-card { padding: 1.25rem; }
 .managed-module-row .module-copy { flex:1; }
 .managed-module-row .module-meta { flex:0 0 auto; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
 @media(max-width:640px) { .managed-module-row { display:flex; flex-direction:column; align-items:stretch; } .managed-module-row .module-meta { margin-top:0; } }
+
+.settings-sections .settings-subsection { padding-inline-start: 2rem; }

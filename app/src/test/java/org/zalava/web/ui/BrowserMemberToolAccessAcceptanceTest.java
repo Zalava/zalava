@@ -81,8 +81,11 @@ class BrowserMemberToolAccessAcceptanceTest {
       signIn(page, admin);
       page.navigate(base() + "/zalava/accounts");
       page.locator("[data-account-id='" + member.id() + "']")
-          .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Manage tool access"))
+          .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Manage permissions"))
           .click();
+      assertThat(page.locator("[data-permission-tool='member-clock:current_time']"))
+          .containsText("Not allowed");
+      page.navigate(base() + "/zalava/accounts/" + member.id() + "/tools");
       var row = page.locator("[data-tool-access='member-clock:current_time']");
       assertThat(row).containsText("Not allowed");
       row.locator("select[name=decision]").selectOption("ALLOW");

@@ -68,8 +68,27 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     requireMemberAccess(provider, tool, command.context());
     Map<String, Object> arguments = decoder.decode(command.argumentsJson());
 
-    if (!tool.sideEffecting()) {
+    Optional<Boolean> setting =
+        confirmation == null || command.taskReference() != null
+            ? Optional.empty()
+            : confirmation.requireFor(command.context(), provider, tool);
+    if (!tool.sideEffecting() && !setting.orElse(false)) {
       return ToolInvocationOutcome.executed(execute(provider, tool, arguments, command.context()));
+    }
+
+    if (!tool.sideEffecting()
+        && setting.orElse(false)
+        && confirmation.mayConsumeReadApproval(command.context())) {
+      var approved =
+          approvalPort.consumeChatReadDecision(
+              command.context(), provider, tool, command.argumentsJson());
+      if (approved.isPresent())
+        return ToolInvocationOutcome.executed(
+            execute(
+                provider,
+                tool,
+                arguments,
+                confirmedContext(command.context(), approved.get().requestId())));
     }
 
     if (command.taskReference() != null) {
@@ -92,10 +111,6 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       }
     }
 
-    Optional<Boolean> setting =
-        confirmation == null || command.taskReference() != null
-            ? Optional.empty()
-            : confirmation.requireFor(command.context(), provider, tool);
     if (setting.isPresent() && !setting.get()) {
       Map<String, String> attributes = new LinkedHashMap<>(command.context().attributes());
       attributes.put("approvalPolicy", "chat-confirmation-setting");
@@ -170,6 +185,11 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
         System.nanoTime(),
         arguments);
     return ToolInvocationOutcome.pending(approval);
+  }
+
+  @Override
+  public ToolApproval approveChatRead(String requestId) {
+    return approvalDecision(() -> approvalPort.approveChatRead(requestId));
   }
 
   @Override

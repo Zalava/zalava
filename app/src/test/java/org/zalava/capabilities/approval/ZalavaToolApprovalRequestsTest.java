@@ -57,6 +57,111 @@ class ZalavaToolApprovalRequestsTest {
   }
 
   @Test
+  void approvedReadRetryRequiresExactActorConversationModuleScopeAndFreshDecision() {
+    var original = provider("m-one", Map.of("root", "a"));
+    var tool = new ZalavaToolDescriptor("read", "Read data", false);
+    var attributes =
+        Map.of(
+            "accountRole",
+            "MEMBER",
+            "permissionPolicyChannel",
+            "web",
+            "conversationId",
+            "conversation-a",
+            "approvedModuleId",
+            "m-one");
+    var context = new InvocationContext("actor-a", false, attributes);
+    var pending = requests.create(original, tool, context, JSON.createObjectNode(), null);
+    requests.approveChatRead(pending.requestId());
+    assertThat(
+            requests.consumeChatReadDecision(
+                new InvocationContext("actor-b", false, attributes),
+                original,
+                tool,
+                JSON.createObjectNode()))
+        .isEmpty();
+    assertThat(
+            requests.consumeChatReadDecision(
+                context, provider("m-two", Map.of("root", "a")), tool, JSON.createObjectNode()))
+        .isEmpty();
+    assertThat(
+            requests.consumeChatReadDecision(
+                context, provider("m-one", Map.of("root", "b")), tool, JSON.createObjectNode()))
+        .isEmpty();
+    assertThat(
+            requests.consumeChatReadDecision(
+                context, original, tool, JSON.readTree("{\"different\":true}")))
+        .isEmpty();
+    var differentRole =
+        new InvocationContext(
+            "actor-a",
+            false,
+            Map.of(
+                "accountRole",
+                "ADMIN",
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-a"));
+    assertThat(
+            requests.consumeChatReadDecision(
+                differentRole, original, tool, JSON.createObjectNode()))
+        .isEmpty();
+    var differentConversation =
+        new InvocationContext(
+            "actor-a",
+            false,
+            Map.of(
+                "accountRole",
+                "MEMBER",
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-b"));
+    assertThat(
+            requests.consumeChatReadDecision(
+                differentConversation, original, tool, JSON.createObjectNode()))
+        .isEmpty();
+    assertThat(requests.consumeChatReadDecision(context, original, tool, JSON.createObjectNode()))
+        .isPresent();
+    assertThat(requests.consumeChatReadDecision(context, original, tool, JSON.createObjectNode()))
+        .isEmpty();
+    var expired =
+        new ZalavaToolApprovalRequests.Entry(
+            UUID.randomUUID().toString(),
+            Instant.now().minusSeconds(400).toString(),
+            Instant.now().minusSeconds(301).toString(),
+            null,
+            null,
+            "test-provider",
+            "read",
+            "actor-a",
+            Map.of(
+                "accountRole",
+                "MEMBER",
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-a",
+                "approvedModuleId",
+                "m-one",
+                "chatReadRetry",
+                "true"),
+            Map.of("root", "a"),
+            List.of(),
+            false,
+            JSON.createObjectNode(),
+            "{}",
+            null,
+            ZalavaToolApprovalRequests.Decision.ALLOWED,
+            ZalavaToolApprovalRequests.ApprovalScope.ONCE);
+    new FileSystemApprovalRequestStore(workspace).save(expired);
+    var reloaded = new ZalavaToolApprovalRequests(new FileSystemApprovalRequestStore(workspace));
+    assertThat(reloaded.consumeChatReadDecision(context, original, tool, JSON.createObjectNode()))
+        .isEmpty();
+  }
+
+  @Test
   void denyUnscopedDecidesEntry() {
     var fresh = new ZalavaToolApprovalRequests(new FileSystemApprovalRequestStore(workspace));
     String id = addPending("p", "t", "a");

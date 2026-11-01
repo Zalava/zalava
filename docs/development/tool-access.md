@@ -1,7 +1,6 @@
 # Member tool access
 
-Administrators manage individual Member tool grants from Settings → Manage accounts →
-Manage tool access. Tool access defaults define Administrators only or All Members per
+Administrators manage app pages, Member tool access, and Chat confirmation together from Settings → Manage accounts → Permissions. Choose a role default or an individual person; existing direct settings URLs remain available. Tool access defaults define Administrators only or All Members per
 module/provider/tool. Each Member can inherit the role default or have an explicit Allow
 or Deny override. Resetting an override restores inheritance. Existing overrides are
 preserved on upgrade; tools with no configured default or override remain administrators-only.
@@ -15,13 +14,12 @@ Revocation prevents future invocations; it does not undo completed work or cance
 already executing. Disabling an account also denies Member provider calls.
 
 A grant cannot bypass mandatory scope, trust or administrator-only capability restrictions.
-Side-effecting operations use the existing execution approval by default. Administrators
-can choose Chat confirmation per action and role under Settings → Manage accounts →
-Chat tool confirmation, with individual overrides taking precedence. “Existing
+Side-effecting operations use the existing execution approval by default. Read-only provider tools run without confirmation by default. Administrators
+can choose Chat confirmation for either kind of provider tool per action and role under Settings → Manage accounts → Permissions, with individual overrides taking precedence. “Existing
 policy” retains prior actor/tool approval policies. Explicit “Require confirmation”
 overrides an older always-allow policy; “Run without confirmation” applies only to
 direct Chat actions and does not grant access or change other channels. Pending
-requests still need a decision. Changes are audited and apply to subsequent calls.
+requests still need a decision. When a read requires confirmation, approving it permits one retry of the exact read in the same conversation within five minutes; Chat asks the person to repeat the question so the model receives the result. The approval is bound to the same actor, role, provider, module, scope and arguments and cannot be used twice. Changes are audited and apply to subsequent calls. Built-in host tools, including Knowledge tools, do not use provider-tool confirmation and are not controlled by this screen.
 Provider-side
 argument validation and module-owned root/scope enforcement remain in force. The legacy
 member-safe marker alone does not grant access in the configured host.
@@ -54,4 +52,4 @@ account and tool-access screens.
 
 ## Module app access
 
-Module app screens are controlled separately from provider tools and Chat confirmation. Administrators can open **Manage accounts → App access** to set the Member default for each registered page and an individual Member override. Members are denied by default; administrators retain access. Allowed pages appear in Apps, and the same policy applies to direct page requests and form submissions. Granting access to a page permits its registered page actions and exposes the data that page provides; it does not imply per-person data isolation. Existing CSRF protection applies. Changes are persisted and audited, and saved permissions remain visible for stopped apps so they can be revoked.
+Module app screens are controlled separately from provider tools and Chat confirmation. Administrators can open **Manage accounts → Permissions** to set the Member default for each registered page and an individual Member override. Members are denied by default; administrators retain access. Allowed pages appear in Apps, and the same policy applies to direct page requests and form submissions. Granting access to a page permits its registered page actions and exposes the data that page provides; it does not imply per-person data isolation. Existing CSRF protection applies. Changes are persisted and audited, and saved permissions remain visible for stopped apps so they can be revoked.

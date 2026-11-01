@@ -1057,6 +1057,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         }
         proveDirectShoppingApprovals(page, modelServer);
         proveChatConfirmationSettings(page, browser, modelServer);
+        proveUnifiedPermissions(page, modelServer);
       } finally {
         stop();
       }
@@ -1402,9 +1403,108 @@ class ReleasedModuleDistributableAcceptanceTest {
     }
   }
 
+  private void proveUnifiedPermissions(Page page, WireMockServer modelServer) throws Exception {
+    page.navigate(baseUrl + "/zalava/accounts/permissions");
+    var read = page.locator("[data-permission-tool='shopping-list-household:list_items']");
+    PlaywrightAssertions.assertThat(read).containsText("Default: no confirmation");
+    PlaywrightAssertions.assertThat(read).containsText("List items");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("unified-role-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    String memberId =
+        page.locator("#permission-subject option")
+            .filter(new Locator.FilterOptions().setHasText("released-clock-member"))
+            .getAttribute("value");
+    page.locator("#permission-subject").selectOption(memberId);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show permissions"))
+        .click();
+    PlaywrightAssertions.assertThat(
+            page.locator("[data-permission-app='zalava-module-shopping-list:shopping-list']"))
+        .containsText("Individual override");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("unified-person-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    page.locator("#permission-subject").selectOption("administrator");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show permissions"))
+        .click();
+    read.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    read.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .focus();
+    page.keyboard().press("Enter");
+    page.getByText("Chat confirmation saved.").waitFor();
+    page.reload();
+    PlaywrightAssertions.assertThat(read).containsText("Require confirmation");
+    sendShoppingToolTurn(
+        page, modelServer, "Read-only confirmation required", "list_items", Map.of());
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("list_items");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Read approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill("Read-only confirmation required");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(
+            page.getByText(
+                "Policy tool call completed.", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(2);
+    PlaywrightAssertions.assertThat(
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+        .hasCount(0);
+    modelServer.verify(
+        WireMock.postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing("Read-only confirmation required"))
+            .withRequestBody(containing("Policy automatic milk")));
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    read.locator("form[action$='/confirmation'] select").selectOption("INHERIT");
+    read.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    sendShoppingToolTurn(page, modelServer, "Read-only default auto", "list_items", Map.of());
+    PlaywrightAssertions.assertThat(
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+        .hasCount(0);
+  }
+
   private void sendShoppingPolicyTurn(
       Page page, WireMockServer modelServer, String marker, String item) {
-    String callback = ZalavaToolCallbackNames.forTool("shopping-list-household", "add_item");
+    sendShoppingToolTurn(page, modelServer, marker, "add_item", Map.of("name", item));
+  }
+
+  private void sendShoppingToolTurn(
+      Page page,
+      WireMockServer modelServer,
+      String marker,
+      String tool,
+      Map<String, Object> arguments) {
+    String callback = ZalavaToolCallbackNames.forTool("shopping-list-household", tool);
     String call =
         """
         data: {"id":"policy","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"policy-call","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
@@ -1414,8 +1514,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         data: [DONE]
 
         """
-            .formatted(
-                callback, JSON.writeValueAsString(JSON.writeValueAsString(Map.of("name", item))));
+            .formatted(callback, JSON.writeValueAsString(JSON.writeValueAsString(arguments)));
     modelServer.stubFor(
         WireMock.post(urlEqualTo("/v1/chat/completions"))
             .atPriority(2)

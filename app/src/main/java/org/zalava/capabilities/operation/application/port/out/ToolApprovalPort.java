@@ -36,6 +36,18 @@ public interface ToolApprovalPort {
         provider.descriptor().scope());
   }
 
+  default Optional<ToolApproval> consumeChatReadDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      String argumentsJson) {
+    return Optional.empty();
+  }
+
+  default ToolApproval approveChatRead(String requestId) {
+    throw new UnsupportedOperationException("Read approval unavailable");
+  }
+
   ToolApproval allowUnscoped(String requestId);
 
   ToolApproval allowUnscopedTool(String requestId);
