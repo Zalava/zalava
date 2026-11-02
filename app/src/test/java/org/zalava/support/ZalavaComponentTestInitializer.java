@@ -35,7 +35,10 @@ public final class ZalavaComponentTestInitializer
             "spring.ai.model.chat="
                 + context.getEnvironment().getProperty("zalava.test.chat-provider", "unknown"),
             "spring.ai.openai.api-key=component-test-not-a-real-key",
-            "spring.datasource.url=" + PostgreSqlTestDatabase.newJdbcUrl(),
+            "spring.datasource.url="
+                + (context.getEnvironment().containsProperty("zalava.test.database-scope")
+                    ? PostgreSqlTestDatabase.isolatedJdbcUrl()
+                    : PostgreSqlTestDatabase.newJdbcUrl()),
             "jobrunr.background-job-server.enabled=false",
             "jobrunr.dashboard.enabled=false",
             "zalava.accounts.security-enabled=" + securityEnabled,

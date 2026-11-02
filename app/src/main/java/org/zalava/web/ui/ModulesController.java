@@ -569,7 +569,7 @@ public class ModulesController {
     List<ModuleConfigurationForm.Field> configurationFields =
         loaded == null
             ? List.of()
-            : ModuleConfigurationForm.fields(
+            : ModuleConfigurationForm.fieldsForDisplay(
                 loaded.configuration(), configurationSnapshot.factories());
     String lifecycleState =
         loaded == null

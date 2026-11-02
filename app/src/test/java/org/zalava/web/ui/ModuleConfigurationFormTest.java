@@ -79,6 +79,25 @@ class ModuleConfigurationFormTest {
   }
 
   @Test
+  void displayObservationNeverSelectsOrSubmitsAnExample() {
+    var descriptor =
+        new ModuleConfigurationDescriptor(
+            Map.of(
+                "type",
+                "object",
+                "properties",
+                Map.of(
+                    "endpoint",
+                    Map.of("type", "string", "examples", List.of("unix:///run/example.sock")))));
+    var fields =
+        ModuleConfigurationForm.fieldsForDisplay(descriptor, Map.of(), value -> "socket found");
+    assertThat(fields.getFirst().exampleObservations())
+        .containsEntry("unix:///run/example.sock", "socket found");
+    assertThat(fields.getFirst().value()).isEmpty();
+    assertThat(ModuleConfigurationForm.document(fields, Map.of())).isEmpty();
+  }
+
+  @Test
   void preservesARequiredBooleanFieldWhenTheCheckboxIsNotSelected() {
     ModuleConfigurationDescriptor descriptor =
         new ModuleConfigurationDescriptor(

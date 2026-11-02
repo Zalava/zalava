@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.zalava.api.ModuleConfigurationDescriptor;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -21,6 +22,20 @@ public final class ModuleConfigurationForm {
     List<Field> fields = new ArrayList<>();
     addFields(fields, "", descriptor.jsonSchema(), values, null, null, null);
     return List.copyOf(fields);
+  }
+
+  public static List<Field> fieldsForDisplay(
+      ModuleConfigurationDescriptor descriptor, Map<String, Object> values) {
+    return fieldsForDisplay(descriptor, values, LocalSocketExampleObservation::observe);
+  }
+
+  static List<Field> fieldsForDisplay(
+      ModuleConfigurationDescriptor descriptor,
+      Map<String, Object> values,
+      Function<String, String> observer) {
+    return fields(descriptor, values).stream()
+        .map(field -> field.observeExamples(observer))
+        .toList();
   }
 
   public static List<Section> sections(List<Field> fields) {
@@ -94,6 +109,7 @@ public final class ModuleConfigurationForm {
               displayValue(type(property), value),
               string(property.get("description")),
               strings(property.get("examples")),
+              Map.of(),
               sectionPath,
               sectionTitle,
               sectionDescription));
@@ -205,9 +221,33 @@ public final class ModuleConfigurationForm {
       String value,
       String description,
       List<String> examples,
+      Map<String, String> exampleObservations,
       String sectionPath,
       String sectionTitle,
       String sectionDescription) {
+    private Field observeExamples(Function<String, String> observer) {
+      Map<String, String> observations = new LinkedHashMap<>();
+      if (type.equals("string")) {
+        for (String example : examples.stream().limit(8).toList()) {
+          String observation = observer.apply(example);
+          if (observation != null) observations.put(example, observation);
+        }
+      }
+      return new Field(
+          path,
+          label,
+          type,
+          required,
+          secretReference,
+          value,
+          description,
+          examples,
+          Map.copyOf(observations),
+          sectionPath,
+          sectionTitle,
+          sectionDescription);
+    }
+
     public String name() {
       return "configuration." + path;
     }

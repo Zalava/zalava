@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.api.InvocationContext;
 import org.zalava.assistant.agent.AgentRequestTools;
@@ -33,6 +34,7 @@ import org.zalava.support.SecureZalavaComponentTest;
 import org.zalava.web.control.application.port.in.InvocationLogQueries;
 
 @SecureZalavaComponentTest
+@TestPropertySource(properties = "zalava.test.database-scope=member-access")
 @Import(MemberToolAccessFixture.class)
 class MemberToolAccessComponentTest {
   @Autowired MockMvc mvc;
@@ -80,6 +82,13 @@ class MemberToolAccessComponentTest {
             tool,
             "{}",
             new InvocationContext(id(a), false, Map.of("accountRole", a.role().name()))));
+  }
+
+  @Test
+  void usesAnIsolatedDatabase() {
+    assertThat(jdbc.sql("select current_database()").query(String.class).single())
+        .startsWith("zalava_")
+        .isNotEqualTo("zalava_test");
   }
 
   @Test
