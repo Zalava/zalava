@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zalava.api.InvocationContext;
 import org.zalava.assistant.agent.AgentRequestTools;
@@ -39,6 +40,7 @@ import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
 import org.zalava.support.SecureZalavaComponentTest;
 
 @SecureZalavaComponentTest
+@TestPropertySource(properties = "zalava.test.database-scope=chat-confirmation")
 @Import(MemberToolAccessFixture.class)
 class ChatConfirmationComponentTest {
   @Autowired MockMvc mvc;
@@ -63,6 +65,13 @@ class ChatConfirmationComponentTest {
     confirmation.setRole(id(admin), AccountRole.MEMBER, write, Choice.INHERIT);
     confirmation.setRole(id(admin), AccountRole.ADMIN, write, Choice.INHERIT);
     access.defaultAccess(id(admin), write, false);
+  }
+
+  @Test
+  void usesAnIsolatedDatabase() {
+    assertThat(jdbc.sql("select current_database()").query(String.class).single())
+        .startsWith("zalava_")
+        .isNotEqualTo("zalava_test");
   }
 
   @Test

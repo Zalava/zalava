@@ -1,5 +1,6 @@
 package org.zalava.support;
 
+import java.util.UUID;
 import org.springframework.test.context.DynamicPropertyRegistry;
 
 public final class PostgreSqlTestDatabase {
@@ -20,5 +21,11 @@ public final class PostgreSqlTestDatabase {
 
   public static String newJdbcUrl() {
     return JDBC_URL;
+  }
+
+  public static String isolatedJdbcUrl() {
+    return "jdbc:tc:postgresql:18.4-alpine:///zalava_"
+        + UUID.randomUUID().toString().replace("-", "")
+        + "?TC_DAEMON=true";
   }
 }

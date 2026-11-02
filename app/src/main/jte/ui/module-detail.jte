@@ -120,7 +120,7 @@
                                         <datalist id="examples-${field.name()}">
                                             @for(var example : field.examples())<option value="${example}"></option>@endfor
                                         </datalist>
-                                        <p class="help" id="examples-help-${field.name()}">Example: @for(var example : field.examples())<span class="is-family-monospace">${example}</span> @endfor Suggestions are not checked automatically.</p>
+                                        <p class="help" id="examples-help-${field.name()}">Example: @for(var example : field.examples())<span class="is-family-monospace">${example}</span> @if(field.exampleObservations().containsKey(example))<span>— ${field.exampleObservations().get(example)}</span>@else <span>— Not checked.</span>@endif @endfor</p>
                                     @endif
                                 @endif
                             @endif

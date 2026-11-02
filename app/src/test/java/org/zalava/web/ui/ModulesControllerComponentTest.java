@@ -292,6 +292,14 @@ class ModulesControllerComponentTest {
   }
 
   @Test
+  void deniesMembersTheModuleConfigurationPage() throws Exception {
+    var member = accounts.newActivated(AccountRole.MEMBER);
+    mockMvc
+        .perform(get("/modules/configured-search").with(accounts.authenticatedAs(member)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
   void rejectsManagedZalavaRestartForMember() throws Exception {
     var member = accounts.newActivated(AccountRole.MEMBER);
 
