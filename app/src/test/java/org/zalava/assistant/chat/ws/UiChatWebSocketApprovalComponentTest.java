@@ -98,6 +98,22 @@ class UiChatWebSocketApprovalComponentTest {
   }
 
   @Test
+  void failedApprovedRequestIsNotClaimedAsExecutedOnRetry() throws Exception {
+    Account owner = member();
+    int before = WRITES.get();
+    String id = directRequest(owner, "invalid-name").approval().requestId();
+    WebSocketSession session = session(owner.loginName());
+    handler.handleTextMessage(session, directCommand(id, "allow-once"));
+    assertThat(payloads(session)).contains("failure");
+    assertThat(approvals.get(id).attributes())
+        .containsEntry(ZalavaToolApprovalRequests.EXECUTION_OUTCOME, "failed");
+    var retry = directRequest(owner, "invalid-name");
+    assertThat(retry.result().success()).isFalse();
+    assertThat(((Map<?, ?>) retry.result().content()).get("status")).isEqualTo("execution_failed");
+    assertThat(WRITES.get()).isEqualTo(before + 1);
+  }
+
+  @Test
   void directDenyIsOwnerScopedAndDoesNotExecuteOrExposeAnotherActorsRequest() throws Exception {
     Account owner = member();
     Account other = member();
@@ -433,6 +449,10 @@ class UiChatWebSocketApprovalComponentTest {
         .thenAnswer(
             invocation -> {
               WRITES.incrementAndGet();
+              Map<?, ?> arguments = invocation.getArgument(1);
+              if ("invalid-name".equals(arguments.get("name"))) {
+                throw new IllegalArgumentException("invalid container name");
+              }
               return ZalavaOperationResult.success(Map.of("written", true));
             });
     return provider;

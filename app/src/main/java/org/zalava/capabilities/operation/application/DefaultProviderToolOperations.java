@@ -212,7 +212,19 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             approval.actorId(),
             true,
             operatorApprovedAttributes(approval.attributes(), approval.requestId()));
-    return ToolInvocationOutcome.executed(execute(provider, tool, arguments, context));
+    ZalavaOperationResult result;
+    try {
+      result = execute(provider, tool, arguments, context);
+    } catch (RuntimeException failure) {
+      try {
+        approvalPort.recordExecutionOutcome(approval.requestId(), false);
+      } catch (RuntimeException recordingFailure) {
+        failure.addSuppressed(recordingFailure);
+      }
+      throw failure;
+    }
+    approvalPort.recordExecutionOutcome(approval.requestId(), result.success());
+    return ToolInvocationOutcome.executed(result);
   }
 
   @Override
@@ -325,12 +337,22 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   }
 
   private static ZalavaOperationResult alreadyExecuted(ToolApproval approval) {
-    return ZalavaOperationResult.success(
+    String outcome = approval.attributes().getOrDefault("approvalExecutionOutcome", "unknown");
+    if ("succeeded".equals(outcome)) {
+      return ZalavaOperationResult.success(
+          Map.of(
+              "status", "already_executed",
+              "approvalRequestId", approval.requestId(),
+              "message", "This approved operation already completed successfully."));
+    }
+    return ZalavaOperationResult.failure(
         Map.of(
-            "status", "already_executed",
-            "approvalRequestId", approval.requestId(),
+            "status",
+            "failed".equals(outcome) ? "execution_failed" : "execution_unknown",
+            "approvalRequestId",
+            approval.requestId(),
             "message",
-                "This permission request was already approved and executed from Zalava control."));
+            "The previous approved operation did not report success; check its outcome before retrying."));
   }
 
   private void observe(
