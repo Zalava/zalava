@@ -1,6 +1,7 @@
 package org.zalava.modules.web.application.port.in;
 
 import java.util.List;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.modules.web.application.RegisteredWebPage;
 
 public interface ModulePageAccess {
@@ -10,10 +11,14 @@ public interface ModulePageAccess {
 
   boolean memberDefault(String administratorId, String moduleId, String pageId);
 
-  String override(String administratorId, String accountId, String moduleId, String pageId);
+  AccessDecision override(String administratorId, String accountId, String moduleId, String pageId);
 
   void setDefault(String administratorId, String moduleId, String pageId, boolean allowed);
 
   void setOverride(
-      String administratorId, String accountId, String moduleId, String pageId, String decision);
+      String administratorId,
+      String accountId,
+      String moduleId,
+      String pageId,
+      AccessDecision decision);
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.modules.web.application.RegisteredWebPage;
@@ -55,7 +56,7 @@ public class ModulePageAccessController {
                         access.memberDefault(admin, p.moduleId(), p.pageId()),
                         accountId == null
                             ? null
-                            : access.override(admin, accountId, p.moduleId(), p.pageId())))
+                            : access.override(admin, accountId, p.moduleId(), p.pageId()).name()))
             .toList();
     model.addAttribute("members", members);
     model.addAttribute("accountId", accountId);
@@ -91,7 +92,11 @@ public class ModulePageAccessController {
     try {
       UUID.fromString(accountId);
       access.setOverride(
-          actors.actor(auth).accountId().toString(), accountId, moduleId, pageId, decision);
+          actors.actor(auth).accountId().toString(),
+          accountId,
+          moduleId,
+          pageId,
+          AccessDecision.valueOf(decision));
       redirect.addFlashAttribute("message", "Individual access saved.");
       redirect.addAttribute("accountId", accountId);
       return "redirect:/zalava/accounts/app-access?accountId={accountId}";

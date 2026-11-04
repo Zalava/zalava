@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -70,13 +71,13 @@ public final class DefaultModulePageAccess implements ModulePageAccess {
   }
 
   @Override
-  public String override(String admin, String accountId, String moduleId, String pageId) {
+  public AccessDecision override(String admin, String accountId, String moduleId, String pageId) {
     requireAdmin(admin);
     requireMember(accountId);
     return store
         .override(accountId, moduleId, pageId)
-        .map(v -> v ? "ALLOW" : "DENY")
-        .orElse("INHERIT");
+        .map(v -> v ? AccessDecision.ALLOW : AccessDecision.DENY)
+        .orElse(AccessDecision.INHERIT);
   }
 
   @Override
@@ -90,12 +91,11 @@ public final class DefaultModulePageAccess implements ModulePageAccess {
 
   @Override
   public void setOverride(
-      String admin, String accountId, String moduleId, String pageId, String decision) {
+      String admin, String accountId, String moduleId, String pageId, AccessDecision decision) {
     requireAdmin(admin);
     requireMember(accountId);
     validateKey(moduleId, pageId);
-    if (!List.of("INHERIT", "ALLOW", "DENY").contains(decision)
-        || (decision.equals("ALLOW") && !available(moduleId, pageId)))
+    if (decision == null || (decision == AccessDecision.ALLOW && !available(moduleId, pageId)))
       throw new IllegalArgumentException("Invalid page access");
     store.setOverride(admin, accountId, moduleId, pageId, decision);
   }

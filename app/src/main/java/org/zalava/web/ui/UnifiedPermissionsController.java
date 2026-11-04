@@ -21,6 +21,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation.Choice;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 import org.zalava.identity.accounts.application.UnifiedPermissions;
+import org.zalava.identity.accounts.application.UnifiedPermissions.AppAccessChange;
+import org.zalava.identity.accounts.application.UnifiedPermissions.ConfirmationChange;
+import org.zalava.identity.accounts.application.UnifiedPermissions.ToolAccessChange;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 
 @Controller
@@ -86,10 +90,34 @@ public class UnifiedPermissionsController {
           throw new IllegalArgumentException("Invalid form");
         String[] parts = name.split("\\.", -1);
         if (parts.length != 5) throw new IllegalArgumentException("Invalid form");
-        var key = new ToolKey(decode(parts[2]), decode(parts[3]), decode(parts[4]));
+        String module = decode(parts[2]);
+        String provider = decode(parts[3]);
+        String target = decode(parts[4]);
+        String before = fields.getFirst("before." + name);
+        String decision = entry.getValue().getFirst();
         changes.add(
-            new UnifiedPermissions.Change(
-                parts[1], key, fields.getFirst("before." + name), entry.getValue().getFirst()));
+            switch (parts[1]) {
+              case "access" ->
+                  new ToolAccessChange(
+                      new ToolKey(module, provider, target),
+                      AccessDecision.valueOf(before),
+                      AccessDecision.valueOf(decision));
+              case "confirmation" ->
+                  new ConfirmationChange(
+                      new ToolKey(module, provider, target),
+                      Choice.valueOf(before),
+                      Choice.valueOf(decision));
+              case "app" -> {
+                if (!provider.equals("page"))
+                  throw new IllegalArgumentException("Invalid app identity");
+                yield new AppAccessChange(
+                    module,
+                    target,
+                    AccessDecision.valueOf(before),
+                    AccessDecision.valueOf(decision));
+              }
+              default -> throw new IllegalArgumentException("Unknown permission");
+            });
       }
       permissions.saveBatch(admin(auth), subject, changes);
       redirect.addFlashAttribute("message", "Permissions saved.");
@@ -121,7 +149,10 @@ public class UnifiedPermissionsController {
       RedirectAttributes redirect) {
     try {
       permissions.setToolAccess(
-          admin(auth), subject, new ToolKey(moduleId, providerId, toolName), decision);
+          admin(auth),
+          subject,
+          new ToolKey(moduleId, providerId, toolName),
+          AccessDecision.valueOf(decision));
       redirect.addFlashAttribute("message", "Tool access saved.");
     } catch (IllegalArgumentException e) {
       redirect.addFlashAttribute(
@@ -162,7 +193,8 @@ public class UnifiedPermissionsController {
       Authentication auth,
       RedirectAttributes redirect) {
     try {
-      permissions.setAppAccess(admin(auth), subject, moduleId, pageId, decision);
+      permissions.setAppAccess(
+          admin(auth), subject, moduleId, pageId, AccessDecision.valueOf(decision));
       redirect.addFlashAttribute("message", "App access saved.");
     } catch (IllegalArgumentException e) {
       redirect.addFlashAttribute(

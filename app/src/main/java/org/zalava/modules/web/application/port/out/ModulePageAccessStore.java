@@ -2,6 +2,7 @@ package org.zalava.modules.web.application.port.out;
 
 import java.util.List;
 import java.util.Optional;
+import org.zalava.identity.accounts.domain.AccessDecision;
 
 public interface ModulePageAccessStore {
   record PageKey(String moduleId, String pageId) {}
@@ -15,5 +16,9 @@ public interface ModulePageAccessStore {
   void setDefault(String administratorId, String moduleId, String pageId, boolean allowed);
 
   void setOverride(
-      String administratorId, String accountId, String moduleId, String pageId, String decision);
+      String administratorId,
+      String accountId,
+      String moduleId,
+      String pageId,
+      AccessDecision decision);
 }

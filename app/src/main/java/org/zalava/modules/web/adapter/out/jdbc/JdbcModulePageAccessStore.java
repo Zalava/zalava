@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.modules.web.application.port.out.ModulePageAccessStore;
 
 public class JdbcModulePageAccessStore implements ModulePageAccessStore {
@@ -54,15 +55,15 @@ public class JdbcModulePageAccessStore implements ModulePageAccessStore {
         .param("allowed", allowed)
         .param("admin", UUID.fromString(admin))
         .update();
-    audit(admin, null, module, page, allowed ? "ALLOW" : "DENY");
+    audit(admin, null, module, page, allowed ? AccessDecision.ALLOW : AccessDecision.DENY);
   }
 
   @Override
   @Transactional
   public void setOverride(
-      String admin, String account, String module, String page, String decision) {
+      String admin, String account, String module, String page, AccessDecision decision) {
     var id = UUID.fromString(account);
-    if (decision.equals("INHERIT"))
+    if (decision == AccessDecision.INHERIT)
       jdbc.sql(
               "DELETE FROM zalava_page_access_user WHERE account_id=:account AND module_id=:module AND page_id=:page")
           .param("account", id)
@@ -75,20 +76,21 @@ public class JdbcModulePageAccessStore implements ModulePageAccessStore {
           .param("account", id)
           .param("module", module)
           .param("page", page)
-          .param("allowed", decision.equals("ALLOW"))
+          .param("allowed", decision == AccessDecision.ALLOW)
           .param("admin", UUID.fromString(admin))
           .update();
     audit(admin, id, module, page, decision);
   }
 
-  private void audit(String admin, UUID account, String module, String page, String decision) {
+  private void audit(
+      String admin, UUID account, String module, String page, AccessDecision decision) {
     jdbc.sql(
             "INSERT INTO zalava_page_access_audit(id,account_id,module_id,page_id,decision,changed_by) VALUES(:id,:account,:module,:page,:decision,:admin)")
         .param("id", UUID.randomUUID())
         .param("account", account)
         .param("module", module)
         .param("page", page)
-        .param("decision", decision)
+        .param("decision", decision.name())
         .param("admin", UUID.fromString(admin))
         .update();
   }

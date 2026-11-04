@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -49,7 +50,8 @@ class UnifiedPermissionsTest {
             List.of(mock(RegisteredWebRoute.class)));
     when(pages.pages("admin")).thenReturn(List.of(page));
     when(pages.memberDefault("admin", "shopping", "items")).thenReturn(true);
-    when(pages.override("admin", person.id().toString(), "shopping", "items")).thenReturn("ALLOW");
+    when(pages.override("admin", person.id().toString(), "shopping", "items"))
+        .thenReturn(AccessDecision.ALLOW);
     when(pages.allowed(person.id().toString(), "shopping", "items")).thenReturn(false);
 
     var snapshot =
@@ -60,7 +62,7 @@ class UnifiedPermissionsTest {
         .singleElement()
         .satisfies(
             row -> {
-              assertThat(row.choice()).isEqualTo("ALLOW");
+              assertThat(row.choice()).isEqualTo(AccessDecision.ALLOW);
               assertThat(row.allowed()).isFalse();
             });
     verify(pages).allowed(person.id().toString(), "shopping", "items");

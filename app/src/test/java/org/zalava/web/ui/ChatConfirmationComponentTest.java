@@ -568,6 +568,32 @@ class ChatConfirmationComponentTest {
         .isEqualTo(Choice.REQUIRE);
     mvc.perform(
             post("/zalava/accounts/permissions/save")
+                .with(adminUser)
+                .with(csrf())
+                .param("subject", "member")
+                .param(accessField, "DENY")
+                .param("before." + accessField, "ALLOW")
+                .param(confirmField, "AUTO")
+                .param("before." + confirmField, "INHERIT"))
+        .andExpect(status().is3xxRedirection());
+    assertThat(access.allowed(id(first), write)).isTrue();
+    assertThat(confirmation.roleDefault(id(admin), AccountRole.MEMBER, write))
+        .isEqualTo(Choice.REQUIRE);
+    String unknownField =
+        PermissionFields.field("unknown", write.moduleId(), write.providerId(), write.toolName());
+    var invalid =
+        mvc.perform(
+                post("/zalava/accounts/permissions/save")
+                    .with(adminUser)
+                    .with(csrf())
+                    .param("subject", "member")
+                    .param(unknownField, "ALLOW")
+                    .param("before." + unknownField, "ALLOW"))
+            .andExpect(status().is3xxRedirection())
+            .andReturn();
+    assertThat(invalid.getFlashMap().get("error")).isNotNull();
+    mvc.perform(
+            post("/zalava/accounts/permissions/save")
                 .with(user(first.loginName()).roles("MEMBER"))
                 .with(csrf())
                 .param("subject", "member")

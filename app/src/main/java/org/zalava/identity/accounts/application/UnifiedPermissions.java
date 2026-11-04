@@ -11,6 +11,7 @@ import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmatio
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.modules.web.application.RegisteredWebPage;
@@ -77,12 +78,13 @@ public class UnifiedPermissions {
       var ct = confirmationTools.get(key);
       boolean available = ct != null && ct.available();
       Boolean sideEffecting = ct == null ? null : ct.sideEffecting();
-      String accessChoice = "FIXED", accessEffective = "Allowed · Administrator", accessSource = "";
+      AccessDecision accessChoice = null;
+      String accessEffective = "Allowed · Administrator", accessSource = "";
       if (selected.role() == AccountRole.MEMBER) {
         if (selected.person() == null) {
           boolean allowed =
               memberDefaults.stream().anyMatch(d -> d.key().equals(key) && d.allowed());
-          accessChoice = allowed ? "ALLOW" : "DENY";
+          accessChoice = allowed ? AccessDecision.ALLOW : AccessDecision.DENY;
           accessEffective = allowed && tool.eligible() ? "Allowed" : "Not allowed";
           accessSource = tool.eligible() ? "Member role default" : "Unavailable or restricted";
         } else {
@@ -130,26 +132,26 @@ public class UnifiedPermissions {
             .map(
                 p -> {
                   boolean defaultAllowed = pages.memberDefault(admin, p.moduleId(), p.pageId());
-                  String override =
+                  AccessDecision override =
                       selected.person() != null && selected.role() == AccountRole.MEMBER
                           ? pages.override(
                               admin, selected.person().id().toString(), p.moduleId(), p.pageId())
-                          : "INHERIT";
+                          : AccessDecision.INHERIT;
                   boolean allowed =
                       selected.role() == AccountRole.ADMIN
-                          || (override.equals("ALLOW")
-                              || (override.equals("INHERIT") && defaultAllowed));
+                          || (override == AccessDecision.ALLOW
+                              || (override == AccessDecision.INHERIT && defaultAllowed));
                   if (selected.person() != null) {
                     allowed =
                         pages.allowed(selected.person().id().toString(), p.moduleId(), p.pageId());
                   } else if (p.routes().isEmpty()) {
                     allowed = false;
                   }
-                  String choice =
+                  AccessDecision choice =
                       selected.role() == AccountRole.ADMIN
-                          ? "FIXED"
+                          ? null
                           : selected.person() == null
-                              ? (defaultAllowed ? "ALLOW" : "DENY")
+                              ? (defaultAllowed ? AccessDecision.ALLOW : AccessDecision.DENY)
                               : override;
                   return new PageRow(
                       p,
@@ -159,7 +161,7 @@ public class UnifiedPermissions {
                           ? "App unavailable"
                           : selected.person() == null
                               ? "Role default"
-                              : override.equals("INHERIT")
+                              : override == AccessDecision.INHERIT
                                   ? "Role default"
                                   : "Individual override");
                 })
@@ -176,62 +178,69 @@ public class UnifiedPermissions {
   public void saveBatch(String admin, String subject, List<Change> changes) {
     var current = snapshot(admin, subject);
     for (var change : changes) {
-      if (change.before().equals(change.decision())) continue;
-      switch (change.kind()) {
-        case "access" -> {
+      switch (change) {
+        case ToolAccessChange access -> {
+          if (access.before() == access.decision()) continue;
           var row =
               current.toolRows().stream()
-                  .filter(r -> r.key().equals(change.key()))
+                  .filter(r -> r.key().equals(access.key()))
                   .findFirst()
                   .orElseThrow(() -> new IllegalArgumentException("Tool is no longer available"));
-          if (!row.accessChoice().equals(change.before()))
+          if (row.accessChoice() != access.before())
             throw new IllegalArgumentException("Permissions changed; reload and try again");
-          setToolAccess(admin, subject, change.key(), change.decision());
+          setToolAccess(admin, subject, access.key(), access.decision());
         }
-        case "confirmation" -> {
+        case ConfirmationChange confirmationChange -> {
+          if (confirmationChange.before() == confirmationChange.decision()) continue;
           var row =
               current.toolRows().stream()
-                  .filter(r -> r.key().equals(change.key()))
+                  .filter(r -> r.key().equals(confirmationChange.key()))
                   .findFirst()
                   .orElseThrow(() -> new IllegalArgumentException("Tool is no longer available"));
-          if (!row.confirmationChoice().name().equals(change.before()))
+          if (row.confirmationChoice() != confirmationChange.before())
             throw new IllegalArgumentException("Permissions changed; reload and try again");
-          setConfirmation(admin, subject, change.key(), Choice.valueOf(change.decision()));
+          setConfirmation(admin, subject, confirmationChange.key(), confirmationChange.decision());
         }
-        case "app" -> {
-          if (!change.key().providerId().equals("page"))
-            throw new IllegalArgumentException("Invalid app identity");
+        case AppAccessChange app -> {
+          if (app.before() == app.decision()) continue;
           var row =
               current.appRows().stream()
                   .filter(
                       r ->
-                          r.page().moduleId().equals(change.key().moduleId())
-                              && r.page().pageId().equals(change.key().toolName()))
+                          r.page().moduleId().equals(app.moduleId())
+                              && r.page().pageId().equals(app.pageId()))
                   .findFirst()
                   .orElseThrow(() -> new IllegalArgumentException("App is no longer available"));
-          if (!row.choice().equals(change.before()))
+          if (row.choice() != app.before())
             throw new IllegalArgumentException("Permissions changed; reload and try again");
-          setAppAccess(
-              admin, subject, change.key().moduleId(), change.key().toolName(), change.decision());
+          setAppAccess(admin, subject, app.moduleId(), app.pageId(), app.decision());
         }
-        default -> throw new IllegalArgumentException("Unknown permission");
       }
     }
   }
 
-  public record Change(String kind, ToolKey key, String before, String decision) {}
+  public sealed interface Change permits ToolAccessChange, ConfirmationChange, AppAccessChange {}
 
-  public void setToolAccess(String admin, String subject, ToolKey key, String decision) {
+  public record ToolAccessChange(ToolKey key, AccessDecision before, AccessDecision decision)
+      implements Change {}
+
+  public record ConfirmationChange(ToolKey key, Choice before, Choice decision) implements Change {}
+
+  public record AppAccessChange(
+      String moduleId, String pageId, AccessDecision before, AccessDecision decision)
+      implements Change {}
+
+  public void setToolAccess(String admin, String subject, ToolKey key, AccessDecision decision) {
     Subject selected = subject(subject);
     requireMember(selected);
     if (selected.person() == null) {
       requireAllowOrDeny(decision);
-      tools.defaultAccess(admin, key, decision.equals("ALLOW"));
-    } else if (decision.equals("INHERIT")) {
+      tools.defaultAccess(admin, key, decision == AccessDecision.ALLOW);
+    } else if (decision == AccessDecision.INHERIT) {
       tools.inherit(admin, selected.person().id().toString(), key);
     } else {
       requireAllowOrDeny(decision);
-      tools.decide(admin, selected.person().id().toString(), key, decision.equals("ALLOW"));
+      tools.decide(admin, selected.person().id().toString(), key, decision == AccessDecision.ALLOW);
     }
   }
 
@@ -242,12 +251,12 @@ public class UnifiedPermissions {
   }
 
   public void setAppAccess(
-      String admin, String subject, String module, String page, String decision) {
+      String admin, String subject, String module, String page, AccessDecision decision) {
     Subject selected = subject(subject);
     requireMember(selected);
     if (selected.person() == null) {
       requireAllowOrDeny(decision);
-      pages.setDefault(admin, module, page, decision.equals("ALLOW"));
+      pages.setDefault(admin, module, page, decision == AccessDecision.ALLOW);
     } else pages.setOverride(admin, selected.person().id().toString(), module, page, decision);
   }
 
@@ -256,8 +265,8 @@ public class UnifiedPermissions {
       throw new IllegalArgumentException("Administrator access is fixed");
   }
 
-  private static void requireAllowOrDeny(String decision) {
-    if (!List.of("ALLOW", "DENY").contains(decision))
+  private static void requireAllowOrDeny(AccessDecision decision) {
+    if (decision != AccessDecision.ALLOW && decision != AccessDecision.DENY)
       throw new IllegalArgumentException("Invalid choice");
   }
 
@@ -330,7 +339,7 @@ public class UnifiedPermissions {
       boolean available,
       Boolean sideEffecting,
       String hostAccessNote,
-      String accessChoice,
+      AccessDecision accessChoice,
       String accessEffective,
       String accessSource,
       Choice confirmationChoice,
@@ -343,5 +352,6 @@ public class UnifiedPermissions {
     }
   }
 
-  public record PageRow(RegisteredWebPage page, String choice, boolean allowed, String source) {}
+  public record PageRow(
+      RegisteredWebPage page, AccessDecision choice, boolean allowed, String source) {}
 }

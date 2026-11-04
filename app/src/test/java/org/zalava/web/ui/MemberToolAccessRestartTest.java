@@ -13,6 +13,7 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.support.PostgreSqlTestDatabase;
 import org.zalava.support.RestartableZalavaApplicationContext;
@@ -107,7 +108,7 @@ class MemberToolAccessRestartTest {
                   .getBean(MemberToolAccess.class)
                   .effective(administratorId, memberId, key)
                   .override())
-          .isEqualTo("DENY");
+          .isEqualTo(AccessDecision.DENY);
       third.getBean(MemberToolAccess.class).inherit(administratorId, memberId, key);
       assertThat(third.getBean(MemberToolAccess.class).allowed(memberId, key)).isTrue();
       third.getBean(MemberToolAccess.class).defaultAccess(administratorId, key, false);

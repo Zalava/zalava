@@ -64,7 +64,7 @@ public class MemberToolAccessController {
                       true,
                       decision == null ? null : decision.changedAt().toString(),
                       effective.source(),
-                      effective.override(),
+                      effective.override().name(),
                       effective.membersAllowed()));
             });
     decisions.forEach(
@@ -99,7 +99,7 @@ public class MemberToolAccessController {
                         false,
                         value.changedAt().toString(),
                         effective.source(),
-                        effective.override(),
+                        effective.override().name(),
                         effective.membersAllowed()));
               }
             });
