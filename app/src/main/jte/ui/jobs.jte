@@ -57,15 +57,15 @@
                                 @for(var job : group.jobs())
                                     <article class="job-entry">
                                         <div class="job-copy">
-                                            <h3 class="has-text-weight-semibold mb-1">
-                                                <a class="job-link" href="${job.url()}">${job.name()}</a>
-                                            </h3>
+                                            <div class="item-heading">
+                                                <h3 class="has-text-weight-semibold mb-1"><a class="job-link" href="${job.url()}">${job.name()}</a></h3>
+                                                <span class="tag ${group.statusClass()}">${group.title()}</span>
+                                            </div>
                                             <p class="has-text-grey is-size-7 mb-2">Created ${job.createdAt()}</p>
                                             @if(job.description() != null && !job.description().isBlank())
                                                 <p class="job-description">${job.description()}</p>
                                             @endif
                                         </div>
-                                        <span class="tag ${group.statusClass()}">${group.title()}</span>
                                     </article>
                                 @endfor
                             </div>

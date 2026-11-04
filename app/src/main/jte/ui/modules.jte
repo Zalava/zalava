@@ -51,9 +51,9 @@
 <div class="module-entries">
 @for(var module : model.modules())
 <article class="module-entry managed-module-row" data-module="${module.moduleId()}" data-enabled-module="${module.installed() ? module.moduleId() : null}"><div class="module-copy">
-<div class="module-heading"><h3 class="title is-6 mb-1">${module.displayName()}</h3><span class="tag is-light">${module.state()}</span><span class="tag is-light">${module.loaded() ? "Loaded" : "Not loaded"}</span></div>
-<p class="is-size-7 has-text-grey">${module.moduleId()} · ${module.version()}</p><p>${module.description()}</p><details><summary>Source and permissions</summary><p class="is-size-7">${module.source()} · ${module.permissionCount()} permissions</p></details></div>
-<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span><a class="button is-link is-light is-small" href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">Open module</a></div></article>
+<div class="module-heading item-heading"><h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">${module.displayName()}</a></h3><span class="tag is-light">${module.state()}</span><span class="tag is-light">${module.loaded() ? "Loaded" : "Not loaded"}</span></div>
+<p class="is-size-7 has-text-grey">Version ${module.version()}</p>@if(module.description() != null && !module.description().isBlank() && !module.description().equalsIgnoreCase(module.displayName()))<p>${module.description()}</p>@endif<details><summary>Source and permissions</summary><p class="is-size-7">${module.source()} · ${module.permissionCount()} permissions</p></details></div>
+<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span></div></article>
 @endfor
 </div>@endif
 </section>
@@ -101,7 +101,7 @@
                     @for(CatalogModuleEntry module : model.catalogModules())
                         <article class="module-entry" data-catalog-module="${module.moduleId()}">
                             <div class="module-copy">
-                                <div class="module-heading module-catalog-heading">
+                                <div class="module-heading item-heading">
                                     <h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-catalog-detail-link="${module.moduleId()}">${module.displayName()}</a></h3>
                                     @if(module.installed())
                                         <span class="tag is-info is-light" data-catalog-installed>Installed ${module.installedVersion()}</span>

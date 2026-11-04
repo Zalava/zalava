@@ -7,7 +7,9 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -63,7 +65,27 @@ class BrowserModuleLifecycleAcceptanceTest {
         BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page);
-      page.navigate(baseUrl() + "/modules/lifecycle-fixture");
+      page.navigate(baseUrl() + "/modules");
+      var moduleLink = page.locator("[data-module=lifecycle-fixture] [data-module-detail-link]");
+      PlaywrightAssertions.assertThat(moduleLink).hasText("Lifecycle fixture");
+      assertThat(page.locator("[data-module=lifecycle-fixture]").innerText())
+          .doesNotContain("Open module", "lifecycle-fixture");
+      assertThat(page.locator("[data-module=lifecycle-fixture] p").allInnerTexts())
+          .doesNotContain("Lifecycle fixture");
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        Path screenshot = Path.of("build/browser-acceptance/installed-module-" + width + ".png");
+        try {
+          Files.createDirectories(screenshot.getParent());
+        } catch (IOException exception) {
+          throw new IllegalStateException(exception);
+        }
+        page.screenshot(new Page.ScreenshotOptions().setPath(screenshot).setFullPage(true));
+      }
+      moduleLink.focus();
+      page.keyboard().press("Enter");
       assertThat(page.locator("[data-runtime-state]").getAttribute("data-runtime-state"))
           .isEqualTo("SETUP_REQUIRED");
 
@@ -109,7 +131,7 @@ class BrowserModuleLifecycleAcceptanceTest {
   private static Path workspace() {
     try {
       return Files.createTempDirectory("zalava-module-lifecycle-browser-");
-    } catch (java.io.IOException exception) {
+    } catch (IOException exception) {
       throw new ExceptionInInitializerError(exception);
     }
   }
