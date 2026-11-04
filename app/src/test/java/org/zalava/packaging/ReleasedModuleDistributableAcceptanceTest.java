@@ -1432,6 +1432,13 @@ class ReleasedModuleDistributableAcceptanceTest {
       if (width <= 1024)
         page.waitForFunction(
             "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      if (width == 768)
+        assertThat(
+                ((Number)
+                        read.locator("select[name^='p.confirmation.']")
+                            .evaluate("element => element.getBoundingClientRect().width"))
+                    .doubleValue())
+            .isGreaterThan(250.0);
       assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
           .isTrue();
       page.screenshot(
@@ -1462,18 +1469,58 @@ class ReleasedModuleDistributableAcceptanceTest {
               .setPath(diagnostics.resolve("unified-person-" + width + ".png"))
               .setFullPage(true));
     }
-    page.setViewportSize(1440, 900);
-    page.locator("#permission-subject").selectOption("administrator");
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show permissions"))
+    var memberApp =
+        page.locator("[data-permission-app='zalava-module-shopping-list:shopping-list']");
+    memberApp.locator("select[name^='p.app.']").selectOption("ALLOW");
+    read.locator("select[name^='p.confirmation.']").selectOption("REQUIRE");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
         .click();
-    read.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
-    read.getByRole(
-            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+    page.getByText("Permissions saved.").waitFor();
+    PlaywrightAssertions.assertThat(memberApp).containsText("Currently: Allowed");
+    PlaywrightAssertions.assertThat(read).containsText("Currently: Require confirmation");
+    page.navigate(baseUrl + "/zalava/accounts");
+    page.locator("[data-account-id='" + memberId + "']")
+        .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("View permissions"))
+        .click();
+    PlaywrightAssertions.assertThat(
+            page.getByText("Current access, including permissions inherited from the role."))
+        .isVisible();
+    assertThat(page.locator("select").count()).isZero();
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("account-permissions-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Manage permissions"))
+        .click();
+    memberApp.locator("select[name^='p.app.']").selectOption("DENY");
+    read.locator("select[name^='p.confirmation.']").selectOption("INHERIT");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
+        .click();
+    page.getByText("Permissions saved.").waitFor();
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    PlaywrightAssertions.assertThat(
+            page.locator("[data-permission-module]")
+                .filter(new Locator.FilterOptions().setHasText("Shopping List")))
+        .containsText("List items");
+    var memory = page.locator("[data-permission-tool='zalava-internal:proposeMemory']");
+    memory.locator("select[name^='p.confirmation.']").selectOption("REQUIRE");
+    read.locator("select[name^='p.confirmation.']").selectOption("REQUIRE");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
         .focus();
     page.keyboard().press("Enter");
-    page.getByText("Chat confirmation saved.").waitFor();
+    page.getByText("Permissions saved.").waitFor();
     page.reload();
     PlaywrightAssertions.assertThat(read).containsText("Require confirmation");
+    PlaywrightAssertions.assertThat(memory).containsText("Require confirmation");
     sendShoppingToolTurn(
         page, modelServer, "Read-only confirmation required", "list_items", Map.of());
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
@@ -1501,9 +1548,9 @@ class ReleasedModuleDistributableAcceptanceTest {
             .withRequestBody(containing("Read-only confirmation required"))
             .withRequestBody(containing("Policy automatic milk")));
     page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
-    read.locator("form[action$='/confirmation'] select").selectOption("INHERIT");
-    read.getByRole(
-            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+    read.locator("select[name^='p.confirmation.']").selectOption("INHERIT");
+    memory.locator("select[name^='p.confirmation.']").selectOption("INHERIT");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
         .click();
     sendShoppingToolTurn(page, modelServer, "Read-only default auto", "list_items", Map.of());
     PlaywrightAssertions.assertThat(
@@ -1547,11 +1594,10 @@ class ReleasedModuleDistributableAcceptanceTest {
               .setFullPage(true));
     }
     page.setViewportSize(1440, 900);
-    read.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
-    read.getByRole(
-            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+    read.locator("select[name^='p.confirmation.']").selectOption("REQUIRE");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
         .click();
-    page.getByText("Chat confirmation saved.").waitFor();
+    page.getByText("Permissions saved.").waitFor();
     String call =
         """
         data: {"id":"knowledge","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"knowledge-call","type":"function","function":{"name":"zalava_knowledge_search_f2405c6159c995e8","arguments":%s}}]},"finish_reason":null}]}
@@ -1652,10 +1698,10 @@ class ReleasedModuleDistributableAcceptanceTest {
               .setFullPage(true));
     }
     page.setViewportSize(1440, 900);
-    row.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
-    row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+    row.locator("select[name^='p.confirmation.']").selectOption("REQUIRE");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
         .click();
-    page.getByText("Chat confirmation saved.").waitFor();
+    page.getByText("Permissions saved.").waitFor();
     Map<String, Object> proposal = Map.of("scope", "USER", "text", fact, "metadata", Map.of());
     String call =
         """
@@ -1783,12 +1829,10 @@ class ReleasedModuleDistributableAcceptanceTest {
               .setFullPage(true));
     }
     page.setViewportSize(1440, 900);
-    skill.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
-    skill
-        .getByRole(
-            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+    skill.locator("select[name^='p.confirmation.']").selectOption("REQUIRE");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save permissions"))
         .click();
-    page.getByText("Chat confirmation saved.").waitFor();
+    page.getByText("Permissions saved.").waitFor();
     assertThat(
             post(
                     page.context(),

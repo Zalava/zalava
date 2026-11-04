@@ -26,6 +26,7 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.To
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
@@ -113,7 +114,8 @@ class MemberToolAccessComponentTest {
         .isEqualTo(ProviderToolOperations.ToolInvocationStatus.EXECUTED);
     access.decide(id(admin), id(first), key, false);
     assertThatThrownBy(() -> invoke(first, "current_time")).hasMessageContaining("denied");
-    assertThat(access.effective(id(admin), id(first), key).override()).isEqualTo("DENY");
+    assertThat(access.effective(id(admin), id(first), key).override())
+        .isEqualTo(AccessDecision.DENY);
     access.defaultAccess(id(admin), key, false);
     access.decide(id(admin), id(second), key, true);
     assertThat(invoke(second, "current_time").status())
@@ -126,8 +128,10 @@ class MemberToolAccessComponentTest {
             new JdbcMemberToolAccessStore(jdbc),
             new ZalavaRuntimeProviderCatalog(runtime),
             Clock.systemUTC());
-    assertThat(reloaded.effective(id(admin), id(second), key).override()).isEqualTo("INHERIT");
-    assertThat(reloaded.effective(id(admin), id(first), key).override()).isEqualTo("DENY");
+    assertThat(reloaded.effective(id(admin), id(second), key).override())
+        .isEqualTo(AccessDecision.INHERIT);
+    assertThat(reloaded.effective(id(admin), id(first), key).override())
+        .isEqualTo(AccessDecision.DENY);
     assertThatThrownBy(() -> access.defaultAccess(id(first), key, true))
         .isInstanceOf(SecurityException.class);
     assertThatThrownBy(() -> access.defaultAccess(id(admin), key("unsafe_shell"), true))

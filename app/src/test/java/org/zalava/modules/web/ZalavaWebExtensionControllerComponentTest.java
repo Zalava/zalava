@@ -32,6 +32,7 @@ import org.zalava.api.ProviderFactory;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.extensions.web.*;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.modules.web.application.DefaultModulePageAccess;
 import org.zalava.modules.web.application.port.in.ModulePageAccess;
@@ -247,12 +248,12 @@ class ZalavaWebExtensionControllerComponentTest {
                 .with(memberUser)
                 .with(csrf().useInvalidToken()))
         .andExpect(status().isForbidden());
-    access.setOverride(administrator, individual, module, page, "INHERIT");
+    access.setOverride(administrator, individual, module, page, AccessDecision.INHERIT);
     mockMvc
         .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
         .andExpect(status().isOk());
     access.setDefault(administrator, module, page, false);
-    access.setOverride(administrator, individual, module, page, "ALLOW");
+    access.setOverride(administrator, individual, module, page, AccessDecision.ALLOW);
     mockMvc
         .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
         .andExpect(status().isOk());
@@ -266,9 +267,19 @@ class ZalavaWebExtensionControllerComponentTest {
     assertThatThrownBy(() -> unavailable.setDefault(administrator, module, page, true))
         .isInstanceOf(IllegalArgumentException.class);
     unavailable.setDefault(administrator, module, page, false);
-    unavailable.setOverride(administrator, individual, module, page, "DENY");
-    assertThatThrownBy(() -> access.setOverride(administrator, individual, module, page, "BAD"))
+    unavailable.setOverride(administrator, individual, module, page, AccessDecision.DENY);
+    assertThatThrownBy(() -> access.setOverride(administrator, individual, module, page, null))
         .isInstanceOf(IllegalArgumentException.class);
+    mockMvc
+        .perform(
+            post("/zalava/accounts/app-access/user")
+                .with(adminUser)
+                .with(csrf())
+                .param("accountId", individual)
+                .param("moduleId", module)
+                .param("pageId", page)
+                .param("decision", "BAD"))
+        .andExpect(status().is3xxRedirection());
     assertThatThrownBy(() -> access.setDefault(administrator, "../bad", page, false))
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(() -> access.setDefault(individual, module, page, true))
@@ -277,7 +288,7 @@ class ZalavaWebExtensionControllerComponentTest {
     mockMvc
         .perform(get("/apps/test-web-module/shopping-list").with(memberUser))
         .andExpect(status().is3xxRedirection());
-    access.setOverride(administrator, individual, module, page, "INHERIT");
+    access.setOverride(administrator, individual, module, page, AccessDecision.INHERIT);
   }
 
   @TestConfiguration(proxyBeanMethods = false)
