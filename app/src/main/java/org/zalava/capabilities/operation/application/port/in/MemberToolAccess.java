@@ -2,6 +2,7 @@ package org.zalava.capabilities.operation.application.port.in;
 
 import java.time.Instant;
 import java.util.List;
+import org.zalava.identity.accounts.domain.AccessDecision;
 
 /** Persisted, exact per-account grants. Runtime safety and confirmation remain independent. */
 public interface MemberToolAccess {
@@ -23,7 +24,8 @@ public interface MemberToolAccess {
 
   Effective effective(String administratorId, String memberId, ToolKey key);
 
-  record Effective(boolean allowed, String source, String override, boolean membersAllowed) {}
+  record Effective(
+      boolean allowed, String source, AccessDecision override, boolean membersAllowed) {}
 
   record ToolKey(String moduleId, String providerId, String toolName) {
     public ToolKey {

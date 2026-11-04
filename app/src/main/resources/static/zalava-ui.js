@@ -94,14 +94,32 @@ document.querySelectorAll('time[data-local-time]').forEach(element => {
     const query = input.value.trim().toLocaleLowerCase();
     let count = 0;
     rows.forEach(row => {
-      const matches = !query || row.textContent.toLocaleLowerCase().includes(query);
+      const moduleName = row.closest('[data-permission-module]')?.querySelector('h2')?.textContent || '';
+      const matches = !query || row.textContent.toLocaleLowerCase().includes(query) || moduleName.toLocaleLowerCase().includes(query);
       row.hidden = !matches;
       row.style.display = matches ? '' : 'none';
       if (matches) count++;
     });
+    document.querySelectorAll('[data-permission-module]').forEach(group => { group.hidden = !Array.from(group.querySelectorAll('[data-permission-app], [data-permission-tool]')).some(row => !row.hidden); });
     status.textContent = query ? `${count} matching ${count === 1 ? 'app or tool' : 'apps or tools'}.` : '';
   };
   container.hidden = false;
   input.addEventListener('input', update);
   update();
+})();
+
+// Warn before leaving a permissions batch with unsaved selections.
+(() => {
+  const form = document.querySelector('.permissions-matrix');
+  const status = document.querySelector('[data-permission-save-status]');
+  if (!form || !status) return;
+  let submitting = false;
+  const changed = () => Array.from(form.querySelectorAll('select[name^="p."]')).some(select => {
+    const before = Array.from(form.querySelectorAll('input[type="hidden"]')).find(input => input.name === `before.${select.name}`);
+    return before && before.value !== select.value;
+  });
+  status.textContent = changed() ? 'Unsaved changes' : '';
+  form.addEventListener('change', () => { status.textContent = changed() ? 'Unsaved changes' : ''; });
+  form.addEventListener('submit', () => { submitting = true; status.textContent = 'Saving…'; });
+  window.addEventListener('beforeunload', event => { if (!submitting && changed()) event.preventDefault(); });
 })();

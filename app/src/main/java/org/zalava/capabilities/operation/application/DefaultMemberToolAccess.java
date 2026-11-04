@@ -7,6 +7,7 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.out.MemberToolAccessStore;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.identity.accounts.domain.AccessDecision;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
 
@@ -126,7 +127,9 @@ public final class DefaultMemberToolAccess implements MemberToolAccess {
     return new Effective(
         override.map(Decision::allowed).orElse(roleAllowed),
         override.isPresent() ? "User override" : "Role default",
-        override.map(value -> value.allowed() ? "ALLOW" : "DENY").orElse("INHERIT"),
+        override
+            .map(value -> value.allowed() ? AccessDecision.ALLOW : AccessDecision.DENY)
+            .orElse(AccessDecision.INHERIT),
         roleAllowed);
   }
 
