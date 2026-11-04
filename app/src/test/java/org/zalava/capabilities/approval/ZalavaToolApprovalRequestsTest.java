@@ -162,6 +162,22 @@ class ZalavaToolApprovalRequestsTest {
   }
 
   @Test
+  void executionOutcomeSurvivesReloadAndRequiresAnAllowedDecision() {
+    String id = addPending("p", "t", "a");
+    var store = new FileSystemApprovalRequestStore(workspace);
+    var reloaded = new ZalavaToolApprovalRequests(store);
+    assertThatThrownBy(() -> reloaded.recordExecutionOutcome(id, false))
+        .isInstanceOf(IllegalStateException.class);
+    reloaded.allowUnscoped(id);
+    assertThat(reloaded.get(id).attributes())
+        .doesNotContainKey(ZalavaToolApprovalRequests.EXECUTION_OUTCOME);
+    reloaded.recordExecutionOutcome(id, false);
+    var afterRestart = new ZalavaToolApprovalRequests(store);
+    assertThat(afterRestart.get(id).attributes())
+        .containsEntry(ZalavaToolApprovalRequests.EXECUTION_OUTCOME, "failed");
+  }
+
+  @Test
   void denyUnscopedDecidesEntry() {
     var fresh = new ZalavaToolApprovalRequests(new FileSystemApprovalRequestStore(workspace));
     String id = addPending("p", "t", "a");

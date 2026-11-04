@@ -91,6 +91,20 @@ public class ZalavaToolApprovalRequests {
         .orElseGet(() -> add(provider, tool, context, arguments, argumentsJson, taskReference));
   }
 
+  public static final String EXECUTION_OUTCOME = "approvalExecutionOutcome";
+
+  public synchronized void recordExecutionOutcome(String requestId, boolean succeeded) {
+    Entry existing = find(requestId);
+    if (existing.decision() != Decision.ALLOWED) {
+      throw new IllegalStateException("Approval is not allowed");
+    }
+    Map<String, String> attributes = new LinkedHashMap<>(existing.attributes());
+    attributes.put(EXECUTION_OUTCOME, succeeded ? "succeeded" : "failed");
+    replace(
+        existing,
+        existing.withPolicy(existing.scope(), Map.copyOf(attributes), existing.decidedAt()));
+  }
+
   public synchronized Entry allowUnscoped(String requestId) {
     return decideUnscoped(requestId, Decision.ALLOWED, ApprovalScope.ONCE);
   }

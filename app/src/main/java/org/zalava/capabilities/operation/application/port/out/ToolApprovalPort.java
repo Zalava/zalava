@@ -48,6 +48,9 @@ public interface ToolApprovalPort {
     throw new UnsupportedOperationException("Read approval unavailable");
   }
 
+  /** Persist the outcome of an already-claimed approval; absence means unknown. */
+  void recordExecutionOutcome(String requestId, boolean succeeded);
+
   ToolApproval allowUnscoped(String requestId);
 
   ToolApproval allowUnscopedTool(String requestId);

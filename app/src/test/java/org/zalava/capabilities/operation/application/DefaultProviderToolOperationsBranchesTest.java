@@ -163,6 +163,9 @@ class DefaultProviderToolOperationsBranchesTest {
     }
 
     @Override
+    public void recordExecutionOutcome(String requestId, boolean succeeded) {}
+
+    @Override
     public ToolApproval allowUnscoped(String requestId) {
       throw new ApprovalNotFoundException(requestId);
     }

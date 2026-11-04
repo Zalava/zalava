@@ -31,6 +31,7 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
       String argumentsJson,
       TaskReference taskReference) {
     Map<String, String> attributes = new LinkedHashMap<>(context.attributes());
+    attributes.remove(ZalavaToolApprovalRequests.EXECUTION_OUTCOME);
     attributes.put("approvedModuleId", provider.descriptor().moduleId());
     InvocationContext identified =
         new InvocationContext(context.actorId(), context.confirmed(), Map.copyOf(attributes));
@@ -94,6 +95,11 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
     return requests
         .findAllowedToolPolicy(context, provider, tool)
         .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
+  public void recordExecutionOutcome(String requestId, boolean succeeded) {
+    requests.recordExecutionOutcome(requestId, succeeded);
   }
 
   @Override
