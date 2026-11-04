@@ -143,7 +143,11 @@ class BrowserModuleManagementAcceptanceTest {
             .click();
         PlaywrightAssertions.assertThat(page.locator("[data-catalog-module]")).hasCount(1);
         assertThat(page.locator("[data-catalog-module=zalava-module-tasks]").innerText())
-            .contains("Not installed");
+            .contains("Not installed", "Create and schedule jobs")
+            .doesNotContain("zalava-module-tasks", "View module");
+        PlaywrightAssertions.assertThat(
+                page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Tasks")))
+            .isVisible();
         capture(page, "module-search-" + width);
         page.locator("[data-catalog-module=zalava-module-tasks] [data-catalog-detail-link]")
             .click();
@@ -159,7 +163,14 @@ class BrowserModuleManagementAcceptanceTest {
         page.getByText("No modules match this search.", new Page.GetByTextOptions().setExact(false))
             .waitFor();
         capture(page, "module-no-match-" + width);
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Clear search")).click();
+        page.locator("#module-search").focus();
+        page.keyboard().press("Tab");
+        PlaywrightAssertions.assertThat(
+                page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Clear search")))
+            .isFocused();
+        page.keyboard().press("Enter");
+        PlaywrightAssertions.assertThat(page.locator("[data-catalog-module]")).hasCount(2);
+        PlaywrightAssertions.assertThat(page.locator("#module-search")).hasValue("");
       }
       page.locator("[data-module-developer-options] summary").click();
       assertThat(page.locator("input[name=moduleJar]").isVisible()).isTrue();

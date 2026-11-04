@@ -81,12 +81,14 @@
 
             <form method="get" action="/modules" class="module-capability-search mb-4" role="search">
                 <div class="field"><label class="label" for="module-search">Search capabilities</label>
-                    <input class="input" id="module-search" name="q" value="${catalogQuery}" maxlength="200" placeholder="Search by capability or module name">
+                    <div class="module-search-input">
+                        <input class="input" id="module-search" name="q" value="${catalogQuery}" maxlength="200" placeholder="Search by capability or module name">
+                        @if(!catalogQuery.isBlank())
+                            <a class="module-search-clear" href="/modules" aria-label="Clear search" title="Clear search">×</a>
+                        @endif
+                    </div>
                 </div>
                 <button class="button is-link" type="submit">Search</button>
-                @if(!catalogQuery.isBlank())
-                    <a class="button is-light" href="/modules">Clear search</a>
-                @endif
             </form>
             @if(model.catalogModules().isEmpty())
                 @if(!catalogQuery.isBlank() && model.catalogRefreshedAt() != null)
@@ -99,20 +101,15 @@
                     @for(CatalogModuleEntry module : model.catalogModules())
                         <article class="module-entry" data-catalog-module="${module.moduleId()}">
                             <div class="module-copy">
-                                <div class="module-heading">
-                                    <h3 class="title is-6 mb-1">${module.displayName()}</h3>
+                                <div class="module-heading module-catalog-heading">
+                                    <h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-catalog-detail-link="${module.moduleId()}">${module.displayName()}</a></h3>
                                     @if(module.installed())
                                         <span class="tag is-info is-light" data-catalog-installed>Installed ${module.installedVersion()}</span>
                                     @else
                                         <span class="tag is-light">Not installed</span>
                                     @endif
                                 </div>
-                                <p class="has-text-grey is-size-7 mb-2">${module.moduleId()}</p>
                                 <p class="module-description">${module.description()}</p>
-                                <p class="mt-3">
-                                    <a class="tag is-link is-light" href="/modules/${module.moduleId()}"
-                                       data-catalog-detail-link="${module.moduleId()}">View module</a>
-                                </p>
                             </div>
                         </article>
                     @endfor
