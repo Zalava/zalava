@@ -17,7 +17,7 @@ import org.zalava.modules.web.application.RegisteredWebPage;
 import org.zalava.modules.web.application.port.in.ModulePageAccess;
 
 /** Coordinates the independent permission policies for an administrator's selected subject. */
-public final class UnifiedPermissions {
+public class UnifiedPermissions {
   private final MemberToolAccess tools;
   private final ChatToolConfirmation confirmation;
   private final ModulePageAccess pages;
@@ -173,6 +173,54 @@ public final class UnifiedPermissions {
         appRows);
   }
 
+  public void saveBatch(String admin, String subject, List<Change> changes) {
+    var current = snapshot(admin, subject);
+    for (var change : changes) {
+      if (change.before().equals(change.decision())) continue;
+      switch (change.kind()) {
+        case "access" -> {
+          var row =
+              current.toolRows().stream()
+                  .filter(r -> r.key().equals(change.key()))
+                  .findFirst()
+                  .orElseThrow(() -> new IllegalArgumentException("Tool is no longer available"));
+          if (!row.accessChoice().equals(change.before()))
+            throw new IllegalArgumentException("Permissions changed; reload and try again");
+          setToolAccess(admin, subject, change.key(), change.decision());
+        }
+        case "confirmation" -> {
+          var row =
+              current.toolRows().stream()
+                  .filter(r -> r.key().equals(change.key()))
+                  .findFirst()
+                  .orElseThrow(() -> new IllegalArgumentException("Tool is no longer available"));
+          if (!row.confirmationChoice().name().equals(change.before()))
+            throw new IllegalArgumentException("Permissions changed; reload and try again");
+          setConfirmation(admin, subject, change.key(), Choice.valueOf(change.decision()));
+        }
+        case "app" -> {
+          if (!change.key().providerId().equals("page"))
+            throw new IllegalArgumentException("Invalid app identity");
+          var row =
+              current.appRows().stream()
+                  .filter(
+                      r ->
+                          r.page().moduleId().equals(change.key().moduleId())
+                              && r.page().pageId().equals(change.key().toolName()))
+                  .findFirst()
+                  .orElseThrow(() -> new IllegalArgumentException("App is no longer available"));
+          if (!row.choice().equals(change.before()))
+            throw new IllegalArgumentException("Permissions changed; reload and try again");
+          setAppAccess(
+              admin, subject, change.key().moduleId(), change.key().toolName(), change.decision());
+        }
+        default -> throw new IllegalArgumentException("Unknown permission");
+      }
+    }
+  }
+
+  public record Change(String kind, ToolKey key, String before, String decision) {}
+
   public void setToolAccess(String admin, String subject, ToolKey key, String decision) {
     Subject selected = subject(subject);
     requireMember(selected);
@@ -241,7 +289,35 @@ public final class UnifiedPermissions {
       boolean memberSubject,
       boolean accountEnabled,
       List<ToolRow> toolRows,
-      List<PageRow> appRows) {}
+      List<PageRow> appRows) {
+    public List<ModuleGroup> groups() {
+      Map<String, List<PageRow>> apps = new LinkedHashMap<>();
+      Map<String, List<ToolRow>> tools = new LinkedHashMap<>();
+      Map<String, String> names = new LinkedHashMap<>();
+      for (var row : appRows) {
+        var id = row.page().moduleId();
+        apps.computeIfAbsent(id, unused -> new ArrayList<>()).add(row);
+        names.put(id, row.page().moduleDisplayName());
+      }
+      for (var row : toolRows) {
+        var id = row.key().moduleId();
+        tools.computeIfAbsent(id, unused -> new ArrayList<>()).add(row);
+        names.putIfAbsent(id, id.equals("zalava-host") ? "Built-in Zalava" : friendly(id));
+      }
+      return names.entrySet().stream()
+          .sorted(Map.Entry.comparingByValue(String.CASE_INSENSITIVE_ORDER))
+          .map(
+              e ->
+                  new ModuleGroup(
+                      e.getKey(),
+                      e.getValue(),
+                      apps.getOrDefault(e.getKey(), List.of()),
+                      tools.getOrDefault(e.getKey(), List.of())))
+          .toList();
+    }
+  }
+
+  public record ModuleGroup(String id, String name, List<PageRow> apps, List<ToolRow> tools) {}
 
   public record Person(String id, String name, AccountRole role, boolean enabled) {}
 
@@ -259,7 +335,13 @@ public final class UnifiedPermissions {
       String accessSource,
       Choice confirmationChoice,
       Choice confirmationEffective,
-      String confirmationSource) {}
+      String confirmationSource) {
+    public String hostAccessSummary() {
+      if (hostAccessNote == null) return "";
+      int end = hostAccessNote.indexOf('.');
+      return end < 0 ? hostAccessNote : hostAccessNote.substring(0, end + 1);
+    }
+  }
 
   public record PageRow(RegisteredWebPage page, String choice, boolean allowed, String source) {}
 }

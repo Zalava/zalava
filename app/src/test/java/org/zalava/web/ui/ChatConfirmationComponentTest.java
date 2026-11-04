@@ -3,6 +3,7 @@ package org.zalava.web.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -499,6 +500,82 @@ class ChatConfirmationComponentTest {
     accounts.setEnabled(admin.id(), false);
     assertThat(operations.invoke(adminRead).status())
         .isEqualTo(ToolInvocationStatus.PENDING_APPROVAL);
+  }
+
+  @Test
+  void accountPermissionSummaryIsReadOnlyAndShowsEffectiveMemberGrants() throws Exception {
+    access.defaultAccess(id(admin), write, true);
+    mvc.perform(
+            get("/zalava/accounts/permissions/view")
+                .with(user(admin.loginName()).roles("ADMIN"))
+                .param("subject", id(first)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Write time")))
+        .andExpect(content().string(containsString("Allowed")))
+        .andExpect(content().string(containsString("Role default")))
+        .andExpect(content().string(not(containsString("<select"))));
+    mvc.perform(
+            get("/zalava/accounts/permissions/view")
+                .with(user(first.loginName()).roles("MEMBER"))
+                .param("subject", id(first)))
+        .andExpect(status().isForbidden());
+    access.defaultAccess(id(admin), write, false);
+  }
+
+  @Test
+  void batchPermissionsSaveTogetherAndRollBackOnInvalidChoice() throws Exception {
+    var adminUser = user(admin.loginName()).roles("ADMIN");
+    String accessField =
+        PermissionFields.field("access", write.moduleId(), write.providerId(), write.toolName());
+    String confirmField =
+        PermissionFields.field(
+            "confirmation", write.moduleId(), write.providerId(), write.toolName());
+    mvc.perform(
+            post("/zalava/accounts/permissions/save")
+                .with(adminUser)
+                .with(csrf())
+                .param("subject", "member")
+                .param(accessField, "ALLOW")
+                .param("before." + accessField, "DENY")
+                .param(confirmField, "REQUIRE")
+                .param("before." + confirmField, "INHERIT"))
+        .andExpect(status().is3xxRedirection());
+    assertThat(access.allowed(id(first), write)).isTrue();
+    assertThat(confirmation.roleDefault(id(admin), AccountRole.MEMBER, write))
+        .isEqualTo(Choice.REQUIRE);
+    var failed =
+        mvc.perform(
+                post("/zalava/accounts/permissions/save")
+                    .with(adminUser)
+                    .with(csrf())
+                    .param("subject", "member")
+                    .param(accessField, "DENY")
+                    .param("before." + accessField, "ALLOW")
+                    .param(confirmField, "INVALID")
+                    .param("before." + confirmField, "REQUIRE"))
+            .andExpect(status().is3xxRedirection())
+            .andReturn();
+    assertThat(((Map<?, ?>) failed.getFlashMap().get("submitted")).get(accessField))
+        .isEqualTo("DENY");
+    mvc.perform(
+            get("/zalava/accounts/permissions")
+                .with(adminUser)
+                .param("subject", "member")
+                .flashAttrs(failed.getFlashMap()))
+        .andExpect(status().isOk());
+    assertThat(access.allowed(id(first), write)).isTrue();
+    assertThat(confirmation.roleDefault(id(admin), AccountRole.MEMBER, write))
+        .isEqualTo(Choice.REQUIRE);
+    mvc.perform(
+            post("/zalava/accounts/permissions/save")
+                .with(user(first.loginName()).roles("MEMBER"))
+                .with(csrf())
+                .param("subject", "member")
+                .param(accessField, "DENY")
+                .param("before." + accessField, "ALLOW"))
+        .andExpect(status().isForbidden());
+    confirmation.setRole(id(admin), AccountRole.MEMBER, write, Choice.INHERIT);
+    access.defaultAccess(id(admin), write, false);
   }
 
   @Test

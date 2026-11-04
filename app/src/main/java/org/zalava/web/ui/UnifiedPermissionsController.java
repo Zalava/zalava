@@ -1,11 +1,17 @@
 package org.zalava.web.ui;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,15 +41,73 @@ public class UnifiedPermissionsController {
       Model model,
       CsrfToken csrf) {
     var snapshot = permissions.snapshot(admin(auth), subject);
+    if (!model.containsAttribute("submitted")) model.addAttribute("submitted", Map.of());
     model.addAttribute("people", snapshot.people());
     model.addAttribute("subject", subject);
     model.addAttribute("personSelected", snapshot.personSelected());
     model.addAttribute("memberSubject", snapshot.memberSubject());
     model.addAttribute("accountEnabled", snapshot.accountEnabled());
+    model.addAttribute("groups", snapshot.groups());
     model.addAttribute("toolRows", snapshot.toolRows());
     model.addAttribute("appRows", snapshot.appRows());
     model.addAttribute("csrf", csrf);
     return "accounts/permissions";
+  }
+
+  @GetMapping("/zalava/accounts/permissions/view")
+  String view(@RequestParam String subject, Authentication auth, Model model) {
+    var snapshot = permissions.snapshot(admin(auth), subject);
+    model.addAttribute("subject", subject);
+    model.addAttribute("groups", snapshot.groups());
+    model.addAttribute(
+        "person",
+        snapshot.people().stream()
+            .filter(p -> p.id().equals(subject))
+            .findFirst()
+            .orElseThrow(NoSuchElementException::new));
+    model.addAttribute("accountEnabled", snapshot.accountEnabled());
+    return "accounts/permission-summary";
+  }
+
+  @PostMapping("/zalava/accounts/permissions/save")
+  String save(
+      @RequestParam String subject,
+      @RequestParam MultiValueMap<String, String> fields,
+      Authentication auth,
+      RedirectAttributes redirect) {
+    try {
+      var changes = new ArrayList<UnifiedPermissions.Change>();
+      for (var entry : fields.entrySet()) {
+        String name = entry.getKey();
+        if (!name.startsWith("p.")) continue;
+        if (entry.getValue().size() != 1
+            || fields.get("before." + name) == null
+            || fields.get("before." + name).size() != 1)
+          throw new IllegalArgumentException("Invalid form");
+        String[] parts = name.split("\\.", -1);
+        if (parts.length != 5) throw new IllegalArgumentException("Invalid form");
+        var key = new ToolKey(decode(parts[2]), decode(parts[3]), decode(parts[4]));
+        changes.add(
+            new UnifiedPermissions.Change(
+                parts[1], key, fields.getFirst("before." + name), entry.getValue().getFirst()));
+      }
+      permissions.saveBatch(admin(auth), subject, changes);
+      redirect.addFlashAttribute("message", "Permissions saved.");
+    } catch (IllegalArgumentException e) {
+      var submitted = new LinkedHashMap<String, String>();
+      fields.forEach(
+          (key, values) -> {
+            if (key.startsWith("p.") && values.size() == 1) submitted.put(key, values.getFirst());
+          });
+      redirect.addFlashAttribute("submitted", submitted);
+      redirect.addFlashAttribute(
+          "error", "Permissions could not be saved. Check your selections and try again.");
+    }
+    return back(subject, redirect);
+  }
+
+  private static String decode(String value) {
+    return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
   }
 
   @PostMapping("/zalava/accounts/permissions/tool-access")
