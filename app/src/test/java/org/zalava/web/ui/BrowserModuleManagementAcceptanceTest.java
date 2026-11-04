@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -124,6 +125,16 @@ class BrowserModuleManagementAcceptanceTest {
       assertThat(page.locator("input[name=moduleJar]").isVisible()).isFalse();
       page.locator("[data-action=refresh-catalog]").click();
       page.locator("[data-catalog-module=zalava-module-tasks]").waitFor();
+      PlaywrightAssertions.assertThat(page.locator("[data-catalog-refreshed-at] time"))
+          .hasAttribute("datetime", Pattern.compile(".+Z"));
+      assertThat(page.locator("[data-catalog-refreshed-at] time").innerText())
+          .doesNotContain("T", "Z");
+      page.locator("#module-search").focus();
+      page.keyboard().press("Tab");
+      PlaywrightAssertions.assertThat(
+              page.getByRole(
+                  AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true)))
+          .isFocused();
       for (int width : new int[] {1440, 768, 390}) {
         page.setViewportSize(width, 900);
         page.locator("#module-search").fill("schedule");
