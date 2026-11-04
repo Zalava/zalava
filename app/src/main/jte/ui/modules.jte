@@ -75,7 +75,7 @@
                 <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
                 <button class="button is-light" type="submit" data-action="refresh-catalog">Check catalog</button>
                 @if(model.catalogRefreshedAt() != null)
-                    <span class="has-text-grey is-size-7 ml-3" data-catalog-refreshed-at>Refreshed ${model.catalogRefreshedAt()}</span>
+                    <p class="has-text-grey is-size-7 mt-2" data-catalog-refreshed-at>Last checked <time datetime="${model.catalogRefreshedAt()}" data-local-time>${model.catalogRefreshedAt()}</time></p>
                 @endif
             </form>
 

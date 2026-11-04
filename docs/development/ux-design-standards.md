@@ -39,3 +39,7 @@ Use WCAG 2.2 AA as the accessibility target. Consult Material Design 3 for adapt
 5. Record screens, viewports, interactions, results and any blockers in the PR and the **private** execution/acceptance plan in `cordin/zalava-dev`. Do not commit screenshots, traces, local data or private plans to the public repository.
 
 For documentation-only changes, review the standards and links for consistency; browser verification is required when UI behavior or appearance is actually modified.
+
+## Visual review evidence
+
+For a substantive UI change, record the user task and affected screens, rendered revision, and the viewports and applicable normal, empty, loading, error and permission states inspected. Include keyboard and focus results, screenshot locations in private evidence, concrete findings and their resolution or remaining blockers. Inspect 390×844, 768×1024 and 1440×900 when supported, plus landscape where relevant; explain substitutions. Critique clarity, hierarchy, action prominence, grouping, spacing, consistency, density, navigation and feedback alongside automated assertions. Reinspect material corrections before handoff. A screen that cannot be opened is a verification blocker, not a pass. Scale this evidence to the impact of the change.
