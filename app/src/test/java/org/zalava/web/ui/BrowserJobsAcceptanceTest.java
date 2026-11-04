@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import java.io.IOException;
@@ -118,6 +119,19 @@ class BrowserJobsAcceptanceTest {
       ownerPage.navigate(baseUrl() + "/jobs");
       ownerPage.getByText("Owner approval job").waitFor();
       assertThat(ownerPage.locator("body").innerText()).doesNotContain("Other actor job");
+      var entry =
+          ownerPage
+              .locator(".job-entry")
+              .filter(new Locator.FilterOptions().setHasText("Owner approval job"));
+      assertThat(entry.locator(".item-heading .tag").count()).isEqualTo(1);
+      for (int width : new int[] {390, 768, 1440}) {
+        ownerPage.setViewportSize(width, 900);
+        ownerPage.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        Path screenshot = Path.of("build/browser-acceptance/task-list-" + width + ".png");
+        Files.createDirectories(screenshot.getParent());
+        ownerPage.screenshot(new Page.ScreenshotOptions().setPath(screenshot).setFullPage(true));
+      }
 
       Page otherPage = otherContext.newPage();
       signIn(otherPage, OTHER_LOGIN);
