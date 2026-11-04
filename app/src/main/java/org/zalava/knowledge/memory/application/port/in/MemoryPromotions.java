@@ -1,6 +1,7 @@
 package org.zalava.knowledge.memory.application.port.in;
 
 import java.util.List;
+import java.util.Optional;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.memory.domain.MemoryProposal;
 import org.zalava.knowledge.memory.domain.MemoryProposalDraft;
@@ -15,6 +16,8 @@ public interface MemoryPromotions {
   MemoryProposal propose(Actor actor, MemoryProposalDraft draft);
 
   List<MemoryProposal> pending(Actor actor);
+
+  Optional<MemoryProposal> approvedForMemory(Actor actor, String memoryId);
 
   MemoryProposal get(Actor actor, String proposalId);
 

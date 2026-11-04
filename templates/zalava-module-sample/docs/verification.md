@@ -3,8 +3,8 @@
 
 ## Verification and delivery
 
-Run `GRADLE_USER_HOME=/tmp/gradle-home ./gradlew check` before review or release.
-`check` must enforce Spotless 7.2.1 / google-java-format 1.36.1 and JaCoCo
+Run `./gradlew check` before review or release.
+`check` must enforce Spotless 8.10.4 / google-java-format 1.36.1 and JaCoCo
 minimums of 90% line coverage and 74% branch coverage, matching the Zalava host.
 Do not lower thresholds or exclude uncovered production classes to pass.
 Use focused tests first and retain coverage reports and failure diagnostics.

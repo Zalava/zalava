@@ -8,6 +8,32 @@ import org.junit.jupiter.api.Test;
 
 class UiCommandDecoderTest {
   @Test
+  void decodesDirectDecisionsWithoutWeakeningTaskDecisionValidation() {
+    assertThat(
+            UiCommandDecoder.decode(
+                Map.of("type", "permission.decide", "requestId", "p-1", "decision", "allow-once")))
+        .contains(
+            new UiCommand.DecideDirectApproval(
+                UiCommandDecoder.VERSION, "p-1", UiCommand.DecideApproval.Decision.ALLOW_ONCE));
+    assertThat(
+            UiCommandDecoder.decode(
+                Map.of("type", "permission.decide", "requestId", "p-1", "decision", "deny")))
+        .contains(
+            new UiCommand.DecideDirectApproval(
+                UiCommandDecoder.VERSION, "p-1", UiCommand.DecideApproval.Decision.DENY));
+    for (Map<String, ?> invalid :
+        List.of(
+            Map.of("type", "permission.decide"),
+            Map.of("type", "permission.decide", "requestId", "", "decision", "deny"),
+            Map.of("type", "permission.decide", "requestId", "x".repeat(129), "decision", "deny"),
+            Map.of("type", "permission.decide", "requestId", "p-1"),
+            Map.of("type", "permission.decide", "requestId", "p-1", "decision", "always-allow"),
+            Map.of("type", "approval.decide", "requestId", "p-1", "decision", "allow-once"))) {
+      assertThat(UiCommandDecoder.decode(invalid)).isEmpty();
+    }
+  }
+
+  @Test
   void decodesExplicitContinuationWithoutAcceptingMissingDestination() {
     assertThat(
             UiCommandDecoder.decode(

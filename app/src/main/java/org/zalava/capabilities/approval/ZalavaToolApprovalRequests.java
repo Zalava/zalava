@@ -1,12 +1,14 @@
 package org.zalava.capabilities.approval;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,17 @@ public class ZalavaToolApprovalRequests {
       TaskReference taskReference) {
     String argumentsJson = json(arguments);
     return entries.stream()
+        .filter(entry -> entry.actorId().equals(context.actorId()))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get(ACTOR_TASK_REFERENCE),
+                    context.attributes().get(ACTOR_TASK_REFERENCE)))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("accountRole"), context.attributes().get("accountRole")))
+        .filter(entry -> channel(entry.attributes()).equals(channel(context.attributes())))
         .filter(entry -> entry.decision() == Decision.PENDING)
         .filter(
             entry ->
@@ -76,6 +89,20 @@ public class ZalavaToolApprovalRequests {
                     taskReference, provider.descriptor().providerId(), tool.name(), argumentsJson))
         .findFirst()
         .orElseGet(() -> add(provider, tool, context, arguments, argumentsJson, taskReference));
+  }
+
+  public static final String EXECUTION_OUTCOME = "approvalExecutionOutcome";
+
+  public synchronized void recordExecutionOutcome(String requestId, boolean succeeded) {
+    Entry existing = find(requestId);
+    if (existing.decision() != Decision.ALLOWED) {
+      throw new IllegalStateException("Approval is not allowed");
+    }
+    Map<String, String> attributes = new LinkedHashMap<>(existing.attributes());
+    attributes.put(EXECUTION_OUTCOME, succeeded ? "succeeded" : "failed");
+    replace(
+        existing,
+        existing.withPolicy(existing.scope(), Map.copyOf(attributes), existing.decidedAt()));
   }
 
   public synchronized Entry allowUnscoped(String requestId) {
@@ -151,6 +178,137 @@ public class ZalavaToolApprovalRequests {
         .filter(entry -> entry.matches(taskReference, providerId, toolName, argumentsJson))
         .findFirst()
         .map(entry -> replace(entry, entry.withConsumed(Instant.now().toString())));
+  }
+
+  /** Consume one approved read only in the original actor, role and web conversation. */
+  public synchronized Optional<Entry> consumeChatReadDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      JsonNode arguments) {
+    String conversation = context.attributes().get("conversationId");
+    String role = context.attributes().get("accountRole");
+    if (conversation == null
+        || conversation.isBlank()
+        || role == null
+        || !"web".equals(context.attributes().get("permissionPolicyChannel")))
+      return Optional.empty();
+    String argumentsJson = json(arguments);
+    Instant now = Instant.now();
+    Instant oldest = now.minusSeconds(300);
+    Map<String, String> scope =
+        provider.descriptor().scope() == null ? Map.of() : provider.descriptor().scope();
+    return entries.stream()
+        .filter(
+            entry ->
+                entry.taskReference() == null
+                    && !entry.sideEffecting()
+                    && entry.consumedAt() == null)
+        .filter(
+            entry ->
+                entry.decision() == Decision.ALLOWED && entry.approvalScope() == ApprovalScope.ONCE)
+        .filter(entry -> isFreshDecision(entry, oldest, now))
+        .filter(
+            entry ->
+                entry.matchesUnscoped(
+                    context.actorId(),
+                    provider.descriptor().providerId(),
+                    tool.name(),
+                    argumentsJson))
+        .filter(entry -> "true".equals(entry.attributes().get("chatReadRetry")))
+        .filter(
+            entry ->
+                provider.descriptor().moduleId().equals(entry.attributes().get("approvedModuleId"))
+                    && entry.scope().equals(scope))
+        .filter(
+            entry ->
+                conversation.equals(entry.attributes().get("conversationId"))
+                    && role.equals(entry.attributes().get("accountRole")))
+        .filter(entry -> "web".equals(entry.attributes().get("permissionPolicyChannel")))
+        .findFirst()
+        .map(entry -> replace(entry, entry.withConsumed(Instant.now().toString())));
+  }
+
+  /** Consume an approved host callback only for the original authenticated Chat invocation. */
+  public synchronized Optional<Entry> consumeChatHostDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      JsonNode arguments) {
+    String conversation = context.attributes().get("conversationId");
+    String role = context.attributes().get("accountRole");
+    if (conversation == null
+        || conversation.isBlank()
+        || role == null
+        || !"web".equals(context.attributes().get("permissionPolicyChannel")))
+      return Optional.empty();
+    String argumentsJson = json(arguments);
+    Instant now = Instant.now();
+    Map<String, String> scope =
+        provider.descriptor().scope() == null ? Map.of() : provider.descriptor().scope();
+    return entries.stream()
+        .filter(
+            entry ->
+                entry.taskReference() == null
+                    && entry.consumedAt() == null
+                    && entry.sideEffecting() == tool.sideEffecting())
+        .filter(
+            entry ->
+                entry.decision() == Decision.ALLOWED && entry.approvalScope() == ApprovalScope.ONCE)
+        .filter(entry -> isFreshDecision(entry, now.minusSeconds(300), now))
+        .filter(
+            entry ->
+                entry.matchesUnscoped(
+                    context.actorId(),
+                    provider.descriptor().providerId(),
+                    tool.name(),
+                    argumentsJson))
+        .filter(entry -> "true".equals(entry.attributes().get("hostCallbackRetry")))
+        .filter(
+            entry ->
+                provider.descriptor().moduleId().equals(entry.attributes().get("approvedModuleId"))
+                    && entry.scope().equals(scope))
+        .filter(
+            entry ->
+                conversation.equals(entry.attributes().get("conversationId"))
+                    && role.equals(entry.attributes().get("accountRole")))
+        .filter(entry -> "web".equals(entry.attributes().get("permissionPolicyChannel")))
+        .findFirst()
+        .map(entry -> replace(entry, entry.withConsumed(Instant.now().toString())));
+  }
+
+  public synchronized Entry approveChatHostOperation(String requestId) {
+    Entry existing = find(requestId);
+    if (!"true".equals(existing.attributes().get("hostCallbackRetry"))
+        || existing.taskReference() != null
+        || existing.attributes().getOrDefault("conversationId", "").isBlank()
+        || !"web".equals(existing.attributes().get("permissionPolicyChannel")))
+      throw new WrongScopeException(requestId);
+    return decideUnscoped(requestId, Decision.ALLOWED, ApprovalScope.ONCE);
+  }
+
+  private static boolean isFreshDecision(Entry entry, Instant oldest, Instant now) {
+    try {
+      if (entry.decidedAt() == null) return false;
+      Instant decided = Instant.parse(entry.decidedAt());
+      return decided.isAfter(oldest) && !decided.isAfter(now);
+    } catch (DateTimeParseException invalid) {
+      return false;
+    }
+  }
+
+  public synchronized Entry approveChatRead(String requestId) {
+    Entry existing = find(requestId);
+    if (existing.sideEffecting()
+        || existing.taskReference() != null
+        || existing.attributes().getOrDefault("conversationId", "").isBlank()
+        || !"web".equals(existing.attributes().get("permissionPolicyChannel")))
+      throw new WrongScopeException(requestId);
+    Entry allowed = decideUnscoped(requestId, Decision.ALLOWED, ApprovalScope.ONCE);
+    Map<String, String> attributes = new LinkedHashMap<>(allowed.attributes());
+    attributes.put("chatReadRetry", "true");
+    return replace(
+        allowed, allowed.withPolicy(allowed.scope(), Map.copyOf(attributes), allowed.decidedAt()));
   }
 
   public synchronized Optional<Entry> findUnscopedDecision(

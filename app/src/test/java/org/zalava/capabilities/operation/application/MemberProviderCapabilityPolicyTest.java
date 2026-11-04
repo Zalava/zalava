@@ -71,6 +71,20 @@ class MemberProviderCapabilityPolicyTest {
         .hasMessageContaining("Member capability policy denied");
   }
 
+  @Test
+  void providerCannotImpersonateReservedHostReadForAnyRole() {
+    var provider = HostReadToolCatalog.provider();
+    var tool = HostReadToolCatalog.tool("knowledge.search");
+    var policy = new MemberProviderCapabilityPolicy();
+    assertThat(MemberProviderCapabilityPolicy.eligible(provider, tool)).isFalse();
+    for (String role : List.of("MEMBER", "ADMIN")) {
+      var context = new InvocationContext("actor", false, Map.of("accountRole", role));
+      assertThatThrownBy(() -> policy.requireAllowed(provider, tool, context))
+          .isInstanceOf(ProviderToolOperationException.class)
+          .hasMessageContaining("reserved host tool identity");
+    }
+  }
+
   private static DefaultProviderToolOperations operations(TestProvider provider) {
     return new DefaultProviderToolOperations(
         providerId -> "test".equals(providerId) ? Optional.of(provider) : Optional.empty(),

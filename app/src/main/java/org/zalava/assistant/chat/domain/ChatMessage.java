@@ -2,9 +2,13 @@ package org.zalava.assistant.chat.domain;
 
 import java.util.List;
 
-public record ChatMessage(Role role, String text, List<String> attachmentNames) {
+public record ChatMessage(Role role, String text, List<String> attachmentNames, String runId) {
+  public ChatMessage(Role role, String text, List<String> attachmentNames) {
+    this(role, text, attachmentNames, null);
+  }
+
   public ChatMessage(Role role, String text) {
-    this(role, text, List.of());
+    this(role, text, List.of(), null);
   }
 
   public ChatMessage {

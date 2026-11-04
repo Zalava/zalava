@@ -3,6 +3,10 @@ set -euo pipefail
 
 image=${1:?Usage: verify-in-image.sh <image-reference> [gradle-options...]}
 repository=$(pwd -P)
+docker_cli=$(command -v docker)
+docker compose version >/dev/null
+compose_cli=$(docker info --format '{{range .ClientInfo.Plugins}}{{if eq .Name "compose"}}{{.Path}}{{end}}{{end}}')
+[[ -f "$compose_cli" ]] || { echo "Docker Compose plugin path is unavailable" >&2; exit 1; }
 gradle_home=${GRADLE_USER_HOME:-"$HOME/.gradle"}
 mkdir -p "$gradle_home"
 mkdir -p "$HOME/.npm"
@@ -14,6 +18,8 @@ docker run --rm --network host \
     --user "$(id -u):$(id -g)" \
     --group-add "$(stat -c '%g' /var/run/docker.sock)" \
     --volume /var/run/docker.sock:/var/run/docker.sock \
+    --volume "$docker_cli:/usr/local/bin/docker:ro" \
+    --volume "$compose_cli:/usr/local/lib/docker/cli-plugins/docker-compose:ro" \
     --volume "$repository:$repository" \
     --volume "$gradle_home:$gradle_home" \
     --volume "$HOME/.npm:$HOME/.npm" \

@@ -7,6 +7,13 @@ domain language, use cases, and persistence-facing contracts; it does not reach
 into another context's internals. Share a stable contract only when the
 relationship is deliberate and versioned.
 
+Keep controllers as transport adapters: resolve authentication, parse and validate
+HTTP inputs, call application ports, and translate results or errors into HTTP
+and view models. Put business rules, permission decisions and orchestration in
+the owning application or domain layer. Apply this to new and modified
+controllers; review the boundary and add focused architecture checks when
+practical.
+
 Keep each context hexagonal. Domain rules must not import Spring, HTTP,
 persistence, messaging, or vendor-SDK types. Inbound adapters translate a
 transport request into a use-case input. Use cases coordinate domain behavior

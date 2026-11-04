@@ -13,6 +13,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.RequestOptions;
@@ -24,15 +25,19 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -49,6 +54,7 @@ import org.junit.jupiter.api.Timeout;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.support.DigitalPdfFixture;
@@ -73,6 +79,10 @@ class ReleasedModuleDistributableAcceptanceTest {
   private final HttpClient http =
       HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
   private Process process;
+  String ociImage;
+  boolean ociCompose;
+  private OciComposeFleet ociComposeFleet;
+  private String ociContainer;
   private CatalogReleaseProxy catalogProxy;
   private String baseUrl;
   private int generation;
@@ -129,6 +139,7 @@ class ReleasedModuleDistributableAcceptanceTest {
             .fill("released-member");
         page.locator("form[action='/zalava/accounts/create'] input[name=temporaryPassword]")
             .fill(INITIAL_PASSWORD);
+        page.locator("#confirm-create-password").fill(INITIAL_PASSWORD);
         page.locator("form[action='/zalava/accounts/create'] select[name=role]")
             .selectOption("MEMBER");
         page.locator("form[action='/zalava/accounts/create'] button[type=submit]").click();
@@ -265,7 +276,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true)).waitFor();
         assertThat(admin.request().get(baseUrl + "/api/zalava/modules").status()).isEqualTo(404);
         page.locator("form:has(input[name=name][value='SDK acceptance milk']) input[type=checkbox]")
-            .check();
+            .click();
         page.waitForURL(baseUrl + "/apps/zalava-module-shopping-list/shopping-list/items/bought");
         assertThat(page.locator("main").textContent()).contains("Bought SDK acceptance milk");
         page.getByText("SDK acceptance milk", new Page.GetByTextOptions().setExact(true))
@@ -438,17 +449,98 @@ class ReleasedModuleDistributableAcceptanceTest {
               argument.startsWith("-Dhttps.proxy")
                   || argument.startsWith("-Djavax.net.ssl.trustStore"));
     }
-    ProcessBuilder builder = new ProcessBuilder(arguments);
-    builder
-        .environment()
-        .keySet()
-        .removeIf(
-            key ->
-                key.startsWith("SPRING_")
-                    || key.startsWith("AGENT_")
-                    || key.startsWith("ZALAVA_")
-                    || key.startsWith("SEA_")
-                    || key.startsWith("JOBRUNR_"));
+    if (ociImage != null) {
+      ociContainer = "zalava-oci-fleet-" + UUID.randomUUID();
+      List<String> docker =
+          new ArrayList<>(
+              List.of(
+                  "docker",
+                  "run",
+                  "--rm",
+                  "--name",
+                  ociContainer,
+                  "--network",
+                  "host",
+                  "--memory",
+                  "2g",
+                  "--cpus",
+                  "2",
+                  "--user",
+                  fixtureUser(),
+                  "--group-add",
+                  "1001",
+                  "--volume",
+                  diagnostics + ":" + diagnostics));
+      if (catalogProxy != null) {
+        try {
+          Path bindings =
+              Files.createDirectories(diagnostics.resolve("certificate-bindings/proxy"));
+          Files.writeString(bindings.resolve("type"), "ca-certificates");
+          KeyStore trust = KeyStore.getInstance("PKCS12");
+          try (var input = Files.newInputStream(catalogProxy.trustStore())) {
+            trust.load(input, "fixture".toCharArray());
+          }
+          byte[] certificate = trust.getCertificate(trust.aliases().nextElement()).getEncoded();
+          Files.writeString(
+              bindings.resolve("proxy.pem"),
+              "-----BEGIN CERTIFICATE-----\n"
+                  + Base64.getMimeEncoder(64, new byte[] {'\n'}).encodeToString(certificate)
+                  + "\n-----END CERTIFICATE-----\n");
+          docker.addAll(List.of("--env", "SERVICE_BINDING_ROOT=" + bindings.getParent()));
+        } catch (Exception failure) {
+          throw new IllegalStateException(
+              "Unable to prepare the disposable OCI certificate binding", failure);
+        }
+      }
+      List<String> javaOptions = new ArrayList<>();
+      for (String argument : arguments) {
+        if (argument.startsWith("--")) {
+          int equals = argument.indexOf('=');
+          String key =
+              argument
+                  .substring(2, equals)
+                  .replace('.', '_')
+                  .replace('-', '_')
+                  .toUpperCase(Locale.ROOT);
+          docker.addAll(List.of("--env", key + argument.substring(equals)));
+        } else if (argument.startsWith("-D") || argument.startsWith("-X")) {
+          if (!argument.startsWith("-Djavax.net.ssl.trustStore")) javaOptions.add(argument);
+        }
+      }
+      docker.addAll(
+          List.of(
+              "--env",
+              "JAVA_TOOL_OPTIONS="
+                  + (Boolean.parseBoolean(System.getProperty("oci.aot", "true"))
+                      ? "-XX:AOTMode=on "
+                      : "")
+                  + String.join(" ", javaOptions),
+              ociImage));
+      if (ociCompose) {
+        try {
+          ociComposeFleet = new OciComposeFleet(ociImage, diagnostics, docker);
+          ociContainer = null;
+        } catch (Exception failure) {
+          throw new IllegalStateException(
+              "Unable to prepare the disposable Compose fleet", failure);
+        }
+      }
+      arguments = docker;
+    }
+    ProcessBuilder builder =
+        ociComposeFleet == null ? new ProcessBuilder(arguments) : ociComposeFleet.processBuilder();
+    if (ociComposeFleet == null) {
+      builder
+          .environment()
+          .keySet()
+          .removeIf(
+              key ->
+                  key.startsWith("SPRING_")
+                      || key.startsWith("AGENT_")
+                      || key.startsWith("ZALAVA_")
+                      || key.startsWith("SEA_")
+                      || key.startsWith("JOBRUNR_"));
+    }
     return builder;
   }
 
@@ -485,7 +577,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(version).isNotBlank();
         Files.writeString(diagnostics.resolve("public-release-version.txt"), version);
         page.locator("[data-action=request-installation]").click();
-        page.locator("[data-request-status]")
+        page.navigate(baseUrl + "/monitoring#module-installations");
+        page.locator("[data-installation-history]")
             .filter(new Locator.FilterOptions().setHasText("SUCCEEDED"))
             .waitFor();
         startModule(page, "zalava-module-time");
@@ -568,6 +661,18 @@ class ReleasedModuleDistributableAcceptanceTest {
         BrowserContext admin = browser.newContext()) {
       postgres.start();
       Page page = admin.newPage();
+      page.onPageError(
+          error -> {
+            try {
+              Files.writeString(
+                  diagnostics.resolve("browser-errors.private.txt"),
+                  error + "\n",
+                  StandardOpenOption.CREATE,
+                  StandardOpenOption.APPEND);
+            } catch (Exception ignored) {
+            }
+          });
+
       try {
         start(postgres, workspace, "test");
         signIn(page, LOGIN, INITIAL_PASSWORD, true);
@@ -666,10 +771,10 @@ class ReleasedModuleDistributableAcceptanceTest {
               .isTrue();
           assertThat(
                   (Boolean)
-                      page.locator("[data-artifact-digest]")
+                      page.locator(".managed-module-row")
                           .first()
                           .evaluate("e => e.scrollWidth<=e.clientWidth"))
-              .as("artifact digest remains readable inside its card at %s", width)
+              .as("installed module remains contained inside its compact row at %s", width)
               .isTrue();
           page.screenshot(
               new Page.ScreenshotOptions()
@@ -716,6 +821,23 @@ class ReleasedModuleDistributableAcceptanceTest {
           Thread.sleep(250);
         }
         assertThat(completed).as("Actuator context restart completes").isTrue();
+        try {
+          page.waitForURL("**/login");
+        } catch (PlaywrightException failure) {
+          Files.writeString(diagnostics.resolve("restart-failure.html"), page.content());
+          Files.writeString(diagnostics.resolve("restart-failure-url.txt"), page.url());
+          page.screenshot(
+              new Page.ScreenshotOptions().setPath(diagnostics.resolve("restart-failure.png")));
+          if (page.locator("[data-restart-previous]").count() > 0) {
+            String previous =
+                page.locator("[data-restart-previous]").getAttribute("data-restart-previous");
+            Files.writeString(
+                diagnostics.resolve("restart-status.json"),
+                admin.request().get(baseUrl + "/restart-status?previous=" + previous).text());
+          }
+          throw failure;
+        }
+        assertThat(page.locator("input[name=username]").isVisible()).isTrue();
         assertThat(process.pid()).isEqualTo(pid);
         assertThat(workspace.resolve("zalava-runtime-restart/request.properties")).doesNotExist();
         admin.clearCookies();
@@ -775,9 +897,21 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.locator("#message").fill("What code does my PDF contain?");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
             .click();
-        page.getByText(
-                "Your PDF code is amber-larch-1013.", new Page.GetByTextOptions().setExact(true))
-            .waitFor();
+        try {
+          page.getByText(
+                  "Your PDF code is amber-larch-1013.", new Page.GetByTextOptions().setExact(true))
+              .waitFor();
+        } catch (PlaywrightException failure) {
+          Files.writeString(diagnostics.resolve("pdf-failure.html"), page.content());
+          page.screenshot(
+              new Page.ScreenshotOptions().setPath(diagnostics.resolve("pdf-failure.png")));
+          Files.writeString(
+              diagnostics.resolve("model-requests.private.txt"),
+              modelServer.getAllServeEvents().stream()
+                  .map(event -> event.getRequest().getBodyAsString())
+                  .reduce("", (left, right) -> left + "\n" + right));
+          throw failure;
+        }
         modelServer.verify(
             postRequestedFor(urlEqualTo("/v1/chat/completions"))
                 .withRequestBody(
@@ -809,6 +943,140 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(page.locator("input[name=model]").inputValue())
             .isEqualTo("updated-fixture-model");
         assertThat(page.locator("input[name=apiKey]").inputValue()).isEmpty();
+        Release timeRelease = downloadReleases(Set.of("time")).getFirst();
+        page.navigate(baseUrl + "/modules");
+        page.locator("[data-module-developer-options] summary").click();
+        page.locator("input[name=moduleJar]").setInputFiles(timeRelease.path());
+        page.locator("[data-action=upload-module]").click();
+        page.getByText(
+                "Uploaded " + timeRelease.moduleId() + " " + timeRelease.version() + " installed")
+            .waitFor();
+        Release shoppingRelease = downloadReleases(Set.of("shopping-list")).getFirst();
+        page.locator("[data-module-developer-options] summary").click();
+        page.locator("input[name=moduleJar]").setInputFiles(shoppingRelease.path());
+        page.locator("[data-action=upload-module]").click();
+        page.getByText(
+                "Uploaded "
+                    + shoppingRelease.moduleId()
+                    + " "
+                    + shoppingRelease.version()
+                    + " installed")
+            .waitFor();
+        stop();
+        admin.clearCookies();
+        start(postgres, workspace, "dev");
+        signIn(page, LOGIN, PASSWORD, false);
+        startModule(page, "zalava-module-time");
+        startModule(page, "zalava-module-shopping-list");
+        page.navigate(baseUrl + "/zalava/accounts");
+        String clockMember = "released-clock-member";
+        page.locator("#create-login").fill(clockMember);
+        page.locator("#create-password").fill(INITIAL_PASSWORD);
+        page.locator("#confirm-create-password").fill(INITIAL_PASSWORD);
+        page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Create account").setExact(true))
+            .click();
+        page.navigate(baseUrl + "/zalava/accounts/tool-defaults");
+        var clockDefault = page.locator("[data-tool-access='jdk-time:current_time']");
+        assertThat(
+                clockDefault
+                    .getByRole(
+                        AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+                    .isVisible())
+            .isTrue();
+        clockDefault.locator("select[name=membersAllowed]").selectOption("true");
+        clockDefault
+            .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+            .click();
+        String clockCallback = ZalavaToolCallbackNames.forTool("jdk-time", "current_time");
+        String clockCall =
+            """
+            data: {"id":"clock","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"released-clock-call","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+            data: {"id":"clock","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+            data: [DONE]
+
+            """
+                .formatted(
+                    clockCallback,
+                    JSON.writeValueAsString(JSON.writeValueAsString(Map.of("zoneId", "UTC"))));
+        modelServer.stubFor(
+            WireMock.post(urlEqualTo("/v1/chat/completions"))
+                .atPriority(2)
+                .withRequestBody(
+                    matchingJsonPath(
+                        "$.messages[?(@.role == 'user')].content",
+                        containing("Released Time UTC check")))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "text/event-stream")
+                        .withBody(clockCall)));
+        modelServer.stubFor(
+            WireMock.post(urlEqualTo("/v1/chat/completions"))
+                .atPriority(1)
+                .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "text/event-stream")
+                        .withBody(
+                            """
+            data: {"id":"clock-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Released Time call completed"},"finish_reason":null}]}
+
+            data: {"id":"clock-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """)));
+        try (var memberContext = browser.newContext()) {
+          Page memberPage = memberContext.newPage();
+          signIn(memberPage, clockMember, INITIAL_PASSWORD, true);
+          memberPage.navigate(baseUrl + "/chat");
+          memberPage.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+          memberPage.locator("#message").fill("Released Time UTC check");
+          memberPage
+              .getByRole(
+                  AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+              .click();
+          memberPage
+              .getByText("Released Time call completed", new Page.GetByTextOptions().setExact(true))
+              .waitFor();
+          var answer = memberPage.locator(".message.assistant").last();
+          answer.locator(".answer-execution > summary").click();
+          answer.locator(".answer-tool > summary").click();
+          assertThat(answer.innerText())
+              .contains("jdk-time", "current_time", "zoneId", "UTC", "instant");
+          memberPage.reload();
+          memberPage.locator(".message.assistant .answer-execution > summary").last().click();
+          memberPage.locator(".message.assistant .answer-tool > summary").last().click();
+          assertThat(memberPage.locator(".message.assistant").last().innerText())
+              .contains("jdk-time", "instant");
+          memberPage.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(diagnostics.resolve("released-time-member-inline.png")));
+        }
+        proveDirectShoppingApprovals(page, modelServer);
+        proveChatConfirmationSettings(page, browser, modelServer);
+        proveUnifiedPermissions(page, modelServer);
+        Path skillDirectory = Files.createDirectories(workspace.resolve("skills/qa-private-skill"));
+        Files.writeString(
+            skillDirectory.resolve("SKILL.md"),
+            """
+            ---
+            name: qa-private-skill
+            description: confidential-description-451
+            version: 1.0.0
+            ---
+            Private skill body: confidential-skill-body-672.
+            """);
+        stop();
+        start(postgres, workspace, "local-control", true);
+        page.context().clearCookies();
+        signIn(page, LOGIN, PASSWORD, false);
+        proveKnowledgeReadConfirmation(page, modelServer);
+        proveHostCallbackConfirmation(page, modelServer);
+        proveSkillConfirmation(page, modelServer);
       } finally {
         stop();
       }
@@ -817,15 +1085,859 @@ class ReleasedModuleDistributableAcceptanceTest {
     }
   }
 
+  private void proveDirectShoppingApprovals(Page page, WireMockServer modelServer)
+      throws Exception {
+    page.setViewportSize(1440, 900);
+    String marker = "Released Shopping direct approval check";
+    String callback = ZalavaToolCallbackNames.forTool("shopping-list-household", "add_item");
+    String calls =
+        """
+        data: {"id":"shopping","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"shopping-milk","type":"function","function":{"name":"%s","arguments":%s}},{"index":1,"id":"shopping-denied","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"shopping","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                callback,
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("name", "Released approval milk"))),
+                callback,
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("name", "Released denied bread"))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(calls)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"shopping-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Shopping operations await permission."},"finish_reason":null}]}
+
+        data: {"id":"shopping-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText(
+            "Shopping operations await permission.", new Page.GetByTextOptions().setExact(true))
+        .waitFor();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .waitFor();
+    page.reload();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var cards =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    var answer = page.locator(".message.assistant").last();
+    answer.locator(".answer-execution > summary").click();
+    PlaywrightAssertions.assertThat(answer.locator(".answer-tool > summary")).hasCount(2);
+    PlaywrightAssertions.assertThat(answer.locator(".answer-tool > summary").first())
+        .containsText("Awaiting permission");
+    answer.locator(".answer-tool > summary").first().click();
+    PlaywrightAssertions.assertThat(answer).containsText("pending_approval");
+    // Sections with accessible names are exposed as regions by the browser.
+    PlaywrightAssertions.assertThat(cards).hasCount(2);
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      assertThat((Boolean) cards.first().evaluate("e => e.scrollWidth<=e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("shopping-direct-pending-" + width + ".png")));
+    }
+    page.setViewportSize(1440, 900);
+    var milk = cards.filter(new Locator.FilterOptions().setHasText("Released approval milk"));
+    var bread = cards.filter(new Locator.FilterOptions().setHasText("Released denied bread"));
+    milk.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).focus();
+    page.keyboard().press("Enter");
+    page.getByText("Permission allowed once; operation completed.").waitFor();
+    PlaywrightAssertions.assertThat(cards).hasCount(1);
+    bread
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny").setExact(true))
+        .click();
+    page.getByText("Permission denied; operation was not run.").waitFor();
+    PlaywrightAssertions.assertThat(cards).hasCount(0);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("shopping-direct-decided.png")));
+    page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+    PlaywrightAssertions.assertThat(
+            page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    assertThat(page.content()).doesNotContain("Released denied bread");
+    page.reload();
+    PlaywrightAssertions.assertThat(
+            page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(diagnostics.resolve("shopping-direct-persisted.png")));
+  }
+
+  private void proveChatConfirmationSettings(Page page, Browser browser, WireMockServer modelServer)
+      throws Exception {
+    page.setViewportSize(1440, 900);
+    page.navigate(baseUrl + "/zalava/accounts/chat-confirmations");
+    var row = page.locator("[data-confirmation-tool='shopping-list-household:add_item']");
+    PlaywrightAssertions.assertThat(row).containsText("Existing policy");
+    row.locator("form[action$='/role']")
+        .first()
+        .locator("select[name=choice]")
+        .selectOption("AUTO");
+    row.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save administrator default"))
+        .focus();
+    page.keyboard().press("Enter");
+    page.getByText("Role confirmation default saved.").waitFor();
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      assertThat((Boolean) row.evaluate("e => e.scrollWidth<=e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("chat-confirmation-role-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    page.reload();
+    assertThat(
+            row.locator("form[action$='/role']")
+                .first()
+                .locator("select[name=choice]")
+                .inputValue())
+        .isEqualTo("AUTO");
+    String account =
+        page.locator("#confirmation-account option")
+            .filter(new Locator.FilterOptions().setHasText(LOGIN))
+            .getAttribute("value");
+    page.locator("#confirmation-account").selectOption(account);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show individual settings"))
+        .click();
+    PlaywrightAssertions.assertThat(row).containsText("Run without confirmation");
+    PlaywrightAssertions.assertThat(row).containsText("Role default");
+    row.locator("form[action$='/user'] select[name=choice]").selectOption("REQUIRE");
+    row.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual setting"))
+        .click();
+    PlaywrightAssertions.assertThat(row).containsText("Require confirmation · User override");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      assertThat((Boolean) row.evaluate("e => e.scrollWidth<=e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("chat-confirmation-individual-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    sendShoppingPolicyTurn(
+        page, modelServer, "Confirmation-required bread", "Policy guarded bread");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("Policy guarded bread");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny").setExact(true))
+        .click();
+    page.getByText("Permission denied; operation was not run.").waitFor();
+    page.navigate(baseUrl + "/zalava/accounts/chat-confirmations?accountId=" + account);
+    row.locator("form[action$='/user'] select[name=choice]").selectOption("INHERIT");
+    row.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual setting"))
+        .click();
+    PlaywrightAssertions.assertThat(row).containsText("Run without confirmation · Role default");
+    sendShoppingPolicyTurn(page, modelServer, "Confirmation-auto milk", "Policy automatic milk");
+    PlaywrightAssertions.assertThat(
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+        .hasCount(0);
+    page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+    PlaywrightAssertions.assertThat(
+            page.getByText("Policy automatic milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    assertThat(page.content()).doesNotContain("Policy guarded bread");
+    page.reload();
+    PlaywrightAssertions.assertThat(
+            page.getByText("Policy automatic milk", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(1);
+    page.navigate(baseUrl + "/zalava/accounts/tool-defaults");
+    var access = page.locator("[data-tool-access='shopping-list-household:add_item']");
+    access.locator("select[name=membersAllowed]").selectOption("true");
+    access
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save default"))
+        .click();
+    page.navigate(baseUrl + "/zalava/accounts/chat-confirmations");
+    row.locator("form[action$='/role']").nth(1).locator("select[name=choice]").selectOption("AUTO");
+    row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save member default"))
+        .click();
+    try (var memberContext = browser.newContext()) {
+      Page member = memberContext.newPage();
+      signIn(member, "released-clock-member", PASSWORD, false);
+      sendShoppingPolicyTurn(
+          member, modelServer, "Member confirmation-auto", "Member automatic milk");
+      PlaywrightAssertions.assertThat(
+              member.getByRole(
+                  AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+          .hasCount(0);
+      member.navigate(baseUrl + "/apps");
+      PlaywrightAssertions.assertThat(
+              member.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Shopping List")))
+          .hasCount(0);
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(403);
+      page.navigate(baseUrl + "/zalava/accounts/app-access");
+      var app = page.locator("[data-app-access='zalava-module-shopping-list:shopping-list']");
+      PlaywrightAssertions.assertThat(app).containsText("Not allowed");
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("app-access-" + width + ".png"))
+                .setFullPage(true));
+      }
+      page.setViewportSize(1440, 900);
+      app.locator("select[name=allowed]").selectOption("true");
+      app.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save member default"))
+          .focus();
+      page.keyboard().press("Enter");
+      page.getByText("Member default saved.").waitFor();
+      page.reload();
+      assertThat(app.locator("select[name=allowed]").inputValue()).isEqualTo("true");
+      member.navigate(baseUrl + "/apps");
+      member.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Shopping List")).click();
+      PlaywrightAssertions.assertThat(
+              member.getByText("Member automatic milk", new Page.GetByTextOptions().setExact(true)))
+          .hasCount(1);
+      for (int width : new int[] {1440, 768, 390}) {
+        member.setViewportSize(width, 900);
+        if (width <= 1024)
+          member.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) member.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        member.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("member-shopping-" + width + ".png"))
+                .setFullPage(true));
+      }
+      member.setViewportSize(1440, 900);
+      member
+          .locator("form:has(input[name=name][value='Member automatic milk']) input[type=checkbox]")
+          .check();
+      member.getByText("Bought Member automatic milk").waitFor();
+      member.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
+      PlaywrightAssertions.assertThat(
+              member.getByText("Member automatic milk", new Page.GetByTextOptions().setExact(true)))
+          .hasCount(0);
+      page.navigate(baseUrl + "/zalava/accounts/app-access");
+      app.locator("select[name=allowed]").selectOption("false");
+      app.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save member default"))
+          .click();
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(403);
+      String memberId =
+          page.locator("#member option")
+              .filter(new Locator.FilterOptions().setHasText("released-clock-member"))
+              .getAttribute("value");
+      page.locator("#member").selectOption(memberId);
+      page.getByRole(
+              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show individual settings"))
+          .click();
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("app-access-individual-" + width + ".png"))
+                .setFullPage(true));
+      }
+      page.setViewportSize(1440, 900);
+      app.locator("select[name=decision]").selectOption("ALLOW");
+      app.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual access"))
+          .click();
+      page.getByText("Individual access saved.").waitFor();
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(200);
+      app.locator("select[name=decision]").selectOption("DENY");
+      app.getByRole(
+              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save individual access"))
+          .click();
+      assertThat(
+              member
+                  .request()
+                  .get(baseUrl + "/apps/zalava-module-shopping-list/shopping-list")
+                  .status())
+          .isEqualTo(403);
+    }
+  }
+
+  private void proveUnifiedPermissions(Page page, WireMockServer modelServer) throws Exception {
+    page.navigate(baseUrl + "/zalava/accounts/permissions");
+    var read = page.locator("[data-permission-tool='shopping-list-household:list_items']");
+    PlaywrightAssertions.assertThat(read).containsText("Default: no confirmation");
+    PlaywrightAssertions.assertThat(read).containsText("List items");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("unified-role-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    String memberId =
+        page.locator("#permission-subject option")
+            .filter(new Locator.FilterOptions().setHasText("released-clock-member"))
+            .getAttribute("value");
+    page.locator("#permission-subject").selectOption(memberId);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show permissions"))
+        .click();
+    PlaywrightAssertions.assertThat(
+            page.locator("[data-permission-app='zalava-module-shopping-list:shopping-list']"))
+        .containsText("Individual override");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("unified-person-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    page.locator("#permission-subject").selectOption("administrator");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Show permissions"))
+        .click();
+    read.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    read.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .focus();
+    page.keyboard().press("Enter");
+    page.getByText("Chat confirmation saved.").waitFor();
+    page.reload();
+    PlaywrightAssertions.assertThat(read).containsText("Require confirmation");
+    sendShoppingToolTurn(
+        page, modelServer, "Read-only confirmation required", "list_items", Map.of());
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("list_items");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Read approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill("Read-only confirmation required");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(
+            page.getByText(
+                "Policy tool call completed.", new Page.GetByTextOptions().setExact(true)))
+        .hasCount(2);
+    PlaywrightAssertions.assertThat(
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+        .hasCount(0);
+    modelServer.verify(
+        WireMock.postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing("Read-only confirmation required"))
+            .withRequestBody(containing("Policy automatic milk")));
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    read.locator("form[action$='/confirmation'] select").selectOption("INHERIT");
+    read.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    sendShoppingToolTurn(page, modelServer, "Read-only default auto", "list_items", Map.of());
+    PlaywrightAssertions.assertThat(
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions")))
+        .hasCount(0);
+  }
+
+  private void proveKnowledgeReadConfirmation(Page page, WireMockServer modelServer) {
+    String marker = "Knowledge approval test rarecedar";
+    String fact = "rarecedar-8392 is the private fixture fact.";
+    page.navigate(baseUrl + "/knowledge");
+    page.locator("#knowledge-file")
+        .setInputFiles(
+            new FilePayload(
+                "confirmation-note.txt", "text/plain", fact.getBytes(StandardCharsets.UTF_8)));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Upload").setExact(true))
+        .click();
+    page.getByText("Source uploaded for processing.").waitFor();
+    Locator document =
+        page.locator("li.box")
+            .filter(new Locator.FilterOptions().setHasText("confirmation-note.txt"));
+    for (int attempt = 0; attempt < 100 && !document.innerText().contains("Ready"); attempt++) {
+      page.waitForTimeout(300);
+      page.reload();
+    }
+    PlaywrightAssertions.assertThat(document).containsText("Ready");
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    Locator read = page.locator("[data-permission-tool='zalava-knowledge:knowledge.search']");
+    PlaywrightAssertions.assertThat(read).containsText("Governed by document permissions");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("knowledge-permission-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    read.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    read.getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    page.getByText("Chat confirmation saved.").waitFor();
+    String call =
+        """
+        data: {"id":"knowledge","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"knowledge-call","type":"function","function":{"name":"zalava_knowledge_search_f2405c6159c995e8","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"knowledge","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("query", "rarecedar", "limit", 2))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"knowledge-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Knowledge tool call completed."},"finish_reason":null}]}
+
+        data: {"id":"knowledge-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Knowledge tool call completed.").waitFor();
+    assertThat(
+            modelServer.getAllServeEvents().stream()
+                .map(event -> event.getRequest().getBodyAsString())
+                .filter(body -> body.contains(marker)))
+        .allMatch(body -> !body.contains("rarecedar-8392"));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("knowledge.search");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Read approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(page.getByText("Knowledge tool call completed.")).hasCount(2);
+    modelServer.verify(
+        WireMock.postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(marker))
+            .withRequestBody(containing("rarecedar-8392")));
+  }
+
+  private void proveHostCallbackConfirmation(Page page, WireMockServer modelServer) {
+    String marker = "Host callback approval scenario";
+    String fact = "I prefer apricot orchards for acceptance tests.";
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    var row = page.locator("[data-permission-tool='zalava-internal:proposeMemory']");
+    PlaywrightAssertions.assertThat(row).containsText("Propose Memory");
+    PlaywrightAssertions.assertThat(row).containsText("Run without confirmation by default");
+    page.locator("#permission-filter").fill("propose memory");
+    PlaywrightAssertions.assertThat(row).isVisible();
+    PlaywrightAssertions.assertThat(
+            page.locator("[data-permission-tool='zalava-internal:beginModuleDevelopment']"))
+        .isHidden();
+    PlaywrightAssertions.assertThat(page.locator("[data-permission-filter-status]"))
+        .containsText("1 matching");
+    page.locator("#permission-filter").fill("no such permission");
+    PlaywrightAssertions.assertThat(page.locator("[data-permission-filter-status]"))
+        .containsText("0 matching");
+    page.locator("#permission-filter").fill("");
+    PlaywrightAssertions.assertThat(row).isVisible();
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("host-callback-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    row.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    page.getByText("Chat confirmation saved.").waitFor();
+    Map<String, Object> proposal = Map.of("scope", "USER", "text", fact, "metadata", Map.of());
+    String call =
+        """
+        data: {"id":"host","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"host-call","type":"function","function":{"name":"proposeMemory","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"host","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                JSON.writeValueAsString(JSON.writeValueAsString(Map.of("proposal", proposal))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"host-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Host callback completed."},"finish_reason":null}]}
+
+        data: {"id":"host-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Host callback completed.").waitFor();
+    assertThat(page.context().request().get(baseUrl + "/memory").text()).doesNotContain(fact);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("proposeMemory");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Action approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(page.getByText("Host callback completed.")).hasCount(2);
+    assertThat(page.context().request().get(baseUrl + "/memory").text()).contains(fact);
+
+    String deniedMarker = "Host callback denial scenario";
+    String deniedFact = "I prefer denied plum orchards for acceptance tests.";
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath(
+                    "$.messages[?(@.role == 'user')].content", containing(deniedMarker)))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(call.replace(fact, deniedFact))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath(
+                    "$.messages[?(@.role == 'user')].content", containing(deniedMarker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"denied-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Denied callback completed."},"finish_reason":null}]}
+
+        data: {"id":"denied-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(deniedMarker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Denied callback completed.").waitFor();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var deniedCard =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(deniedCard).containsText("proposeMemory");
+    deniedCard.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny")).click();
+    page.getByText("Permission denied; operation was not run.").waitFor();
+    assertThat(page.context().request().get(baseUrl + "/memory").text()).doesNotContain(deniedFact);
+  }
+
+  private void proveSkillConfirmation(Page page, WireMockServer modelServer) {
+    String marker = "Skill approval fixture question";
+    String secretBody = "confidential-skill-body-672";
+    String secretDescription = "confidential-description-451";
+    page.navigate(baseUrl + "/zalava/accounts/permissions?subject=administrator");
+    var skill = page.locator("[data-permission-tool='zalava-internal:Skill']");
+    PlaywrightAssertions.assertThat(skill).containsText("automatic skill context");
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+          .isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("skill-permission-" + width + ".png"))
+              .setFullPage(true));
+    }
+    page.setViewportSize(1440, 900);
+    skill.locator("form[action$='/confirmation'] select").selectOption("REQUIRE");
+    skill
+        .getByRole(
+            AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Save Chat confirmation"))
+        .click();
+    page.getByText("Chat confirmation saved.").waitFor();
+    assertThat(
+            post(
+                    page.context(),
+                    page,
+                    "/api/skills/qa-private-skill/activate",
+                    Map.of("version", "1.0.0"))
+                .status())
+        .isEqualTo(200);
+    String call =
+        """
+        data: {"id":"skill","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"skill-call","type":"function","function":{"name":"Skill","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"skill","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(
+                JSON.writeValueAsString(
+                    JSON.writeValueAsString(Map.of("command", "qa-private-skill"))));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"skill-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Skill callback completed."},"finish_reason":null}]}
+
+        data: {"id":"skill-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Skill callback completed.").waitFor();
+    assertThat(
+            modelServer.getAllServeEvents().stream()
+                .map(event -> event.getRequest().getBodyAsString())
+                .filter(body -> body.contains(marker)))
+        .allMatch(body -> !body.contains(secretBody) && !body.contains(secretDescription));
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+        .click();
+    var card =
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+    PlaywrightAssertions.assertThat(card).containsText("Skill");
+    card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
+    page.getByText(
+            "Action approved. Ask the same question again in this conversation within five minutes.")
+        .waitFor();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    PlaywrightAssertions.assertThat(page.getByText("Skill callback completed.")).hasCount(2);
+    modelServer.verify(
+        WireMock.postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(marker))
+            .withRequestBody(containing(secretBody)));
+  }
+
+  private void sendShoppingPolicyTurn(
+      Page page, WireMockServer modelServer, String marker, String item) {
+    sendShoppingToolTurn(page, modelServer, marker, "add_item", Map.of("name", item));
+  }
+
+  private void sendShoppingToolTurn(
+      Page page,
+      WireMockServer modelServer,
+      String marker,
+      String tool,
+      Map<String, Object> arguments) {
+    String callback = ZalavaToolCallbackNames.forTool("shopping-list-household", tool);
+    String call =
+        """
+        data: {"id":"policy","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"policy-call","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"policy","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(callback, JSON.writeValueAsString(JSON.writeValueAsString(arguments)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(2)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(0)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"policy-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Policy tool call completed."},"finish_reason":null}]}
+
+        data: {"id":"policy-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.navigate(baseUrl + "/chat");
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(marker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Policy tool call completed.", new Page.GetByTextOptions().setExact(true))
+        .waitFor();
+  }
+
   private void start(PostgreSQLContainer postgres, Path workspace, String profile)
+      throws Exception {
+    start(postgres, workspace, profile, false);
+  }
+
+  private void start(
+      PostgreSQLContainer postgres, Path workspace, String profile, boolean jobsEnabled)
       throws Exception {
     int port;
     try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
       port = socket.getLocalPort();
     }
     baseUrl = "http://127.0.0.1:" + port;
-    Path jar = Path.of(System.getProperty("zalava.test.boot-jar")).toAbsolutePath();
-    assertThat(jar).exists();
+    Path jar =
+        Path.of(System.getProperty("zalava.test.boot-jar", "unused-oci.jar")).toAbsolutePath();
+    if (ociImage == null) assertThat(jar).exists();
     Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
     process =
         hostProcessBuilder(
@@ -856,7 +1968,7 @@ class ReleasedModuleDistributableAcceptanceTest {
                 "--spring.ai.model.chat=unknown",
                 "--agent.channels.telegram.token=false",
                 "--agent.channels.telegram.username=false",
-                "--jobrunr.background-job-server.enabled=false",
+                "--jobrunr.background-job-server.enabled=" + jobsEnabled,
                 "--jobrunr.dashboard.enabled=false")
             .directory(workspace.toFile())
             .redirectErrorStream(true)
@@ -873,7 +1985,17 @@ class ReleasedModuleDistributableAcceptanceTest {
                         .build(),
                     HttpResponse.BodyHandlers.discarding())
                 .statusCode()
-            == 200) return;
+            == 200) {
+          if (ociImage != null) {
+            assertThat(Files.readString(log))
+                .as("usable AOT cache in image; diagnostics: %s", log)
+                .doesNotContain(
+                    "Unable to map shared spaces",
+                    "An error has occurred while processing the AOT cache",
+                    "size has changed");
+          }
+          return;
+        }
       } catch (IOException ignored) {
         // The packaged server has not bound its random loopback port yet.
       }
@@ -882,8 +2004,33 @@ class ReleasedModuleDistributableAcceptanceTest {
     throw new AssertionError("Packaged host startup timed out; diagnostics: " + log);
   }
 
+  private String fixtureUser() {
+    try {
+      return Files.getAttribute(diagnostics, "unix:uid")
+          + ":"
+          + Files.getAttribute(diagnostics, "unix:gid");
+    } catch (IOException failure) {
+      throw new IllegalStateException(
+          "OCI acceptance requires Linux bind-mount ownership", failure);
+    }
+  }
+
   private void stop() throws Exception {
     if (process != null) {
+      if (ociComposeFleet != null) {
+        ociComposeFleet.stop();
+        ociComposeFleet = null;
+      }
+      if (ociContainer != null) {
+        Process stopping =
+            new ProcessBuilder("docker", "stop", "--time", "20", ociContainer)
+                .redirectErrorStream(true)
+                .redirectOutput(diagnostics.resolve("docker-stop-" + generation + ".log").toFile())
+                .start();
+        assertThat(stopping.waitFor(30, TimeUnit.SECONDS)).isTrue();
+        assertThat(stopping.exitValue()).isZero();
+        ociContainer = null;
+      }
       process.destroy();
       if (!process.waitFor(20, TimeUnit.SECONDS)) {
         process.destroyForcibly();
@@ -902,6 +2049,7 @@ class ReleasedModuleDistributableAcceptanceTest {
       page.locator("input[name=currentPassword]").waitFor();
       page.locator("input[name=currentPassword]").fill(password);
       page.locator("input[name=replacementPassword]").fill(password + "-changed");
+      page.locator("input[name=passwordConfirmation]").fill(password + "-changed");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
     }
@@ -929,10 +2077,13 @@ class ReleasedModuleDistributableAcceptanceTest {
     catalogProxy.artifact(release.path());
     prepareCatalogRelease(page, release);
     page.locator("[data-installation-request] [data-action=deny]").click();
-    assertThat(page.locator("[data-request-status]").textContent()).containsIgnoringCase("denied");
+    page.navigate(baseUrl + "/monitoring#module-installations");
+    assertThat(page.locator("[data-installation-history]").textContent())
+        .containsIgnoringCase("denied");
     prepareCatalogRelease(page, release);
     page.locator("[data-installation-request] [data-action=allow]").click();
-    page.locator("[data-request-status]")
+    page.navigate(baseUrl + "/monitoring#module-installations");
+    page.locator("[data-installation-history]")
         .filter(new Locator.FilterOptions().setHasText("SUCCEEDED"))
         .waitFor();
     page.screenshot(

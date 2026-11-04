@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
@@ -20,6 +21,7 @@ public final class CapabilityGapTools {
 
   private final ModuleSuggestions suggestions;
   private final BooleanSupplier administrator;
+  private final Function<String, String> moduleState;
 
   public CapabilityGapTools() {
     this(
@@ -27,6 +29,14 @@ public final class CapabilityGapTools {
   }
 
   public CapabilityGapTools(ModuleSuggestions suggestions, BooleanSupplier administrator) {
+    this(suggestions, administrator, moduleId -> "UNKNOWN");
+  }
+
+  public CapabilityGapTools(
+      ModuleSuggestions suggestions,
+      BooleanSupplier administrator,
+      Function<String, String> moduleState) {
+    this.moduleState = Objects.requireNonNull(moduleState);
     this.suggestions = Objects.requireNonNull(suggestions);
     this.administrator = Objects.requireNonNull(administrator);
   }
@@ -61,6 +71,7 @@ public final class CapabilityGapTools {
                     entry.put("moduleId", module.moduleId());
                     entry.put("displayName", module.displayName());
                     entry.put("description", module.description());
+                    entry.put("installationState", moduleState.apply(module.moduleId()));
                     if (admin)
                       entry.put(
                           "reviewUrl",
@@ -72,8 +83,8 @@ public final class CapabilityGapTools {
       recommendation.put(
           "nextAction",
           admin
-              ? "As an administrator, open Modules, use Check catalog, review the suggested module and release, then choose Install explicitly if suitable. Installation and loading have not happened."
-              : "Ask an administrator to review these possible modules in Modules and install and load a suitable release. You cannot install modules from your member account.");
+              ? "As an administrator, open Modules, use Check catalog, review the suggested module and release, then choose Install explicitly if suitable. A catalog match does not establish installation state. Check installationState: for INSTALLED_NOT_RUNNING open the existing module and start it; for RUNNING check account permissions; only NOT_INSTALLED calls for installation. UNKNOWN means installation state was not verified."
+              : "Ask an administrator to review installationState and your tool permissions. INSTALLED_NOT_RUNNING needs the existing module started; RUNNING may need a tool access grant; only NOT_INSTALLED calls for installation. UNKNOWN means installation state was not verified. You cannot install modules from your member account.");
       return json(recommendation);
     }
     if (outcome.status() != ModuleSuggestions.Status.NO_MATCH) {

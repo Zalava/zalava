@@ -70,7 +70,7 @@ public class JobDetailController {
       model.addAttribute("csrf", csrf);
       return "ui/job-detail";
     } catch (TaskNotFoundException exception) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found", exception);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found", exception);
     }
   }
 
@@ -86,7 +86,7 @@ public class JobDetailController {
     try {
       reference = TaskReference.parse(date, filename);
     } catch (IllegalArgumentException ex) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
     }
     try {
       Task task = taskQueries.getTask(reference);
@@ -95,7 +95,7 @@ public class JobDetailController {
       model.addAttribute("csrf", csrf);
       return "ui/job-detail";
     } catch (TaskNotFoundException ex) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
     }
   }
 
@@ -174,7 +174,7 @@ public class JobDetailController {
     try {
       Task task = taskQueries.getTask(reference);
       if (task.getStatus() != Task.Status.awaiting_human_input) {
-        throw new IllegalStateException("Job is not waiting for an approval decision");
+        throw new IllegalStateException("Task is not waiting for an approval decision");
       }
       switch (decision) {
         case ALLOW_ONCE -> approvalRequests.allow(requestId, reference);
@@ -189,7 +189,7 @@ public class JobDetailController {
     } catch (ZalavaToolApprovalRequests.NotFoundException ex) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Approval request not found", ex);
     } catch (TaskNotFoundException ex) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found", ex);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found", ex);
     } catch (ZalavaToolApprovalRequests.AlreadyDecidedException | IllegalStateException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
     }
@@ -206,7 +206,7 @@ public class JobDetailController {
     try {
       Task task = actorTasks.get(actor, taskReference);
       if (task.getStatus() != Task.Status.awaiting_human_input) {
-        throw new IllegalStateException("Job is not waiting for an approval decision");
+        throw new IllegalStateException("Task is not waiting for an approval decision");
       }
       ZalavaToolApprovalRequests.Entry approval =
           approvalRequests.get(actor, taskReference, requestId);
@@ -228,7 +228,7 @@ public class JobDetailController {
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Approval request not found", exception);
     } catch (TaskNotFoundException exception) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found", exception);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found", exception);
     } catch (ZalavaToolApprovalRequests.AlreadyDecidedException | IllegalStateException exception) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage(), exception);
     }
@@ -238,7 +238,7 @@ public class JobDetailController {
     try {
       return TaskReference.parse(date, filename);
     } catch (IllegalArgumentException ex) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
     }
   }
 
@@ -246,7 +246,7 @@ public class JobDetailController {
     try {
       return new ActorTaskReference(value);
     } catch (IllegalArgumentException exception) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found", exception);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found", exception);
     }
   }
 
@@ -283,7 +283,7 @@ public class JobDetailController {
         new LifecycleEntry(
             "Created",
             CREATED_AT.format(task.getCreatedAt().atZone(ZoneId.systemDefault())),
-            "Job recorded in the workspace."),
+            "Task recorded in the workspace."),
         new LifecycleEntry(statusLabel(task.getStatus()), null, statusGuidance(task.getStatus())));
   }
 
@@ -367,12 +367,12 @@ public class JobDetailController {
 
   private static String statusGuidance(Task.Status status) {
     return switch (status) {
-      case todo -> "Zalava has recorded this job and it is waiting to run.";
-      case in_progress -> "Zalava is currently working on this job.";
-      case awaiting_human_input -> "Zalava needs human input before this job can continue.";
-      case completed -> "Zalava has completed this job.";
-      case cancelled -> "Zalava cancelled this job.";
-      case failed -> "Zalava could not complete this job after retrying it.";
+      case todo -> "Zalava has recorded this task and it is waiting to run.";
+      case in_progress -> "Zalava is currently working on this task.";
+      case awaiting_human_input -> "Zalava needs human input before this task can continue.";
+      case completed -> "Zalava has completed this task.";
+      case cancelled -> "Zalava cancelled this task.";
+      case failed -> "Zalava could not complete this task after retrying it.";
     };
   }
 
@@ -408,9 +408,9 @@ public class JobDetailController {
       boolean pending) {}
 
   private enum ApprovalDecision {
-    ALLOW_ONCE("Approval granted. The job has been queued to continue."),
-    ALLOW_TOOL("Tool approval saved. The job has been queued to continue."),
-    DENY("Approval denied. The job has been queued to continue.");
+    ALLOW_ONCE("Approval granted. The task has been queued to continue."),
+    ALLOW_TOOL("Tool approval saved. The task has been queued to continue."),
+    DENY("Approval denied. The task has been queued to continue.");
 
     private final String message;
 

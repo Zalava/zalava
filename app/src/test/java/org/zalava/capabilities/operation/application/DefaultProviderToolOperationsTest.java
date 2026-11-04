@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,7 +73,20 @@ class DefaultProviderToolOperationsTest {
         .isEqualTo(ProviderToolOperations.ToolInvocationStatus.PENDING_APPROVAL);
     assertThat(outcome.approval().taskReference()).isNull();
     assertThat(provider.calls).hasValue(0);
-    assertThat(observer.observations).isEmpty();
+    assertThat(observer.observations)
+        .singleElement()
+        .satisfies(
+            observation -> {
+              assertThat(observation.errorType()).isEqualTo("pending_approval");
+              assertThat(observation.arguments()).containsEntry("path", "notes/a.txt");
+              assertThat(observation.result().content())
+                  .isEqualTo(
+                      Map.of(
+                          "status",
+                          "pending_approval",
+                          "approvalRequestId",
+                          outcome.approval().requestId()));
+            });
   }
 
   @Test
@@ -91,9 +105,8 @@ class DefaultProviderToolOperationsTest {
     assertThat(outcome.result().content())
         .isEqualTo(Map.of("path", "notes/a.txt", "confirmed", true));
     assertThat(provider.calls).hasValue(1);
-    assertThat(observer.observations)
-        .singleElement()
-        .satisfies(observation -> assertThat(observation.confirmed()).isTrue());
+    assertThat(observer.observations).hasSize(2);
+    assertThat(observer.observations.getLast().confirmed()).isTrue();
   }
 
   @Test
@@ -135,8 +148,8 @@ class DefaultProviderToolOperationsTest {
     assertThat(outcome.status()).isEqualTo(ProviderToolOperations.ToolInvocationStatus.DENIED);
     assertThat(outcome.approval().requestId()).isEqualTo(requestId);
     assertThat(provider.calls).hasValue(0);
-    assertThat(observer.observations)
-        .singleElement()
+    assertThat(observer.observations).hasSize(2);
+    assertThat(observer.observations.getLast())
         .satisfies(
             observation -> {
               assertThat(observation.success()).isFalse();
@@ -169,6 +182,44 @@ class DefaultProviderToolOperationsTest {
         .containsEntry("approvalRequestId", requestId);
     assertThat(provider.calls).hasValue(1);
     assertThat(approvals.requests).hasSize(1);
+  }
+
+  @Test
+  void failedApprovedOperationIsNotReportedAsExecutedOrRunAgain() {
+    var command =
+        ProviderToolOperations.ToolInvocationCommand.task(
+            "test-provider",
+            "write",
+            "{}",
+            new InvocationContext("agent", false, Map.of("source", "telegram")),
+            null);
+    String requestId = operations.invoke(command).approval().requestId();
+    provider.failWrite = true;
+    assertThatThrownBy(() -> operations.allowUnscoped(requestId))
+        .isInstanceOf(ProviderToolOperationException.class);
+    var repeated = operations.invoke(command);
+    assertThat(repeated.result().success()).isFalse();
+    assertThat(((Map<?, ?>) repeated.result().content()).get("status"))
+        .isEqualTo("execution_failed");
+    assertThat(provider.calls).hasValue(1);
+  }
+
+  @Test
+  void approvedOperationWithoutRecordedOutcomeIsUnknownAndNotRepeated() {
+    var command =
+        ProviderToolOperations.ToolInvocationCommand.task(
+            "test-provider",
+            "write",
+            "{}",
+            new InvocationContext("agent", false, Map.of("source", "telegram")),
+            null);
+    String requestId = operations.invoke(command).approval().requestId();
+    approvals.allowUnscoped(requestId);
+    var repeated = operations.invoke(command);
+    assertThat(repeated.result().success()).isFalse();
+    assertThat(((Map<?, ?>) repeated.result().content()).get("status"))
+        .isEqualTo("execution_unknown");
+    assertThat(provider.calls).hasValue(0);
   }
 
   @Test
@@ -386,6 +437,32 @@ class DefaultProviderToolOperationsTest {
     }
 
     @Override
+    public void recordExecutionOutcome(String requestId, boolean succeeded) {
+      for (int i = 0; i < requests.size(); i++) {
+        ToolApproval request = requests.get(i);
+        if (request.requestId().equals(requestId)) {
+          var attributes = new LinkedHashMap<>(request.attributes());
+          attributes.put("approvalExecutionOutcome", succeeded ? "succeeded" : "failed");
+          requests.set(
+              i,
+              new ToolApproval(
+                  request.requestId(),
+                  request.providerId(),
+                  request.toolName(),
+                  request.actorId(),
+                  attributes,
+                  request.providerScope(),
+                  request.argumentsJson(),
+                  request.taskReference(),
+                  request.decision(),
+                  request.approvalScope()));
+          return;
+        }
+      }
+      throw new ApprovalNotFoundException(requestId);
+    }
+
+    @Override
     public ToolApproval allowUnscoped(String requestId) {
       return decide(
           requestId, null, ToolApproval.Decision.ALLOWED, ToolApproval.ApprovalScope.ONCE);
@@ -443,6 +520,7 @@ class DefaultProviderToolOperationsTest {
   private static final class MutableProvider implements ZalavaProvider {
 
     private final AtomicInteger calls = new AtomicInteger();
+    private boolean failWrite;
     private Map<String, String> scope = Map.of("root", "workspace");
 
     @Override
@@ -480,6 +558,7 @@ class DefaultProviderToolOperationsTest {
         throw new IllegalStateException("provider failed");
       }
       calls.incrementAndGet();
+      if (failWrite && "write".equals(toolName)) throw new IllegalArgumentException("invalid name");
       return ZalavaOperationResult.success(
           Map.of(
               "path", arguments.path("path").stringValue(""),

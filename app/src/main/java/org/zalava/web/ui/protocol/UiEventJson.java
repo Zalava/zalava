@@ -43,6 +43,7 @@ public final class UiEventJson {
         json.put("conversationId", completed.conversationId());
         json.put("text", completed.text());
         json.put("jobIds", completed.jobIds());
+        if (completed.runId() != null) json.put("runId", completed.runId());
       }
       case UiEvent.ToolProgress progress -> {
         json.put("type", "tool.progress");
@@ -60,6 +61,11 @@ public final class UiEventJson {
         json.put("jobId", request.jobId());
         json.put("requestId", request.requestId());
         json.put("summary", request.summary());
+      }
+      case UiEvent.DirectPermissions permissions -> {
+        json.put("type", "permission.direct");
+        json.put("requests", permissions.requests());
+        json.put("feedback", permissions.feedback());
       }
       case UiEvent.ArtifactAvailable artifact -> {
         json.put("type", "artifact.available");
@@ -94,6 +100,7 @@ public final class UiEventJson {
         json.put("type", "failure");
         json.put("operation", failure.operation());
         json.put("message", failure.message());
+        if (failure.runId() != null) json.put("runId", failure.runId());
       }
       case UiEvent.Cancelled cancelled -> {
         json.put("type", "cancelled");

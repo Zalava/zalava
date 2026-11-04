@@ -220,6 +220,20 @@ class BrowserModuleManagementAcceptanceTest {
           .setInputFiles(new FilePayload("fixture.jar", "application/java-archive", uploadedJar()));
       page.locator("[data-action=upload-module]").click();
       page.getByText("Uploaded uploaded-fixture 1.0.0 installed").waitFor();
+      page.navigate(baseUrl() + "/monitoring#module-installations");
+      assertThat(page.locator("[data-installation-history]").count()).isGreaterThan(0);
+      assertThat(page.locator("#module-installations time[datetime]").count()).isGreaterThan(0);
+      Files.createDirectories(Path.of("build/browser-acceptance/module-access"));
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        page.locator("#module-installations").scrollIntoViewIfNeeded();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(
+                    Path.of("build/browser-acceptance/module-access/history-" + width + ".png")));
+      }
     }
   }
 
@@ -235,12 +249,10 @@ class BrowserModuleManagementAcceptanceTest {
 
       page.locator("[data-action=restart-zalava]").click();
 
-      page.locator("[data-zalava-restart-status=REQUESTED]").waitFor();
-      assertThat(
-              page.locator("[data-zalava-restart-status]")
-                  .getAttribute("data-zalava-restart-status"))
-          .isEqualTo("REQUESTED");
-      assertThat(page.locator("[data-action=restart-zalava]").isDisabled()).isTrue();
+      page.waitForURL("**/modules/restart");
+      page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Restarting Zalava"))
+          .waitFor();
+      assertThat(page.locator("progress").isVisible()).isTrue();
     }
   }
 
@@ -296,6 +308,7 @@ class BrowserModuleManagementAcceptanceTest {
     String replacement = password + "-changed";
     page.locator("input[name=currentPassword]").fill(password);
     page.locator("input[name=replacementPassword]").fill(replacement);
+    page.locator("input[name=passwordConfirmation]").fill(replacement);
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
     CURRENT_PASSWORD.compareAndSet(password, replacement);
   }
@@ -308,6 +321,7 @@ class BrowserModuleManagementAcceptanceTest {
     page.locator("input[name=currentPassword]").waitFor();
     page.locator("input[name=currentPassword]").fill(LOCAL_MODULE_PASSWORD);
     page.locator("input[name=replacementPassword]").fill(LOCAL_MODULE_PASSWORD + "-changed");
+    page.locator("input[name=passwordConfirmation]").fill(LOCAL_MODULE_PASSWORD + "-changed");
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
   }
 

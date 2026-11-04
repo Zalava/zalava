@@ -9,6 +9,8 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.Test;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 import org.zalava.architecture.fixture.application.FileSystemCoupledApplicationFixture;
 import org.zalava.architecture.fixture.domain.AdapterCoupledDomainFixture;
 import org.zalava.architecture.fixture.domain.SpringCoupledDomainFixture;
@@ -45,6 +47,17 @@ class PortsAndAdaptersArchitectureTest {
   static final ArchRule production_code_must_not_depend_on_retired_sea_namespace =
       noClasses().should().dependOnClassesThat().resideInAnyPackage("org.zalava.sea..");
 
+  @ArchTest
+  static final ArchRule controllers_must_not_bypass_application_use_cases_for_storage =
+      noClasses()
+          .that()
+          .areAnnotatedWith(Controller.class)
+          .or()
+          .areAnnotatedWith(RestController.class)
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..application.port.out..", "..adapter.out..");
+
   private static final String[] FRAMEWORK_PACKAGES = {
     "org.springframework..",
     "org.jobrunr..",
@@ -53,6 +66,15 @@ class PortsAndAdaptersArchitectureTest {
     "org.telegram..",
     "tools.jackson.."
   };
+
+  @ArchTest
+  static final ArchRule provider_agent_adapters_must_not_depend_on_assistant_internals =
+      noClasses()
+          .that()
+          .resideInAPackage("org.zalava.capabilities.operation.adapter.in.agent..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("org.zalava.assistant..");
 
   private static final String[] ADAPTER_PACKAGES = {
     "..adapter..",

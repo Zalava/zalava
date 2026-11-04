@@ -84,6 +84,7 @@ class AccountManagementComponentTest {
                     .with(csrf())
                     .param("loginName", login)
                     .param("temporaryPassword", PASSWORD)
+                    .param("passwordConfirmation", PASSWORD)
                     .param("role", "MEMBER"))
             .andExpect(status().is3xxRedirection())
             .andReturn();
@@ -105,6 +106,7 @@ class AccountManagementComponentTest {
                     .with(csrf())
                     .param("loginName", login)
                     .param("temporaryPassword", PASSWORD)
+                    .param("passwordConfirmation", PASSWORD)
                     .param("role", "MEMBER"))
             .andExpect(status().is3xxRedirection())
             .andReturn();

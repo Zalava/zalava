@@ -1,6 +1,7 @@
 package org.zalava.assistant.conversation.adapter.out.springai;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +15,12 @@ import org.springframework.ai.chat.client.advisor.api.BaseAdvisor;
 import org.springframework.ai.chat.client.advisor.api.BaseChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.util.Assert;
+import org.zalava.assistant.agent.AgentRunContext;
 import org.zalava.assistant.agent.application.port.out.AgentModelInput;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -111,7 +114,20 @@ public final class MessageChatMemoryAdvisor implements BaseChatMemoryAdvisor {
     if (chatClientResponse.chatResponse() != null) {
       assistantMessages =
           chatClientResponse.chatResponse().getResults().stream()
-              .map(g -> (Message) g.getOutput())
+              .map(
+                  g -> {
+                    var output = g.getOutput();
+                    Object runId = chatClientResponse.context().get(AgentRunContext.KEY);
+                    if (!(runId instanceof String)) return (Message) output;
+                    var metadata = new LinkedHashMap<>(output.getMetadata());
+                    metadata.put(AgentRunContext.KEY, runId);
+                    return (Message)
+                        AssistantMessage.builder()
+                            .content(output.getText())
+                            .properties(metadata)
+                            .toolCalls(output.getToolCalls())
+                            .build();
+                  })
               .toList();
     }
     this.chatMemory.add(this.getConversationId(chatClientResponse.context()), assistantMessages);

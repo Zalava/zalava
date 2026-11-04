@@ -1,5 +1,7 @@
 package org.zalava.capabilities.operation.adapter.out.approval;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.zalava.api.InvocationContext;
 import org.zalava.api.ZalavaProvider;
@@ -28,7 +30,13 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
       InvocationContext context,
       String argumentsJson,
       TaskReference taskReference) {
-    return map(requests.create(provider, tool, context, arguments(argumentsJson), taskReference));
+    Map<String, String> attributes = new LinkedHashMap<>(context.attributes());
+    attributes.remove(ZalavaToolApprovalRequests.EXECUTION_OUTCOME);
+    attributes.put("approvedModuleId", provider.descriptor().moduleId());
+    InvocationContext identified =
+        new InvocationContext(context.actorId(), context.confirmed(), Map.copyOf(attributes));
+    return map(
+        requests.create(provider, tool, identified, arguments(argumentsJson), taskReference));
   }
 
   @Override
@@ -37,6 +45,29 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
     return requests
         .consumeDecision(taskReference, providerId, toolName, arguments(argumentsJson))
         .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
+  public Optional<ToolApproval> consumeChatReadDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      String argumentsJson) {
+    return requests
+        .consumeChatReadDecision(context, provider, tool, arguments(argumentsJson))
+        .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
+  public ToolApproval approveChatRead(String requestId) {
+    try {
+      return map(requests.approveChatRead(requestId));
+    } catch (ZalavaToolApprovalRequests.NotFoundException ex) {
+      throw new ApprovalNotFoundException(requestId);
+    } catch (ZalavaToolApprovalRequests.AlreadyDecidedException
+        | ZalavaToolApprovalRequests.WrongScopeException ex) {
+      throw new ApprovalConflictException(ex.getMessage());
+    }
   }
 
   @Override
@@ -64,6 +95,11 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
     return requests
         .findAllowedToolPolicy(context, provider, tool)
         .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
+  public void recordExecutionOutcome(String requestId, boolean succeeded) {
+    requests.recordExecutionOutcome(requestId, succeeded);
   }
 
   @Override

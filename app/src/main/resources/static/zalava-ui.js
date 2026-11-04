@@ -1,0 +1,107 @@
+/* Shared native-form feedback, navigation and accessible disclosure cancellation. */
+(() => {
+  const pendingForms = new Map();
+  document.addEventListener('submit', event => {
+    const form = event.target;
+    if (event.defaultPrevented || !(form instanceof HTMLFormElement) || form.hasAttribute('data-repeatable')) return;
+    if (pendingForms.has(form)) { event.preventDefault(); return; }
+    if (!form.checkValidity()) return;
+    const submitter = event.submitter;
+    if (submitter && submitter.name) {
+      const value = document.createElement('input');
+      value.type = 'hidden'; value.name = submitter.name; value.value = submitter.value;
+      value.dataset.pendingSubmitter = 'true'; form.appendChild(value);
+    }
+    const buttons = Array.from(form.elements).filter(el => ['submit', 'image'].includes(el.type));
+    pendingForms.set(form, buttons.map(el => ({el, disabled: el.disabled, html: el.innerHTML, value: el.value})));
+    buttons.forEach(button => {
+      button.disabled = true; button.setAttribute('aria-disabled', 'true'); button.dataset.pending = 'true';
+      if (button.tagName === 'BUTTON') button.textContent = 'Working…';
+    });
+    form.setAttribute('aria-busy', 'true');
+    const status = document.createElement('p');
+    status.className = 'zalava-action-status'; status.setAttribute('role', 'status');
+    status.dataset.actionStatus = 'true'; status.textContent = 'Zalava is working on your request.';
+    form.appendChild(status);
+  });
+  window.addEventListener('pageshow', () => {
+    pendingForms.forEach((buttons, form) => {
+      buttons.forEach(({el, disabled, html, value}) => {
+        el.disabled = disabled; el.removeAttribute('aria-disabled'); delete el.dataset.pending;
+        if (el.tagName === 'BUTTON') el.innerHTML = html; else el.value = value;
+      });
+      form.removeAttribute('aria-busy');
+      form.querySelectorAll('[data-action-status], [data-pending-submitter]').forEach(el => el.remove());
+    });
+    pendingForms.clear();
+  });
+  document.addEventListener('click', event => {
+    const cancel = event.target.closest('[data-cancel-confirmation]');
+    if (!cancel) return;
+    const details = cancel.closest('details'); details.open = false; details.querySelector('summary').focus();
+  });
+  const burger = document.querySelector('.navbar-burger');
+  const menu = document.getElementById('zalava-product-navigation');
+  if (burger && menu) {
+    let previousFocus;
+    const close = () => { menu.classList.remove('is-active'); burger.classList.remove('is-active'); burger.setAttribute('aria-expanded', 'false'); previousFocus?.focus(); };
+    burger.addEventListener('click', () => {
+      if (menu.classList.contains('is-active')) return close();
+      previousFocus = document.activeElement; menu.classList.add('is-active'); burger.classList.add('is-active'); burger.setAttribute('aria-expanded', 'true');
+    });
+    menu.querySelector('.zalava-navigation-close')?.addEventListener('click', close);
+    menu.querySelectorAll('a').forEach(link => link.addEventListener('click', close));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && menu.classList.contains('is-active')) close(); });
+  }
+  document.querySelector('[data-error-summary]')?.focus();
+})();
+
+/* File selection and confirmation feedback also survive back/forward restore. */
+(() => {
+  const file = document.getElementById('knowledge-file');
+  const submit = file?.form.querySelector('[data-file-submit]');
+  const hint = file?.form.querySelector('[data-file-hint]');
+  const update = () => {
+    if (!submit) return;
+    submit.disabled = !file.files.length;
+    hint.textContent = file.files.length ? 'Ready to upload: ' + file.files[0].name : 'Select a file to upload.';
+  };
+  file?.addEventListener('change', update);
+  window.addEventListener('pageshow', update);
+  update();
+  document.querySelectorAll('[data-password-confirmation]').forEach(input => {
+    const original = input.form.querySelector('[data-password-original]');
+    const validate = () => input.setCustomValidity(input.value === original.value ? '' : 'Passwords do not match.');
+    input.addEventListener('input', validate);
+    original.addEventListener('input', validate);
+  });
+})();
+
+// Keep machine-readable timestamps while displaying the user's local date and time.
+document.querySelectorAll('time[data-local-time]').forEach(element => {
+  const value = new Date(element.dateTime);
+  if (!Number.isNaN(value.getTime())) element.textContent = new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(value);
+});
+
+// Filter the already-authorized permissions without hiding them when JavaScript is unavailable.
+(() => {
+  const input = document.querySelector('[data-permission-filter]');
+  const container = document.querySelector('[data-permission-filter-container]');
+  const status = document.querySelector('[data-permission-filter-status]');
+  if (!input || !container || !status) return;
+  const rows = Array.from(document.querySelectorAll('[data-permission-app], [data-permission-tool]'));
+  const update = () => {
+    const query = input.value.trim().toLocaleLowerCase();
+    let count = 0;
+    rows.forEach(row => {
+      const matches = !query || row.textContent.toLocaleLowerCase().includes(query);
+      row.hidden = !matches;
+      row.style.display = matches ? '' : 'none';
+      if (matches) count++;
+    });
+    status.textContent = query ? `${count} matching ${count === 1 ? 'app or tool' : 'apps or tools'}.` : '';
+  };
+  container.hidden = false;
+  input.addEventListener('input', update);
+  update();
+})();

@@ -3,9 +3,11 @@ package org.zalava.packaging;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.junit.jupiter.api.Test;
 
@@ -28,9 +30,13 @@ class BootJarPackagingTest {
       assertThat(bootJar.getEntry("BOOT-INF/classes/org/zalava/ZalavaApplication.class"))
           .isNotNull();
       assertThat(bootJar.getEntry("BOOT-INF/lib/module-api-" + version + ".jar")).isNotNull();
+      try (var layers = bootJar.getInputStream(bootJar.getJarEntry("BOOT-INF/layers.idx"))) {
+        assertThat(new String(layers.readAllBytes(), StandardCharsets.UTF_8))
+            .contains("dependencies", "spring-boot-loader", "snapshot-dependencies", "application");
+      }
       var ownedEntries =
           bootJar.stream()
-              .map(java.util.jar.JarEntry::getName)
+              .map(JarEntry::getName)
               .filter(name -> name.startsWith("BOOT-INF/classes/"))
               .toList();
       assertThat(ownedEntries).noneMatch(name -> name.matches(".*(?:Sea[A-Z]|/sea/|/sea[-_.]).*"));

@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.nio.file.Files;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,32 @@ class ModelProviderSettingsComponentTest {
     assertThat(Files.readString(store.path()))
         .contains("not-a-real-secret")
         .contains("replacement");
+  }
+
+  @Test
+  void providerErrorsRetainOrdinaryValuesAndAssociateTheInvalidFieldWithoutEchoingSecrets()
+      throws Exception {
+    var result =
+        mvc.perform(
+                post("/settings/provider")
+                    .param("provider", "openai")
+                    .param("model", "draft-model")
+                    .param("apiKey", "never-echo-this-credential")
+                    .param("baseUrl", "file:/invalid"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(
+                flash()
+                    .attribute(
+                        "providerValues",
+                        Map.of("model", "draft-model", "baseUrl", "file:/invalid")))
+            .andReturn();
+    assertThat(result.getFlashMap().toString()).doesNotContain("never-echo-this-credential");
+    mvc.perform(get("/settings").param("section", "provider").flashAttrs(result.getFlashMap()))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("value=\"draft-model\"")))
+        .andExpect(content().string(containsString("id=\"provider-error-baseUrl\"")))
+        .andExpect(content().string(containsString("aria-invalid=\"true\"")))
+        .andExpect(content().string(not(containsString("never-echo-this-credential"))));
   }
 
   @Test

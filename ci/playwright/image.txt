@@ -1,1 +1,1 @@
-ghcr.io/zalava/ci-playwright@sha256:0d30346c4fc16c98e0679ee82fc0f3b02eb281b6a2ff3420d944774c21afae47
+ghcr.io/zalava/ci-playwright@sha256:d29ebdb6d00965f5cc4a2f0ba61b47653db83a4942f1be82043dafc59650975d

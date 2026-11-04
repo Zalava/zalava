@@ -64,3 +64,18 @@ Successful-run acceptance archives exclude duplicate module JARs and retain the
 release version/SHA-256 inventory alongside logs, screenshots, traces and
 persisted fixture state, and can be rehydrated from those immutable releases.
 Failed or cancelled runs retain the complete archive, including module binaries.
+
+## OCI execution
+
+`:app:ociImageAcceptanceTest` builds the digest-pinned Buildpacks image and runs
+the fleet installation/permission/configuration/tool/persistence journey against
+real containers instead of the JAR subprocess. Independent container restarts
+reuse only the disposable database and workspace. The same immutable module pins
+and checksums apply; module classes are not injected into the host.
+
+The actual contributed JRE separately proves TLS handshake/EC crypto/PKCS12,
+reflection, PostgreSQL JDBC ServiceLoader and JFR availability. Test catalog TLS
+uses an ephemeral CA through Paketo's supported certificate binding, preserving
+certificate validation. No production credentials or user acceptance browser is
+used. The lane is required by `check` and fails on missing prerequisites.
+See [OCI build choices](oci-images.md) for AOT, layering and jlink options.

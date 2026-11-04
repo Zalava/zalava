@@ -2,6 +2,7 @@ package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.gson.JsonParser;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
@@ -66,9 +67,8 @@ class BrowserNavigationAcceptanceTest {
 
   private static final List<String> ADMIN_MENU =
       List.of(
-          "Dashboard",
           "Chat",
-          "Jobs",
+          "Dashboard",
           "Knowledge",
           "Memory",
           "Monitoring",
@@ -78,9 +78,9 @@ class BrowserNavigationAcceptanceTest {
           "Advanced settings",
           "My account");
   private static final List<String> MEMBER_MENU =
-      List.of("Dashboard", "Chat", "Jobs", "Knowledge", "Memory", "My account");
+      List.of("Chat", "Dashboard", "Knowledge", "Memory", "Apps", "My account");
   private static final List<String> MEMBER_HIDDEN =
-      List.of("/apps", "/modules", "/monitoring", "/settings", "/zalava/control");
+      List.of("/modules", "/monitoring", "/settings", "/zalava/control");
 
   private static final Map<String, String> PAGES = pages();
 
@@ -263,7 +263,8 @@ class BrowserNavigationAcceptanceTest {
       try {
         Page page = context.newPage();
         signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
-        for (String path : List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/memory")) {
+        for (String path :
+            List.of("/dashboard", "/chat", "/jobs", "/knowledge", "/memory", "/apps")) {
           var response = page.navigate(baseUrl() + path);
           assertThat(response.status()).isEqualTo(200);
           page.locator(".zalava-navbar").waitFor();
@@ -332,14 +333,11 @@ class BrowserNavigationAcceptanceTest {
                 .isTrue();
             assertThat(page.locator(".composer-options-toggle").isDisabled()).isTrue();
             var notice = page.locator(".provider-notice").boundingBox();
-            assertThat(page.locator(".conversations").boundingBox().y)
-                .as("Conversation toolbar follows model setup without unused vertical space")
-                .isCloseTo(notice.y + notice.height + 16, Offset.offset(1.0));
-            if (width > 1024) {
-              assertThat(page.locator(".chat-inspector").boundingBox().height).isGreaterThan(350);
-              assertThat(page.locator(".chat-inspector").boundingBox().y)
-                  .isEqualTo(page.locator(".chat-primary").boundingBox().y);
-            }
+            double gap =
+                page.locator(".conversation-toolbar").boundingBox().y - notice.y - notice.height;
+            assertThat(gap).as("Compact toolbar follows provider setup").isBetween(0.0, 20.0);
+            assertThat(page.locator(".chat-inspector").isVisible()).isFalse();
+            assertThat(page.locator(".inspector-toggle").isVisible()).isTrue();
           } else if (path.startsWith("/settings")) {
             assertContained(
                 page,
@@ -370,7 +368,22 @@ class BrowserNavigationAcceptanceTest {
           .waitFor();
       assertThat(Files.readString(WORKSPACE.resolve("AGENT.private.md")))
           .contains("Browser saved instructions.");
-      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reset to defaults"))
+      // Exercise the post-redirect visual check while resources arrive over a cold, slow
+      // connection.
+      var network = context.newCDPSession(page);
+      network.send("Network.enable");
+      network.send(
+          "Network.setCacheDisabled",
+          JsonParser.parseString("{\"cacheDisabled\":true}").getAsJsonObject());
+      network.send(
+          "Network.emulateNetworkConditions",
+          JsonParser.parseString(
+                  "{\"offline\":false,\"latency\":500,\"downloadThroughput\":50000,\"uploadThroughput\":50000}")
+              .getAsJsonObject());
+      page.locator("[data-action=confirm-action]").click();
+      page.getByRole(
+              AriaRole.BUTTON,
+              new Page.GetByRoleOptions().setName("Reset instructions").setExact(true))
           .click();
       page.getByText("Default workspace instructions restored.").waitFor();
       assertThat(page.locator("#instructions").inputValue())
@@ -415,6 +428,7 @@ class BrowserNavigationAcceptanceTest {
       }
       page.locator("input[name=currentPassword]").fill("WrongCurrentPassword-123");
       page.locator("input[name=replacementPassword]").fill(replacement);
+      page.locator("input[name=passwordConfirmation]").fill(replacement);
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
       page.getByRole(AriaRole.ALERT).waitFor();
@@ -425,6 +439,7 @@ class BrowserNavigationAcceptanceTest {
       }
       page.locator("input[name=currentPassword]").fill(temporary);
       page.locator("input[name=replacementPassword]").fill(replacement);
+      page.locator("input[name=passwordConfirmation]").fill(replacement);
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
       page.waitForURL("**/chat");
@@ -532,6 +547,7 @@ class BrowserNavigationAcceptanceTest {
       page.navigate(baseUrl() + "/zalava/accounts");
       page.locator("#create-login").fill(login);
       page.locator("#create-password").fill("ManagedBrowserPassword-123");
+      page.locator("#confirm-create-password").fill("ManagedBrowserPassword-123");
       page.getByRole(
               AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create account").setExact(true))
           .click();
@@ -558,6 +574,7 @@ class BrowserNavigationAcceptanceTest {
       assertThat(accounts.findById(managed.id()).orElseThrow().enabled()).isTrue();
       page.locator("#create-login").fill(login);
       page.locator("#create-password").fill("ManagedBrowserPassword-123");
+      page.locator("#confirm-create-password").fill("ManagedBrowserPassword-123");
       page.getByRole(
               AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create account").setExact(true))
           .click();
@@ -633,6 +650,10 @@ class BrowserNavigationAcceptanceTest {
         page.setViewportSize(width, 900);
         assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(200);
         capture(page, path.substring(1) + "-search-" + width);
+        if (path.equals("/memory")) {
+          page.getByText("Filter by category", new Page.GetByTextOptions().setExact(true)).click();
+          capture(page, "memory-search-category-expanded-" + width);
+        }
         for (Locator control :
             page.locator(
                     "form[action='"
@@ -685,7 +706,7 @@ class BrowserNavigationAcceptanceTest {
         capture(admin, "knowledge-pending-" + width);
         assertThat(admin.navigate(baseUrl() + href).status()).isEqualTo(200);
         assertThat(admin.locator("body").innerText())
-            .contains("Waiting for a document processing module");
+            .contains("Install and start a document-processing module");
         capture(admin, "knowledge-processing-detail-" + width);
         admin.navigate(baseUrl() + "/knowledge");
       }
@@ -740,9 +761,8 @@ class BrowserNavigationAcceptanceTest {
                       new Locator.GetByRoleOptions().setName("Share").setExact(true))
                   .count())
           .isEqualTo(1);
-      card.getByRole(
-              AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Delete").setExact(true))
-          .click();
+      card.locator("[data-action=delete]").click();
+      card.locator("[data-action=confirm-delete]").click();
       admin.getByRole(AriaRole.STATUS).getByText("Source deleted.").waitFor();
       admin.reload();
       assertThat(
@@ -778,25 +798,21 @@ class BrowserNavigationAcceptanceTest {
       signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
       page.waitForURL("**/chat");
       page.navigate(baseUrl() + "/memory");
-      page.locator("#proposal-scope").selectOption("USER");
       page.locator("#proposal-text").fill(text);
-      page.locator("[data-action=propose]").click();
-      Locator proposal =
-          page.locator("[data-memory-proposal]")
-              .filter(new Locator.FilterOptions().setHasText(text));
-      proposal.waitFor();
+      page.locator("[data-action=save-memory]").click();
+      page.locator("[data-memory-entry]")
+          .filter(new Locator.FilterOptions().setHasText(text))
+          .waitFor();
       for (int width : List.of(390, 768, 1440)) {
         page.setViewportSize(width, 900);
-        capture(page, "memory-proposal-" + width);
+        capture(page, "memory-saved-" + width);
       }
-      proposal.locator("[data-action=approve]").click();
       page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(text).setExact(true))
           .click();
       for (int width : List.of(390, 768, 1440)) {
         page.setViewportSize(width, 900);
         assertThat(page.locator("body").innerText())
-            .contains(
-                "Private to your account", "Personal preferences", "Approved memory proposal");
+            .contains("Private to your account", "Personal preferences", "Saved by you");
         capture(page, "memory-readable-detail-" + width);
       }
       page.getByText("Stored metadata", new Page.GetByTextOptions().setExact(true)).click();
@@ -806,6 +822,11 @@ class BrowserNavigationAcceptanceTest {
   }
 
   private void capture(Page page, String name) {
+    // A form submission can expose its confirmation before stylesheets finish loading.
+    page.waitForLoadState();
+    assertThat(page.evaluate("document.readyState"))
+        .as("Page is fully loaded before measuring %s", name)
+        .isEqualTo("complete");
     page.waitForFunction(
         """
         () => {
@@ -815,10 +836,27 @@ class BrowserNavigationAcceptanceTest {
           return menu.classList.contains('is-active') ? Math.abs(bounds.left) < 0.5 : bounds.right <= 0.5;
         }
         """);
-    assertThat(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
-        .isEqualTo(true);
+    var layout =
+        page.evaluate(
+            """
+            () => ({
+              width: window.innerWidth,
+              scrollWidth: document.documentElement.scrollWidth,
+              contained: document.documentElement.scrollWidth <= window.innerWidth,
+              overflowing: [...document.querySelectorAll('body *')].filter(element => {
+                const bounds = element.getBoundingClientRect();
+                return bounds.width > 0 && (bounds.left < -1 || bounds.right > window.innerWidth + 1);
+              }).slice(0, 20).map(element => ({
+                tag: element.tagName, id: element.id, classes: element.className,
+                left: element.getBoundingClientRect().left, right: element.getBoundingClientRect().right
+              }))
+            })
+            """);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(DIAGNOSTICS.resolve(name + ".png")).setFullPage(true));
+    assertThat(((Map<?, ?>) layout).get("contained"))
+        .as("Viewport containment for %s: %s", name, layout)
+        .isEqualTo(true);
   }
 
   private void assertContained(Page page, String container, String controls) {
@@ -863,7 +901,6 @@ class BrowserNavigationAcceptanceTest {
     Map<String, String> pages = new LinkedHashMap<>();
     pages.put("/dashboard", "Dashboard");
     pages.put("/chat", "Chat");
-    pages.put("/jobs", "Jobs");
     pages.put("/knowledge", "Knowledge");
     pages.put("/memory", "Memory");
     pages.put("/monitoring", "Monitoring");

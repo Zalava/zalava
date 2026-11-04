@@ -8,6 +8,8 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,21 +23,33 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.zalava.api.extensions.web.ZalavaWebRequest;
 import org.zalava.api.extensions.web.ZalavaWebResponse;
+import org.zalava.identity.accounts.security.AuthenticatedActorResolver;
 import org.zalava.modules.web.application.RouteInvocation;
+import org.zalava.modules.web.application.port.in.ModulePageAccess;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
 
 @Controller
 public final class ZalavaWebExtensionController {
 
   private final WebExtensionRoutes routes;
+  private final ModulePageAccess access;
+  private final AuthenticatedActorResolver actors;
 
-  public ZalavaWebExtensionController(WebExtensionRoutes routes) {
+  public ZalavaWebExtensionController(
+      WebExtensionRoutes routes, ModulePageAccess access, AuthenticatedActorResolver actors) {
     this.routes = routes;
+    this.access = access;
+    this.actors = actors;
   }
 
   @GetMapping("/apps")
-  public String apps(Model model) {
-    model.addAttribute("pages", routes.pages());
+  public String apps(Model model, Authentication authentication) {
+    String actor = actors.actor(authentication).accountId().toString();
+    model.addAttribute(
+        "pages",
+        routes.pages().stream()
+            .filter(page -> access.allowed(actor, page.moduleId(), page.pageId()))
+            .toList());
     return "ui/apps";
   }
 
@@ -46,7 +60,11 @@ public final class ZalavaWebExtensionController {
       @PathVariable String moduleId,
       @PathVariable String pageId,
       HttpServletRequest servletRequest,
-      CsrfToken csrf) {
+      CsrfToken csrf,
+      Authentication authentication) {
+    String actor = actors.actor(authentication).accountId().toString();
+    if (!access.allowed(actor, moduleId, pageId))
+      throw new AccessDeniedException("Page access denied");
     String path = extensionPath(servletRequest, moduleId, pageId);
     RouteInvocation invocation =
         routes

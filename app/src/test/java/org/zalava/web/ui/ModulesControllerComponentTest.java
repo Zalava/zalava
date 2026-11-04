@@ -2,7 +2,9 @@ package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -134,19 +136,18 @@ class ModulesControllerComponentTest {
                 .string(
                     containsString(
                         "class=\"navbar-item is-active\" aria-current=\"page\" href=\"/modules\"")))
-        .andExpect(content().string(containsString("Loaded modules")))
+        .andExpect(content().string(containsString("Installed modules")))
         .andExpect(content().string(containsString("Built in")))
         .andExpect(content().string(containsString("Bundled with Zalava")))
-        .andExpect(content().string(containsString("data-metric=\"loaded-modules\"")))
-        .andExpect(content().string(containsString("No external modules are enabled yet.")));
+        .andExpect(content().string(containsString("data-module=")))
+        .andExpect(content().string(containsString("Source and permissions")));
   }
 
   @Test
   void rejectsLocalDevelopmentInstallOutsideMountedWorkspace() throws Exception {
     mockMvc
         .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/local-project-installations")
+            post("/modules/local-project-installations")
                 .param("projectDirectory", "/not-mounted/module")
                 .param("moduleId", "zalava-module-example")
                 .param("version", "1.0.0")
@@ -162,8 +163,7 @@ class ModulesControllerComponentTest {
   void preparesLocalDevelopmentInstallationFromModulesPage() throws Exception {
     mockMvc
         .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/local-project-installations")
+            post("/modules/local-project-installations")
                 .param("projectDirectory", "/mounted/modules/zalava-module-example")
                 .param("moduleId", "zalava-module-example")
                 .param("version", "1.2.3")
@@ -278,13 +278,12 @@ class ModulesControllerComponentTest {
   void requestsManagedZalavaRestartFromModulesPage() throws Exception {
     mockMvc
         .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/restart")
+            post("/modules/restart")
                 .with(
                     org.springframework.security.test.web.servlet.request
                         .SecurityMockMvcRequestPostProcessors.csrf()))
-        .andExpect(status().is3xxRedirection())
-        .andExpect(flash().attribute("marketplaceMessage", containsString("Restart requested")));
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Restarting Zalava")));
 
     mockMvc
         .perform(get("/modules"))
@@ -293,13 +292,20 @@ class ModulesControllerComponentTest {
   }
 
   @Test
+  void deniesMembersTheModuleConfigurationPage() throws Exception {
+    var member = accounts.newActivated(AccountRole.MEMBER);
+    mockMvc
+        .perform(get("/modules/configured-search").with(accounts.authenticatedAs(member)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
   void rejectsManagedZalavaRestartForMember() throws Exception {
     var member = accounts.newActivated(AccountRole.MEMBER);
 
     mockMvc
         .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/restart")
+            post("/modules/restart")
                 .with(
                     org.springframework.security.test.web.servlet.request
                         .SecurityMockMvcRequestPostProcessors.csrf())
@@ -371,14 +377,14 @@ class ModulesControllerComponentTest {
     mockMvc
         .perform(get("/modules"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("Enabled external modules")))
-        .andExpect(content().string(containsString("data-metric=\"enabled-modules\">1<")))
+        .andExpect(content().string(containsString("Installed modules")))
+        .andExpect(content().string(containsString("Installed · not loaded")))
         .andExpect(content().string(containsString("zalava-module-example")))
         .andExpect(content().string(containsString("1.2.3")))
         .andExpect(
             content().string(containsString("https://github.com/Zalava/zalava-module-example")))
-        .andExpect(content().string(containsString("Permissions")))
-        .andExpect(content().string(containsString(">1</p>")));
+        .andExpect(content().string(containsString("permissions")))
+        .andExpect(content().string(containsString("1 permissions")));
   }
 
   @Test
@@ -442,9 +448,7 @@ class ModulesControllerComponentTest {
   @Test
   void requestsAnInstallForDeclaredManagedServices() throws Exception {
     mockMvc
-        .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                "/modules/zalava-module-declared/managed-services/request"))
+        .perform(post("/modules/zalava-module-declared/managed-services/request"))
         .andExpect(status().is3xxRedirection());
 
     assertThat(managedServiceInstallRequestStore.recent(1))
@@ -474,9 +478,7 @@ class ModulesControllerComponentTest {
   @Test
   void rejectsAnInstallRequestForAModuleWithoutDeclarations() throws Exception {
     mockMvc
-        .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                "/modules/configured-search/managed-services/request"))
+        .perform(post("/modules/configured-search/managed-services/request"))
         .andExpect(status().is3xxRedirection())
         .andExpect(flash().attributeExists("managedServiceError"));
   }
@@ -504,6 +506,12 @@ class ModulesControllerComponentTest {
     mockMvc
         .perform(get("/modules/configured-search"))
         .andExpect(status().isOk())
+        .andExpect(
+            content()
+                .string(containsString("<legend class=\"title is-6\">Search connection</legend>")))
+        .andExpect(content().string(containsString("Connect the search provider.")))
+        .andExpect(content().string(containsString("<option value=\"https://example.test\">")))
+        .andExpect(content().string(containsString("examples-help-configuration.search.endpoint")))
         .andExpect(content().string(containsString("https://old.example.test")))
         .andExpect(content().string(containsString("Replace stored secret")))
         .andExpect(content().string(containsString("1 stored secret reference(s)")))
@@ -511,8 +519,7 @@ class ModulesControllerComponentTest {
 
     mockMvc
         .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/configured-search/configuration")
+            post("/modules/configured-search/configuration")
                 .param("configuration.search.endpoint", "https://new.example.test")
                 .param("configuration.search.credentialRef", "search-key")
                 .param("replacement-secret.search.credentialRef", "replacement-secret"))
@@ -548,13 +555,23 @@ class ModulesControllerComponentTest {
 
   @Test
   void keepsAnInvalidConfigurationOnTheFormInsteadOfStagingIt() throws Exception {
+    var result =
+        mockMvc
+            .perform(
+                post("/modules/configured-search/configuration")
+                    .param("configuration.search.credentialRef", "search-key")
+                    .param("replacement-secret.search.credentialRef", "never-echo-module-secret"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("configurationError", "Endpoint is required."))
+            .andReturn();
+    assertThat(result.getFlashMap().toString()).doesNotContain("never-echo-module-secret");
+    assertThat(result.getFlashMap().get("configurationValues").toString()).contains("search-key");
     mockMvc
-        .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/configured-search/configuration")
-                .param("configuration.search.credentialRef", "search-key"))
-        .andExpect(status().is3xxRedirection())
-        .andExpect(flash().attribute("configurationError", "Endpoint is required."));
+        .perform(get("/modules/configured-search").flashAttrs(result.getFlashMap()))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("id=\"error-configuration.search.endpoint\"")))
+        .andExpect(content().string(containsString("aria-invalid=\"true\"")))
+        .andExpect(content().string(not(containsString("never-echo-module-secret"))));
 
     assertThat(moduleConfigurationStore.candidate("configured-search")).isEmpty();
   }
@@ -570,8 +587,7 @@ class ModulesControllerComponentTest {
 
     mockMvc
         .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                    "/modules/configured-filesystem/configuration")
+            post("/modules/configured-filesystem/configuration")
                 .param("configuration.filesystem.roots", "[{\"id\":\"workspace\"}]"))
         .andExpect(status().is3xxRedirection());
 
@@ -608,9 +624,7 @@ class ModulesControllerComponentTest {
         Map.of("search-key", "pending-secret"));
 
     mockMvc
-        .perform(
-            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(
-                "/modules/configured-search/configuration/cancel"))
+        .perform(post("/modules/configured-search/configuration/cancel"))
         .andExpect(status().is3xxRedirection())
         .andExpect(
             flash().attribute("configurationMessage", "Pending configuration changes discarded."));
@@ -734,9 +748,18 @@ class ModulesControllerComponentTest {
                           "search",
                           Map.of(
                               "type", "object",
+                              "title", "Search connection",
+                              "description", "Connect the search provider.",
                               "properties",
                                   Map.of(
-                                      "endpoint", Map.of("type", "string", "title", "Endpoint"),
+                                      "endpoint",
+                                          Map.of(
+                                              "type",
+                                              "string",
+                                              "title",
+                                              "Endpoint",
+                                              "examples",
+                                              List.of("https://example.test")),
                                       "credentialRef",
                                           Map.of(
                                               "type", "string", "title", "Credential reference")),

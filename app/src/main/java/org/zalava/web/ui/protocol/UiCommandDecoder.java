@@ -31,6 +31,7 @@ public final class UiCommandDecoder {
       case "chat.rename" -> renameConversation(payload, acceptedVersion);
       case "chat.continue" -> continueConversation(payload, acceptedVersion);
       case "approval.decide" -> decideApproval(payload, acceptedVersion);
+      case "permission.decide" -> decideDirectApproval(payload, acceptedVersion);
       case "attachment.put" -> putAttachment(payload, acceptedVersion);
       case "attachment.import" -> importAttachment(payload, acceptedVersion);
       case "attachment.delete" -> deleteAttachment(payload, acceptedVersion);
@@ -76,6 +77,24 @@ public final class UiCommandDecoder {
           Optional.of(
               new UiCommand.DecideApproval(
                   version, jobId, requestId, UiCommand.DecideApproval.Decision.DENY));
+      default -> Optional.empty();
+    };
+  }
+
+  private static Optional<UiCommand> decideDirectApproval(Map<String, ?> payload, String version) {
+    String id = string(payload.get("requestId"));
+    if (blank(id) || id.length() > 128) return Optional.empty();
+    String decision = string(payload.get("decision"));
+    if (decision == null) return Optional.empty();
+    return switch (decision) {
+      case "allow-once" ->
+          Optional.of(
+              new UiCommand.DecideDirectApproval(
+                  version, id, UiCommand.DecideApproval.Decision.ALLOW_ONCE));
+      case "deny" ->
+          Optional.of(
+              new UiCommand.DecideDirectApproval(
+                  version, id, UiCommand.DecideApproval.Decision.DENY));
       default -> Optional.empty();
     };
   }

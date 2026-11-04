@@ -5,6 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.zalava.identity.accounts.domain.AccountId;
@@ -38,6 +43,25 @@ class ActorScopedPathsTest {
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(() -> paths.directory(actor, "../memory"))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void concurrentFirstUseCreatesOneRealActorPartition() throws Exception {
+    Actor actor = new Actor(AccountId.newId());
+    CountDownLatch start = new CountDownLatch(1);
+    List<Callable<Path>> requests = new ArrayList<>();
+    for (int i = 0; i < 64; i++) {
+      requests.add(
+          () -> {
+            start.await();
+            return new ActorScopedPaths(workspace).directory(actor, "memory");
+          });
+    }
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      var futures = requests.stream().map(executor::submit).toList();
+      start.countDown();
+      for (var future : futures) assertThat(future.get()).isDirectory();
+    }
   }
 
   @Test

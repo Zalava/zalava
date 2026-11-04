@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.zalava.api.ModuleConfigurationDescriptor;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -19,8 +20,38 @@ public final class ModuleConfigurationForm {
   public static List<Field> fields(
       ModuleConfigurationDescriptor descriptor, Map<String, Object> values) {
     List<Field> fields = new ArrayList<>();
-    addFields(fields, "", descriptor.jsonSchema(), values);
+    addFields(fields, "", descriptor.jsonSchema(), values, null, null, null);
     return List.copyOf(fields);
+  }
+
+  public static List<Field> fieldsForDisplay(
+      ModuleConfigurationDescriptor descriptor, Map<String, Object> values) {
+    return fieldsForDisplay(descriptor, values, LocalSocketExampleObservation::observe);
+  }
+
+  static List<Field> fieldsForDisplay(
+      ModuleConfigurationDescriptor descriptor,
+      Map<String, Object> values,
+      Function<String, String> observer) {
+    return fields(descriptor, values).stream()
+        .map(field -> field.observeExamples(observer))
+        .toList();
+  }
+
+  public static List<Section> sections(List<Field> fields) {
+    Map<String, List<Field>> groups = new LinkedHashMap<>();
+    for (Field field : fields) {
+      String key = field.sectionPath() == null ? "" : field.sectionPath();
+      groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(field);
+    }
+    return groups.values().stream()
+        .map(
+            group ->
+                new Section(
+                    group.getFirst().sectionTitle(),
+                    group.getFirst().sectionDescription(),
+                    List.copyOf(group)))
+        .toList();
   }
 
   public static Map<String, Object> document(List<Field> fields, Map<String, String> submitted) {
@@ -32,7 +63,7 @@ public final class ModuleConfigurationForm {
       }
       if (value == null || value.isBlank()) {
         if (field.required()) {
-          throw new IllegalArgumentException(field.label() + " is required.");
+          throw new FieldInputException(field.name(), field.label() + " is required.");
         }
         continue;
       }
@@ -42,7 +73,13 @@ public final class ModuleConfigurationForm {
   }
 
   private static void addFields(
-      List<Field> fields, String path, Map<String, Object> schema, Map<String, Object> values) {
+      List<Field> fields,
+      String path,
+      Map<String, Object> schema,
+      Map<String, Object> values,
+      String sectionPath,
+      String sectionTitle,
+      String sectionDescription) {
     Map<String, Object> properties = map(schema.get("properties"));
     List<String> requiredProperties = strings(schema.get("required"));
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
@@ -51,7 +88,15 @@ public final class ModuleConfigurationForm {
       String propertyPath = path.isEmpty() ? name : path + "." + name;
       Object value = values.get(name);
       if ("object".equals(property.get("type")) || property.containsKey("properties")) {
-        addFields(fields, propertyPath, property, map(value));
+        String title = string(property.get("title"));
+        addFields(
+            fields,
+            propertyPath,
+            property,
+            map(value),
+            title == null ? sectionPath : propertyPath,
+            title == null ? sectionTitle : title,
+            title == null ? sectionDescription : string(property.get("description")));
         continue;
       }
       fields.add(
@@ -62,7 +107,12 @@ public final class ModuleConfigurationForm {
               requiredProperties.contains(name),
               secretReference(name, property),
               displayValue(type(property), value),
-              string(property.get("description"))));
+              string(property.get("description")),
+              strings(property.get("examples")),
+              Map.of(),
+              sectionPath,
+              sectionTitle,
+              sectionDescription));
     }
   }
 
@@ -75,8 +125,11 @@ public final class ModuleConfigurationForm {
         case "json" -> JSON.readValue(value, Object.class);
         default -> value;
       };
+    } catch (NumberFormatException exception) {
+      throw new FieldInputException(
+          field.name(), "Enter a valid number for " + field.label() + ".");
     } catch (JacksonException exception) {
-      throw new IllegalArgumentException(field.label() + " must be valid JSON.");
+      throw new FieldInputException(field.name(), field.label() + " must be valid JSON.");
     }
   }
 
@@ -144,6 +197,21 @@ public final class ModuleConfigurationForm {
     return value instanceof String string ? string : null;
   }
 
+  public static final class FieldInputException extends IllegalArgumentException {
+    private final String field;
+
+    public FieldInputException(String field, String message) {
+      super(message);
+      this.field = field;
+    }
+
+    public String field() {
+      return field;
+    }
+  }
+
+  public record Section(String title, String description, List<Field> fields) {}
+
   public record Field(
       String path,
       String label,
@@ -151,7 +219,35 @@ public final class ModuleConfigurationForm {
       boolean required,
       boolean secretReference,
       String value,
-      String description) {
+      String description,
+      List<String> examples,
+      Map<String, String> exampleObservations,
+      String sectionPath,
+      String sectionTitle,
+      String sectionDescription) {
+    private Field observeExamples(Function<String, String> observer) {
+      Map<String, String> observations = new LinkedHashMap<>();
+      if (type.equals("string")) {
+        for (String example : examples.stream().limit(8).toList()) {
+          String observation = observer.apply(example);
+          if (observation != null) observations.put(example, observation);
+        }
+      }
+      return new Field(
+          path,
+          label,
+          type,
+          required,
+          secretReference,
+          value,
+          description,
+          examples,
+          Map.copyOf(observations),
+          sectionPath,
+          sectionTitle,
+          sectionDescription);
+    }
+
     public String name() {
       return "configuration." + path;
     }

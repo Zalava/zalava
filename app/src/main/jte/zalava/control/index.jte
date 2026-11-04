@@ -12,7 +12,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Zalava Advanced Settings</title>
     <link href="/css/vendor/bootstrap-5.3.8.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/zalava-ui.css">
+    <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
     <link rel="stylesheet" href="/zalava-control.css">
     <script src="/css/vendor/htmx-2.0.4.min.js" defer></script>
     <script>
@@ -26,7 +28,7 @@
 <body class="zalava-advanced">
     @template.ui.navigation(items = navigation.items(), activePage = "advanced", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
 
-  <div class="advanced-destinations px-4 pt-4"><a href="/zalava/accounts">Manage accounts</a>@if(metricsEnabled)<a href="/zalava/control/metrics">Runtime metrics</a>@endif</div>
+  @if(metricsEnabled)<div class="advanced-destinations px-4 pt-3"><a href="/zalava/control/metrics">Runtime metrics</a></div>@endif
   <main id="zalava-control" class="container-fluid px-4 py-4">
         @template.zalava.control.workspace(model = model)
     </main>

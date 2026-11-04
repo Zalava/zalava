@@ -1,0 +1,109 @@
+services:
+  state-init:
+    image: ${POSTGRES_IMAGE:-postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15}
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["chown 1002:1001 /state /diagnostics && chmod 0700 /state /diagnostics"]
+    network_mode: none
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - zalava-state:/state
+      - zalava-diagnostics:/diagnostics
+    restart: "no"
+
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15}
+    environment:
+      POSTGRES_DB: zalava
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-admin-password
+    secrets:
+      - source: db_admin_password
+        target: db-admin-password
+      - source: db_app_password
+        target: db-app-password
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./ops/compose/10-zalava-role.sh:/docker-entrypoint-initdb.d/10-zalava-role.sh:ro
+    networks: [database]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zalava"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    mem_limit: 1g
+    cpus: 1
+    stop_grace_period: 30s
+    restart: on-failure:5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+  zalava:
+    image: ${ZALAVA_IMAGE:?Set ZALAVA_IMAGE to a verified Gradle-built image}
+    depends_on:
+      state-init: {condition: service_completed_successfully}
+      postgres: {condition: service_healthy}
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/zalava
+      SPRING_DATASOURCE_USERNAME: zalava
+      SPRING_CONFIG_IMPORT: configtree:/run/secrets/
+      AGENT_WORKSPACE: file:/data/workspace/
+      JOBRUNR_DASHBOARD_ENABLED: "false"
+      MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: readinessState,db
+      BPL_JVM_HEAD_ROOM: "15"
+      BPL_JVM_THREAD_COUNT: "50"
+      BPL_JAVA_NMT_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: ${ZALAVA_JAVA_TOOL_OPTIONS:-}
+      THC_CONN_TIMEOUT: "1"
+      THC_REQ_TIMEOUT: "2"
+      THC_PORT: "8082"
+      THC_PATH: /actuator/health/readiness
+    secrets:
+      - source: db_app_password
+        target: spring.datasource.password
+      - source: bootstrap_login
+        target: zalava.accounts.bootstrap-login
+      - source: bootstrap_password
+        target: zalava.accounts.bootstrap-password
+    ports:
+      - "127.0.0.1:${ZALAVA_PORT:-8080}:8080"
+    volumes:
+      - zalava-state:/data
+      - zalava-diagnostics:/diagnostics
+    networks: [application, database]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "/workspace/health-check"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    mem_limit: ${ZALAVA_MEMORY:-2g}
+    cpus: ${ZALAVA_CPUS:-2}
+    stop_grace_period: 30s
+    restart: on-failure:5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+networks:
+  application: {}
+  database: {internal: true}
+volumes:
+  postgres-data: {}
+  zalava-state: {}
+  zalava-diagnostics: {}
+secrets:
+  db_admin_password:
+    file: ${ZALAVA_DB_ADMIN_PASSWORD_FILE:?Set the private database admin password file}
+  db_app_password:
+    file: ${ZALAVA_DB_PASSWORD_FILE:?Set the private app database password file}
+  bootstrap_login:
+    file: ${ZALAVA_BOOTSTRAP_LOGIN_FILE:?Set the bootstrap login file}
+  bootstrap_password:
+    file: ${ZALAVA_BOOTSTRAP_PASSWORD_FILE:?Set the bootstrap password file}

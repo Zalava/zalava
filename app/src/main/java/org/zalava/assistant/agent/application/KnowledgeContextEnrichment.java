@@ -1,9 +1,11 @@
 package org.zalava.assistant.agent.application;
 
 import java.util.List;
+import java.util.Optional;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.knowledge.application.KnowledgeEvidenceQueries;
+import org.zalava.knowledge.application.KnowledgeReadGate;
 import org.zalava.knowledge.domain.KnowledgeEvidence;
 
 /**
@@ -17,6 +19,7 @@ public final class KnowledgeContextEnrichment {
   private final ActorExecutionContext actors;
   private final ModelBoundary boundary;
   private final boolean enabled;
+  private final KnowledgeReadGate gate;
 
   public KnowledgeContextEnrichment(
       KnowledgeEvidenceQueries evidence, ActorExecutionContext actors, ModelBoundary boundary) {
@@ -28,14 +31,24 @@ public final class KnowledgeContextEnrichment {
       ActorExecutionContext actors,
       ModelBoundary boundary,
       boolean enabled) {
+    this(evidence, actors, boundary, enabled, (operation, arguments) -> Optional.empty());
+  }
+
+  public KnowledgeContextEnrichment(
+      KnowledgeEvidenceQueries evidence,
+      ActorExecutionContext actors,
+      ModelBoundary boundary,
+      boolean enabled,
+      KnowledgeReadGate gate) {
     this.evidence = evidence;
     this.actors = actors;
     this.boundary = boundary;
     this.enabled = enabled;
+    this.gate = gate;
   }
 
   public List<KnowledgeEvidence> select(String input) {
-    if (!enabled || input == null || input.isBlank()) {
+    if (!enabled || input == null || input.isBlank() || gate.blockAutomaticRead()) {
       return List.of();
     }
     return actors

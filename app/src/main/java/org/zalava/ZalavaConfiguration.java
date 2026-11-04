@@ -5,6 +5,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +30,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.assistant.agent.Agent;
 import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.DefaultAgent;
+import org.zalava.assistant.agent.PolicyFilteredToolSearch;
 import org.zalava.assistant.agent.WorkspaceInstructions;
+import org.zalava.assistant.agent.adapter.out.policy.HostManagedToolCallback;
 import org.zalava.assistant.agent.adapter.out.springai.WorkspaceAgentPrompt;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
 import org.zalava.assistant.agent.application.DefaultAgentContextAssembler;
@@ -75,19 +79,35 @@ import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackCatalog;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolIndex;
 import org.zalava.capabilities.discovery.application.DefaultInstalledToolDiscovery;
+import org.zalava.capabilities.discovery.application.DynamicToolActivationPolicy;
 import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.discovery.application.port.in.ToolDiscovery;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderTool;
 import org.zalava.capabilities.operation.adapter.in.agent.ZalavaProviderToolInvoker;
+import org.zalava.capabilities.operation.adapter.out.approval.HostCallbackChatPolicy;
+import org.zalava.capabilities.operation.adapter.out.approval.KnowledgeChatReadGate;
 import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
+import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcChatToolConfirmationStore;
+import org.zalava.capabilities.operation.adapter.out.jdbc.JdbcMemberToolAccessStore;
+import org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder;
 import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProviderCatalog;
+import org.zalava.capabilities.operation.application.DefaultChatToolConfirmation;
+import org.zalava.capabilities.operation.application.DefaultMemberToolAccess;
 import org.zalava.capabilities.operation.application.DefaultProviderToolOperations;
+import org.zalava.capabilities.operation.application.MemberProviderCapabilityPolicy;
+import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
+import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
+import org.zalava.capabilities.operation.application.port.out.ChatToolConfirmationStore;
+import org.zalava.capabilities.operation.application.port.out.MemberToolAccessStore;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
+import org.zalava.identity.accounts.application.UnifiedPermissions;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.application.port.out.AccountStore;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.knowledge.adapter.in.agent.KnowledgeAgentTools;
+import org.zalava.knowledge.application.KnowledgeToolObservation;
 import org.zalava.knowledge.memory.adapter.in.agent.MemoryPromotionTools;
 import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryProposalStore;
 import org.zalava.knowledge.memory.adapter.out.filesystem.FileSystemMemoryStore;
@@ -124,9 +144,13 @@ import org.zalava.modules.runtime.ZalavaModuleProperties;
 import org.zalava.modules.runtime.ZalavaModuleRegistry;
 import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.modules.runtime.adapter.out.filesystem.FileSystemModuleLifecycleStore;
+import org.zalava.modules.web.adapter.out.jdbc.JdbcModulePageAccessStore;
 import org.zalava.modules.web.adapter.out.runtime.ZalavaRuntimeWebExtensionModuleCatalog;
+import org.zalava.modules.web.application.DefaultModulePageAccess;
 import org.zalava.modules.web.application.DefaultWebExtensionRoutes;
+import org.zalava.modules.web.application.port.in.ModulePageAccess;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
+import org.zalava.modules.web.application.port.out.ModulePageAccessStore;
 import org.zalava.platform.configuration.adapter.out.filesystem.FileSystemConfigurationStore;
 import org.zalava.platform.configuration.adapter.out.spring.SpringConfigurationChangePublisher;
 import org.zalava.platform.configuration.application.DefaultConfigurationManagement;
@@ -369,6 +393,9 @@ public class ZalavaConfiguration {
       org.zalava.knowledge.application.KnowledgeEvidenceQueries knowledgeEvidenceQueries,
       SkillActivations skillActivations,
       ActorExecutionContext actorExecutionContext,
+      TaskExecutionContext taskExecutionContext,
+      ChatToolConfirmation chatToolConfirmation,
+      ZalavaToolApprovalRequests approvalRequests,
       ModelBoundary modelBoundary) {
     return new DefaultAgentContextAssembler(
         characterBudget,
@@ -378,9 +405,22 @@ public class ZalavaConfiguration {
             knowledgeEvidenceQueries,
             actorExecutionContext,
             modelBoundary,
-            knowledgeEnrichmentEnabled),
+            knowledgeEnrichmentEnabled,
+            new KnowledgeChatReadGate(
+                actorExecutionContext,
+                taskExecutionContext,
+                chatToolConfirmation,
+                approvalRequests)),
         new SkillContextEnrichment(
-            skillActivations, actorExecutionContext, modelBoundary, skillEnrichmentEnabled),
+            skillActivations,
+            actorExecutionContext,
+            modelBoundary,
+            skillEnrichmentEnabled,
+            new HostCallbackChatPolicy(
+                actorExecutionContext,
+                taskExecutionContext,
+                chatToolConfirmation,
+                approvalRequests)),
         new org.zalava.assistant.agent.application.ContextSourceBudgets(
             toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget));
   }
@@ -666,14 +706,25 @@ public class ZalavaConfiguration {
 
   @Bean
   public CapabilityGapTools capabilityGapTools(
-      ModuleSuggestions suggestions, ActorExecutionContext actors) {
+      ModuleSuggestions suggestions,
+      ActorExecutionContext actors,
+      ZalavaRuntime runtime,
+      ModuleQueries modules) {
     return new CapabilityGapTools(
         suggestions,
         () ->
             actors
                 .currentPrincipal()
                 .map(principal -> principal.role() == AccountRole.ADMIN)
-                .orElse(false));
+                .orElse(false),
+        moduleId ->
+            runtime.activeModules().stream()
+                    .anyMatch(module -> module.descriptor().moduleId().equals(moduleId))
+                ? "RUNNING"
+                : modules.enabledModules().stream()
+                        .anyMatch(module -> module.moduleId().equals(moduleId))
+                    ? "INSTALLED_NOT_RUNNING"
+                    : "NOT_INSTALLED");
   }
 
   @Bean
@@ -778,6 +829,17 @@ public class ZalavaConfiguration {
   }
 
   @Bean
+  public ModulePageAccessStore modulePageAccessStore(JdbcClient jdbc) {
+    return new JdbcModulePageAccessStore(jdbc);
+  }
+
+  @Bean
+  public ModulePageAccess modulePageAccess(
+      AccountLifecycle accounts, WebExtensionRoutes routes, ModulePageAccessStore store) {
+    return new DefaultModulePageAccess(accounts, routes, store);
+  }
+
+  @Bean
   public WebExtensionRoutes webExtensionRoutes(ZalavaRuntime zalavaRuntime) {
     return new DefaultWebExtensionRoutes(new ZalavaRuntimeWebExtensionModuleCatalog(zalavaRuntime));
   }
@@ -794,15 +856,79 @@ public class ZalavaConfiguration {
   }
 
   @Bean
+  public UnifiedPermissions unifiedPermissions(
+      MemberToolAccess tools,
+      ChatToolConfirmation confirmation,
+      ModulePageAccess pages,
+      AccountLifecycle accounts) {
+    return new UnifiedPermissions(tools, confirmation, pages, accounts);
+  }
+
+  @Bean
+  public ChatToolConfirmationStore chatToolConfirmationStore(JdbcClient jdbc) {
+    return new JdbcChatToolConfirmationStore(jdbc);
+  }
+
+  @Bean
+  public ChatToolConfirmation chatToolConfirmation(
+      AccountLifecycle accounts,
+      ChatToolConfirmationStore store,
+      ZalavaRuntime runtime,
+      Clock clock) {
+    return new DefaultChatToolConfirmation(
+        accounts, store, new ZalavaRuntimeProviderCatalog(runtime), clock);
+  }
+
+  @Bean
+  public MemberToolAccessStore memberToolAccessStore(JdbcClient jdbc) {
+    return new JdbcMemberToolAccessStore(jdbc);
+  }
+
+  @Bean
+  public MemberToolAccess memberToolAccess(
+      AccountLifecycle accounts, MemberToolAccessStore store, ZalavaRuntime runtime, Clock clock) {
+    return new DefaultMemberToolAccess(
+        accounts, store, new ZalavaRuntimeProviderCatalog(runtime), clock);
+  }
+
+  @Bean
+  public DynamicToolActivationPolicy memberToolActivationPolicy(
+      MemberToolAccess access, ZalavaRuntime runtime, ActorExecutionContext actors) {
+    return new DynamicToolActivationPolicy(
+        (providerId, toolName) ->
+            actors
+                .currentPrincipal()
+                .filter(principal -> principal.role() == AccountRole.MEMBER)
+                .map(
+                    principal ->
+                        runtime
+                            .findProvider(providerId)
+                            .map(
+                                provider ->
+                                    access.allowed(
+                                        principal.actor().accountId().toString(),
+                                        new MemberToolAccess.ToolKey(
+                                            provider.descriptor().moduleId(),
+                                            providerId,
+                                            toolName)))
+                            .orElse(false))
+                .orElse(false));
+  }
+
+  @Bean
   public ProviderToolOperations providerToolOperations(
       ZalavaRuntime zalavaRuntime,
       ZalavaToolApprovalRequests approvalRequests,
-      List<ToolInvocationObserver> observers) {
+      List<ToolInvocationObserver> observers,
+      MemberToolAccess access,
+      ChatToolConfirmation confirmation) {
     return new DefaultProviderToolOperations(
         new ZalavaRuntimeProviderCatalog(zalavaRuntime),
         new ZalavaToolApprovalAdapter(approvalRequests),
         observers,
-        new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
+        new MemberProviderCapabilityPolicy(access),
+        new JacksonToolArgumentDecoder(),
+        confirmation);
   }
 
   @Bean
@@ -820,11 +946,26 @@ public class ZalavaConfiguration {
       ZalavaRuntime zalavaRuntime,
       ProviderToolOperations providerToolOperations,
       TaskExecutionContext taskExecutionContext,
-      ActorExecutionContext actorExecutionContext) {
+      ActorExecutionContext actorExecutionContext,
+      MemberToolAccess access) {
     return new ZalavaToolCallbackCatalog(
         new ZalavaRuntimeProviderCatalog(zalavaRuntime),
         new ZalavaProviderToolInvoker(
-            providerToolOperations, taskExecutionContext, actorExecutionContext));
+            providerToolOperations, taskExecutionContext, actorExecutionContext),
+        (provider, tool) ->
+            actorExecutionContext
+                .currentPrincipal()
+                .map(
+                    principal ->
+                        principal.role() != AccountRole.MEMBER
+                            || (MemberProviderCapabilityPolicy.eligible(provider, tool)
+                                && access.allowed(
+                                    principal.actor().accountId().toString(),
+                                    new MemberToolAccess.ToolKey(
+                                        provider.descriptor().moduleId(),
+                                        provider.descriptor().providerId(),
+                                        tool.name()))))
+                .orElse(true));
   }
 
   @Bean
@@ -845,7 +986,10 @@ public class ZalavaConfiguration {
       ModelBoundary modelBoundary,
       ToolIndex springAiToolIndex,
       @Value("${agent.tool-selection.tool-search.enabled:false}") boolean toolSearchEnabled,
-      List<ToolInvocationObserver> knowledgeObservers)
+      List<ToolInvocationObserver> knowledgeObservers,
+      ChatToolConfirmation chatToolConfirmation,
+      ZalavaToolApprovalRequests approvalRequests,
+      DynamicToolActivationPolicy activationPolicy)
       throws IOException {
     Path skillsDirectory = skillsDir(workspace);
     List<Object> bootstrapTools =
@@ -858,16 +1002,23 @@ public class ZalavaConfiguration {
                     providerToolOperations,
                     toolDiscovery,
                     taskExecutionContext,
-                    actorExecutionContext)));
+                    actorExecutionContext,
+                    activationPolicy)));
     bootstrapTools.add(
         new KnowledgeAgentTools(
             knowledgeEvidence,
             actorExecutionContext,
             modelBoundary,
-            new org.zalava.knowledge.application.KnowledgeToolObservation(knowledgeObservers)));
+            new KnowledgeToolObservation(knowledgeObservers),
+            new KnowledgeChatReadGate(
+                actorExecutionContext,
+                taskExecutionContext,
+                chatToolConfirmation,
+                approvalRequests)));
     if (hasConfiguredSkills(skillsDirectory)) {
       bootstrapTools.add(
-          SkillsTool.builder().addSkillsDirectory(skillsDirectory.toString()).build());
+          new HostManagedToolCallback(
+              SkillsTool.builder().addSkillsDirectory(skillsDirectory.toString()).build()));
     }
     return new AgentRequestTools(
         bootstrapTools,
@@ -875,8 +1026,8 @@ public class ZalavaConfiguration {
         callbackCatalog,
         List.of(capabilityGapTools),
         remoteDiscovery,
-        new org.zalava.assistant.agent.PolicyFilteredToolSearch(
-            springAiToolIndex, toolSearchEnabled));
+        new PolicyFilteredToolSearch(springAiToolIndex, activationPolicy, toolSearchEnabled),
+        activationPolicy);
   }
 
   @Bean

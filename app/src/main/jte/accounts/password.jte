@@ -6,7 +6,9 @@
 @param String loginName = ""
 @param NavigationModel navigation
 <!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Change Zalava password</title><link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-ui.css"></head>
+<title>Change Zalava password</title><link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css"><link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script></head>
 <body class="${required ? "zalava-auth" : ""}">
 @if(!required)@template.ui.navigation(items = navigation.items(), activePage = "account", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())@endif
 <main class="auth-layout">
@@ -16,7 +18,8 @@
 @if(error != null)<p class="auth-alert" role="alert">${error}. Check your current password and use at least 12 characters for the new password.</p>@endif
 <form method="post" action="/account/password"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
 <label for="current-password">Current password</label><input id="current-password" type="password" name="currentPassword" autocomplete="current-password" required>
-<label for="new-password">New password</label><input id="new-password" type="password" name="replacementPassword" autocomplete="new-password" required minlength="12" aria-describedby="password-help">
+<label for="new-password">New password</label><input id="new-password" data-password-original type="password" name="replacementPassword" autocomplete="new-password" required minlength="12" aria-describedby="password-help">
+<label for="confirm-password">Confirm new password</label><input id="confirm-password" data-password-confirmation type="password" name="passwordConfirmation" autocomplete="new-password" required minlength="12">
 <p id="password-help" class="auth-help">Use a unique password with at least 12 characters.</p><button type="submit">Change password</button></form>
 <form method="post" action="/logout"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><button class="auth-secondary" type="submit">Sign out</button></form>@if(!required)<a class="auth-recovery auth-secondary" href="/chat">Return to Chat</a>@endif</section>
 </main></body></html>

@@ -53,7 +53,7 @@ class ModuleMarketplaceComponentTest {
 
   private static final String MODULE_ID = "zalava-module-tika";
   private static final Pattern REQUEST_ID =
-      Pattern.compile("data-installation-request=\"([^\"]+)\"");
+      Pattern.compile("data-installation-history=\"([^\"]+)\"");
   private static final Path WORKSPACE = createWorkspace();
 
   @Autowired private MockMvc mockMvc;
@@ -79,7 +79,8 @@ class ModuleMarketplaceComponentTest {
   }
 
   @BeforeEach
-  void enableBootstrapAdministrator() {
+  void enableBootstrapAdministrator() throws IOException {
+    Files.deleteIfExists(WORKSPACE.resolve("source-module-installation/enabled-modules.json"));
     var administrator =
         accounts
             .findByLoginName("modules-admin")
@@ -176,22 +177,22 @@ class ModuleMarketplaceComponentTest {
     requestInstallation(MODULE_ID, "1.1.0");
     assertThat(modulesHtml())
         .contains("data-enabled-module=\"zalava-module-tika\"")
-        .contains("data-request-status>SUCCEEDED")
-        .contains("sha256:");
+        .contains("Installed · not loaded");
+    assertThat(historyHtml()).contains("SUCCEEDED", "sha256:", "Requested", "datetime=");
   }
 
   @Test
   void directInstallationDoesNotCreateAPendingApproval() throws Exception {
     refreshCatalog();
     requestInstallation(MODULE_ID, "1.1.0");
-    assertThat(modulesHtml()).contains("data-request-status>SUCCEEDED").doesNotContain("PENDING");
+    assertThat(historyHtml()).contains("SUCCEEDED").doesNotContain(">PENDING<");
   }
 
   @Test
   void detailReportsAnAvailableUpdate() throws Exception {
     refreshCatalog();
     requestInstallation(MODULE_ID, "1.0.1");
-    String requestId = firstRequestId(modulesHtml());
+    String requestId = firstRequestId(historyHtml());
     mockMvc
         .perform(post("/modules/installation-requests/" + requestId + "/allow"))
         .andExpect(status().is3xxRedirection());
@@ -208,7 +209,7 @@ class ModuleMarketplaceComponentTest {
   void disablingAnEnabledModuleRemovesItAndRequiresARestart() throws Exception {
     refreshCatalog();
     requestInstallation(MODULE_ID, "1.1.0");
-    String requestId = firstRequestId(modulesHtml());
+    String requestId = firstRequestId(historyHtml());
     mockMvc
         .perform(post("/modules/installation-requests/" + requestId + "/allow"))
         .andExpect(status().is3xxRedirection());
@@ -220,7 +221,7 @@ class ModuleMarketplaceComponentTest {
 
     String afterDisable = modulesHtml();
     assertThat(afterDisable).doesNotContain("data-enabled-module=\"zalava-module-tika\"");
-    assertThat(afterDisable).contains("data-metric=\"enabled-modules\">0<");
+    assertThat(afterDisable).contains("No modules are installed or loaded.");
   }
 
   @Test
@@ -249,6 +250,15 @@ class ModuleMarketplaceComponentTest {
                 .param("moduleId", moduleId)
                 .param("version", version))
         .andExpect(status().is3xxRedirection());
+  }
+
+  private String historyHtml() throws Exception {
+    return mockMvc
+        .perform(get("/monitoring"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
   }
 
   private String modulesHtml() throws Exception {

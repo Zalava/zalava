@@ -1,7 +1,17 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
     id 'java-library'
     id 'org.springframework.boot'
     id 'gg.jte.gradle' version '3.2.4'
+}
+
+// Deliberately separate from runtimeClasspath, developmentOnly and test runtimes.
+configurations {
+    bootuiRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+    }
 }
 
 sourceSets {
@@ -41,15 +51,14 @@ rootProject.tasks.named('spotlessJava') {
 }
 
 dependencies {
+    bootuiRuntime 'com.julien-dubois.bootui:bootui-spring-boot-starter:2.1.0'
+
     implementation project(':module-api')
     externalModuleFixtureImplementation project(':module-api')
+    externalModuleFixtureImplementation 'org.springframework.boot:spring-boot'
 
     implementation 'com.anthropic:anthropic-java-client-okhttp'
-    implementation 'com.microsoft.playwright:playwright'
-    implementation 'org.webjars.npm:htmx.org:2.0.6'
-    implementation 'org.webjars.npm:htmx-ext-ws:2.0.3'
     implementation 'com.networknt:json-schema-validator'
-    implementation 'org.apache.commons:commons-lang3'
     implementation 'org.jobrunr:jobrunr-spring-boot-4-starter'
     implementation 'org.springaicommunity:spring-ai-agent-utils'
     implementation 'org.springframework.ai:spring-ai-client-chat'
@@ -61,18 +70,14 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-mistral-ai'
     implementation 'org.springframework.ai:spring-ai-starter-model-deepseek'
     implementation 'org.springframework.ai:spring-ai-starter-model-bedrock-converse'
-    implementation 'org.springframework.ai:spring-ai-tool-search-advisor'
     implementation 'org.springframework.ai:spring-ai-tool-search-tool'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.cloud:spring-cloud-context:5.0.3'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-restclient'
-    implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
-    implementation 'org.springframework.modulith:spring-modulith-starter-core'
     implementation 'org.telegram:telegrambots-client'
     implementation 'org.telegram:telegrambots-springboot-longpolling-starter'
     implementation 'gg.jte:jte-spring-boot-starter-4'
@@ -83,15 +88,12 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'io.netty:netty-resolver-dns-native-macos'
 
-    testImplementation 'org.awaitility:awaitility'
-    testImplementation 'org.wiremock:wiremock-standalone:3.13.1'
+    testImplementation 'com.microsoft.playwright:playwright'
+    testImplementation 'org.springframework.ai:spring-ai-tool-search-advisor'
+    testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     testImplementation 'org.testcontainers:testcontainers-postgresql'
@@ -115,6 +117,7 @@ springBoot {
 
 bootJar {
     archiveBaseName = 'zalava'
+    layered { enabled = true }
     dependsOn tasks.named('precompileJte')
     bootInf {
         into('classes') {
@@ -132,14 +135,20 @@ jte {
 
 tasks.named('bootBuildImage') {
     imageName = "ghcr.io/zalava/zalava:${project.version}"
+    builder = rootProject.file('ci/oci/builder.txt').text.trim()
+    runImage = rootProject.file('ci/oci/run-image.txt').text.trim()
+    buildpacks = ['urn:cnb:builder:paketo-buildpacks/java', rootProject.file('ci/oci/health-checker.txt').text.trim()]
+    def cachePrefix = providers.gradleProperty('oci.cache-prefix').orElse('zalava-local').get()
+    def aotCache = providers.gradleProperty('oci.aot').orElse('true').get()
+    def jlink = providers.gradleProperty('oci.jlink').orElse('true').get()
     buildCache {
         volume {
-            name = 'zalava-local-build-cache'
+            name = "${cachePrefix}-build-cache"
         }
     }
     launchCache {
         volume {
-            name = 'zalava-local-launch-cache'
+            name = "${cachePrefix}-launch-cache"
         }
     }
     def leydenTrainingNetwork = providers.gradleProperty('leyden.training.network')
@@ -150,15 +159,21 @@ tasks.named('bootBuildImage') {
     network = leydenTrainingNetwork.orNull
     environment = [
             'BP_JVM_VERSION': '25.*',
-            'BP_JVM_AOTCACHE_ENABLED': 'true',
+            'BP_HEALTH_CHECKER_ENABLED': 'true',
+            'BP_JVM_AOTCACHE_ENABLED': aotCache,
+            'BP_JVM_JLINK_ENABLED': jlink,
+            'BP_JVM_JLINK_ARGS': '--no-man-pages --no-header-files --strip-debug --compress=2 --add-modules java.se,jdk.crypto.ec,jdk.unsupported,jdk.management,jdk.management.jfr,jdk.jfr,jdk.httpserver,jdk.security.auth,jdk.naming.dns,jdk.zipfs,jdk.charsets,jdk.localedata,jdk.net,jdk.security.jgss',
         'SPRING_DATASOURCE_URL': leydenTrainingJdbcUrl.orNull ?: '',
         'SPRING_DATASOURCE_USERNAME': leydenTrainingUsername.orNull ?: '',
         'SPRING_DATASOURCE_PASSWORD': leydenTrainingPassword.orNull ?: '',
             'AGENT_CHANNELS_TELEGRAM_TOKEN': 'false',
             'AGENT_CHANNELS_TELEGRAM_USERNAME': 'false'
-    ]
+    ] + (jlink == 'true' ? ['JRE_HOME': '/layers/paketo-buildpacks_bellsoft-liberica/JLink'] : [:])
     doFirst {
-        [
+        if (!(aotCache in ['true', 'false']) || !(jlink in ['true', 'false'])) {
+            throw new GradleException('oci.aot and oci.jlink must be true or false')
+        }
+        if (aotCache == 'true') [
             'leyden.training.network': leydenTrainingNetwork.orNull,
             'leyden.training.jdbc-url': leydenTrainingJdbcUrl.orNull,
             'leyden.training.username': leydenTrainingUsername.orNull,
@@ -174,11 +189,11 @@ tasks.named('bootBuildImage') {
 def installPlaywrightChromium = tasks.register('installPlaywrightChromium', JavaExec) {
     group = 'verification'
     description = 'Installs the Chromium headless shell used by browser acceptance.'
-    classpath = configurations.runtimeClasspath
+    classpath = configurations.testRuntimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     def imageVersion = providers.environmentVariable('ZALAVA_CI_PLAYWRIGHT_VERSION')
     def browserCache = providers.environmentVariable('PLAYWRIGHT_BROWSERS_PATH')
-    def playwrightArtifacts = configurations.runtimeClasspath.incoming.artifacts.resolvedArtifacts
+    def playwrightArtifacts = configurations.testRuntimeClasspath.incoming.artifacts.resolvedArtifacts
     def installerLogger = logger
     onlyIf('Chromium is not already supplied by a compatible CI image') {
         if (imageVersion.isPresent()) {
@@ -526,14 +541,19 @@ tasks.register('structuredOutputAcceptanceTest', Test) {
 
 tasks.register('leydenImageIntegrationTest', Test) {
     group = 'verification'
-    description = 'Builds a Leyden-trained image against a disposable PostgreSQL Testcontainer.'
+    description = 'Builds a named local image against disposable PostgreSQL without browser acceptance.'
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
     useJUnitPlatform {
         includeTags 'leyden-image'
     }
+    ['oci.jlink', 'oci.aot'].each { option ->
+        systemProperty option, providers.gradleProperty(option).orElse('true').get()
+    }
+    outputs.upToDateWhen { false }
     def requestedImageName = providers.gradleProperty('leyden.image-name')
     if (requestedImageName.present) {
         systemProperty 'zalava.leyden.image-name', requestedImageName.get()
@@ -559,3 +579,104 @@ bootRun {
     workingDir = rootProject.projectDir
     systemProperty 'gg.jte.template-location', 'app/src/main/jte'
 }
+
+tasks.register('bootuiRun', BootRun) {
+    group = 'application'
+    description = 'Runs a loopback-only local host with the optional BootUI console.'
+    dependsOn tasks.named('precompileJte')
+    mainClass = springBoot.mainClass
+    classpath = sourceSets.main.runtimeClasspath + configurations.bootuiRuntime + files('jte-classes')
+    workingDir = rootProject.projectDir
+    systemProperty 'gg.jte.template-location', 'app/src/main/jte'
+    systemProperty 'spring.profiles.include', 'local'
+    systemProperty 'spring.devtools.restart.enabled', 'false'
+    systemProperty 'spring.devtools.livereload.enabled', 'false'
+    systemProperty 'server.port', '18080'
+    systemProperty 'management.server.port', '18082'
+
+    // Command-line properties also take precedence over environment and local overrides.
+    def localOnly = [
+        'server.address': '127.0.0.1',
+        'management.server.address': '127.0.0.1',
+        'jobrunr.dashboard.enabled': 'false',
+        'bootui.allow-non-localhost': 'false',
+        'bootui.enabled': 'AUTO',
+        'bootui.mcp.enabled': 'OFF'
+    ]
+    doFirst { task ->
+        localOnly.each { name, value ->
+            if (task.args.any { it == "--${name}" || it.startsWith("--${name}=") }) {
+                throw new GradleException("bootuiRun fixes ${name}=${value}; remove its --args override")
+            }
+            task.args "--${name}=${value}"
+        }
+    }
+}
+
+tasks.register('verifyBootuiIsolation') {
+    group = 'verification'
+    description = 'Verifies BootUI is available only to bootuiRun and absent from release packaging.'
+    dependsOn tasks.named('bootJar')
+    def ordinaryClasspaths = [
+        runtimeClasspath: configurations.runtimeClasspath,
+        testRuntimeClasspath: configurations.testRuntimeClasspath,
+        bootRun: tasks.named('bootRun').get().classpath,
+        bootJar: tasks.named('bootJar').get().classpath
+    ]
+    def consoleRuntime = configurations.bootuiRuntime
+    def consoleClasspath = tasks.named('bootuiRun').get().classpath
+    def archive = tasks.named('bootJar').flatMap { it.archiveFile }
+    def imageArchive = tasks.named('bootBuildImage').flatMap { it.archiveFile }
+    def packagedBootui = zipTree(archive).matching { include 'BOOT-INF/lib/*bootui*.jar' }
+    doLast {
+        ordinaryClasspaths.each { name, classpath ->
+            if (classpath.files.any { it.name.startsWith('bootui-') && it.name.endsWith('.jar') }) {
+                throw new GradleException("BootUI leaked into ${name}")
+            }
+        }
+        def starter = consoleRuntime.files.find {
+            it.name == 'bootui-spring-boot-starter-2.1.0.jar'
+        }
+        if (starter == null || !consoleClasspath.contains(starter)) {
+            throw new GradleException('BootUI must be present only on bootuiRun')
+        }
+        if (!packagedBootui.isEmpty()) {
+            throw new GradleException('BootUI leaked into the executable archive')
+        }
+        if (imageArchive.get().asFile != archive.get().asFile) {
+            throw new GradleException('bootBuildImage must use the verified production archive')
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyBootuiIsolation')
+}
+
+// Missing Docker or released artifacts fail the required distributable lane.
+['ociImageAcceptanceTest', 'ociFullJreImageAcceptanceTest', 'ociComposeAcceptanceTest'].each { taskName ->
+tasks.register(taskName, Test) {
+    group = 'verification'
+    description = 'Builds the pinned OCI image and verifies its JVM and real released-module browser journeys.'
+    dependsOn tasks.named('testClasses'), tasks.named('externalModuleFixtureJar'), tasks.named('precompileJte'), installPlaywrightChromium
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    maxParallelForks = 1
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    useJUnitPlatform { includeTags 'leyden-image' }
+    shouldRunAfter tasks.named('test'), tasks.named('architectureTest'), tasks.named('browserAcceptanceTest'), tasks.named('releasedModuleAcceptanceTest')
+    systemProperty 'zalava.test.oci.acceptance', 'true'
+    if (taskName == 'ociComposeAcceptanceTest') {
+        systemProperty 'zalava.test.oci.compose', 'true'
+        shouldRunAfter tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest')
+    }
+    systemProperty 'zalava.test.external-module-jar', tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
+    systemProperty 'oci.aot', providers.gradleProperty('oci.aot').orElse('true').get()
+    systemProperty 'oci.jlink', taskName == 'ociFullJreImageAcceptanceTest' ? 'false' : providers.gradleProperty('oci.jlink').orElse('true').get()
+    if (taskName == 'ociFullJreImageAcceptanceTest') shouldRunAfter tasks.named('ociImageAcceptanceTest')
+    def requestedImage = providers.gradleProperty('oci.image')
+    if (requestedImage.present && taskName == 'ociImageAcceptanceTest') systemProperty 'zalava.leyden.image-name', requestedImage.get()
+    outputs.upToDateWhen { false }
+}
+}
+tasks.named('check') { dependsOn tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest'), tasks.named('ociComposeAcceptanceTest') }

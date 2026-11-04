@@ -14,6 +14,14 @@ public interface ActorChatStreamListener {
   /** The turn finished; the full text and any job references created during the turn. */
   void onComplete(String fullText, List<ActorTaskReference> jobReferences);
 
+  default void onComplete(String fullText, List<ActorTaskReference> jobReferences, String runId) {
+    onComplete(fullText, jobReferences);
+  }
+
+  default void onError(RuntimeException failure, String runId) {
+    onError(failure);
+  }
+
   /** The turn failed; no completion callback follows. */
   void onError(RuntimeException failure);
 }

@@ -6,6 +6,7 @@
 @param NavigationModel navigation
 @param String memoryMessage
 @param String memoryError
+@param String approvedProposal = null
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
@@ -13,7 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Memory</title>
   <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-  <link rel="stylesheet" href="/zalava-ui.css">
+  <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head>
 <body>
   @template.ui.navigation(items = navigation.items(), activePage = "memory", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
@@ -24,7 +27,7 @@
         <article class="message is-success" role="status"><div class="message-body">${memoryMessage}</div></article>
       @endif
       @if(model.error() != null)
-        <article class="message is-danger" role="alert"><div class="message-body">${model.error()}</div></article>
+        <article class="message is-danger" role="alert" tabindex="-1" data-error-summary><div class="message-body">${model.error()}</div></article>
       @endif
       <h1 class="title is-3">Memory entry</h1><p class="has-text-grey mb-4">Private to your account. ${LibraryPresentation.scope(model.memory().scope())} is a category for recall, not a sharing setting.</p>
       <div class="box" data-memory-detail="${model.memory().id()}">
@@ -41,7 +44,7 @@
         @for(var entry : model.memory().metadata().entrySet())<dt>${entry.getKey()}</dt><dd>${entry.getValue()}</dd>@endfor
         </dl></details>
       </div>
-      <form method="post" action="/memory/${model.memory().id()}/edit" class="box">
+      <form method="post" action="/memory/${model.memory().id()}/edit" class="box" id="memory-edit-form">
         <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
         <h2 class="title is-5">Edit memory</h2>
         <div class="field">
@@ -61,16 +64,16 @@
           </div>
         </div>
         <div class="field">
-          <label class="label" for="memory-text">Memory</label>
-          <div class="control"><textarea class="textarea" id="memory-text" name="text" maxlength="2000" required>${model.text()}</textarea></div>
+          <label class="label" for="memory-text">Memory <span class="field-requirement">(required)</span></label>
+          <div class="control"><textarea class="textarea" id="memory-text" name="text" maxlength="2000" required aria-invalid="${model.error() != null ? "true" : null}" aria-describedby="${model.error() != null ? "memory-edit-error" : null}">${model.text()}</textarea></div>
         </div>
-        <button class="button is-primary" data-action="save">Save</button>
+        @if(model.error() != null)<p class="field-error" id="memory-edit-error">${model.error()}</p>@endif
+
       </form>
-      <form method="post" action="/memory/${model.memory().id()}/delete">
-        <input type="hidden" name="${model.csrf().getParameterName()}" value="${model.csrf().getToken()}">
-        <input type="hidden" name="confirmed" value="true">
-        <button class="button is-danger is-light" data-action="delete">Delete</button>
-      </form>
+      <div class="memory-action-row"><button class="button is-primary" data-action="save" type="submit" form="memory-edit-form">Save</button>
+      @if(approvedProposal != null)@template.ui.deleteConfirmation(action = "/memory/proposals/" + approvedProposal + "/revoke", item = model.memory().text(), csrfName = model.csrf().getParameterName(), csrfValue = model.csrf().getToken(), consequence = "This approved suggestion will be removed from recall.", label = "Revoke approval", actionLabel = "Revoke approved memory", deletion = false)@endif
+      @template.ui.deleteConfirmation(action = "/memory/" + model.memory().id() + "/delete", item = model.memory().text(), csrfName = model.csrf().getParameterName(), csrfValue = model.csrf().getToken(), consequence = "This memory will no longer be available for recall.")
+      </div>
     </div>
   </main>
 </body>

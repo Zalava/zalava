@@ -1,10 +1,14 @@
 package org.zalava.capabilities.operation.adapter.out.observability;
 
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.zalava.api.ZalavaOperationResult;
+import org.zalava.assistant.agent.application.ModelBoundary;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 import org.zalava.modules.runtime.ZalavaToolInvocationAuditEvent;
@@ -21,9 +25,19 @@ public final class SpringToolInvocationObserver implements ToolInvocationObserve
 
   private final ApplicationEventPublisher eventPublisher;
   private final OperationalMetrics metrics;
+  private final ModelBoundary boundary;
 
   public SpringToolInvocationObserver(
       ApplicationEventPublisher eventPublisher, OperationalMetrics metrics) {
+    this(eventPublisher, metrics, new ModelBoundary(1200, ""));
+  }
+
+  @Autowired
+  public SpringToolInvocationObserver(
+      ApplicationEventPublisher eventPublisher,
+      OperationalMetrics metrics,
+      ModelBoundary boundary) {
+    this.boundary = boundary;
     this.eventPublisher = eventPublisher;
     this.metrics = metrics;
   }
@@ -36,7 +50,7 @@ public final class SpringToolInvocationObserver implements ToolInvocationObserve
               observation.providerId(),
               observation.toolName(),
               observation.actorId(),
-              observation.attributes(),
+              attributes(observation),
               observation.confirmed(),
               observation.classification(),
               observation.policyTags(),
@@ -54,6 +68,40 @@ public final class SpringToolInvocationObserver implements ToolInvocationObserve
     } catch (RuntimeException ignored) {
       // Audit and metrics are optional; provider execution has already completed.
     }
+  }
+
+  private Map<String, String> attributes(ToolInvocationObservation observation) {
+    Map<String, String> attributes = new LinkedHashMap<>(observation.attributes());
+    if (!observation.arguments().isEmpty()) {
+      try {
+        attributes.put(
+            "inputPreview",
+            truncate(boundary.redact(JSON.writeValueAsString(sanitize(observation.arguments())))));
+      } catch (RuntimeException ignored) {
+        attributes.put("inputPreview", "Input preview unavailable");
+      }
+    }
+    return Map.copyOf(attributes);
+  }
+
+  private static Object sanitize(Object value) {
+    if (value instanceof Map<?, ?> map) {
+      Map<String, Object> safe = new LinkedHashMap<>();
+      map.forEach(
+          (key, item) -> {
+            String name = String.valueOf(key);
+            safe.put(
+                name,
+                name.toLowerCase(Locale.ROOT)
+                        .matches(".*(password|secret|token|authorization|api.?key|credential).*")
+                    ? "[REDACTED]"
+                    : sanitize(item));
+          });
+      return safe;
+    }
+    if (value instanceof List<?> list)
+      return list.stream().map(SpringToolInvocationObserver::sanitize).toList();
+    return value;
   }
 
   private static String resultPreview(ZalavaOperationResult result) {

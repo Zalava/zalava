@@ -14,7 +14,13 @@ import org.zalava.identity.accounts.domain.Account;
 
 public class PasswordChangeRequiredFilter extends OncePerRequestFilter {
   private static final Set<String> ALLOWED =
-      Set.of("/account/password", "/logout", "/login", "/zalava-ui.css");
+      Set.of(
+          "/account/password",
+          "/logout",
+          "/login",
+          "/zalava-ui.css",
+          "/zalava-tokens.css",
+          "/zalava-ui.js");
   private final AccountLifecycle accounts;
 
   public PasswordChangeRequiredFilter(AccountLifecycle accounts) {

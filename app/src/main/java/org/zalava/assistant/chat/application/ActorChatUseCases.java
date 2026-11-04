@@ -1,6 +1,7 @@
 package org.zalava.assistant.chat.application;
 
 import java.util.List;
+import org.zalava.assistant.agent.AgentRunContext;
 import org.zalava.assistant.agent.application.port.in.AgentExecution;
 import org.zalava.assistant.agent.application.port.in.AgentStreamListener;
 import org.zalava.assistant.agent.domain.AgentRequest;
@@ -80,6 +81,7 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
             .findById(actor.accountId())
             .filter(value -> value.enabled())
             .orElseThrow(() -> new IllegalStateException("Actor account is unavailable"));
+    String[] executionId = new String[1];
     var capture =
         taskCreation.capture(
             () -> {
@@ -99,21 +101,20 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
 
                               @Override
                               public void onComplete(String fullText) {
-                                // Completion is issued by streamChat after the capture returns,
-                                // where the collected job references are available.
+                                executionId[0] = AgentRunContext.current().orElse(null);
                               }
 
                               @Override
                               public void onError(RuntimeException failure) {
-                                // Failure is reported by streamChat once the capture unwinds.
+                                executionId[0] = AgentRunContext.current().orElse(null);
                               }
                             }));
               } catch (RuntimeException failure) {
-                listener.onError(failure);
+                listener.onError(failure, executionId[0]);
                 throw failure;
               }
             });
-    listener.onComplete(capture.value(), capture.taskReferences());
+    listener.onComplete(capture.value(), capture.taskReferences(), executionId[0]);
     return new ActorChatTurn(capture.value(), capture.taskReferences());
   }
 
@@ -149,7 +150,8 @@ public final class ActorChatUseCases implements ActorChatCommands, ActorChatQuer
                 new ChatMessage(
                     ChatMessage.Role.valueOf(message.role().name()),
                     message.text(),
-                    message.attachmentNames()))
+                    message.attachmentNames(),
+                    message.runId()))
         .toList();
   }
 

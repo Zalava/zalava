@@ -11,6 +11,9 @@ import org.zalava.knowledge.memory.domain.MemoryScope;
  */
 public interface MemoryManagement {
 
+  /** Saves a memory explicitly entered by its owner, after content validation. */
+  Memory remember(Actor actor, MemoryScope scope, String text);
+
   /**
    * Revises an owned durable memory's scope and text, preserving its identity, creation time,
    * provenance and metadata.

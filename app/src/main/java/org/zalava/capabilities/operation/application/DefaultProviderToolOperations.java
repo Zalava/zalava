@@ -3,32 +3,37 @@ package org.zalava.capabilities.operation.application;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.zalava.api.InvocationContext;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
+import org.zalava.capabilities.operation.application.port.in.ChatToolConfirmation;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
+import org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
 
 public final class DefaultProviderToolOperations implements ProviderToolOperations {
 
-  private final org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder;
+  private final ToolArgumentDecoder decoder;
   private final ProviderCatalog providerCatalog;
   private final ToolApprovalPort approvalPort;
   private final List<ToolInvocationObserver> observers;
   private final MemberProviderCapabilityPolicy memberCapabilities;
+  private final ChatToolConfirmation confirmation;
 
   public DefaultProviderToolOperations(
       ProviderCatalog providerCatalog,
       ToolApprovalPort approvalPort,
       List<ToolInvocationObserver> observers,
-      org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder) {
+      ToolArgumentDecoder decoder) {
     this(providerCatalog, approvalPort, observers, new MemberProviderCapabilityPolicy(), decoder);
   }
 
@@ -37,8 +42,19 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       ToolApprovalPort approvalPort,
       List<ToolInvocationObserver> observers,
       MemberProviderCapabilityPolicy memberCapabilities,
-      org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder decoder) {
-    this.decoder = java.util.Objects.requireNonNull(decoder);
+      ToolArgumentDecoder decoder) {
+    this(providerCatalog, approvalPort, observers, memberCapabilities, decoder, null);
+  }
+
+  public DefaultProviderToolOperations(
+      ProviderCatalog providerCatalog,
+      ToolApprovalPort approvalPort,
+      List<ToolInvocationObserver> observers,
+      MemberProviderCapabilityPolicy memberCapabilities,
+      ToolArgumentDecoder decoder,
+      ChatToolConfirmation confirmation) {
+    this.confirmation = confirmation;
+    this.decoder = Objects.requireNonNull(decoder);
     this.providerCatalog = providerCatalog;
     this.approvalPort = approvalPort;
     this.observers = List.copyOf(observers);
@@ -49,11 +65,30 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   public ToolInvocationOutcome invoke(ToolInvocationCommand command) {
     ZalavaProvider provider = findProvider(command.providerId());
     ZalavaToolDescriptor tool = findTool(provider, command.toolName());
-    memberCapabilities.requireAllowed(provider, tool, command.context());
+    requireMemberAccess(provider, tool, command.context());
     Map<String, Object> arguments = decoder.decode(command.argumentsJson());
 
-    if (!tool.sideEffecting()) {
+    Optional<Boolean> setting =
+        confirmation == null || command.taskReference() != null
+            ? Optional.empty()
+            : confirmation.requireFor(command.context(), provider, tool);
+    if (!tool.sideEffecting() && !setting.orElse(false)) {
       return ToolInvocationOutcome.executed(execute(provider, tool, arguments, command.context()));
+    }
+
+    if (!tool.sideEffecting()
+        && setting.orElse(false)
+        && confirmation.mayConsumeReadApproval(command.context())) {
+      var approved =
+          approvalPort.consumeChatReadDecision(
+              command.context(), provider, tool, command.argumentsJson());
+      if (approved.isPresent())
+        return ToolInvocationOutcome.executed(
+            execute(
+                provider,
+                tool,
+                arguments,
+                confirmedContext(command.context(), approved.get().requestId())));
     }
 
     if (command.taskReference() != null) {
@@ -76,8 +111,20 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       }
     }
 
+    if (setting.isPresent() && !setting.get()) {
+      Map<String, String> attributes = new LinkedHashMap<>(command.context().attributes());
+      attributes.put("approvalPolicy", "chat-confirmation-setting");
+      return ToolInvocationOutcome.executed(
+          execute(
+              provider,
+              tool,
+              arguments,
+              new InvocationContext(command.context().actorId(), true, Map.copyOf(attributes))));
+    }
     Optional<ToolApproval> policy =
-        approvalPort.findAllowedToolPolicy(command.context(), provider, tool);
+        setting.orElse(false)
+            ? Optional.empty()
+            : approvalPort.findAllowedToolPolicy(command.context(), provider, tool);
     if (policy.isPresent()) {
       return ToolInvocationOutcome.executed(
           execute(
@@ -88,11 +135,15 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     }
 
     if (command.approvalMode() == ApprovalMode.OPERATOR) {
-      return ToolInvocationOutcome.pending(
+      return pending(
+          provider,
+          tool,
+          arguments,
+          command,
           approvalPort.create(provider, tool, command.context(), command.argumentsJson(), null));
     }
 
-    if (command.approvalMode() == ApprovalMode.TASK) {
+    if (command.approvalMode() == ApprovalMode.TASK && setting.isEmpty()) {
       Optional<ToolApproval> decision =
           approvalPort.findUnscopedDecision(
               command.context().actorId(),
@@ -107,9 +158,38 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       }
     }
 
-    return ToolInvocationOutcome.pending(
+    return pending(
+        provider,
+        tool,
+        arguments,
+        command,
         approvalPort.create(
             provider, tool, command.context(), command.argumentsJson(), command.taskReference()));
+  }
+
+  private ToolInvocationOutcome pending(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      Map<String, Object> arguments,
+      ToolInvocationCommand command,
+      ToolApproval approval) {
+    observe(
+        provider,
+        tool,
+        command.context(),
+        false,
+        "pending_approval",
+        "Awaiting permission",
+        ZalavaOperationResult.failure(
+            Map.of("status", "pending_approval", "approvalRequestId", approval.requestId())),
+        System.nanoTime(),
+        arguments);
+    return ToolInvocationOutcome.pending(approval);
+  }
+
+  @Override
+  public ToolApproval approveChatRead(String requestId) {
+    return approvalDecision(() -> approvalPort.approveChatRead(requestId));
   }
 
   @Override
@@ -132,7 +212,19 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             approval.actorId(),
             true,
             operatorApprovedAttributes(approval.attributes(), approval.requestId()));
-    return ToolInvocationOutcome.executed(execute(provider, tool, arguments, context));
+    ZalavaOperationResult result;
+    try {
+      result = execute(provider, tool, arguments, context);
+    } catch (RuntimeException failure) {
+      try {
+        approvalPort.recordExecutionOutcome(approval.requestId(), false);
+      } catch (RuntimeException recordingFailure) {
+        failure.addSuppressed(recordingFailure);
+      }
+      throw failure;
+    }
+    approvalPort.recordExecutionOutcome(approval.requestId(), result.success());
+    return ToolInvocationOutcome.executed(result);
   }
 
   @Override
@@ -181,39 +273,86 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return ToolInvocationOutcome.denied(approval);
   }
 
+  private void requireMemberAccess(
+      ZalavaProvider provider, ZalavaToolDescriptor tool, InvocationContext context) {
+    try {
+      memberCapabilities.requireAllowed(provider, tool, context);
+    } catch (ProviderToolOperationException denied) {
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "permission_denied",
+          denied.getMessage(),
+          null,
+          System.nanoTime());
+      throw denied;
+    }
+  }
+
   private ZalavaOperationResult execute(
       ZalavaProvider provider,
       ZalavaToolDescriptor tool,
       Map<String, Object> arguments,
       InvocationContext context) {
-    memberCapabilities.requireAllowed(provider, tool, context);
+    requireMemberAccess(provider, tool, context);
     long startedAt = System.nanoTime();
     try {
       ZalavaOperationResult result = provider.callTool(tool.name(), arguments, context);
-      observe(provider, tool, context, true, null, null, result, startedAt);
+      observe(provider, tool, context, true, null, null, result, startedAt, arguments);
       return result;
     } catch (UnsupportedOperationException ex) {
-      observe(provider, tool, context, false, "unsupported", ex.getMessage(), null, startedAt);
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "unsupported",
+          ex.getMessage(),
+          null,
+          startedAt,
+          arguments);
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.UNSUPPORTED, ex.getMessage(), ex);
     } catch (IllegalArgumentException ex) {
-      observe(provider, tool, context, false, "validation", ex.getMessage(), null, startedAt);
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "validation",
+          ex.getMessage(),
+          null,
+          startedAt,
+          arguments);
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.VALIDATION, ex.getMessage(), ex);
     } catch (RuntimeException ex) {
-      observe(provider, tool, context, false, "execution", ex.getMessage(), null, startedAt);
+      observe(
+          provider, tool, context, false, "execution", ex.getMessage(), null, startedAt, arguments);
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.EXECUTION, "Zalava operation failed", ex);
     }
   }
 
   private static ZalavaOperationResult alreadyExecuted(ToolApproval approval) {
-    return ZalavaOperationResult.success(
+    String outcome = approval.attributes().getOrDefault("approvalExecutionOutcome", "unknown");
+    if ("succeeded".equals(outcome)) {
+      return ZalavaOperationResult.success(
+          Map.of(
+              "status", "already_executed",
+              "approvalRequestId", approval.requestId(),
+              "message", "This approved operation already completed successfully."));
+    }
+    return ZalavaOperationResult.failure(
         Map.of(
-            "status", "already_executed",
-            "approvalRequestId", approval.requestId(),
+            "status",
+            "failed".equals(outcome) ? "execution_failed" : "execution_unknown",
+            "approvalRequestId",
+            approval.requestId(),
             "message",
-                "This permission request was already approved and executed from Zalava control."));
+            "The previous approved operation did not report success; check its outcome before retrying."));
   }
 
   private void observe(
@@ -225,6 +364,19 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       String errorMessage,
       ZalavaOperationResult result,
       long startedAt) {
+    observe(provider, tool, context, success, errorType, errorMessage, result, startedAt, Map.of());
+  }
+
+  private void observe(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      InvocationContext context,
+      boolean success,
+      String errorType,
+      String errorMessage,
+      ZalavaOperationResult result,
+      long startedAt,
+      Map<String, Object> arguments) {
     ToolInvocationObservation observation =
         new ToolInvocationObservation(
             provider.descriptor().providerId(),
@@ -239,7 +391,8 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             errorType,
             errorMessage,
             result,
-            (System.nanoTime() - startedAt) / 1_000_000);
+            (System.nanoTime() - startedAt) / 1_000_000,
+            arguments);
     observers.forEach(observer -> observer.observe(observation));
   }
 
@@ -275,7 +428,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     return "zalava_backed";
   }
 
-  private static ToolApproval approvalDecision(java.util.function.Supplier<ToolApproval> decision) {
+  private static ToolApproval approvalDecision(Supplier<ToolApproval> decision) {
     try {
       return decision.get();
     } catch (ToolApprovalPort.ApprovalNotFoundException ex) {

@@ -3,6 +3,7 @@ package org.zalava.assistant.agent.application;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Locale;
+import org.zalava.assistant.agent.AgentRunContext;
 import org.zalava.assistant.agent.ConversationChannelContext;
 import org.zalava.assistant.agent.application.port.in.AgentExecution;
 import org.zalava.assistant.agent.application.port.in.AgentStreamListener;
@@ -197,9 +198,27 @@ public final class DefaultAgentExecution implements AgentExecution {
       AgentStreamListener listener,
       Invocation<T> invocation,
       AgentRequest request) {
+    return AgentRunContext.call(
+        idGenerator.nextId(),
+        () -> executeRun(conversationId, input, promptType, listener, invocation, request));
+  }
+
+  private <T> T executeRun(
+      String conversationId,
+      String input,
+      AgentRun.PromptType promptType,
+      AgentStreamListener listener,
+      Invocation<T> invocation,
+      AgentRequest request) {
     Instant startedAt = clock.now();
-    AgentToolSelection selection = toolSelector.select(conversationId, input);
-    AgentContext context = withAttachments(contextAssembler.assemble(input, selection), request);
+    AgentToolSelection selection =
+        ConversationChannelContext.call(
+            conversationId, () -> toolSelector.select(conversationId, input));
+    AgentContext context =
+        withAttachments(
+            ConversationChannelContext.call(
+                conversationId, () -> contextAssembler.assemble(input, selection)),
+            request);
     try {
       T result =
           ConversationChannelContext.call(
@@ -245,7 +264,7 @@ public final class DefaultAgentExecution implements AgentExecution {
     Instant completedAt = clock.now();
     runStore.record(
         new AgentRun(
-            idGenerator.nextId(),
+            AgentRunContext.current().orElseThrow(),
             conversationId,
             promptType,
             redact(input),

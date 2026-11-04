@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -155,9 +155,11 @@ class ChatControllerComponentTest {
                   .doesNotContain("createTask", "scheduleTask", "CheckListTool")
                   .doesNotHaveDuplicates();
             });
-    assertThat(chatMemoryRepository.findByConversationId("component-chat"))
-        .containsExactly(
-            new UserMessage("hi"), new AssistantMessage("Hello from the component test model."));
+    var saved = chatMemoryRepository.findByConversationId("component-chat");
+    assertThat(saved)
+        .extracting(Message::getText)
+        .containsExactly("hi", "Hello from the component test model.");
+    assertThat(saved.getLast().getMetadata().get("zalava.runId")).isInstanceOf(String.class);
   }
 
   @Test

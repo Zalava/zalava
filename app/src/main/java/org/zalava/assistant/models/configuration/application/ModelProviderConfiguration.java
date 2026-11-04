@@ -90,38 +90,55 @@ public final class ModelProviderConfiguration {
       if (field.secret() && value.isBlank() && !"true".equals(input.get("clear-" + field.name())))
         value = previous.getOrDefault(field.name(), "");
       if (field.required() && value.isBlank())
-        throw new IllegalArgumentException("Enter " + field.label().toLowerCase() + ".");
+        throw new FieldValidationException(
+            "Enter " + field.label().toLowerCase() + ".", field.name());
       if (value.length() > 8192 || value.contains("\n") || value.contains("\r"))
-        throw new IllegalArgumentException("Enter a valid " + field.label().toLowerCase() + ".");
+        throw new FieldValidationException(
+            "Enter a valid " + field.label().toLowerCase() + ".", field.name());
       if (field.name().equals("baseUrl") && !value.isBlank()) {
         URI uri;
         try {
           uri = URI.create(value);
         } catch (IllegalArgumentException e) {
-          throw new IllegalArgumentException("Enter a valid endpoint URL.");
+          throw new FieldValidationException("Enter a valid endpoint URL.", field.name());
         }
         if (!("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))
             || uri.getHost() == null
             || uri.getUserInfo() != null
             || uri.getFragment() != null)
-          throw new IllegalArgumentException(
-              "Enter an http or https endpoint URL without embedded credentials.");
+          throw new FieldValidationException(
+              "Enter an http or https endpoint URL without embedded credentials.", field.name());
       }
       if (field.name().equals("credentialsUri") && !value.isBlank() && !value.startsWith("file:"))
-        throw new IllegalArgumentException(
-            "Use a file: URI for credentials accessible to the Zalava host.");
+        throw new FieldValidationException(
+            "Use a file: URI for credentials accessible to the Zalava host.", field.name());
       values.put(field.name(), value);
     }
     if (id.equals("bedrock-converse")
         && values.get("accessKey").isBlank() != values.get("secretKey").isBlank())
-      throw new IllegalArgumentException(
-          "Provide both AWS access and secret keys, or leave both empty.");
+      throw new FieldValidationException(
+          "Provide both AWS access and secret keys, or leave both empty.",
+          "accessKey",
+          "secretKey");
     var configurations = configurations(saved);
     configurations.put(id, values);
     Map<String, Object> candidate = Map.of("provider", id, "configurations", configurations);
     try (var prepared = activation.prepare(runtimeProperties(candidate))) {
       store.write(candidate);
       prepared.commit();
+    }
+  }
+
+  public static final class FieldValidationException extends IllegalArgumentException {
+    private final List<String> fields;
+
+    public FieldValidationException(String message, String... fields) {
+      super(message);
+      this.fields = List.of(fields);
+    }
+
+    public List<String> fields() {
+      return fields;
     }
   }
 

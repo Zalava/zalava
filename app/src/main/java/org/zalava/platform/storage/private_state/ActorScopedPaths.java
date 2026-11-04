@@ -1,7 +1,9 @@
 package org.zalava.platform.storage.private_state;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Objects;
 import org.zalava.identity.accounts.domain.Actor;
@@ -61,13 +63,18 @@ public final class ActorScopedPaths {
       Path current = directory.getRoot();
       for (Path segment : directory) {
         current = current.resolve(segment);
-        if (Files.exists(current)) {
-          if (Files.isSymbolicLink(current) || !Files.isDirectory(current)) {
-            throw new IllegalStateException(
-                "Private-state directory is not a real directory: " + current);
+        if (!Files.exists(current, LinkOption.NOFOLLOW_LINKS)) {
+          try {
+            Files.createDirectory(current);
+          } catch (FileAlreadyExistsException concurrentCreation) {
+            // Another first-use request may create this actor partition.
+            // Validate it below just like an already-existing path.
           }
-        } else {
-          Files.createDirectory(current);
+        }
+        if (Files.isSymbolicLink(current)
+            || !Files.isDirectory(current, LinkOption.NOFOLLOW_LINKS)) {
+          throw new IllegalStateException(
+              "Private-state directory is not a real directory: " + current);
         }
       }
     } catch (IOException ex) {

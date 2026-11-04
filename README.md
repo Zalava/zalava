@@ -13,4 +13,6 @@ fresh Zalava installation rather than migrating an existing installation.
 - [Operate](docs/operations.md)
 - [Architecture](docs/development/architecture.md)
 - [Develop a module](docs/development/module-development.md)
+- [Local BootUI developer console](docs/development/bootui.md)
+- [Build and verify OCI images](docs/development/oci-images.md)
 - [Contribute](docs/contributing.md)

@@ -11,6 +11,93 @@ import org.zalava.api.ModuleConfigurationDescriptor;
 class ModuleConfigurationFormTest {
 
   @Test
+  void groupsFieldsUsingObjectTitlesAndDescriptionsWithoutChangingSubmittedPaths() {
+    var descriptor =
+        new ModuleConfigurationDescriptor(
+            Map.of(
+                "type",
+                "object",
+                "properties",
+                Map.of(
+                    "services",
+                        Map.of(
+                            "type",
+                            "object",
+                            "title",
+                            "Managed services",
+                            "description",
+                            "Run approved services.",
+                            "properties",
+                            Map.of("endpoint", Map.of("type", "string", "title", "Connection"))),
+                    "containers",
+                        Map.of(
+                            "type",
+                            "object",
+                            "title",
+                            "Container tools",
+                            "properties",
+                            Map.of("endpoint", Map.of("type", "string"))))));
+    var fields = ModuleConfigurationForm.fields(descriptor, Map.of());
+    var sections = ModuleConfigurationForm.sections(fields);
+    assertThat(sections)
+        .extracting(ModuleConfigurationForm.Section::title)
+        .containsExactlyInAnyOrder("Managed services", "Container tools");
+    var service =
+        sections.stream()
+            .filter(section -> "Managed services".equals(section.title()))
+            .findFirst()
+            .orElseThrow();
+    assertThat(service.description()).isEqualTo("Run approved services.");
+    assertThat(service.fields())
+        .extracting(ModuleConfigurationForm.Field::name)
+        .containsExactly("configuration.services.endpoint");
+    assertThat(
+            ModuleConfigurationForm.document(
+                fields, Map.of("configuration.services.endpoint", "local")))
+        .isEqualTo(Map.of("services", Map.of("endpoint", "local")));
+  }
+
+  @Test
+  void offersStringExamplesWithoutApplyingThem() {
+    var descriptor =
+        new ModuleConfigurationDescriptor(
+            Map.of(
+                "type",
+                "object",
+                "properties",
+                Map.of(
+                    "connection",
+                    Map.of(
+                        "type",
+                        "string",
+                        "examples",
+                        List.of("unix:///var/run/docker.sock", 17)))));
+    var fields = ModuleConfigurationForm.fields(descriptor, Map.of());
+    assertThat(fields.getFirst().examples()).containsExactly("unix:///var/run/docker.sock");
+    assertThat(fields.getFirst().value()).isEmpty();
+    assertThat(ModuleConfigurationForm.document(fields, Map.of())).isEmpty();
+  }
+
+  @Test
+  void displayObservationNeverSelectsOrSubmitsAnExample() {
+    var descriptor =
+        new ModuleConfigurationDescriptor(
+            Map.of(
+                "type",
+                "object",
+                "properties",
+                Map.of(
+                    "endpoint",
+                    Map.of("type", "string", "examples", List.of("unix:///run/example.sock")))));
+    var fields =
+        ModuleConfigurationForm.fieldsForDisplay(descriptor, Map.of(), value -> "socket found");
+    assertThat(fields.getFirst().exampleObservations())
+        .containsEntry("unix:///run/example.sock", "socket found");
+    assertThat(fields.getFirst().value()).isEmpty();
+    assertThat(ModuleConfigurationForm.document(fields, Map.of())).isEmpty();
+  }
+
+  @Test
   void preservesARequiredBooleanFieldWhenTheCheckboxIsNotSelected() {
     ModuleConfigurationDescriptor descriptor =
         new ModuleConfigurationDescriptor(

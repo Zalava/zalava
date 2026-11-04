@@ -148,7 +148,7 @@ class BrowserFileAcceptanceTest {
 
         page.locator("#message").fill("attach these");
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send")).click();
-        page.getByText("Hello from the component test model.").waitFor();
+        page.locator(".messages").getByText("Hello from the component test model.").waitFor();
 
         page.reload();
         page.getByText("Connected").waitFor();
@@ -207,7 +207,7 @@ class BrowserFileAcceptanceTest {
             .waitFor();
 
         page.navigate(baseUrl() + "/knowledge");
-        page.getByText("report.txt").waitFor();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("report.txt")).waitFor();
 
         page.navigate(baseUrl() + "/chat");
         page.getByText("Connected").waitFor();

@@ -4,12 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
+import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.assistant.agent.application.port.out.HostCallbackPolicy;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
@@ -129,6 +133,92 @@ class StreamingToolContextBridgeTest {
 
     assertThatThrownBy(() -> wrapped.call("{}")).isInstanceOf(IllegalStateException.class);
     assertThat(actorExecution.currentPrincipal()).isEmpty();
+  }
+
+  @Test
+  void carriesConversationToAnotherThreadAndRestoresItAfterFailure() throws Exception {
+    var actors = new ActorExecutionContext();
+    var bridge = new StreamingToolContextBridge(actors, new ActorTaskCreationContext());
+    var actor = new Actor(AccountId.newId());
+    var snapshot =
+        ConversationChannelContext.call(
+            "owned-conversation", () -> actors.call(actor, AccountRole.MEMBER, bridge::snapshot));
+    var seen = new AtomicReference<String>();
+    ToolCallback callback =
+        (ToolCallback)
+            bridge
+                .bind(
+                    List.of(
+                        recordingCallback(
+                            "read",
+                            ignored -> {
+                              seen.set(ConversationChannelContext.conversation().orElseThrow());
+                              throw new IllegalStateException("expected");
+                            })),
+                    snapshot)
+                .getFirst();
+    Thread thread =
+        Thread.ofVirtual()
+            .start(
+                () -> {
+                  assertThatThrownBy(() -> callback.call("{}"))
+                      .isInstanceOf(IllegalStateException.class);
+                  assertThat(ConversationChannelContext.conversation()).isEmpty();
+                  assertThat(actors.currentPrincipal()).isEmpty();
+                });
+    thread.join();
+    assertThat(seen.get()).isEqualTo("owned-conversation");
+  }
+
+  @Test
+  void policyCanDeferAHostCallbackWithoutRunningIt() {
+    var actors = new ActorExecutionContext();
+    var actor = new Actor(AccountId.newId());
+    var allow = new AtomicBoolean(false);
+    var seen = new AtomicReference<String>();
+    var bridge =
+        new StreamingToolContextBridge(
+            actors,
+            new ActorTaskCreationContext(),
+            (name, input) -> allow.get() ? Optional.empty() : Optional.of("pending"));
+    var snapshot = actors.call(actor, AccountRole.ADMIN, bridge::snapshot);
+    var provider =
+        (ToolCallbackProvider)
+            bridge.bind(List.of(new AnnotatedTool(seen, actors)), snapshot).getFirst();
+    var callback = provider.getToolCallbacks()[0];
+    assertThat(callback.call("{\"input\":\"value\"}")).isEqualTo("pending");
+    assertThat(seen.get()).isNull();
+    allow.set(true);
+    assertThat(callback.call("{\"input\":\"value\"}")).isEqualTo("\"ok\"");
+    assertThat(seen.get()).contains(actor.accountId().value().toString());
+  }
+
+  @Test
+  void protectedHostCallbackDoesNotExposeItsDescriptionBeforeApproval() {
+    var actors = new ActorExecutionContext();
+    var actor = new Actor(AccountId.newId());
+    var policy =
+        new HostCallbackPolicy() {
+          @Override
+          public Optional<String> beforeCall(String name, String input) {
+            return Optional.of("pending");
+          }
+
+          @Override
+          public boolean blockAutomaticContent(String name) {
+            return "Skill".equals(name);
+          }
+        };
+    var bridge = new StreamingToolContextBridge(actors, new ActorTaskCreationContext(), policy);
+    var original = recordingCallback("Skill", ignored -> {});
+    var snapshot = actors.call(actor, AccountRole.ADMIN, bridge::snapshot);
+    var callback =
+        (ToolCallback)
+            bridge.bind(List.of(new HostManagedToolCallback(original)), snapshot).getFirst();
+    assertThat(callback.getToolDefinition().description())
+        .contains("configured skill")
+        .doesNotContain("test");
+    assertThat(callback.call("{}")).isEqualTo("pending");
   }
 
   private static ToolCallback recordingCallback(

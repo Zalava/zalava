@@ -3,13 +3,13 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.yaml:snakeyaml:2.5'
+        classpath 'org.yaml:snakeyaml:2.7'
     }
 }
 
 plugins {
     id 'jacoco'
-    id 'com.diffplug.spotless' version '7.2.1'
+    id 'com.diffplug.spotless' version '8.10.4'
     id 'java-library'
     id 'maven-publish'
 }
@@ -59,8 +59,8 @@ dependencies {
     compileOnlyApi "org.zalava:module-api:${moduleApiVersion.get()}"
     testImplementation "org.zalava:module-api:${moduleApiVersion.get()}"
     testImplementation "org.zalava:module-api-test:${moduleApiVersion.get()}"
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.1.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.3'
 }
 
 java {
@@ -193,7 +193,7 @@ spotless {
 }
 
 jacoco {
-    toolVersion = '0.8.14'
+    toolVersion = '0.8.15'
 }
 
 tasks.named('test') {

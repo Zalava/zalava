@@ -137,6 +137,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
           // Approval decisions are intentionally available only on the authenticated Zalava UI
           // adapter.
         }
+        case UiCommand.DecideDirectApproval ignored -> {
+          // Direct permissions are available only on the authenticated product JSON adapter.
+        }
         case UiCommand.ImportAttachment ignored -> {
           // Knowledge saving is available only on the authenticated product JSON adapter.
         }

@@ -80,6 +80,7 @@ class BrowserOnboardingAcceptanceTest {
       assertThat(page.url()).endsWith("/account/password");
       page.locator("input[name=currentPassword]").fill("OnboardingTestPassword-123");
       page.locator("input[name=replacementPassword]").fill("OnboardingTestPassword-456");
+      page.locator("input[name=passwordConfirmation]").fill("OnboardingTestPassword-456");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
 
@@ -144,8 +145,7 @@ class BrowserOnboardingAcceptanceTest {
       page.locator("input[name=baseUrl]").fill("not-an-endpoint");
       page.evaluate(
           """
-          document.querySelector("form[action='/settings/provider']")
-            .addEventListener("submit", event => event.preventDefault(), {once:true});
+          document.addEventListener("submit", event => event.preventDefault(), {once:true});
           """);
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save provider")).click();
       assertThat(page.locator("button[data-pending=true]").isDisabled()).isTrue();

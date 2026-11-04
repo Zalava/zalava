@@ -2,11 +2,16 @@ package org.zalava.assistant.agent.adapter.out.policy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.zalava.assistant.agent.AgentRunContext;
+import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.assistant.agent.application.port.out.HostCallbackPolicy;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.tasks.capture.ActorTaskCreationContext;
 import org.zalava.tasks.domain.ActorTaskReference;
@@ -26,11 +31,20 @@ public final class StreamingToolContextBridge {
 
   private final ActorExecutionContext actorExecution;
   private final ActorTaskCreationContext taskCreation;
+  private final HostCallbackPolicy hostPolicy;
 
   public StreamingToolContextBridge(
       ActorExecutionContext actorExecution, ActorTaskCreationContext taskCreation) {
+    this(actorExecution, taskCreation, (name, input) -> Optional.empty());
+  }
+
+  public StreamingToolContextBridge(
+      ActorExecutionContext actorExecution,
+      ActorTaskCreationContext taskCreation,
+      HostCallbackPolicy hostPolicy) {
     this.actorExecution = actorExecution;
     this.taskCreation = taskCreation;
+    this.hostPolicy = hostPolicy;
   }
 
   /**
@@ -49,7 +63,11 @@ public final class StreamingToolContextBridge {
     if (references == null) {
       references = new ArrayList<>();
     }
-    return new Snapshot(principal, references);
+    return new Snapshot(
+        principal,
+        references,
+        ConversationChannelContext.conversation().orElse(null),
+        AgentRunContext.current().orElse(null));
   }
 
   /**
@@ -70,7 +88,8 @@ public final class StreamingToolContextBridge {
 
   private Object wrap(Object tool, Snapshot snapshot) {
     if (tool instanceof ToolCallback callback) {
-      return new ContextRestoringToolCallback(callback, this, snapshot);
+      return new ContextRestoringToolCallback(
+          callback, this, snapshot, callback instanceof HostManagedToolCallback);
     }
     return new ContextRestoringToolCallbackProvider(tool, this, snapshot);
   }
@@ -80,7 +99,16 @@ public final class StreamingToolContextBridge {
     taskCreation.installReferences(snapshot.taskReferences());
     try {
       ActorExecutionContext.Principal principal = snapshot.principal();
-      return actorExecution.call(principal.actor(), principal.role(), operation::get);
+      return actorExecution.call(
+          principal.actor(),
+          principal.role(),
+          () ->
+              AgentRunContext.call(
+                  snapshot.runId,
+                  () ->
+                      snapshot.conversationId == null
+                          ? operation.get()
+                          : ConversationChannelContext.call(snapshot.conversationId, operation)));
     } finally {
       taskCreation.installReferences(previous);
     }
@@ -90,10 +118,17 @@ public final class StreamingToolContextBridge {
   public static final class Snapshot {
     private final ActorExecutionContext.Principal principal;
     private final List<ActorTaskReference> taskReferences;
+    private final String conversationId;
+    private final String runId;
 
     private Snapshot(
-        ActorExecutionContext.Principal principal, List<ActorTaskReference> taskReferences) {
+        ActorExecutionContext.Principal principal,
+        List<ActorTaskReference> taskReferences,
+        String conversationId,
+        String runId) {
       this.principal = principal;
+      this.conversationId = conversationId;
+      this.runId = runId;
       this.taskReferences = taskReferences;
     }
 
@@ -110,17 +145,33 @@ public final class StreamingToolContextBridge {
     private final ToolCallback delegate;
     private final StreamingToolContextBridge bridge;
     private final Snapshot snapshot;
+    private final boolean hostCandidate;
 
     private ContextRestoringToolCallback(
-        ToolCallback delegate, StreamingToolContextBridge bridge, Snapshot snapshot) {
+        ToolCallback delegate,
+        StreamingToolContextBridge bridge,
+        Snapshot snapshot,
+        boolean hostCandidate) {
       this.delegate = delegate;
       this.bridge = bridge;
       this.snapshot = snapshot;
+      this.hostCandidate = hostCandidate;
     }
 
     @Override
     public ToolDefinition getToolDefinition() {
-      return delegate.getToolDefinition();
+      return bridge.withinContext(
+          snapshot,
+          () -> {
+            var definition = delegate.getToolDefinition();
+            if (!hostCandidate || !bridge.hostPolicy.blockAutomaticContent(definition.name()))
+              return definition;
+            return ToolDefinition.builder()
+                .name(definition.name())
+                .inputSchema(definition.inputSchema())
+                .description("Load a configured skill by name after a user request.")
+                .build();
+          });
     }
 
     @Override
@@ -130,12 +181,22 @@ public final class StreamingToolContextBridge {
 
     @Override
     public String call(String toolInput) {
-      return bridge.withinContext(snapshot, () -> delegate.call(toolInput));
+      return bridge.withinContext(
+          snapshot, () -> invoke(toolInput, () -> delegate.call(toolInput)));
     }
 
     @Override
     public String call(String toolInput, ToolContext toolContext) {
-      return bridge.withinContext(snapshot, () -> delegate.call(toolInput, toolContext));
+      return bridge.withinContext(
+          snapshot, () -> invoke(toolInput, () -> delegate.call(toolInput, toolContext)));
+    }
+
+    private String invoke(String input, Supplier<String> operation) {
+      if (!hostCandidate) return operation.get();
+      return bridge
+          .hostPolicy
+          .beforeCall(delegate.getToolDefinition().name(), input)
+          .orElseGet(operation);
     }
   }
 
@@ -173,7 +234,7 @@ public final class StreamingToolContextBridge {
       ToolCallback[] callbacks = provider().getToolCallbacks();
       ToolCallback[] wrapped = new ToolCallback[callbacks.length];
       for (int i = 0; i < callbacks.length; i++) {
-        wrapped[i] = new ContextRestoringToolCallback(callbacks[i], bridge, snapshot);
+        wrapped[i] = new ContextRestoringToolCallback(callbacks[i], bridge, snapshot, true);
       }
       return wrapped;
     }

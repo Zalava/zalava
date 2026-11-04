@@ -9,7 +9,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Zalava Logs</title>
   <link rel="stylesheet" href="/css/vendor/bulma-1.0.4.min.css">
-  <link rel="stylesheet" href="/zalava-ui.css">
+  <link rel="stylesheet" href="/zalava-tokens.css">
+<link rel="stylesheet" href="/zalava-ui.css">
+<script src="/zalava-ui.js" defer></script>
 </head>
 <body>
 @template.ui.navigation(items = navigation.items(), activePage = "monitoring", csrfName = navigation.csrfParameter(), csrfValue = navigation.csrfToken(), accountName = navigation.accountName())
@@ -28,11 +30,7 @@
         <div class="notification is-info" role="status">No log lines have been recorded yet.</div>
       @else
         <section class="box" aria-label="Recent Zalava log lines">
-          <pre class="zalava-log-output">
-          @for(String line : logs.lines())
-${line}
-          @endfor
-          </pre>
+          <pre class="zalava-log-output">${String.join("\n", logs.lines())}</pre>
         </section>
       @endif
     @endif

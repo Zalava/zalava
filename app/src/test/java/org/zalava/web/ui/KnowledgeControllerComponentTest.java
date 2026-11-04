@@ -62,7 +62,7 @@ class KnowledgeControllerComponentTest {
         .perform(get("/knowledge").param("query", "renewal").with(asMember()))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("<title>Zalava Knowledge</title>")))
-        .andExpect(content().string(containsString("No sources.")))
+        .andExpect(content().string(containsString("No matching sources.")))
         .andExpect(content().string(not(containsString("sha256"))));
   }
 
@@ -78,7 +78,7 @@ class KnowledgeControllerComponentTest {
         .andExpect(content().string(containsString("household-notes.txt")))
         .andExpect(content().string(containsString("text/plain")))
         .andExpect(content().string(containsString("19 bytes")))
-        .andExpect(content().string(containsString("READY")))
+        .andExpect(content().string(containsString("Ready")))
         .andExpect(content().string(not(containsString(SOURCE_HASH))))
         .andExpect(content().string(not(containsString(member.id().value().toString()))));
   }
