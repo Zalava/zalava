@@ -34,10 +34,10 @@
         </header>
 
         @if(marketplaceMessage != null)
-            <article class="message is-success" role="status"><div class="message-body">${marketplaceMessage}</div></article>
+            <article class="message is-success modules-message" role="status"><div class="message-body">${marketplaceMessage}</div></article>
         @endif
     @if(marketplaceError != null)
-      <article class="message is-danger" role="alert"><div class="message-body">${marketplaceError}</div></article>
+      <article class="message is-danger modules-message" role="alert"><div class="message-body">${marketplaceError}</div></article>
     @endif
 
 
@@ -51,8 +51,8 @@
 <div class="module-entries">
 @for(var module : model.modules())
 <article class="module-entry managed-module-row" data-module="${module.moduleId()}" data-enabled-module="${module.installed() ? module.moduleId() : null}"><div class="module-copy">
-<div class="module-heading item-heading"><h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">${module.displayName()}</a></h3><span class="tag is-light">${module.state()}</span><span class="tag is-light">${module.loaded() ? "Loaded" : "Not loaded"}</span></div>
-<p class="is-size-7 has-text-grey">Version ${module.version()}</p>@if(module.description() != null && !module.description().isBlank() && !module.description().equalsIgnoreCase(module.displayName()))<p>${module.description()}</p>@endif<details><summary>Source and permissions</summary><p class="is-size-7">${module.source()} · ${module.permissionCount()} permissions</p></details></div>
+<div class="module-heading item-heading"><h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">${module.displayName()}</a></h3><span class="tag is-light">${module.state()}</span>@if(module.loaded())<span class="tag is-light">Loaded</span>@endif</div>
+<p class="is-size-7 has-text-grey">Version ${module.version()}</p>@if(module.description() != null && !module.description().isBlank() && !module.description().equalsIgnoreCase(module.displayName()))<p>${module.description()}</p>@endif<details class="module-source-details"><summary>Source and permissions</summary><p class="is-size-7 has-text-grey">@if(module.source() != null && !module.source().isBlank())${module.source()} · @endif${module.permissionCount()} ${module.permissionCount() == 1 ? "permission" : "permissions"}</p></details></div>
 <div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span></div></article>
 @endfor
 </div>@endif

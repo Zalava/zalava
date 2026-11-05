@@ -148,7 +148,9 @@ body {
 }
 
 .job-link {
-    color: var(--zalava-ink);
+    color: var(--zalava-primary);
+    text-decoration: underline;
+    text-underline-offset: .15em;
 }
 
 .job-link:hover {
@@ -995,8 +997,13 @@ body {
 .module-capability-search { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; }
 .module-capability-search .field { flex: 1 1 15rem; min-width: 0; margin-bottom: 0; }
 .item-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: .4rem .6rem; }
-.item-heading .title { margin-bottom: 0 !important; overflow-wrap: anywhere; }
+.item-heading > h3 { min-width: 0; overflow-wrap: anywhere; }
+.item-heading .title { margin-bottom: 0 !important; }
 .item-heading .tag { font-size: .7rem; height: 1.5rem; }
+.modules-message .message-body { overflow-wrap: anywhere; }
+.module-source-details { margin-top: .35rem; }
+.module-source-details summary { color: var(--zalava-primary); cursor: pointer; font-size: .875rem; line-height: 1.5rem; min-height: 24px; width: fit-content; }
+.module-source-details p { margin-top: .4rem; overflow-wrap: anywhere; }
 .module-search-input { position: relative; }
 .module-search-input:has(.module-search-clear) input { padding-right: 3rem; }
 .module-search-clear { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 44px; height: 100%; min-height: 40px; font-size: 1.5rem; line-height: 1; text-decoration: none; }

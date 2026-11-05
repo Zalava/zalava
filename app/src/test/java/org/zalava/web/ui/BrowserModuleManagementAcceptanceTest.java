@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
@@ -242,6 +243,50 @@ class BrowserModuleManagementAcceptanceTest {
           .setInputFiles(new FilePayload("fixture.jar", "application/java-archive", uploadedJar()));
       page.locator("[data-action=upload-module]").click();
       page.getByText("Uploaded uploaded-fixture 1.0.0 installed").waitFor();
+      var installed = page.locator("[data-module=uploaded-fixture]");
+      assertThat(installed.innerText()).contains("Installed · not loaded");
+      assertThat(installed.locator(".item-heading .tag").count()).isEqualTo(1);
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        assertThat(
+                (Boolean)
+                    page.locator(".modules-message .message-body")
+                        .evaluate(
+                            "element => element.scrollWidth <= element.clientWidth && element.getBoundingClientRect().right <= innerWidth"))
+            .isTrue();
+        capture(page, "installed-not-loaded-" + width);
+      }
+      page.locator("body").click(new Locator.ClickOptions().setPosition(1, 1));
+      var disclosure = installed.locator("summary");
+      boolean reached = false;
+      for (int i = 0; i < 100 && !reached; i++) {
+        page.keyboard().press("Tab");
+        reached = (Boolean) disclosure.evaluate("element => element === document.activeElement");
+      }
+      assertThat(reached).isTrue();
+      assertThat((Boolean) disclosure.evaluate("element => element.matches(':focus-visible')"))
+          .isTrue();
+      page.keyboard().press("Enter");
+      assertThat(installed.locator("details").getAttribute("open")).isNotNull();
+      assertThat(installed.locator("details p").innerText()).isEqualTo("1 permission");
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        assertThat(
+                (Boolean)
+                    installed
+                        .locator("details p")
+                        .evaluate(
+                            "element => element.scrollWidth <= element.clientWidth && element.getBoundingClientRect().right <= innerWidth"))
+            .isTrue();
+        capture(page, "installed-source-expanded-" + width);
+      }
+      disclosure.focus();
+      page.keyboard().press("Enter");
+      assertThat(installed.locator("details").getAttribute("open")).isNull();
       page.navigate(baseUrl() + "/monitoring#module-installations");
       assertThat(page.locator("[data-installation-history]").count()).isGreaterThan(0);
       assertThat(page.locator("#module-installations time[datetime]").count()).isGreaterThan(0);
