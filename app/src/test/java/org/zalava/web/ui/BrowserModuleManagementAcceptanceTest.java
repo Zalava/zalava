@@ -2,6 +2,7 @@ package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.deque.html.axecore.playwright.AxeBuilder;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
@@ -21,6 +22,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
@@ -114,7 +116,7 @@ class BrowserModuleManagementAcceptanceTest {
   }
 
   @Test
-  void capabilitiesAreSearchableAndCatalogOnlyDetailsStayTruthful() throws IOException {
+  void capabilitiesAreSearchableAndCatalogOnlyDetailsStayTruthful() throws Exception {
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -149,6 +151,34 @@ class BrowserModuleManagementAcceptanceTest {
         PlaywrightAssertions.assertThat(
                 page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Tasks")))
             .isVisible();
+        var accessibility =
+            new AxeBuilder(page)
+                .include(".module-capability-search")
+                .include("[data-catalog-module=zalava-module-tasks]")
+                .analyze();
+        assertThat(accessibility.getViolations())
+            .as("Catalog search and result accessibility at %s px", width)
+            .isEmpty();
+        page.addStyleTag(
+            new Page.AddStyleTagOptions()
+                .setContent(
+                    "*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }"));
+        Path baseline =
+            Path.of("build/browser-acceptance/module-catalog/search-form-" + width + ".png");
+        Files.createDirectories(baseline.getParent());
+        byte[] image =
+            page.locator(".module-capability-search")
+                .screenshot(new Locator.ScreenshotOptions().setPath(baseline));
+        var expected =
+            Map.of(
+                390, "cec2d7ad8bab3cda1a898f8c1542a4dff5c3ae2c4895d2867fed1f5db5922b3d",
+                768, "f7e77921bbf516a7e66e77f5c6cdac3f3c4bd62a9a05711880549231fcc45e9f",
+                1440, "dd37d2426f2c2233a20e4421ee292eeb26cca962503319572f247c26fe7db635");
+        if (System.getenv("ZALAVA_CI_PLAYWRIGHT_VERSION") != null) {
+          assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(image)))
+              .as("Search form screenshot at %s px; actual: %s", width, baseline)
+              .isEqualTo(expected.get(width));
+        }
         capture(page, "module-search-" + width);
         page.locator("[data-catalog-module=zalava-module-tasks] [data-catalog-detail-link]")
             .click();
