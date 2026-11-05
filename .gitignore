@@ -37,7 +37,10 @@ out/
 ### VS Code ###
 .vscode/
 
-/.codex
+/.codex/*
+!/.codex/agents/
+/.codex/agents/*
+!/.codex/agents/zalava-ux-reviewer.toml
 .tokensave/
 
 .playwright-mcp/

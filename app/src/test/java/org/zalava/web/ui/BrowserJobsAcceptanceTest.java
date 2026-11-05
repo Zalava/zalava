@@ -103,6 +103,11 @@ class BrowserJobsAcceptanceTest {
     tasks.save(
         ownerActor, ownerReference, task("Owner approval job", Task.Status.awaiting_human_input));
     createApproval(owner, ownerActor, ownerReference);
+    String longName = "LongTask".repeat(30);
+    tasks.save(
+        ownerActor,
+        ActorTaskReference.newReference(),
+        task(longName, Task.Status.awaiting_human_input));
     ActorTaskReference otherReference = ActorTaskReference.newReference();
     tasks.save(
         new Actor(other.id()),
@@ -130,8 +135,24 @@ class BrowserJobsAcceptanceTest {
             "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
         Path screenshot = Path.of("build/browser-acceptance/task-list-" + width + ".png");
         Files.createDirectories(screenshot.getParent());
+        assertThat(ownerPage.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
         ownerPage.screenshot(new Page.ScreenshotOptions().setPath(screenshot).setFullPage(true));
       }
+      ownerPage.setViewportSize(390, 900);
+      ownerPage.locator("body").click(new Locator.ClickOptions().setPosition(1, 1));
+      var taskLink = entry.locator("a.job-link");
+      boolean reached = false;
+      for (int i = 0; i < 100 && !reached; i++) {
+        ownerPage.keyboard().press("Tab");
+        reached = (Boolean) taskLink.evaluate("element => element === document.activeElement");
+      }
+      assertThat(reached).isTrue();
+      assertThat((Boolean) taskLink.evaluate("element => element.matches(':focus-visible')"))
+          .isTrue();
+      ownerPage.keyboard().press("Enter");
+      ownerPage.waitForURL(baseUrl() + "/jobs/" + ownerReference.value());
+      ownerPage.navigate(baseUrl() + "/jobs");
 
       Page otherPage = otherContext.newPage();
       signIn(otherPage, OTHER_LOGIN);
