@@ -56,6 +56,8 @@ solely to represent contexts. Keep public SDK contracts distinct from host adapt
 Before pushing, run the same verification entry point as `.github/workflows/verify.yml`
 locally in the pinned CI image:
 `CI=true GITHUB_ACTIONS=true bash ci/playwright/verify-in-image.sh "$(cat ci/playwright/image.txt)" --rerun-tasks --no-build-cache`.
+Run this gate against the final PR revision before marking it ready for review,
+and rerun it after subsequent changes before pushing the updated revision.
 This executes the complete gate with CI's Java/Node/browser/native dependencies;
 a host-only run or cached test results do not satisfy this pre-push requirement.
 Use the normal Gradle home. Report image authentication/runtime blockers before

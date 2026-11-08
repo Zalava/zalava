@@ -426,9 +426,28 @@ class ReleasedModuleDistributableAcceptanceTest {
   }
 
   private HttpResponse<byte[]> download(URI uri) throws Exception {
+    return download(http, uri, diagnostics, 1000);
+  }
+
+  static HttpResponse<byte[]> download(HttpClient http, URI uri, Path diagnostics, long retryDelay)
+      throws IOException, InterruptedException {
     HttpRequest request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET().build();
     for (int attempt = 1; ; attempt++) {
-      HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      HttpResponse<byte[]> response;
+      try {
+        response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      } catch (IOException failure) {
+        if (attempt == 3) {
+          throw failure;
+        }
+        Files.writeString(
+            diagnostics.resolve("download-retries.log"),
+            uri + " attempt=" + attempt + " error=" + failure + "\n",
+            StandardOpenOption.CREATE,
+            StandardOpenOption.APPEND);
+        Thread.sleep(retryDelay * attempt);
+        continue;
+      }
       if (attempt == 3 || !List.of(502, 503, 504).contains(response.statusCode())) {
         return response;
       }
@@ -437,7 +456,7 @@ class ReleasedModuleDistributableAcceptanceTest {
           uri + " attempt=" + attempt + " status=" + response.statusCode() + "\n",
           StandardOpenOption.CREATE,
           StandardOpenOption.APPEND);
-      Thread.sleep(1000L * attempt);
+      Thread.sleep(retryDelay * attempt);
     }
   }
 
