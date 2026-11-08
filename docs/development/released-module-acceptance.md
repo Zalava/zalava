@@ -69,7 +69,11 @@ Failed or cancelled runs retain the complete archive, including module binaries.
 
 `:app:ociImageAcceptanceTest` builds the digest-pinned Buildpacks image and runs
 the fleet installation/permission/configuration/tool/persistence journey against
-real containers instead of the JAR subprocess. Independent container restarts
+real containers instead of the JAR subprocess. The default image is reused for
+both direct Docker and Compose journeys; each gets its own disposable database
+and workspace. Both journeys are attempted if either journey fails.
+`:app:ociComposeAcceptanceTest` is a lifecycle alias for this combined lane.
+Independent container restarts
 reuse only the disposable database and workspace. The same immutable module pins
 and checksums apply; module classes are not injected into the host.
 

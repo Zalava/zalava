@@ -79,14 +79,19 @@ class LeydenImageIntegrationTest {
                     value.startsWith("SPRING_DATASOURCE_") || value.contains(databasePassword));
         if (Boolean.getBoolean("zalava.test.oci.acceptance")) {
           verifyJvm(imageName, diagnostics);
-          new OciRuntimeAcceptance(imageName, diagnostics).verify();
-          if (Boolean.getBoolean("zalava.test.oci.compose")) {
-            new OciComposeAcceptance(imageName, diagnostics).verify();
-          }
-          var acceptance = new ReleasedModuleDistributableAcceptanceTest();
-          acceptance.ociImage = imageName;
-          acceptance.ociCompose = Boolean.getBoolean("zalava.test.oci.compose");
-          acceptance.uploadsReleasedFleetAndPreservesAuthorizedEffectsAcrossPackagedHostRestarts();
+          OciAcceptanceJourneys.verify(
+              () -> {
+                new OciRuntimeAcceptance(imageName, diagnostics).verify();
+                verifyReleasedModules(imageName, false);
+                return null;
+              },
+              () -> {
+                if (Boolean.getBoolean("zalava.test.oci.compose")) {
+                  new OciComposeAcceptance(imageName, diagnostics).verify();
+                  verifyReleasedModules(imageName, true);
+                }
+                return null;
+              });
         }
       } finally {
         // Remove only this invocation's caches; retain reports for success/failure.
@@ -122,6 +127,13 @@ class LeydenImageIntegrationTest {
     } finally {
       Files.deleteIfExists(log);
     }
+  }
+
+  private void verifyReleasedModules(String image, boolean compose) throws Exception {
+    var acceptance = new ReleasedModuleDistributableAcceptanceTest();
+    acceptance.ociImage = image;
+    acceptance.ociCompose = compose;
+    acceptance.uploadsReleasedFleetAndPreservesAuthorizedEffectsAcrossPackagedHostRestarts();
   }
 
   private void verifyJvm(String image, Path diagnostics) throws Exception {

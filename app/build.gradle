@@ -655,7 +655,7 @@ tasks.named('check') {
 }
 
 // Missing Docker or released artifacts fail the required distributable lane.
-['ociImageAcceptanceTest', 'ociFullJreImageAcceptanceTest', 'ociComposeAcceptanceTest'].each { taskName ->
+['ociImageAcceptanceTest', 'ociFullJreImageAcceptanceTest'].each { taskName ->
 tasks.register(taskName, Test) {
     group = 'verification'
     description = 'Builds the pinned OCI image and verifies its JVM and real released-module browser journeys.'
@@ -667,10 +667,8 @@ tasks.register(taskName, Test) {
     useJUnitPlatform { includeTags 'leyden-image' }
     shouldRunAfter tasks.named('test'), tasks.named('architectureTest'), tasks.named('browserAcceptanceTest'), tasks.named('releasedModuleAcceptanceTest')
     systemProperty 'zalava.test.oci.acceptance', 'true'
-    if (taskName == 'ociComposeAcceptanceTest') {
-        systemProperty 'zalava.test.oci.compose', 'true'
-        shouldRunAfter tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest')
-    }
+    // Direct Docker and Compose exercise the same image with independent fixtures.
+    systemProperty 'zalava.test.oci.compose', taskName == 'ociImageAcceptanceTest' ? 'true' : 'false'
     systemProperty 'zalava.test.external-module-jar', tasks.named('externalModuleFixtureJar').flatMap { it.archiveFile }.get().asFile
     systemProperty 'oci.aot', providers.gradleProperty('oci.aot').orElse('true').get()
     systemProperty 'oci.jlink', taskName == 'ociFullJreImageAcceptanceTest' ? 'false' : providers.gradleProperty('oci.jlink').orElse('true').get()
@@ -679,5 +677,11 @@ tasks.register(taskName, Test) {
     if (requestedImage.present && taskName == 'ociImageAcceptanceTest') systemProperty 'zalava.leyden.image-name', requestedImage.get()
     outputs.upToDateWhen { false }
 }
+}
+// Keep the Compose entry point without rebuilding the default JVM variant.
+tasks.register('ociComposeAcceptanceTest') {
+    group = 'verification'
+    description = 'Runs direct Docker and Compose acceptance against one freshly built image.'
+    dependsOn tasks.named('ociImageAcceptanceTest')
 }
 tasks.named('check') { dependsOn tasks.named('ociImageAcceptanceTest'), tasks.named('ociFullJreImageAcceptanceTest'), tasks.named('ociComposeAcceptanceTest') }
