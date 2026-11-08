@@ -154,8 +154,11 @@ backup/upgrade operations remain operator actions.
 
 ## Verification
 
-`./gradlew :app:ociComposeAcceptanceTest` builds an image and starts a unique
-disposable Compose project. It checks fresh initialization, authenticated
+`./gradlew :app:ociComposeAcceptanceTest` is a lifecycle alias for
+`:app:ociImageAcceptanceTest`. The underlying task builds the default JVM image
+once and runs direct Docker and Compose journeys against that same image, with
+independent disposable databases and workspaces. Compose starts a unique
+disposable project. It checks fresh initialization, authenticated
 browser use/invalid login, app role restrictions, actual limits/image identity,
 app/database recreation, transient DB readiness recovery, backup/restore and
 graceful stop. It also runs the immutable released-fleet browser/permission/tool

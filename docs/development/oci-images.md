@@ -44,14 +44,17 @@ known vulnerabilities. Base-size selection does not establish a clean scan.
 ```sh
 # Build a named local image using an isolated PostgreSQL training database:
 ./gradlew :app:leydenImageIntegrationTest -Pleyden.image-name=zalava:local
-# Build and exercise the real OCI image through the released-module browser lane:
+# Build once and exercise the real OCI image through Docker and Compose browser lanes:
 ./gradlew :app:ociImageAcceptanceTest -Poci.image=zalava:verified
 ```
 
 The image task requires Java 25, Docker access and network access to the pinned
 builder's dependencies. Full OCI acceptance also requires the repository's
 Playwright runtime and immutable released module artifacts. `check` includes
-both full-JRE/AOT and jlink/AOT acceptance; missing prerequisites fail. Use the pinned CI verification image
+both full-JRE/AOT and jlink/AOT acceptance; missing prerequisites fail. The default
+JVM variant is built once for direct Docker and Compose acceptance.
+`ociComposeAcceptanceTest` is an alias for `ociImageAcceptanceTest`; requesting
+both tasks does not build another image. Use the pinned CI verification image
 for the complete local gate before pushing. Reports are retained beneath
 `app/build/reports/oci-image` and `released-module-acceptance`.
 
