@@ -780,7 +780,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         page.navigate(baseUrl + "/modules");
         assertThat(page.locator("[data-action=restart-zalava]").isEnabled()).isTrue();
         assertThat(page.locator("[data-zalava-restart-status]").textContent())
-            .contains("Ready to restart the Zalava application");
+            .contains("Restart Zalava to apply module changes.");
         for (int width : new int[] {1440, 768, 390}) {
           page.setViewportSize(width, 900);
           if (width <= 1024)

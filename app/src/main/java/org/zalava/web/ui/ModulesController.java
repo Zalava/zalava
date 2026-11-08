@@ -121,7 +121,11 @@ public class ModulesController {
   }
 
   @PostMapping("/modules/restart")
-  public String restartSea(Model model, RedirectAttributes redirectAttributes) {
+  public String restartSea(
+      Model model,
+      RedirectAttributes redirectAttributes,
+      @RequestParam(defaultValue = "modules") String returnTo) {
+    boolean fromSettings = "settings".equals(returnTo);
     model.addAttribute("previous", restartProgress.generation());
     try {
       ManagedZalavaRestart.Status status = managedZalavaRestart.request();
@@ -129,11 +133,13 @@ public class ModulesController {
           && (status.phase() == ManagedZalavaRestart.Phase.REQUESTED
               || status.phase() == ManagedZalavaRestart.Phase.COMPLETED))
         return "ui/restart-progress";
-      redirectAttributes.addFlashAttribute("marketplaceMessage", status.message());
+      redirectAttributes.addFlashAttribute(
+          fromSettings ? "settingsMessage" : "marketplaceMessage", status.message());
     } catch (RuntimeException exception) {
-      redirectAttributes.addFlashAttribute("marketplaceError", controlError(exception));
+      redirectAttributes.addFlashAttribute(
+          fromSettings ? "settingsError" : "marketplaceError", controlError(exception));
     }
-    return "redirect:/modules";
+    return fromSettings ? "redirect:/settings?section=system" : "redirect:/modules";
   }
 
   @PostMapping("/modules/catalog/refresh")
@@ -691,7 +697,8 @@ public class ModulesController {
         statusClass,
         provenance,
         configuration.label(),
-        configuration.cssClass());
+        configuration.cssClass(),
+        external);
   }
 
   private static boolean isExternal(ZalavaModule module) {
@@ -1005,6 +1012,26 @@ public class ModulesController {
     public List<InstallationRequestEntry> pendingInstallations() {
       return installationRequests.stream().filter(InstallationRequestEntry::pending).toList();
     }
+
+    public boolean moduleRestartRequired() {
+      return loadedModules.stream()
+              .anyMatch(
+                  loaded ->
+                      loaded.external()
+                          && enabledModules.stream()
+                              .noneMatch(
+                                  enabled ->
+                                      enabled.moduleId().equals(loaded.moduleId())
+                                          && enabled.version().equals(loaded.version())))
+          || enabledModules.stream()
+              .anyMatch(
+                  enabled ->
+                      loadedModules.stream()
+                          .noneMatch(
+                              loaded ->
+                                  loaded.moduleId().equals(enabled.moduleId())
+                                      && loaded.version().equals(enabled.version())));
+    }
   }
 
   public record ManagedModuleRow(
@@ -1039,7 +1066,8 @@ public class ModulesController {
       String statusClass,
       String provenance,
       String configurationLabel,
-      String configurationClass) {}
+      String configurationClass,
+      boolean external) {}
 
   public record EnabledModuleEntry(
       String moduleId,
