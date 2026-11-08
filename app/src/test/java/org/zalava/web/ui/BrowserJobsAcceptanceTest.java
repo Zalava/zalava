@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import java.io.IOException;
@@ -102,6 +103,11 @@ class BrowserJobsAcceptanceTest {
     tasks.save(
         ownerActor, ownerReference, task("Owner approval job", Task.Status.awaiting_human_input));
     createApproval(owner, ownerActor, ownerReference);
+    String longName = "LongTask".repeat(30);
+    tasks.save(
+        ownerActor,
+        ActorTaskReference.newReference(),
+        task(longName, Task.Status.awaiting_human_input));
     ActorTaskReference otherReference = ActorTaskReference.newReference();
     tasks.save(
         new Actor(other.id()),
@@ -118,6 +124,35 @@ class BrowserJobsAcceptanceTest {
       ownerPage.navigate(baseUrl() + "/jobs");
       ownerPage.getByText("Owner approval job").waitFor();
       assertThat(ownerPage.locator("body").innerText()).doesNotContain("Other actor job");
+      var entry =
+          ownerPage
+              .locator(".job-entry")
+              .filter(new Locator.FilterOptions().setHasText("Owner approval job"));
+      assertThat(entry.locator(".item-heading .tag").count()).isEqualTo(1);
+      for (int width : new int[] {390, 768, 1440}) {
+        ownerPage.setViewportSize(width, 900);
+        ownerPage.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        Path screenshot = Path.of("build/browser-acceptance/task-list-" + width + ".png");
+        Files.createDirectories(screenshot.getParent());
+        assertThat(ownerPage.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+            .isEqualTo(true);
+        ownerPage.screenshot(new Page.ScreenshotOptions().setPath(screenshot).setFullPage(true));
+      }
+      ownerPage.setViewportSize(390, 900);
+      ownerPage.locator("body").click(new Locator.ClickOptions().setPosition(1, 1));
+      var taskLink = entry.locator("a.job-link");
+      boolean reached = false;
+      for (int i = 0; i < 100 && !reached; i++) {
+        ownerPage.keyboard().press("Tab");
+        reached = (Boolean) taskLink.evaluate("element => element === document.activeElement");
+      }
+      assertThat(reached).isTrue();
+      assertThat((Boolean) taskLink.evaluate("element => element.matches(':focus-visible')"))
+          .isTrue();
+      ownerPage.keyboard().press("Enter");
+      ownerPage.waitForURL(baseUrl() + "/jobs/" + ownerReference.value());
+      ownerPage.navigate(baseUrl() + "/jobs");
 
       Page otherPage = otherContext.newPage();
       signIn(otherPage, OTHER_LOGIN);

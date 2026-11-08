@@ -2,9 +2,11 @@ package org.zalava.web.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.deque.html.axecore.playwright.AxeBuilder;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
@@ -20,10 +22,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -112,7 +116,7 @@ class BrowserModuleManagementAcceptanceTest {
   }
 
   @Test
-  void capabilitiesAreSearchableAndCatalogOnlyDetailsStayTruthful() throws IOException {
+  void capabilitiesAreSearchableAndCatalogOnlyDetailsStayTruthful() throws Exception {
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -124,6 +128,16 @@ class BrowserModuleManagementAcceptanceTest {
       assertThat(page.locator("input[name=moduleJar]").isVisible()).isFalse();
       page.locator("[data-action=refresh-catalog]").click();
       page.locator("[data-catalog-module=zalava-module-tasks]").waitFor();
+      PlaywrightAssertions.assertThat(page.locator("[data-catalog-refreshed-at] time"))
+          .hasAttribute("datetime", Pattern.compile(".+Z"));
+      assertThat(page.locator("[data-catalog-refreshed-at] time").innerText())
+          .doesNotContain("T", "Z");
+      page.locator("#module-search").focus();
+      page.keyboard().press("Tab");
+      PlaywrightAssertions.assertThat(
+              page.getByRole(
+                  AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true)))
+          .isFocused();
       for (int width : new int[] {1440, 768, 390}) {
         page.setViewportSize(width, 900);
         page.locator("#module-search").fill("schedule");
@@ -132,7 +146,39 @@ class BrowserModuleManagementAcceptanceTest {
             .click();
         PlaywrightAssertions.assertThat(page.locator("[data-catalog-module]")).hasCount(1);
         assertThat(page.locator("[data-catalog-module=zalava-module-tasks]").innerText())
-            .contains("Not installed");
+            .contains("Not installed", "Create and schedule jobs")
+            .doesNotContain("zalava-module-tasks", "View module");
+        PlaywrightAssertions.assertThat(
+                page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Tasks")))
+            .isVisible();
+        var accessibility =
+            new AxeBuilder(page)
+                .include(".module-capability-search")
+                .include("[data-catalog-module=zalava-module-tasks]")
+                .analyze();
+        assertThat(accessibility.getViolations())
+            .as("Catalog search and result accessibility at %s px", width)
+            .isEmpty();
+        page.addStyleTag(
+            new Page.AddStyleTagOptions()
+                .setContent(
+                    "*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }"));
+        Path baseline =
+            Path.of("build/browser-acceptance/module-catalog/search-form-" + width + ".png");
+        Files.createDirectories(baseline.getParent());
+        byte[] image =
+            page.locator(".module-capability-search")
+                .screenshot(new Locator.ScreenshotOptions().setPath(baseline));
+        var expected =
+            Map.of(
+                390, "cec2d7ad8bab3cda1a898f8c1542a4dff5c3ae2c4895d2867fed1f5db5922b3d",
+                768, "f7e77921bbf516a7e66e77f5c6cdac3f3c4bd62a9a05711880549231fcc45e9f",
+                1440, "dd37d2426f2c2233a20e4421ee292eeb26cca962503319572f247c26fe7db635");
+        if (System.getenv("ZALAVA_CI_PLAYWRIGHT_VERSION") != null) {
+          assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(image)))
+              .as("Search form screenshot at %s px; actual: %s", width, baseline)
+              .isEqualTo(expected.get(width));
+        }
         capture(page, "module-search-" + width);
         page.locator("[data-catalog-module=zalava-module-tasks] [data-catalog-detail-link]")
             .click();
@@ -148,7 +194,14 @@ class BrowserModuleManagementAcceptanceTest {
         page.getByText("No modules match this search.", new Page.GetByTextOptions().setExact(false))
             .waitFor();
         capture(page, "module-no-match-" + width);
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Clear search")).click();
+        page.locator("#module-search").focus();
+        page.keyboard().press("Tab");
+        PlaywrightAssertions.assertThat(
+                page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Clear search")))
+            .isFocused();
+        page.keyboard().press("Enter");
+        PlaywrightAssertions.assertThat(page.locator("[data-catalog-module]")).hasCount(2);
+        PlaywrightAssertions.assertThat(page.locator("#module-search")).hasValue("");
       }
       page.locator("[data-module-developer-options] summary").click();
       assertThat(page.locator("input[name=moduleJar]").isVisible()).isTrue();
@@ -220,6 +273,50 @@ class BrowserModuleManagementAcceptanceTest {
           .setInputFiles(new FilePayload("fixture.jar", "application/java-archive", uploadedJar()));
       page.locator("[data-action=upload-module]").click();
       page.getByText("Uploaded uploaded-fixture 1.0.0 installed").waitFor();
+      var installed = page.locator("[data-module=uploaded-fixture]");
+      assertThat(installed.innerText()).contains("Installed · not loaded");
+      assertThat(installed.locator(".item-heading .tag").count()).isEqualTo(1);
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        assertThat(
+                (Boolean)
+                    page.locator(".modules-message .message-body")
+                        .evaluate(
+                            "element => element.scrollWidth <= element.clientWidth && element.getBoundingClientRect().right <= innerWidth"))
+            .isTrue();
+        capture(page, "installed-not-loaded-" + width);
+      }
+      page.locator("body").click(new Locator.ClickOptions().setPosition(1, 1));
+      var disclosure = installed.locator("summary");
+      boolean reached = false;
+      for (int i = 0; i < 100 && !reached; i++) {
+        page.keyboard().press("Tab");
+        reached = (Boolean) disclosure.evaluate("element => element === document.activeElement");
+      }
+      assertThat(reached).isTrue();
+      assertThat((Boolean) disclosure.evaluate("element => element.matches(':focus-visible')"))
+          .isTrue();
+      page.keyboard().press("Enter");
+      assertThat(installed.locator("details").getAttribute("open")).isNotNull();
+      assertThat(installed.locator("details p").innerText()).isEqualTo("1 permission");
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        assertThat(
+                (Boolean)
+                    installed
+                        .locator("details p")
+                        .evaluate(
+                            "element => element.scrollWidth <= element.clientWidth && element.getBoundingClientRect().right <= innerWidth"))
+            .isTrue();
+        capture(page, "installed-source-expanded-" + width);
+      }
+      disclosure.focus();
+      page.keyboard().press("Enter");
+      assertThat(installed.locator("details").getAttribute("open")).isNull();
       page.navigate(baseUrl() + "/monitoring#module-installations");
       assertThat(page.locator("[data-installation-history]").count()).isGreaterThan(0);
       assertThat(page.locator("#module-installations time[datetime]").count()).isGreaterThan(0);

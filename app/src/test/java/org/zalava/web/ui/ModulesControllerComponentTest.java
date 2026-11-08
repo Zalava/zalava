@@ -384,7 +384,8 @@ class ModulesControllerComponentTest {
         .andExpect(
             content().string(containsString("https://github.com/Zalava/zalava-module-example")))
         .andExpect(content().string(containsString("permissions")))
-        .andExpect(content().string(containsString("1 permissions")));
+        .andExpect(content().string(containsString("1 permission")))
+        .andExpect(content().string(not(containsString("1 permissions"))));
   }
 
   @Test

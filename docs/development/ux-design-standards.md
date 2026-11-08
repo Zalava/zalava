@@ -39,3 +39,27 @@ Use WCAG 2.2 AA as the accessibility target. Consult Material Design 3 for adapt
 5. Record screens, viewports, interactions, results and any blockers in the PR and the **private** execution/acceptance plan in `cordin/zalava-dev`. Do not commit screenshots, traces, local data or private plans to the public repository.
 
 For documentation-only changes, review the standards and links for consistency; browser verification is required when UI behavior or appearance is actually modified.
+
+## Visual review evidence
+
+For a substantive UI change, record the user task and affected screens, rendered revision, and the viewports and applicable normal, empty, loading, error and permission states inspected. Include keyboard and focus results, screenshot locations in private evidence, concrete findings and their resolution or remaining blockers. Inspect 390×844, 768×1024 and 1440×900 when supported, plus landscape where relevant; explain substitutions. Critique clarity, hierarchy, action prominence, grouping, spacing, consistency, density, navigation and feedback alongside automated assertions. Reinspect material corrections before handoff. A screen that cannot be opened is a verification blocker, not a pass. Scale this evidence to the impact of the change.
+
+## Reusable product patterns
+
+`zalava-tokens.css` defines the shared semantic palette, font stack, spacing, radii, focus ring, motion and shadows used by the product shell and chat. Use canvas for the page, raised surfaces for grouped tasks, muted text for secondary context and semantic status colors with text. Use the existing heading hierarchy and shared form and navigation components rather than inventing page-local scales. At narrow widths allow groups and navigation to reflow without clipping or losing actions.
+
+For a list of items, use a descriptive item name as its link to details when a separate open control would lead to the same destination. Put concise, readable status beside the name when space allows, and allow it to wrap without overlap. Keep distinct actions and their meaning visible. For a single applied search, an accessible clear control inside the field can reclaim space if it restores the unfiltered results and works without a pointer. Keep descriptions that help users choose among items; move technical identifiers and deeper configuration into details when they are not needed for the list task.
+
+Use sign-in as a reference for a clearly labeled form with one primary action and visible focus. Settings illustrates grouped options and persistent labels; keep controls within their group and let long headings or status labels wrap at narrow widths. For catalog and installed-module lists, prioritize the linked name, concise status and useful description. Avoid exposing an identifier, repeated description or a second navigation control when it adds no information to the list task. These examples guide hierarchy, not pixel-for-pixel reproduction.
+
+## Review before a material UI PR
+
+After implementation and real-browser inspection, arrange an independent critique in a context distinct from the implementation. Apply the same host-level standard to module-contributed screens. Record each finding with severity, impacted task, concrete evidence and a focused correction; verify fixes in the browser. Resolve accessibility blockers and unusable primary flows before handoff. Minor subjective preferences need not block review. Summarize affected screens, viewport and state coverage, unresolved findings and decisions needing human input in the PR; keep screenshots and detailed findings in private evidence. If an independent review or real screen is unavailable, state the limitation rather than claiming it passed.
+
+## Automated visual and accessibility checks
+
+The catalog search fixture scans the search and result with axe and compares a small deterministic search-form screenshot against reviewed SHA-256 baselines at phone, tablet and desktop widths in the pinned CI image. It disables animation and caret rendering for capture and stores the actual image under `app/build/browser-acceptance` for diagnosis. Screenshot files remain private. When an intentional design change alters a baseline, inspect the old and new images at all affected widths, document the rationale in private evidence and the PR, then update the digest; never accept a digest merely to make a failure pass. Unpinned host runs still execute the browser and accessibility checks but do not compare pixel digests. Automated checks cannot establish visual quality, ease of understanding or task efficiency.
+
+## Learning from review
+
+Record substantive human-requested UX corrections in the private findings ledger with the screen, symptom, impact, correction, likely cause and recurrence. Periodically group comparable findings and propose a shared pattern, guidance or focused regression when the evidence supports it; obtain maintainer approval before establishing a new norm. Track the number and severity of owner-requested corrections after handoff for comparable UI PRs, along with review time and false positives where measured. Use unknown for unreviewed or unmeasured cases, and report sample size and limitations rather than claiming a trend from missing data.

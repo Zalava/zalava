@@ -34,10 +34,10 @@
         </header>
 
         @if(marketplaceMessage != null)
-            <article class="message is-success" role="status"><div class="message-body">${marketplaceMessage}</div></article>
+            <article class="message is-success modules-message" role="status"><div class="message-body">${marketplaceMessage}</div></article>
         @endif
     @if(marketplaceError != null)
-      <article class="message is-danger" role="alert"><div class="message-body">${marketplaceError}</div></article>
+      <article class="message is-danger modules-message" role="alert"><div class="message-body">${marketplaceError}</div></article>
     @endif
 
 
@@ -51,9 +51,9 @@
 <div class="module-entries">
 @for(var module : model.modules())
 <article class="module-entry managed-module-row" data-module="${module.moduleId()}" data-enabled-module="${module.installed() ? module.moduleId() : null}"><div class="module-copy">
-<div class="module-heading"><h3 class="title is-6 mb-1">${module.displayName()}</h3><span class="tag is-light">${module.state()}</span><span class="tag is-light">${module.loaded() ? "Loaded" : "Not loaded"}</span></div>
-<p class="is-size-7 has-text-grey">${module.moduleId()} · ${module.version()}</p><p>${module.description()}</p><details><summary>Source and permissions</summary><p class="is-size-7">${module.source()} · ${module.permissionCount()} permissions</p></details></div>
-<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span><a class="button is-link is-light is-small" href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">Open module</a></div></article>
+<div class="module-heading item-heading"><h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">${module.displayName()}</a></h3><span class="tag is-light">${module.state()}</span>@if(module.loaded())<span class="tag is-light">Loaded</span>@endif</div>
+<p class="is-size-7 has-text-grey">Version ${module.version()}</p>@if(module.description() != null && !module.description().isBlank() && !module.description().equalsIgnoreCase(module.displayName()))<p>${module.description()}</p>@endif<details class="module-source-details"><summary>Source and permissions</summary><p class="is-size-7 has-text-grey">@if(module.source() != null && !module.source().isBlank())${module.source()} · @endif${module.permissionCount()} ${module.permissionCount() == 1 ? "permission" : "permissions"}</p></details></div>
+<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span></div></article>
 @endfor
 </div>@endif
 </section>
@@ -75,18 +75,20 @@
                 <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
                 <button class="button is-light" type="submit" data-action="refresh-catalog">Check catalog</button>
                 @if(model.catalogRefreshedAt() != null)
-                    <span class="has-text-grey is-size-7 ml-3" data-catalog-refreshed-at>Refreshed ${model.catalogRefreshedAt()}</span>
+                    <p class="has-text-grey is-size-7 mt-2" data-catalog-refreshed-at>Last checked <time datetime="${model.catalogRefreshedAt()}" data-local-time>${model.catalogRefreshedAt()}</time></p>
                 @endif
             </form>
 
             <form method="get" action="/modules" class="module-capability-search mb-4" role="search">
                 <div class="field"><label class="label" for="module-search">Search capabilities</label>
-                    <input class="input" id="module-search" name="q" value="${catalogQuery}" maxlength="200" placeholder="Search by capability or module name">
+                    <div class="module-search-input">
+                        <input class="input" id="module-search" name="q" value="${catalogQuery}" maxlength="200" placeholder="Search by capability or module name">
+                        @if(!catalogQuery.isBlank())
+                            <a class="module-search-clear" href="/modules" aria-label="Clear search" title="Clear search">×</a>
+                        @endif
+                    </div>
                 </div>
                 <button class="button is-link" type="submit">Search</button>
-                @if(!catalogQuery.isBlank())
-                    <a class="button is-light" href="/modules">Clear search</a>
-                @endif
             </form>
             @if(model.catalogModules().isEmpty())
                 @if(!catalogQuery.isBlank() && model.catalogRefreshedAt() != null)
@@ -99,20 +101,15 @@
                     @for(CatalogModuleEntry module : model.catalogModules())
                         <article class="module-entry" data-catalog-module="${module.moduleId()}">
                             <div class="module-copy">
-                                <div class="module-heading">
-                                    <h3 class="title is-6 mb-1">${module.displayName()}</h3>
+                                <div class="module-heading item-heading">
+                                    <h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-catalog-detail-link="${module.moduleId()}">${module.displayName()}</a></h3>
                                     @if(module.installed())
                                         <span class="tag is-info is-light" data-catalog-installed>Installed ${module.installedVersion()}</span>
                                     @else
                                         <span class="tag is-light">Not installed</span>
                                     @endif
                                 </div>
-                                <p class="has-text-grey is-size-7 mb-2">${module.moduleId()}</p>
                                 <p class="module-description">${module.description()}</p>
-                                <p class="mt-3">
-                                    <a class="tag is-link is-light" href="/modules/${module.moduleId()}"
-                                       data-catalog-detail-link="${module.moduleId()}">View module</a>
-                                </p>
                             </div>
                         </article>
                     @endfor
