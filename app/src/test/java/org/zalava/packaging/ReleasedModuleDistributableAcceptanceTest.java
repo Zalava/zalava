@@ -39,10 +39,12 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import org.jobrunr.jobs.context.JobContext;
 import org.jobrunr.jobs.mappers.JobMapper;
 import org.jobrunr.scheduling.JobScheduler;
@@ -69,6 +71,8 @@ import tools.jackson.databind.ObjectMapper;
 /** Real released JARs, a packaged host process, real PostgreSQL and browser entry points. */
 @Tag("released-module-distributable")
 class ReleasedModuleDistributableAcceptanceTest {
+  private static final Pattern STARTED_HTTP_PORT =
+      Pattern.compile("Tomcat started on port (\\d+) \\(http\\) with context path");
   private static final ObjectMapper JSON = new ObjectMapper();
   private static final String LOGIN = "released-module-admin";
   private static final String INITIAL_PASSWORD = "DisposableSdkPassword-123";
@@ -1996,78 +2000,111 @@ class ReleasedModuleDistributableAcceptanceTest {
   private void start(
       PostgreSQLContainer postgres, Path workspace, String profile, boolean jobsEnabled)
       throws Exception {
-    int port;
-    try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
-      port = socket.getLocalPort();
-    }
-    baseUrl = "http://127.0.0.1:" + port;
     Path jar =
         Path.of(System.getProperty("zalava.test.boot-jar", "unused-oci.jar")).toAbsolutePath();
     if (ociImage == null) assertThat(jar).exists();
-    Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
-    process =
-        hostProcessBuilder(
-                Path.of(System.getProperty("java.home"), "bin/java").toString(),
-                "-Xmx768m",
-                "-Dhttps.proxyHost=127.0.0.1",
-                "-Dhttps.proxyPort=" + (catalogProxy == null ? 0 : catalogProxy.port()),
-                "-Djavax.net.ssl.trustStore="
-                    + (catalogProxy == null ? "" : catalogProxy.trustStore()),
-                "-Djavax.net.ssl.trustStorePassword=fixture",
-                "-Dzalava.module.shopping-list.sqlite.path="
-                    + workspace.resolve("shopping-list.sqlite"),
-                "-jar",
-                jar.toString(),
-                "--spring.profiles.active=" + profile,
-                "--server.address=127.0.0.1",
-                "--server.port=" + port,
-                "--management.server.port=0",
-                "--spring.datasource.url=" + postgres.getJdbcUrl(),
-                "--spring.datasource.username=" + postgres.getUsername(),
-                "--spring.datasource.password=" + postgres.getPassword(),
-                "--agent.workspace=" + workspace.toUri(),
-                "--zalava.module-configuration.root=" + workspace.resolve("configuration"),
-                "--zalava.accounts.security-enabled=true",
-                "--zalava.accounts.bootstrap-login=" + LOGIN,
-                "--zalava.accounts.bootstrap-password=" + INITIAL_PASSWORD,
-                "--agent.onboarding.completed=true",
-                "--spring.ai.model.chat=unknown",
-                "--agent.channels.telegram.token=false",
-                "--agent.channels.telegram.username=false",
-                "--jobrunr.background-job-server.enabled=" + jobsEnabled,
-                "--jobrunr.dashboard.enabled=false")
-            .directory(workspace.toFile())
-            .redirectErrorStream(true)
-            .redirectOutput(log.toFile())
-            .start();
-    long deadline = System.nanoTime() + Duration.ofSeconds(120).toNanos();
-    while (System.nanoTime() < deadline) {
-      assertThat(process.isAlive()).as("packaged host startup; diagnostics: %s", log).isTrue();
-      try {
-        if (http.send(
-                    HttpRequest.newBuilder(URI.create(baseUrl + "/login"))
-                        .timeout(Duration.ofSeconds(2))
-                        .GET()
-                        .build(),
-                    HttpResponse.BodyHandlers.discarding())
-                .statusCode()
-            == 200) {
-          if (ociImage != null) {
-            assertThat(Files.readString(log))
-                .as("usable AOT cache in image; diagnostics: %s", log)
-                .doesNotContain(
-                    "Unable to map shared spaces",
-                    "An error has occurred while processing the AOT cache",
-                    "size has changed");
-          }
-          return;
-        }
-      } catch (IOException ignored) {
-        // The packaged server has not bound its random loopback port yet.
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      int port;
+      try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+        port = socket.getLocalPort();
       }
-      Thread.sleep(250);
+      baseUrl = "http://127.0.0.1:" + port;
+      Path log = diagnostics.resolve("host-" + ++generation + "-" + profile + ".log");
+      process =
+          hostProcessBuilder(
+                  Path.of(System.getProperty("java.home"), "bin/java").toString(),
+                  "-Xmx768m",
+                  "-Dhttps.proxyHost=127.0.0.1",
+                  "-Dhttps.proxyPort=" + (catalogProxy == null ? 0 : catalogProxy.port()),
+                  "-Djavax.net.ssl.trustStore="
+                      + (catalogProxy == null ? "" : catalogProxy.trustStore()),
+                  "-Djavax.net.ssl.trustStorePassword=fixture",
+                  "-Dzalava.module.shopping-list.sqlite.path="
+                      + workspace.resolve("shopping-list.sqlite"),
+                  "-jar",
+                  jar.toString(),
+                  "--spring.profiles.active=" + profile,
+                  "--server.address=127.0.0.1",
+                  "--server.port=" + port,
+                  "--management.server.port=0",
+                  "--spring.datasource.url=" + postgres.getJdbcUrl(),
+                  "--spring.datasource.username=" + postgres.getUsername(),
+                  "--spring.datasource.password=" + postgres.getPassword(),
+                  "--agent.workspace=" + workspace.toUri(),
+                  "--zalava.module-configuration.root=" + workspace.resolve("configuration"),
+                  "--zalava.accounts.security-enabled=true",
+                  "--zalava.accounts.bootstrap-login=" + LOGIN,
+                  "--zalava.accounts.bootstrap-password=" + INITIAL_PASSWORD,
+                  "--agent.onboarding.completed=true",
+                  "--spring.ai.model.chat=unknown",
+                  "--agent.channels.telegram.token=false",
+                  "--agent.channels.telegram.username=false",
+                  "--jobrunr.background-job-server.enabled=" + jobsEnabled,
+                  "--jobrunr.dashboard.enabled=false")
+              .directory(workspace.toFile())
+              .redirectErrorStream(true)
+              .redirectOutput(log.toFile())
+              .start();
+      long deadline = System.nanoTime() + Duration.ofSeconds(120).toNanos();
+      while (System.nanoTime() < deadline) {
+        String startupLog = Files.readString(log);
+        if (!process.isAlive()) {
+          if (attempt < 3 && isPortCollision(startupLog, port)) {
+            if (ociComposeFleet != null) {
+              ociComposeFleet.stop();
+              ociComposeFleet = null;
+            }
+            ociContainer = null;
+            process = null;
+            break;
+          }
+          throw new AssertionError("Packaged host exited during startup; diagnostics: " + log);
+        }
+        OptionalInt startedPort = startedApplicationPort(startupLog);
+        if (startedPort.isEmpty() || startedPort.getAsInt() != port) {
+          Thread.sleep(250);
+          continue;
+        }
+        try {
+          if (http.send(
+                      HttpRequest.newBuilder(URI.create(baseUrl + "/login"))
+                          .timeout(Duration.ofSeconds(2))
+                          .GET()
+                          .build(),
+                      HttpResponse.BodyHandlers.discarding())
+                  .statusCode()
+              == 200) {
+            assertThat(process.isAlive()).as("packaged host remains running: %s", log).isTrue();
+            if (ociImage != null) {
+              assertThat(Files.readString(log))
+                  .as("usable AOT cache in image; diagnostics: %s", log)
+                  .doesNotContain(
+                      "Unable to map shared spaces",
+                      "An error has occurred while processing the AOT cache",
+                      "size has changed");
+            }
+            return;
+          }
+        } catch (IOException ignored) {
+          // The packaged server has not bound its random loopback port yet.
+        }
+        Thread.sleep(250);
+      }
+      if (process != null && process.isAlive()) {
+        throw new AssertionError("Packaged host startup timed out; diagnostics: " + log);
+      }
     }
-    throw new AssertionError("Packaged host startup timed out; diagnostics: " + log);
+    throw new AssertionError("Unable to allocate a free packaged-host port after three attempts");
+  }
+
+  static OptionalInt startedApplicationPort(String startupLog) {
+    if (!startupLog.contains("Started ZalavaApplication in ")) return OptionalInt.empty();
+    var match = STARTED_HTTP_PORT.matcher(startupLog);
+    return match.find() ? OptionalInt.of(Integer.parseInt(match.group(1))) : OptionalInt.empty();
+  }
+
+  static boolean isPortCollision(String startupLog, int port) {
+    return startupLog.contains("Port " + port + " was already in use.");
   }
 
   private String fixtureUser() {
