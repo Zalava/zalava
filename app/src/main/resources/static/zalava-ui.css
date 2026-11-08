@@ -298,6 +298,14 @@ body {
     border-top: 0;
 }
 
+[aria-labelledby="marketplace-heading"] .module-entry:last-child {
+    padding-bottom: 0;
+}
+
+[aria-labelledby="managed-modules-heading"] .module-entry:last-child {
+    padding-bottom: 0;
+}
+
 .module-copy {
     min-width: 0;
 }

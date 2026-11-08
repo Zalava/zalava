@@ -77,7 +77,7 @@ class ActuatorRestartComponentTest {
 
   @Test
   void offersApplicationRestartWithoutServiceManagerAndDeduplicatesRequests() throws Exception {
-    mvc.perform(get("/modules"))
+    mvc.perform(get("/settings").param("section", "system"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Ready to restart the Zalava application")))
         .andExpect(content().string(containsString("data-action=\"restart-zalava\"")));
@@ -87,7 +87,7 @@ class ActuatorRestartComponentTest {
     mvc.perform(post("/modules/restart")).andExpect(status().isOk());
     verify(endpoint, times(1)).restart();
     assertThat(WORKSPACE.resolve("zalava-runtime-restart/request.properties")).doesNotExist();
-    mvc.perform(get("/modules"))
+    mvc.perform(get("/settings").param("section", "system"))
         .andExpect(content().string(containsString("data-action=\"restart-zalava\" disabled")));
   }
 

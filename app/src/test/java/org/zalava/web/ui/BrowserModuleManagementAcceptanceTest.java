@@ -335,14 +335,26 @@ class BrowserModuleManagementAcceptanceTest {
   }
 
   @Test
-  void requestsManagedZalavaRestartThroughModulesPage() throws IOException {
+  void requestsManagedZalavaRestartThroughSettings() throws IOException {
     try (Playwright playwright = Playwright.create();
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page);
-      page.navigate(baseUrl() + "/modules");
+      page.navigate(baseUrl() + "/settings?section=system");
+
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/system-restart-" + width + ".png"))
+                .setFullPage(true));
+      }
 
       page.locator("[data-action=restart-zalava]").click();
 

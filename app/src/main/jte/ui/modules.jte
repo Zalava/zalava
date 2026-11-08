@@ -52,10 +52,24 @@
 @for(var module : model.modules())
 <article class="module-entry managed-module-row" data-module="${module.moduleId()}" data-enabled-module="${module.installed() ? module.moduleId() : null}"><div class="module-copy">
 <div class="module-heading item-heading"><h3 class="title is-6 mb-1"><a href="/modules/${module.moduleId()}" data-module-detail-link="${module.moduleId()}">${module.displayName()}</a></h3><span class="tag is-light">${module.state()}</span>@if(module.loaded())<span class="tag is-light">Loaded</span>@endif</div>
-<p class="is-size-7 has-text-grey">Version ${module.version()}</p>@if(module.description() != null && !module.description().isBlank() && !module.description().equalsIgnoreCase(module.displayName()))<p>${module.description()}</p>@endif<details class="module-source-details"><summary>Source and permissions</summary><p class="is-size-7 has-text-grey">@if(module.source() != null && !module.source().isBlank())${module.source()} · @endif${module.permissionCount()} ${module.permissionCount() == 1 ? "permission" : "permissions"}</p></details></div>
-<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span></div></article>
+<p class="is-size-7 has-text-grey">Version ${module.version()}</p>@if(module.loaded() && module.description() != null && !module.description().isBlank() && !module.description().equalsIgnoreCase(module.displayName()))<p>${module.description()}</p>@endif<details class="module-source-details"><summary>Source and permissions</summary><p class="is-size-7 has-text-grey">@if(module.source() != null && !module.source().isBlank())${module.source()} · @endif${module.permissionCount()} ${module.permissionCount() == 1 ? "permission" : "permissions"}</p></details></div>
+@if(module.loaded())<div class="module-meta"><span class="tag is-light">${module.providerCount()} provider(s)</span></div>@endif</article>
 @endfor
 </div>@endif
+@if(model.moduleRestartRequired() || !model.restart().phase().equals("IDLE"))
+<div class="module-restart-notice mt-4" data-zalava-restart-status="${model.restart().phase()}" role="status">
+@if(model.moduleRestartRequired())<p>Restart Zalava to apply module changes.</p>@endif
+@if(!model.restart().phase().equals("IDLE"))<p class="has-text-grey is-size-7">${model.restart().message()}</p>@endif
+@if(model.moduleRestartRequired() || model.restart().requested() || model.restart().phase().equals("FAILED"))
+<p class="has-text-grey is-size-7">Restarting briefly disconnects everyone. Sign in again when Zalava is ready.</p>
+@if(model.restart().available())
+<form method="post" action="/modules/restart" class="mt-2"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><button class="button is-warning is-light is-small" type="submit" data-action="restart-zalava" disabled="${model.restart().requested()}">Restart Zalava</button></form>
+@else
+<p class="has-text-grey is-size-7">Use your local service manager to restart Zalava.</p>
+@endif
+@endif
+</div>
+@endif
 </section>
 
 <section class="box module-list mt-5" aria-labelledby="marketplace-heading">
@@ -116,28 +130,12 @@
                 </div>
             @endif
         </section>
-<section class="box module-list mb-5" aria-labelledby="zalava-restart-heading">
-      <h2 id="zalava-restart-heading" class="title is-5 mb-1">Load installed modules</h2>
-      <p class="has-text-grey is-size-7 mb-3" data-zalava-restart-status="${model.restart().phase()}">${model.restart().message()}</p>
-      @if(model.restart().available())
-        <form method="post" action="/modules/restart">
-          <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-          @if(model.restart().requested())
-            <button class="button is-warning" type="submit" data-action="restart-zalava" disabled>Restart Zalava to load installed modules</button>
-          @else
-            <button class="button is-warning" type="submit" data-action="restart-zalava">Restart Zalava to load installed modules</button>
-          @endif
-        </form>
-      @else
-        <p class="has-text-grey is-size-7">Use your local service manager to restart Zalava, then return here to configure and start the module.</p>
-      @endif
-    </section>
 <section class="box module-list mt-5" aria-labelledby="installation-requests-heading">
             <div class="level is-mobile mb-4">
                 <div class="level-left">
                     <div>
-                        <h2 id="installation-requests-heading" class="title is-5 mb-1">Pending installations</h2>
-                        <p class="has-text-grey is-size-7">Prepared releases awaiting an explicit decision.</p>
+                        <h2 id="installation-requests-heading" class="title is-5 mb-1">Awaiting approval</h2>
+                        <p class="has-text-grey is-size-7">Review module installations before approval.</p>
                     </div>
                 </div>
                 <div class="level-right">
@@ -146,7 +144,7 @@
             </div>
 
             @if(model.pendingInstallations().isEmpty())
-                <div class="notification is-light">No pending installations. <a href="/monitoring#module-installations">View installation history in Monitoring</a>.</div>
+                <div class="notification is-light">No installations awaiting approval. <a href="/monitoring#module-installations">View installation history in Monitoring</a>.</div>
             @else
                 <div class="module-entries">
                     @for(InstallationRequestEntry request : model.pendingInstallations())

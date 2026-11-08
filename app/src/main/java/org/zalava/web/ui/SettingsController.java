@@ -24,6 +24,7 @@ import org.zalava.identity.channels.application.port.in.ChannelLinkChallenges;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.runtime.ZalavaRuntime;
+import org.zalava.modules.runtime.application.port.in.ManagedZalavaRestart;
 
 @Controller
 public class SettingsController {
@@ -36,6 +37,7 @@ public class SettingsController {
   private final WorkspaceInstructions instructions;
   private final ChannelLinkChallenges channelLinkChallenges;
   private final AuthenticatedActorResolver actors;
+  private final ManagedZalavaRestart restart;
 
   public SettingsController(
       @Value("${agent.workspace}") Resource workspace,
@@ -45,7 +47,8 @@ public class SettingsController {
       WorkspaceInstructions instructions,
       ChannelLinkChallenges channelLinkChallenges,
       AuthenticatedActorResolver actors,
-      ModelProviderConfiguration providers) {
+      ModelProviderConfiguration providers,
+      ManagedZalavaRestart restart) {
     this.providers = providers;
     this.workspace = workspace;
     this.environment = environment;
@@ -54,6 +57,7 @@ public class SettingsController {
     this.instructions = instructions;
     this.channelLinkChallenges = channelLinkChallenges;
     this.actors = actors;
+    this.restart = restart;
   }
 
   @GetMapping("/settings")
@@ -75,9 +79,11 @@ public class SettingsController {
       model.addAttribute("providerSettings", providers.display(null));
     }
     model.addAttribute("model", buildModel());
+    model.addAttribute("restart", restart.status());
     model.addAttribute(
         "section",
-        List.of("assistant", "provider", "modules", "channels", "permissions").contains(section)
+        List.of("assistant", "provider", "modules", "channels", "permissions", "system")
+                .contains(section)
             ? section
             : "assistant");
     model.addAttribute("csrf", csrf);
