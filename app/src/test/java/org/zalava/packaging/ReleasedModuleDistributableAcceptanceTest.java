@@ -630,7 +630,10 @@ class ReleasedModuleDistributableAcceptanceTest {
   }
 
   @Test
-  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  // This journey exercises multiple module, permission and restart flows on a real host.
+  // Keep the overall bound aligned with the other packaged-host journeys; each
+  // host startup and browser operation still has its own shorter timeout.
+  @Timeout(value = 10, unit = TimeUnit.MINUTES)
   void persistsProviderFromSettingsAcrossPackagedHostRestartAndAnswersChat() throws Exception {
     Files.createDirectories(diagnostics);
     Path workspace = Files.createDirectories(diagnostics.resolve("workspace"));
