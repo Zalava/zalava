@@ -6,9 +6,11 @@
 @import java.util.Map
 @import org.zalava.assistant.models.configuration.domain.ChatProviderCatalog.Provider
 @import org.zalava.assistant.models.configuration.application.ModelProviderConfiguration.Display
+@import org.zalava.modules.runtime.application.port.in.ManagedZalavaRestart
 @param List<Provider> providers
 @param Display providerSettings
 @param SettingsModel model
+@param ManagedZalavaRestart.Status restart
 @param String section
 @param String settingsMessage
 @param String settingsError
@@ -77,6 +79,17 @@
 @if(channelLinkCode != null)<article class="message is-success" role="status"><div class="message-body">Link code: <code>${channelLinkCode}</code><br>Expires: ${channelLinkExpiresAt.toString()}</div></article>@endif
 @if(model.availableChannels().isEmpty())<p>No active channel modules are available. Install and configure a channel module first.</p><a class="button is-light mt-4" href="/modules">Open modules</a>
 @else<form method="post" action="/settings/channel-links"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><div class="field"><label class="label" for="channel-link-channel">Channel</label><div class="select"><select id="channel-link-channel" name="channel" required>@for(String channel : model.availableChannels())<option value="${channel}">${channel}</option>@endfor</select></div></div><button class="button is-primary" type="submit">Create link code</button></form>@endif
+</section>
+@elseif(section.equals("system"))
+<section class="box settings-card" aria-labelledby="system-restart-heading">
+<h2 id="system-restart-heading" class="title is-4">Restart Zalava</h2>
+<p class="has-text-grey mb-3">Restarting briefly disconnects everyone. Sign in again when Zalava is ready.</p>
+<p class="has-text-grey is-size-7 mb-3" role="status">${restart.message()}</p>
+@if(restart.availability() == ManagedZalavaRestart.Availability.AVAILABLE)
+<form method="post" action="/modules/restart"><input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}"><input type="hidden" name="returnTo" value="settings"><button class="button is-light is-small" type="submit" data-action="restart-zalava" disabled="${restart.phase() == ManagedZalavaRestart.Phase.REQUESTED}">Restart Zalava</button></form>
+@else
+<p class="has-text-grey is-size-7">Use your local service manager to restart Zalava.</p>
+@endif
 </section>
 @else
 <section class="box settings-card"><h2 class="title is-4">Permissions & interface</h2><div class="settings-default"><div><p class="has-text-weight-semibold">Side-effecting tool calls</p><p class="has-text-grey">Require your approval before execution.</p></div><span class="tag is-success is-light">Protected</span></div><div class="settings-default"><div><p class="has-text-weight-semibold">Interface theme</p><p class="has-text-grey">Pinned for consistent product readability.</p></div><span class="tag is-light">Light</span></div><a class="button is-light mt-4" href="/zalava/control">Open advanced settings</a></section>
