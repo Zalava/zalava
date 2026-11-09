@@ -10,7 +10,8 @@
     "@assistant-ui/react": "^0.15.22",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-markdown": "10.1.0"
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.1",

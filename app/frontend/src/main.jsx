@@ -13,6 +13,7 @@ import {
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./style.css";
 
 const providerConfigured = document.getElementById("root").dataset.providerConfigured === "true";
@@ -194,6 +195,7 @@ function ZalavaRuntime({ children }) {
           ...Object.fromEntries(event.requests.map((request) => [request.requestId, { ...request, direct: true, pending: true }])),
         }));
         setPermissionFeedback(event.feedback ?? "");
+        if (event.feedback) setEvidenceAttempt(value => value + 1);
       } else if (event.type === "attachment.available") {
         if (event.attachmentId) {
           setUploadedFiles((current) => [...current.filter((entry) => entry.attachmentId !== event.attachmentId), event]);
@@ -374,7 +376,7 @@ function ZalavaRuntime({ children }) {
       role: message.role,
       content: [{ type: "text", text: message.content }, ...message.tools.map((tool,index) => ({
         type: "tool-call", toolCallId: `${message.runId}-${index}`, toolName: tool.name,
-        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis,pendingApproval:tool.pendingApproval }, isError: !tool.success,
+        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis,pendingApproval:tool.pendingApproval,approvalStatus:tool.approvalStatus }, isError: !tool.success,
       }))],
       metadata: { custom: { original: message, execution:message.execution },
         ...(message.execution ? { timing: { streamStartTime:Date.parse(message.execution.at), totalStreamTime:message.execution.durationMillis, totalChunks:0,toolCallCount:message.tools.length } } : {}) },
@@ -457,11 +459,43 @@ function formatDuration(value) {
   const ms = Math.round(value); const minutes = Math.floor(ms / 60000); const seconds = Math.floor(ms % 60000 / 1000); const remainder = ms % 1000;
   return [minutes && `${minutes} min`, seconds && `${seconds} s`, (remainder || !ms) && `${remainder} ms`].filter(Boolean).join(" ");
 }
+function ResponseTable({children}) {
+  const region = useRef(null);
+  const [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const element = region.current;
+    const update = () => setOverflow(element.scrollWidth > element.clientWidth + 1);
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    update();
+    return () => observer.disconnect();
+  }, [children]);
+  return <div className="answer-table-wrap">{overflow && <p className="answer-table-hint">Scroll for more columns →</p>}<div ref={region} className="answer-table" role="region" aria-label={overflow ? "Response table, scroll for more columns" : "Response table"} tabIndex={0}><table>{children}</table></div></div>;
+}
+
 function MessageText({text}) {
-  return <Markdown allowedElements={["p","strong","em","code","pre","ul","ol","li","blockquote","a","h1","h2","h3","h4","h5","h6"]} components={{a:({href,children}) => <a href={href} rel="noopener noreferrer">{children}</a>}}>{text}</Markdown>;
+  return <Markdown remarkPlugins={[remarkGfm]} allowedElements={["p","strong","em","code","pre","ul","ol","li","blockquote","a","h1","h2","h3","h4","h5","h6","table","thead","tbody","tr","th","td","del","br"]} components={{table:ResponseTable, a:({href,children}) => <a href={href} rel="noopener noreferrer">{children}</a>}}>{text}</Markdown>;
+}
+function friendlyAction(value = "") {
+  const label = value.split("/").at(-1).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_.]/g, " ").toLowerCase().replace(/\bapi\b/g, "API");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+function ApprovalArguments({value}) {
+  let fields;
+  try { fields = JSON.parse(value); } catch { fields = null; }
+  const describe = (value) => {
+    if (value === null) return "None";
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (Array.isArray(value)) return value.map(describe).join("; ");
+    if (typeof value === "object") return Object.entries(value).map(([key, item]) => `${friendlyAction(key)}: ${describe(item)}`).join(", ");
+    return String(value);
+  };
+  return <>{fields && typeof fields === "object" && !Array.isArray(fields) && <dl className="approval-fields">{Object.entries(fields).map(([key, value]) => <div key={key}><dt>{friendlyAction(key)}</dt><dd>{describe(value)}</dd></div>)}</dl>}
+    <details className="approval-technical"><summary>Technical details</summary><pre className="permission-input">{value}</pre></details></>;
 }
 function ToolEvidence({toolName,argsText,result,isError}) {
-  return <details className="answer-tool"><summary>{toolName} · {result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && <p role="alert">{result.error}</p>}</details>;
+  return <details className="answer-tool"><summary>{toolName} · {result?.approvalStatus && result.approvalStatus !== "pending" ? ({succeeded:"Completed after approval",failed:"Failed after approval",denied:"Permission denied",unknown:"Approval outcome unknown"}[result.approvalStatus] ?? "Approval outcome unknown") : result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && (!result?.approvalStatus || result.approvalStatus === "pending") && <p role="alert">{result.error}</p>}</details>;
 }
 const HIDDEN_TEXT = () => null;
 function ConversationAnswer() {
@@ -469,13 +503,13 @@ function ConversationAnswer() {
   const original = state.metadata.custom.original ?? {role:state.role,content:state.content.filter(part => part.type === "text").map(part => part.text).join(""),streaming:state.status?.type === "running",tools:[]};
   const timing = useMessageTiming();
   const run = original.execution;
-  return <MessagePrimitive.Root asChild><article className={`message ${original.role} ${original.failure ? "failure" : ""}`}>
-    <header className="answer-heading"><strong>{original.role === "user" ? "You" : "Zalava"}</strong>{original.role === "assistant" && <span className="answer-timing">{original.streaming ? "Responding…" : formatDuration(timing?.totalStreamTime)}</span>}</header>
+  return <MessagePrimitive.Root asChild><article aria-label={original.role === "user" ? "Your message" : "Zalava response"} className={`message ${original.role} ${original.failure ? "failure" : ""}`}>
+    <header className="answer-heading">{original.role === "assistant" && <span className="answer-timing">{original.streaming ? "Responding…" : formatDuration(timing?.totalStreamTime)}</span>}</header>
     {original.streaming && !original.content && <p className="assistant-pending" role="status">Zalava is responding…</p>}
     <div className="answer-content"><MessagePrimitive.Parts components={{Text:MessageText,tools:{Fallback:HIDDEN_TEXT}}}/></div>
     {original.attachmentNames?.map(name => <span className="attachment-chip" key={name}>{name}</span>)}
     {original.jobIds?.map(id => <a href={`/jobs/${id}`} key={id}>View task</a>)}
-    {original.role === "assistant" && !original.streaming && <details className="answer-execution" data-run-id={run?.id}><summary>Execution details</summary>
+    {original.role === "assistant" && !original.streaming && <details className="answer-execution" data-run-id={run?.id}><summary aria-label="Execution details" title="Execution details"><span aria-hidden="true">ⓘ</span><span className="sr-only">Execution details</span></summary>
       {!run ? <p>No execution details are available for this answer.</p> : <>
         <p>{run.status === "SUCCEEDED" ? "Completed" : "Failed"} · {conversationDate(run.at)}</p>
         <h3>Context used</h3><p>{run.contextCharactersUsed} / {run.contextCharacterBudget} characters · {run.selectedToolCount} tools available</p>
@@ -534,6 +568,18 @@ function Chat() {
     createConversation,
     renameConversation,
   } = useContext(ZalavaChatContext);
+  const revealedApprovals = useRef(new Set());
+  const revealedMemories = useRef(new Set());
+  useEffect(() => {
+    const newApproval = approvals.some(([id]) => !revealedApprovals.current.has(id));
+    approvals.forEach(([id]) => revealedApprovals.current.add(id));
+    const newMemory = memoryReviews.some(review => !revealedMemories.current.has(review.proposalId));
+    memoryReviews.forEach(review => revealedMemories.current.add(review.proposalId));
+    if (newApproval || newMemory) {
+      setInspectorTab(newApproval ? "Tools" : "Context");
+      setInspectorOpen(true);
+    }
+  }, [approvals, memoryReviews]);
   const selectedSummary = conversationSummaries.find((entry) => entry.id === conversationId);
   const [conversationName, setConversationName] = useState("");
   useEffect(() => setConversationName(selectedSummary?.title ?? "New conversation"), [conversationId, selectedSummary?.title]);
@@ -590,7 +636,7 @@ function Chat() {
       document.getElementById('chat-inspector')?.scrollIntoView({ block: 'start' });
       document.getElementById(`inspector-tab-${inspectorTab}`)?.focus({ preventScroll: true });
     }
-  }, [inspectorOpen]);
+  }, [inspectorOpen, inspectorTab]);
   const pending = messages.some((message) => message.streaming);
   const failure = messages.findLast((message) => message.failure);
 
@@ -666,8 +712,7 @@ function Chat() {
       {failure && <p role="alert">{failure.content}</p>}
       {canSend && <ComposerPrimitive.Root data-testid="composer" className="composer">
         <fieldset className="composer-fields" disabled={!providerConfigured} aria-describedby={!providerConfigured ? "model-setup" : undefined}>
-        <label htmlFor="message">Message Zalava</label>
-        <p className="composer-help" id="composer-help">Alt+↑/↓ recalls sent messages.</p>
+        <label className="sr-only" htmlFor="message">Message Zalava</label>
         <ComposerPrimitive.AttachmentDropzone data-testid="attachment-dropzone" className="composer-dropzone">
           <ComposerPrimitive.Attachments>
             {({ attachment }) => (
@@ -681,7 +726,8 @@ function Chat() {
           <div className="attachments" aria-label="Attachments">
             <ComposerPrimitive.Input
               id="message"
-              aria-describedby="composer-help"
+              aria-label="Message Zalava"
+              rows={1}
               className="zalava-field"
               placeholder={providerConfigured ? "Message Zalava" : "Configure a provider to start chatting"}
               onKeyDown={recallPrompt}
@@ -697,15 +743,11 @@ function Chat() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m8 12 7-7a3 3 0 0 1 4 4L9 19a5 5 0 0 1-7-7L13 1" /></svg>
             </button>
             {fileOptionsOpen && <div id="composer-file-options" className="composer-options-menu" role="group" aria-label="Attach files">
+              <p className="composer-help" id="composer-help">Alt+↑/↓ recalls sent messages.</p>
               <div className="document-processing-notice" role="status">
                 {documentProcessing === null ? <p>Checking document-processing support…</p> : documentProcessing ? <p>An active document-processing module can read attached files. Supported formats depend on that module; unreadable files show an error. Up to 5 files, 5 MB each; large extracted documents may need smaller parts.</p> : <><strong>A document-processing module is needed to read files.</strong><p>Files can be stored now. Reading attachments and processing Knowledge imports need an installed, configured and active module.</p>{providerSetupAllowed ? <a href="/modules">Find a document-processing module</a> : <p>Ask your workspace administrator to install and start a document-processing module.</p>}</>}
               </div>
               <ComposerPrimitive.AddAttachment multiple aria-label="Attach files" className="zalava-button zalava-button--secondary composer-attach" onClick={() => setFileOptionsOpen(false)}>Attach files</ComposerPrimitive.AddAttachment>
-
-            </div>}
-          </div>
-          <ComposerPrimitive.Send className="zalava-button composer-send">Send</ComposerPrimitive.Send>
-        </div>
         {uploadedFiles.length > 0 && <details className="uploaded-file-options">
           <summary>Uploaded files</summary>
           <p>Save a file to your private Knowledge library without uploading it again. This keeps a separate copy; removing a Chat attachment does not delete the Knowledge source.</p>
@@ -715,6 +757,12 @@ function Chat() {
           </li>)}</ul>
           {!documentProcessing && <p>Reading saved sources needs an active document-processing module. Files can be stored now.</p>}
         </details>}
+
+
+            </div>}
+          </div>
+          <ComposerPrimitive.Send className="zalava-button composer-send">Send</ComposerPrimitive.Send>
+        </div>
         {imports.length > 0 && (
           <ul className="attachment-list" aria-label="Imported sources">
             {imports.map((entry) => (
@@ -747,7 +795,7 @@ function Chat() {
             <p>Tasks may belong to other conversations.</p>
             {Object.keys(jobs).length === 0 && <p>No recent tasks.</p>}
             {Object.entries(jobs).map(([jobId, job]) => <section className="execution" key={jobId} aria-label={`Execution ${jobId}`}>
-              <strong>Execution {job.status.replaceAll("_", " ")}</strong><p>{job.summary}</p><a href={`/jobs/${jobId}`}>View task evidence</a>
+              <strong>Execution {job.status.replace(/[_.]/g, " ")}</strong><p>{job.summary}</p><a href={`/jobs/${jobId}`}>View task evidence</a>
             </section>)}
           </>}
           {inspectorTab === "Tools" && <>
@@ -755,8 +803,8 @@ function Chat() {
             {permissionFeedback && <p role="status">{permissionFeedback}</p>}
             {approvals.length === 0 && <p>No pending permissions.</p>}
             {approvals.map(([requestId, approval]) => <section className="approval" key={requestId} aria-label="Pending permission">
-              <strong>Permission needed</strong><p>Zalava requests approval for {approval.summary}.</p>
-              {approval.arguments && <><strong>Requested input</strong><pre className="permission-input">{approval.arguments}</pre></>}
+              <strong>Permission needed</strong><p>Review this action: {friendlyAction(approval.summary)}.</p>
+                {approval.arguments && <ApprovalArguments value={approval.arguments} />}
               <button className="zalava-button" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "allow-once")}>Allow once</button>
               <button className="zalava-button zalava-button--danger" type="button" disabled={approval.submitting || status !== "Connected"} onClick={() => decideApproval(approval.jobId, requestId, "deny")}>Deny</button>
               {approval.submitting && <p role="status">Submitting decision…</p>}

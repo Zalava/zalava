@@ -402,6 +402,9 @@ public class ModulesController {
     try {
       ((ManagedZalavaRuntime) zalavaRuntime).start(moduleId);
       redirectAttributes.addFlashAttribute("moduleMessage", "Module started.");
+    } catch (ManagedZalavaRuntime.ConfigurationRequiredException exception) {
+      redirectAttributes.addFlashAttribute("moduleError", exception.getMessage());
+      return "redirect:/modules/" + moduleId + "#configuration";
     } catch (RuntimeException exception) {
       redirectAttributes.addFlashAttribute(
           "moduleError", "Module could not start. Review its configuration and Zalava logs.");

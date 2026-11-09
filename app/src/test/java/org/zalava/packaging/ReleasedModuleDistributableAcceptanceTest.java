@@ -1546,7 +1546,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         .click();
     var card =
         page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
-    PlaywrightAssertions.assertThat(card).containsText("list_items");
+    PlaywrightAssertions.assertThat(card).containsText("Review this action: List items.");
     card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
     page.getByText(
             "Read approved. Ask the same question again in this conversation within five minutes.")
@@ -1670,7 +1670,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         .click();
     var card =
         page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
-    PlaywrightAssertions.assertThat(card).containsText("knowledge.search");
+    PlaywrightAssertions.assertThat(card).containsText("Review this action: Knowledge search.");
     card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
     page.getByText(
             "Read approved. Ask the same question again in this conversation within five minutes.")
@@ -1770,7 +1770,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         .click();
     var card =
         page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
-    PlaywrightAssertions.assertThat(card).containsText("proposeMemory");
+    PlaywrightAssertions.assertThat(card).containsText("Review this action: Propose memory.");
     card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).click();
     page.getByText(
             "Action approved. Ask the same question again in this conversation within five minutes.")
@@ -1822,7 +1822,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         .click();
     var deniedCard =
         page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
-    PlaywrightAssertions.assertThat(deniedCard).containsText("proposeMemory");
+    PlaywrightAssertions.assertThat(deniedCard).containsText("Review this action: Propose memory.");
     deniedCard.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny")).click();
     page.getByText("Permission denied; operation was not run.").waitFor();
     assertThat(page.context().request().get(baseUrl + "/memory").text()).doesNotContain(deniedFact);

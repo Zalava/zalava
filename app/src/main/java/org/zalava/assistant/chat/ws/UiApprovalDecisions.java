@@ -71,11 +71,12 @@ final class UiApprovalDecisions {
 
   synchronized String decideDirect(String loginName, UiCommand.DecideDirectApproval command) {
     Actor actor = actors.actorForLogin(loginName);
-    return directApprovals.decide(
-        actor,
-        actors.roleForLogin(loginName),
-        command.requestId(),
-        command.decision() == UiCommand.DecideApproval.Decision.ALLOW_ONCE);
+    return boundary.redact(
+        directApprovals.decide(
+            actor,
+            actors.roleForLogin(loginName),
+            command.requestId(),
+            command.decision() == UiCommand.DecideApproval.Decision.ALLOW_ONCE));
   }
 
   private String safeArguments(JsonNode arguments) {

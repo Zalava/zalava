@@ -104,7 +104,7 @@ class UiChatWebSocketApprovalComponentTest {
     String id = directRequest(owner, "invalid-name").approval().requestId();
     WebSocketSession session = session(owner.loginName());
     handler.handleTextMessage(session, directCommand(id, "allow-once"));
-    assertThat(payloads(session)).contains("failure");
+    assertThat(payloads(session)).contains("The approved action failed", "invalid", "not retried");
     assertThat(approvals.get(id).attributes())
         .containsEntry(ZalavaToolApprovalRequests.EXECUTION_OUTCOME, "failed");
     var retry = directRequest(owner, "invalid-name");

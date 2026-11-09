@@ -10,6 +10,7 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.AriaRole;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -121,34 +122,26 @@ class BrowserUiInteractAcceptanceTest {
         signIn(page);
         page.navigate(baseUrl() + "/chat");
         page.getByText("Connected").waitFor();
-        page.locator(".inspector-toggle").click();
+        page.getByText("Permission needed").waitFor();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run")).click();
 
         page.getByText("Execution completed").waitFor();
         page.getByText("Completed report").waitFor();
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Review permissions"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
             .click();
         page.getByText("Permission needed").waitFor();
         page.reload();
         page.getByText("Connected").waitFor();
-        page.locator(".inspector-toggle").click();
+        page.getByText("Permission needed").waitFor();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run")).click();
         page.getByText("Completed report").waitFor();
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Review permissions"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
             .click();
         page.getByText("Permission needed").waitFor();
-        assertThat(page.locator("body").innerText()).contains("browser-interact-provider/write");
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Deny"))
-            .click();
+        assertThat(page.locator("body").innerText()).contains("Review this action: Write.");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Deny")).click();
         page.getByText("No pending permissions.").waitFor();
-        page.getByRole(
-                com.microsoft.playwright.options.AriaRole.TAB,
-                new Page.GetByRoleOptions().setName("Run"))
-            .click();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run")).click();
         page.getByText("Execution todo").waitFor();
 
         page.reload();
@@ -208,10 +201,7 @@ class BrowserUiInteractAcceptanceTest {
     page.navigate(baseUrl() + "/login");
     page.locator("input[name=username]").fill(OWNER_LOGIN);
     page.locator("input[name=password]").fill(PASSWORD);
-    page.getByRole(
-            com.microsoft.playwright.options.AriaRole.BUTTON,
-            new Page.GetByRoleOptions().setName("Sign in"))
-        .click();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
   }
 
   private String baseUrl() {

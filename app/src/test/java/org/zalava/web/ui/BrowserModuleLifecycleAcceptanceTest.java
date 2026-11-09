@@ -89,6 +89,18 @@ class BrowserModuleLifecycleAcceptanceTest {
       assertThat(page.locator("[data-runtime-state]").getAttribute("data-runtime-state"))
           .isEqualTo("SETUP_REQUIRED");
 
+      for (int width : new int[] {390, 768, 1440}) {
+        page.setViewportSize(width, width == 390 ? 844 : width == 768 ? 1024 : 900);
+        page.waitForFunction(
+            "() => innerWidth>1024 || (()=>{const menu=document.querySelector('#zalava-product-navigation');return !menu || (getComputedStyle(menu).visibility==='hidden' && menu.getBoundingClientRect().right<=1);})()");
+        page.getByRole(
+                AriaRole.LINK, new Page.GetByRoleOptions().setName("Configure before starting"))
+            .waitFor();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/module-setup-" + width + ".png"))
+                .setFullPage(true));
+      }
       page.locator("input[name='configuration.fixture.endpoint']").fill("ready");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save configuration"))
           .click();
@@ -98,6 +110,10 @@ class BrowserModuleLifecycleAcceptanceTest {
       assertThat(page.locator("[data-runtime-state]").getAttribute("data-runtime-state"))
           .isEqualTo("RUNNING");
 
+      page.getByText("No Chat tool providers are active for this module.").waitFor();
+      page.getByText(
+              "Modules can also provide background services used by other modules; those are separate from Chat tools. Optional tool providers need their own settings under Configuration.")
+          .waitFor();
       page.locator("input[name='configuration.fixture.endpoint']").fill("broken");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save configuration"))
           .click();

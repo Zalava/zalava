@@ -164,6 +164,8 @@ class BrowserFileAcceptanceTest {
                         "nodes => nodes.every(n => { const b=n.getBoundingClientRect(); const c=n.closest(\"[data-testid=composer]\").getBoundingClientRect(); return b.left >= c.left && b.right <= c.right; })"))
             .isEqualTo(true);
         assertThat(page.locator("[data-testid=composer] .attachment-chip").count()).isZero();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+            .click();
         page.locator(".uploaded-file-options summary").click();
         page.locator(".uploaded-file-options li")
             .filter(new Locator.FilterOptions().setHasText("notes.txt"))
@@ -176,6 +178,8 @@ class BrowserFileAcceptanceTest {
         captureFileState(page, "chat-existing-upload-saved");
         page.reload();
         page.getByText("Connected").waitFor();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+            .click();
         page.locator(".uploaded-file-options summary").click();
         assertThat(
                 page.locator(".uploaded-file-options li")
