@@ -66,7 +66,12 @@
             @else
                 <form method="post" action="/modules/${model.moduleId()}/start" class="mb-4">
                     <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
-                    <button class="button is-link" type="submit">Start module</button>
+                    @if("SETUP_REQUIRED".equals(model.lifecycleState()))
+                        <a class="button is-link is-light" href="#configuration">Configure before starting</a>
+                        <p class="help">Save the required settings below, then start the module. Finding a local connection example does not save or test it.</p>
+                    @else
+                        <button class="button is-link" type="submit">Start module</button>
+                    @endif
                 </form>
             @endif
         @endif
@@ -280,7 +285,8 @@
         <section class="box" aria-labelledby="module-providers-heading">
             <h2 id="module-providers-heading" class="title is-5">Providers and tools</h2>
             @if(model.providers().isEmpty())
-                <p class="has-text-grey">No providers are loaded for this module.</p>
+                <p class="has-text-grey">No Chat tool providers are active for this module.</p>
+                <p class="help">Modules can also provide background services used by other modules; those are separate from Chat tools. Optional tool providers need their own settings under Configuration.</p>
             @else
                 @for(ProviderEntry provider : model.providers())
                     <article class="module-provider mb-4" data-provider="${provider.providerId()}">

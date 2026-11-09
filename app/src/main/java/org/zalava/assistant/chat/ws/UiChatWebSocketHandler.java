@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -490,15 +491,21 @@ public final class UiChatWebSocketHandler extends TextWebSocketHandler {
   }
 
   private void send(WebSocketSession session, UiEvent event) {
-    try {
-      if (session.isOpen()) {
-        synchronized (session) {
-          session.sendMessage(
-              new TextMessage(objectMapper.writeValueAsString(UiEventJson.from(event))));
+    TextMessage message = new TextMessage(objectMapper.writeValueAsString(UiEventJson.from(event)));
+    synchronized (session) {
+      if (!session.isOpen()) return;
+      try {
+        session.sendMessage(message);
+      } catch (IOException | IllegalStateException exception) {
+        // Transport loss must not turn a persisted operation into a failed agent run.
+        // The authenticated reconnect path reloads history and current approval state.
+        log.debug("UI event delivery interrupted; state is available on reconnect", exception);
+        try {
+          session.close(CloseStatus.SERVER_ERROR);
+        } catch (IOException | IllegalStateException closeFailure) {
+          log.debug("UI session was already unavailable while closing", closeFailure);
         }
       }
-    } catch (IOException exception) {
-      throw new IllegalStateException("Unable to emit UI event", exception);
     }
   }
 }

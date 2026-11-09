@@ -1,6 +1,8 @@
 package org.zalava.assistant.chat.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
@@ -29,17 +32,24 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.zalava.api.InvocationContext;
+import org.zalava.api.ProviderDescriptor;
+import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.assistant.conversation.application.port.in.ActorConversations;
 import org.zalava.assistant.conversation.application.port.in.ConversationContinuation;
+import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.assistant.conversation.domain.ConversationMessage;
 import org.zalava.assistant.conversation.domain.ConversationOrigin;
 import org.zalava.assistant.conversation.domain.ConversationReference;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.identity.channels.application.port.in.ChannelIdentityLinks;
 import org.zalava.identity.channels.domain.ChannelOperationScope;
 import org.zalava.identity.channels.domain.ExternalChannelIdentity;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 /**
  * Real-browser foundation for the Zalava chat entry point. The only substituted boundary is the
@@ -60,6 +70,7 @@ class BrowserChatAcceptanceTest {
   @LocalServerPort private int port;
 
   @Autowired private AccountLifecycle accounts;
+  @Autowired private ZalavaToolApprovalRequests approvalRequests;
 
   @Autowired private ChannelIdentityLinks links;
 
@@ -82,6 +93,159 @@ class BrowserChatAcceptanceTest {
     registry.add("spring.ai.openai.api-key", () -> "local-scripted-model");
     registry.add("jobrunr.background-job-server.enabled", () -> "false");
     registry.add("jobrunr.dashboard.enabled", () -> "false");
+  }
+
+  @Test
+  void realPendingApprovalRevealsItsTabAndPreservesDraftWithReadableArguments() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      Actor actor = signInDisposableMember(page);
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, width == 390 ? 844 : width == 768 ? 1024 : 900);
+        settleChatNavigation(page);
+        var workspace =
+            page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Workspace details"));
+        if (!"true".equals(workspace.getAttribute("aria-expanded"))) workspace.click();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run").setExact(true))
+            .click();
+        var provider = mock(ZalavaProvider.class);
+        when(provider.descriptor())
+            .thenReturn(
+                new ProviderDescriptor(
+                    "browser-provider",
+                    "browser-module",
+                    "test",
+                    "Web services",
+                    "Fixture",
+                    "1",
+                    null,
+                    List.of(),
+                    Map.of()));
+        String conversation = page.locator("select[aria-label='Select conversation']").inputValue();
+        var request =
+            approvalRequests.create(
+                provider,
+                new ZalavaToolDescriptor("runContainer", "Create a service", true),
+                new InvocationContext(
+                    actor.accountId().toString(),
+                    false,
+                    Map.of(
+                        "accountRole",
+                        "MEMBER",
+                        "permissionPolicyChannel",
+                        "web",
+                        "conversationId",
+                        new ActorConversationId(actor, new ConversationReference(conversation))
+                            .value())),
+                JsonNodeFactory.instance
+                    .objectNode()
+                    .put("name", "sample-web")
+                    .put("image", "nginx:alpine")
+                    .put("apiKey", "must-stay-secret"));
+        // Completing a real Chat turn publishes current, owner-scoped permissions.
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close details"))
+            .click();
+        page.locator("#message").fill("what time is it now");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+            .click();
+        page.getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"))
+            .waitFor();
+        PlaywrightAssertions.assertThat(
+                page.getByRole(
+                    AriaRole.TAB, new Page.GetByRoleOptions().setName("Tools").setExact(true)))
+            .hasAttribute("aria-selected", "true");
+        assertThat(page.locator(".approval-fields").innerText())
+            .contains("sample-web", "nginx:alpine", "[REDACTED]")
+            .doesNotContain("must-stay-secret");
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-approval-" + width + ".png"))
+                .setFullPage(true));
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Deny").setExact(true))
+            .click();
+        page.getByText("Permission denied; operation was not run.").waitFor();
+        assertThat(approvalRequests.get(request.requestId()).decision())
+            .isEqualTo(ZalavaToolApprovalRequests.Decision.DENIED);
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close details"))
+            .click();
+        page.locator("#message").fill("unsent draft " + width);
+        workspace.click();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run").setExact(true))
+            .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close details"))
+            .click();
+        assertThat(page.locator("#message").inputValue()).isEqualTo("unsent draft " + width);
+      }
+    }
+  }
+
+  @Test
+  void compactComposerAndMessagesKeepTablesReadableAcrossViewports() throws Exception {
+    try (Playwright playwright = Playwright.create();
+        Browser browser =
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        BrowserContext context = browser.newContext()) {
+      Page page = context.newPage();
+      signInDisposableMember(page);
+      page.locator("#message").fill("container response table");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.waitForFunction(
+          "document.querySelector('.messages').getAttribute('aria-busy') === 'false'");
+      PlaywrightAssertions.assertThat(page.locator(".message.assistant table")).hasCount(1);
+      PlaywrightAssertions.assertThat(page.locator(".message.assistant th"))
+          .hasText(new String[] {"Container", "Image", "Status", "Ports"});
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, width == 390 ? 844 : width == 768 ? 1024 : 900);
+        settleChatNavigation(page);
+        page.locator("#message").fill("Short draft");
+        double gap =
+            page.locator(".message.assistant").last().boundingBox().y
+                - (page.locator(".message.user").last().boundingBox().y
+                    + page.locator(".message.user").last().boundingBox().height);
+        assertThat(gap).isBetween(0.0, 12.0);
+        assertThat(page.locator("#message").boundingBox().height).isLessThan(70);
+        assertThat(page.locator("[data-testid=composer]").boundingBox().height).isLessThan(125);
+        assertThat(page.locator("#message").getAttribute("aria-label")).isEqualTo("Message Zalava");
+        assertThat(page.locator(".message.user").last().boundingBox().x)
+            .isGreaterThan(page.locator(".message.assistant").last().boundingBox().x);
+        assertThat(page.evaluate("document.documentElement.scrollWidth <= innerWidth"))
+            .isEqualTo(true);
+        if (width == 390) {
+          page.getByText("Scroll for more columns →").waitFor();
+          page.locator(".answer-table").focus();
+          page.keyboard().press("ArrowRight");
+          page.waitForFunction("document.querySelector('.answer-table').scrollLeft > 0");
+          page.locator(".answer-table").evaluate("element => element.scrollLeft = 0");
+          page.locator("#message").focus();
+        }
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-compact-" + width + ".png"))
+                .setFullPage(true));
+        page.locator(".answer-execution summary").last().click();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-evidence-" + width + ".png"))
+                .setFullPage(true));
+        page.locator(".answer-execution summary").last().click();
+        page.locator("#message").fill("Line one\nLine two\nLine three\nLine four\nLine five");
+        assertThat(page.locator("#message").boundingBox().height).isGreaterThan(70);
+        page.locator("#message").focus();
+        page.keyboard().press("Tab");
+        assertThat(page.evaluate("document.activeElement.getAttribute('aria-label')"))
+            .isEqualTo("File options");
+        page.keyboard().press("Enter");
+        page.getByText("Alt+↑/↓ recalls sent messages.", new Page.GetByTextOptions().setExact(true))
+            .waitFor();
+        page.keyboard().press("Escape");
+        assertThat(page.locator("#message").inputValue()).contains("Line five");
+      }
+    }
   }
 
   @Test

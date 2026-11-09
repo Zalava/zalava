@@ -3,18 +3,23 @@ package org.zalava.assistant.chat.ws;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.zalava.assistant.chat.api.ChatProviderReadiness;
@@ -38,6 +43,42 @@ class UiChatWebSocketHandlerTest {
   private final WebSocketSession session = mock(WebSocketSession.class);
   private final Actor actor = new Actor(AccountId.newId());
   private final ConversationReference conversation = ConversationReference.newReference();
+
+  @Test
+  void transportWriteFailureDoesNotFailTheAgentTurnOrDiscardItsCompletion() throws Exception {
+    when(session.getPrincipal()).thenReturn((Principal) () -> "member");
+    when(session.isOpen()).thenReturn(true);
+    when(actors.actorForLogin("member")).thenReturn(actor);
+    when(queries.conversations(actor)).thenReturn(List.of(conversation));
+    doThrow(new IOException("client disconnected")).when(session).sendMessage(any());
+    var completed = new AtomicBoolean();
+    doAnswer(
+            invocation -> {
+              var listener = invocation.getArgument(3, ActorChatStreamListener.class);
+              listener.onDelta("Saved answer");
+              listener.onComplete("Saved answer", List.of());
+              completed.set(true);
+              return new ActorChatTurn("Saved answer", List.of());
+            })
+        .when(commands)
+        .streamChat(any(), any(), any(), any());
+    var handler = new UiChatWebSocketHandler(json, actors, commands, queries);
+    handler.handleTextMessage(
+        session,
+        new TextMessage(
+            json.writeValueAsString(
+                Map.of(
+                    "protocol",
+                    "zalava.ui/v1",
+                    "type",
+                    "chat.send",
+                    "conversationId",
+                    conversation.value(),
+                    "message",
+                    "Hello"))));
+    assertThat(completed).isTrue();
+    verify(session, atLeastOnce()).close(CloseStatus.SERVER_ERROR);
+  }
 
   @Test
   void unconfiguredModelRejectsCraftedSendBeforeExecutingOrPersistingChat() throws Exception {

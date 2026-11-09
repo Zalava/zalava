@@ -33,6 +33,12 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
 
   public record ModuleState(State state, String failure) {}
 
+  public static final class ConfigurationRequiredException extends IllegalStateException {
+    public ConfigurationRequiredException() {
+      super("Save the required module configuration before starting it.");
+    }
+  }
+
   private final List<ZalavaModule> loaded;
   private final Set<String> builtIns;
   private final ModuleLifecycleStore lifecycle;
@@ -101,9 +107,7 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
     if (activeIds.contains(moduleId)) return;
     ZalavaModule module = requireLoaded(moduleId);
     if (configurationRequired(module) && configurations.active(moduleId).isEmpty()) {
-      IllegalStateException failure =
-          new IllegalStateException(
-              "Module " + moduleId + " requires configuration before activation");
+      ConfigurationRequiredException failure = new ConfigurationRequiredException();
       failures.put(moduleId, safeFailure(failure));
       throw failure;
     }

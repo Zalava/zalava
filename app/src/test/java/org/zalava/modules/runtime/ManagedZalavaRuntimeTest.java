@@ -42,6 +42,9 @@ class ManagedZalavaRuntimeTest {
       assertThat(runtime.state("fixture").state())
           .isEqualTo(ManagedZalavaRuntime.State.SETUP_REQUIRED);
 
+      assertThatThrownBy(() -> runtime.start("fixture"))
+          .isInstanceOf(ManagedZalavaRuntime.ConfigurationRequiredException.class)
+          .hasMessage("Save the required module configuration before starting it.");
       configurations.saveCandidate(snapshot("ready"), Map.of());
       runtime.applyCandidate("fixture");
       runtime.start("fixture");

@@ -60,8 +60,10 @@ import org.zalava.assistant.chat.adapter.out.channels.ChannelMessageEventAdapter
 import org.zalava.assistant.chat.adapter.out.conversation.ConversationChatStore;
 import org.zalava.assistant.chat.adapter.out.system.UuidChatConversationIdGenerator;
 import org.zalava.assistant.chat.application.ActorChatUseCases;
+import org.zalava.assistant.chat.application.ConversationEvidenceQueries;
 import org.zalava.assistant.chat.application.DefaultChatUseCases;
 import org.zalava.assistant.chat.application.UiExecutionStateQueries;
+import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
 import org.zalava.assistant.chat.application.port.in.ChatCommands;
 import org.zalava.assistant.chat.application.port.out.ChatAgent;
 import org.zalava.assistant.chat.application.port.out.ChatApprovalCommands;
@@ -191,6 +193,7 @@ import org.zalava.web.control.adapter.out.runtime.ZalavaRuntimeVerificationCatal
 import org.zalava.web.control.application.DefaultBootstrapVerificationQueries;
 import org.zalava.web.control.application.InvocationLog;
 import org.zalava.web.control.application.port.in.BootstrapVerificationQueries;
+import org.zalava.web.control.application.port.in.InvocationLogQueries;
 
 @Configuration
 @EnableConfigurationProperties(ZalavaModuleProperties.class)
@@ -668,6 +671,17 @@ public class ZalavaConfiguration {
       ActorExecutionContext actorExecutionContext,
       TaskExecutionContext taskExecutionContext) {
     return new ClarificationTools(clarifications, actorExecutionContext, taskExecutionContext);
+  }
+
+  @Bean
+  public ConversationEvidenceQueries conversationEvidenceQueries(
+      ActorChatQueries conversations,
+      AgentRunQueries runs,
+      InvocationLogQueries tools,
+      ModelBoundary boundary,
+      ZalavaToolApprovalRequests approvals) {
+    return new ConversationEvidenceQueries(
+        conversations, runs, tools, boundary, approvals, new JacksonToolArgumentDecoder());
   }
 
   @Bean

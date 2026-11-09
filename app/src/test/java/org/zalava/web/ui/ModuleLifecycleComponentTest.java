@@ -5,6 +5,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.file.Files;
@@ -62,10 +64,16 @@ class ModuleLifecycleComponentTest {
   void configurationAndStartStopAreVisibleThroughTheModulePage() throws Exception {
     mvc.perform(get("/modules/lifecycle-fixture"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("data-runtime-state=\"SETUP_REQUIRED\"")));
+        .andExpect(content().string(containsString("data-runtime-state=\"SETUP_REQUIRED\"")))
+        .andExpect(content().string(containsString("Configure before starting")));
 
     mvc.perform(post("/modules/lifecycle-fixture/start").with(csrf()))
-        .andExpect(status().is3xxRedirection());
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/modules/lifecycle-fixture#configuration"))
+        .andExpect(
+            flash()
+                .attribute(
+                    "moduleError", "Save the required module configuration before starting it."));
     mvc.perform(get("/modules/lifecycle-fixture"))
         .andExpect(content().string(containsString("data-runtime-state=\"SETUP_REQUIRED\"")));
 

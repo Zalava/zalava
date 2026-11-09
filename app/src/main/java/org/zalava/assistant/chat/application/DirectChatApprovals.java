@@ -2,6 +2,7 @@ package org.zalava.assistant.chat.application;
 
 import java.util.List;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
@@ -43,10 +44,17 @@ public final class DirectChatApprovals {
       operations.approveChatRead(requestId);
       return "Read approved. Ask the same question again in this conversation within five minutes.";
     }
-    var outcome = operations.allowUnscoped(requestId);
-    return outcome.result().success()
-        ? "Permission allowed once; operation completed."
-        : "Permission allowed once, but the operation returned an error. Check the result before retrying.";
+    try {
+      var outcome = operations.allowUnscoped(requestId);
+      return outcome.result().success()
+          ? "Permission allowed once; operation completed."
+          : "Permission allowed once, but the operation returned an error. Check the result before retrying.";
+    } catch (ProviderToolOperationException failure) {
+      if (failure.code() != ProviderToolOperationException.Code.VALIDATION
+          && failure.code() != ProviderToolOperationException.Code.EXECUTION
+          && failure.code() != ProviderToolOperationException.Code.UNSUPPORTED) throw failure;
+      return "The approved action failed: " + failure.getMessage() + ". It was not retried.";
+    }
   }
 
   private static boolean directFor(

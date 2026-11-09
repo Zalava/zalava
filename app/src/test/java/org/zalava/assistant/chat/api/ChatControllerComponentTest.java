@@ -329,6 +329,9 @@ class ChatControllerComponentTest {
             toolCall(
                 "proposeMemory",
                 "{\"proposal\":{\"scope\":\"USER\",\"text\":\"My preferred greeting is meadow-lamp.\",\"metadata\":{},\"reference\":null}}");
+        case "container response table" ->
+            response(
+                "| Container | Image | Status | Ports |\n| --- | --- | --- | --- |\n| sample-web-service-with-a-long-name | nginx:alpine | Running | 127.0.0.1:18080 → 80/tcp |\n| sample-worker | worker:1.0 | Stopped | None |");
         case "render markdown" ->
             response("**Bold result**\n\n```java\nSystem.out.println(\"safe\");\n```");
         case "fail chat" -> throw new IllegalStateException("Scripted chat failure");
