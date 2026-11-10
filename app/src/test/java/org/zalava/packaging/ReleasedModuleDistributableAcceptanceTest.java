@@ -1231,6 +1231,32 @@ class ReleasedModuleDistributableAcceptanceTest {
     PlaywrightAssertions.assertThat(page.locator(evidenceTarget)).hasAttribute("open", "");
     PlaywrightAssertions.assertThat(page.locator(evidenceTarget).locator("summary"))
         .containsText("Action 1:");
+    String followUp = "What happened to the approved and denied actions?";
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(-1)
+            .withRequestBody(containing(followUp))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "text/event-stream")
+                    .withBody(
+                        """
+        data: {"id":"approval-followup","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Approval context received."},"finish_reason":null}]}
+
+        data: {"id":"approval-followup","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """)));
+    page.locator("#message").fill(followUp);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Approval context received.").waitFor();
+    modelServer.verify(
+        postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(followUp))
+            .withRequestBody(containing("approved; execution succeeded"))
+            .withRequestBody(containing("approval denied")));
     page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
     PlaywrightAssertions.assertThat(
             page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))

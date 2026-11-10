@@ -41,6 +41,7 @@ import org.zalava.assistant.agent.WorkspaceInstructions;
 import org.zalava.assistant.agent.adapter.out.policy.HostManagedToolCallback;
 import org.zalava.assistant.agent.adapter.out.springai.WorkspaceAgentPrompt;
 import org.zalava.assistant.agent.adapter.out.system.AgentEnvironment;
+import org.zalava.assistant.agent.application.ContextSourceBudgets;
 import org.zalava.assistant.agent.application.DefaultAgentContextAssembler;
 import org.zalava.assistant.agent.application.DefaultAgentExecution;
 import org.zalava.assistant.agent.application.DefaultAgentRunQueries;
@@ -60,6 +61,7 @@ import org.zalava.assistant.chat.adapter.out.channels.ChannelMessageEventAdapter
 import org.zalava.assistant.chat.adapter.out.conversation.ConversationChatStore;
 import org.zalava.assistant.chat.adapter.out.system.UuidChatConversationIdGenerator;
 import org.zalava.assistant.chat.application.ActorChatUseCases;
+import org.zalava.assistant.chat.application.ChatApprovalContext;
 import org.zalava.assistant.chat.application.ConversationEvidenceQueries;
 import org.zalava.assistant.chat.application.DefaultChatUseCases;
 import org.zalava.assistant.chat.application.UiExecutionStateQueries;
@@ -425,8 +427,9 @@ public class ZalavaConfiguration {
                 taskExecutionContext,
                 chatToolConfirmation,
                 approvalRequests)),
-        new org.zalava.assistant.agent.application.ContextSourceBudgets(
-            toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget));
+        new ContextSourceBudgets(
+            toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget),
+        new ChatApprovalContext(approvalRequests, actorExecutionContext));
   }
 
   @Bean

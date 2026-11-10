@@ -228,6 +228,21 @@ class BrowserChatAcceptanceTest {
         assertThat(page.locator("#message").getAttribute("aria-label")).isEqualTo("Message Zalava");
         assertThat(page.locator(".message.user").last().boundingBox().x)
             .isGreaterThan(page.locator(".message.assistant").last().boundingBox().x);
+        assertThat(
+                page.locator(".message.assistant")
+                    .last()
+                    .evaluate("e => getComputedStyle(e).backgroundColor"))
+            .isEqualTo("rgba(0, 0, 0, 0)");
+        assertThat(
+                page.locator(".message.assistant")
+                    .last()
+                    .evaluate("e => getComputedStyle(e).boxShadow"))
+            .isEqualTo("none");
+        assertThat(
+                page.locator(".message.user")
+                    .last()
+                    .evaluate("e => getComputedStyle(e).backgroundColor"))
+            .isNotEqualTo("rgba(0, 0, 0, 0)");
         assertThat(page.evaluate("document.documentElement.scrollWidth <= innerWidth"))
             .isEqualTo(true);
         if (width == 390) {
@@ -270,6 +285,23 @@ class BrowserChatAcceptanceTest {
             .waitFor();
         page.keyboard().press("Escape");
         assertThat(page.locator("#message").inputValue()).contains("Line five");
+      }
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+          .click();
+      page.locator("#message").fill("fail chat");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      PlaywrightAssertions.assertThat(page.locator(".message.assistant.failure")).isVisible();
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, width == 390 ? 844 : width == 768 ? 1024 : 900);
+        settleChatNavigation(page);
+        assertThat(
+                page.locator(".message.assistant.failure")
+                    .evaluate("e => getComputedStyle(e).backgroundColor"))
+            .isNotEqualTo("rgba(0, 0, 0, 0)");
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-failure-" + width + ".png")));
       }
     }
   }

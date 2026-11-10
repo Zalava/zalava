@@ -312,6 +312,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .message { width:fit-content; max-width:92%; margin:0; padding:.65rem .85rem; flex:0 0 auto; }
 .message.user { align-self:flex-end; max-width:85%; }
 .message.assistant { align-self:flex-start; }
+.message.assistant:not(.failure) { background:transparent; border-color:transparent; box-shadow:none; }
 .answer-heading:empty { display:none; }
 .answer-heading { justify-content:flex-end; line-height:1.2; }
 .answer-content > :first-child { margin-top:0; }
