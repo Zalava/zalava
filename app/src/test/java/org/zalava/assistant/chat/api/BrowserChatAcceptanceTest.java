@@ -176,6 +176,21 @@ class BrowserChatAcceptanceTest {
         workspace.click();
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run").setExact(true))
             .click();
+        if (width >= 1024) {
+          page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+              .click();
+          var menuBounds = page.locator(".composer-options-menu").boundingBox();
+          assertThat(menuBounds.x).isGreaterThanOrEqualTo(0);
+          assertThat(menuBounds.x + menuBounds.width).isLessThanOrEqualTo((double) width);
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(
+                      Path.of(
+                          "build/browser-acceptance/chat-file-options-workspace-"
+                              + width
+                              + ".png")));
+          page.keyboard().press("Escape");
+        }
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close details"))
             .click();
         assertThat(page.locator("#message").inputValue()).isEqualTo("unsent draft " + width);
@@ -207,7 +222,7 @@ class BrowserChatAcceptanceTest {
             page.locator(".message.assistant").last().boundingBox().y
                 - (page.locator(".message.user").last().boundingBox().y
                     + page.locator(".message.user").last().boundingBox().height);
-        assertThat(gap).isBetween(0.0, 12.0);
+        assertThat(gap).isBetween(10.0, 16.0);
         assertThat(page.locator("#message").boundingBox().height).isLessThan(70);
         assertThat(page.locator("[data-testid=composer]").boundingBox().height).isLessThan(125);
         assertThat(page.locator("#message").getAttribute("aria-label")).isEqualTo("Message Zalava");
@@ -240,6 +255,17 @@ class BrowserChatAcceptanceTest {
         assertThat(page.evaluate("document.activeElement.getAttribute('aria-label')"))
             .isEqualTo("File options");
         page.keyboard().press("Enter");
+        var menu = page.locator(".composer-options-menu");
+        var bounds = menu.boundingBox();
+        assertThat(bounds.x).isGreaterThanOrEqualTo(0);
+        assertThat(bounds.x + bounds.width).isLessThanOrEqualTo((double) width);
+        PlaywrightAssertions.assertThat(
+                menu.getByRole(
+                    AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Attach files")))
+            .isVisible();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-file-options-" + width + ".png")));
         page.getByText("Alt+↑/↓ recalls sent messages.", new Page.GetByTextOptions().setExact(true))
             .waitFor();
         page.keyboard().press("Escape");

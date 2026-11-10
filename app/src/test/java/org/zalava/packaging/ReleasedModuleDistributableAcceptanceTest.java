@@ -1206,8 +1206,31 @@ class ReleasedModuleDistributableAcceptanceTest {
         .click();
     page.getByText("Permission denied; operation was not run.").waitFor();
     PlaywrightAssertions.assertThat(cards).hasCount(0);
-    page.screenshot(
-        new Page.ScreenshotOptions().setPath(diagnostics.resolve("shopping-direct-decided.png")));
+    PlaywrightAssertions.assertThat(answer.locator(".approval-outcome")).hasCount(2);
+    PlaywrightAssertions.assertThat(answer).containsText("completed after approval.");
+    PlaywrightAssertions.assertThat(answer).containsText("permission denied or revoked.");
+    page.reload();
+    PlaywrightAssertions.assertThat(
+            page.locator(".message.assistant").last().locator(".approval-outcome"))
+        .hasCount(2);
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, width == 390 ? 844 : width == 768 ? 1024 : 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("chat-approval-outcome-" + width + ".png")));
+    }
+    page.setViewportSize(1440, 900);
+    var outcomeLink =
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View action 1 details"));
+    String evidenceTarget = outcomeLink.getAttribute("href");
+    outcomeLink.focus();
+    page.keyboard().press("Enter");
+    PlaywrightAssertions.assertThat(page.locator(evidenceTarget)).hasAttribute("open", "");
+    PlaywrightAssertions.assertThat(page.locator(evidenceTarget).locator("summary"))
+        .containsText("Action 1:");
     page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
     PlaywrightAssertions.assertThat(
             page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))

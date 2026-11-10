@@ -376,7 +376,7 @@ function ZalavaRuntime({ children }) {
       role: message.role,
       content: [{ type: "text", text: message.content }, ...message.tools.map((tool,index) => ({
         type: "tool-call", toolCallId: `${message.runId}-${index}`, toolName: tool.name,
-        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis,pendingApproval:tool.pendingApproval,approvalStatus:tool.approvalStatus }, isError: !tool.success,
+        args: {}, argsText: tool.input ?? "Input unavailable", result: { preview:tool.result,error:tool.error,provider:tool.provider,durationMillis:tool.durationMillis,pendingApproval:tool.pendingApproval,approvalStatus:tool.approvalStatus,callNumber:index+1,evidenceId:`approval-tool-${message.runId}-${index}` }, isError: !tool.success,
       }))],
       metadata: { custom: { original: message, execution:message.execution },
         ...(message.execution ? { timing: { streamStartTime:Date.parse(message.execution.at), totalStreamTime:message.execution.durationMillis, totalChunks:0,toolCallCount:message.tools.length } } : {}) },
@@ -495,7 +495,7 @@ function ApprovalArguments({value}) {
     <details className="approval-technical"><summary>Technical details</summary><pre className="permission-input">{value}</pre></details></>;
 }
 function ToolEvidence({toolName,argsText,result,isError}) {
-  return <details className="answer-tool"><summary>{toolName} · {result?.approvalStatus && result.approvalStatus !== "pending" ? ({succeeded:"Completed after approval",failed:"Failed after approval",denied:"Permission denied",unknown:"Approval outcome unknown"}[result.approvalStatus] ?? "Approval outcome unknown") : result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && (!result?.approvalStatus || result.approvalStatus === "pending") && <p role="alert">{result.error}</p>}</details>;
+  return <details id={result?.evidenceId} className="answer-tool"><summary>Action {result?.callNumber}: {toolName} · {result?.approvalStatus && result.approvalStatus !== "pending" ? ({succeeded:"Completed after approval",failed:"Failed after approval",denied:"Permission denied",unknown:"Approval outcome unknown"}[result.approvalStatus] ?? "Approval outcome unknown") : result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && (!result?.approvalStatus || result.approvalStatus === "pending") && <p role="alert">{result.error}</p>}</details>;
 }
 const HIDDEN_TEXT = () => null;
 function ConversationAnswer() {
@@ -507,6 +507,7 @@ function ConversationAnswer() {
     <header className="answer-heading">{original.role === "assistant" && <span className="answer-timing">{original.streaming ? "Responding…" : formatDuration(timing?.totalStreamTime)}</span>}</header>
     {original.streaming && !original.content && <p className="assistant-pending" role="status">Zalava is responding…</p>}
     <div className="answer-content"><MessagePrimitive.Parts components={{Text:MessageText,tools:{Fallback:HIDDEN_TEXT}}}/></div>
+    {original.role === "assistant" && original.tools?.some(tool => tool.approvalStatus && tool.approvalStatus !== "pending") && <div className="approval-updates"><strong>Approval updates</strong>{original.tools.map((tool,index) => tool.approvalStatus && tool.approvalStatus !== "pending" && <p className="approval-outcome" role="status" key={`${tool.name}-${index}`}>Action {index+1} · {friendlyAction(tool.name)}: {({succeeded:"completed after approval.",failed:"failed after approval.",denied:"permission denied or revoked.",unknown:"approval outcome is unavailable."}[tool.approvalStatus] ?? "approval outcome is unknown." )} <a href={`#approval-tool-${original.runId}-${index}`} onClick={() => { const target = document.getElementById(`approval-tool-${original.runId}-${index}`); if (target) { const parent = target.closest("details.answer-execution"); if (parent) parent.open = true; target.open = true; } }}>View action {index+1} details</a></p>)}</div>}
     {original.attachmentNames?.map(name => <span className="attachment-chip" key={name}>{name}</span>)}
     {original.jobIds?.map(id => <a href={`/jobs/${id}`} key={id}>View task</a>)}
     {original.role === "assistant" && !original.streaming && <details className="answer-execution" data-run-id={run?.id}><summary aria-label="Execution details" title="Execution details"><span aria-hidden="true">ⓘ</span><span className="sr-only">Execution details</span></summary>
