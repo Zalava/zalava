@@ -176,6 +176,21 @@ class BrowserChatAcceptanceTest {
         workspace.click();
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Run").setExact(true))
             .click();
+        if (width >= 1024) {
+          page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("File options"))
+              .click();
+          var menuBounds = page.locator(".composer-options-menu").boundingBox();
+          assertThat(menuBounds.x).isGreaterThanOrEqualTo(0);
+          assertThat(menuBounds.x + menuBounds.width).isLessThanOrEqualTo((double) width);
+          page.screenshot(
+              new Page.ScreenshotOptions()
+                  .setPath(
+                      Path.of(
+                          "build/browser-acceptance/chat-file-options-workspace-"
+                              + width
+                              + ".png")));
+          page.keyboard().press("Escape");
+        }
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close details"))
             .click();
         assertThat(page.locator("#message").inputValue()).isEqualTo("unsent draft " + width);
@@ -207,12 +222,27 @@ class BrowserChatAcceptanceTest {
             page.locator(".message.assistant").last().boundingBox().y
                 - (page.locator(".message.user").last().boundingBox().y
                     + page.locator(".message.user").last().boundingBox().height);
-        assertThat(gap).isBetween(0.0, 12.0);
+        assertThat(gap).isBetween(10.0, 16.0);
         assertThat(page.locator("#message").boundingBox().height).isLessThan(70);
         assertThat(page.locator("[data-testid=composer]").boundingBox().height).isLessThan(125);
         assertThat(page.locator("#message").getAttribute("aria-label")).isEqualTo("Message Zalava");
         assertThat(page.locator(".message.user").last().boundingBox().x)
             .isGreaterThan(page.locator(".message.assistant").last().boundingBox().x);
+        assertThat(
+                page.locator(".message.assistant")
+                    .last()
+                    .evaluate("e => getComputedStyle(e).backgroundColor"))
+            .isEqualTo("rgba(0, 0, 0, 0)");
+        assertThat(
+                page.locator(".message.assistant")
+                    .last()
+                    .evaluate("e => getComputedStyle(e).boxShadow"))
+            .isEqualTo("none");
+        assertThat(
+                page.locator(".message.user")
+                    .last()
+                    .evaluate("e => getComputedStyle(e).backgroundColor"))
+            .isNotEqualTo("rgba(0, 0, 0, 0)");
         assertThat(page.evaluate("document.documentElement.scrollWidth <= innerWidth"))
             .isEqualTo(true);
         if (width == 390) {
@@ -240,10 +270,38 @@ class BrowserChatAcceptanceTest {
         assertThat(page.evaluate("document.activeElement.getAttribute('aria-label')"))
             .isEqualTo("File options");
         page.keyboard().press("Enter");
+        var menu = page.locator(".composer-options-menu");
+        var bounds = menu.boundingBox();
+        assertThat(bounds.x).isGreaterThanOrEqualTo(0);
+        assertThat(bounds.x + bounds.width).isLessThanOrEqualTo((double) width);
+        PlaywrightAssertions.assertThat(
+                menu.getByRole(
+                    AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Attach files")))
+            .isVisible();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-file-options-" + width + ".png")));
         page.getByText("Alt+↑/↓ recalls sent messages.", new Page.GetByTextOptions().setExact(true))
             .waitFor();
         page.keyboard().press("Escape");
         assertThat(page.locator("#message").inputValue()).contains("Line five");
+      }
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+          .click();
+      page.locator("#message").fill("fail chat");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      PlaywrightAssertions.assertThat(page.locator(".message.assistant.failure")).isVisible();
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, width == 390 ? 844 : width == 768 ? 1024 : 900);
+        settleChatNavigation(page);
+        assertThat(
+                page.locator(".message.assistant.failure")
+                    .evaluate("e => getComputedStyle(e).backgroundColor"))
+            .isNotEqualTo("rgba(0, 0, 0, 0)");
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(Path.of("build/browser-acceptance/chat-failure-" + width + ".png")));
       }
     }
   }
