@@ -35,8 +35,7 @@ public final class ManagedServiceReconciler {
     if (actual.exists()
         && (!authority.moduleId().equals(actual.ownerModuleId())
             || !record.ownedDataIdentity().equals(actual.dataIdentity()))) {
-      return states.save(
-          record.observed(ManagedServiceObservedState.FAILED, record.observedRevision()));
+      return states.save(record.failed(null, "Another managed service owns this service name."));
     }
     try {
       if (record.desiredState().lifecycle() == ManagedServiceLifecycle.STOPPED) {
@@ -54,9 +53,20 @@ public final class ManagedServiceReconciler {
         return states.save(
             record.observed(ManagedServiceObservedState.FAILED, record.observedRevision()));
       }
-      return states.save(record.failed(now.plus(record.desiredState().readinessDeadline())));
+      return states.save(
+          record.failed(
+              now.plus(record.desiredState().readinessDeadline()),
+              "The service did not become ready in time."));
     } catch (RuntimeException ex) {
-      return states.save(record.failed(now.plus(record.desiredState().readinessDeadline())));
+      String message = ex.getMessage();
+      String reason =
+          message != null
+                  && message.startsWith(
+                      "A foreign container occupies the deterministic Zalava name:")
+              ? "Another container already uses this service name. Resolve the name conflict before retrying."
+              : "The service could not be started. Check the service and Docker settings before retrying.";
+      return states.save(
+          record.failed(now.plus(record.desiredState().readinessDeadline()), reason));
     }
   }
 }

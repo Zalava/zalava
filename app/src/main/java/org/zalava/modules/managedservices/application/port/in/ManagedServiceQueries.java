@@ -20,5 +20,25 @@ public interface ManagedServiceQueries {
       String observedRevision,
       String artifactReference,
       Set<Integer> ports,
-      int consecutiveFailures) {}
+      int consecutiveFailures,
+      String failureReason) {
+    public ManagedServiceSummary(
+        String serviceId,
+        String observedState,
+        String desiredRevision,
+        String observedRevision,
+        String artifactReference,
+        Set<Integer> ports,
+        int consecutiveFailures) {
+      this(
+          serviceId,
+          observedState,
+          desiredRevision,
+          observedRevision,
+          artifactReference,
+          ports,
+          consecutiveFailures,
+          null);
+    }
+  }
 }

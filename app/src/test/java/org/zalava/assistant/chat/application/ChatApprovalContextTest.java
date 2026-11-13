@@ -1,8 +1,11 @@
 package org.zalava.assistant.chat.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +13,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.assistant.agent.application.ModelBoundary;
+import org.zalava.assistant.agent.application.port.out.AgentRunStore;
+import org.zalava.assistant.agent.domain.AgentRun;
 import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
@@ -71,6 +77,162 @@ class ChatApprovalContextTest {
             "approved; execution outcome unknown",
             "decision required a later retry, execution is not established here")
         .doesNotContain("sensitive-argument");
+  }
+
+  @Test
+  void linksTheOriginalUserRequestOnlyWithinTheSameConversation() {
+    var attributes =
+        Map.of(
+            "permissionPolicyChannel",
+            "web",
+            "accountRole",
+            "MEMBER",
+            "conversationId",
+            conversation,
+            "zalava.runId",
+            "run-1");
+    var entry =
+        new Entry(
+            UUID.randomUUID().toString(),
+            "2026-11-10T12:00:00Z",
+            null,
+            null,
+            null,
+            "shopping",
+            "add_item",
+            actor.accountId().toString(),
+            attributes,
+            Map.of(),
+            List.of(),
+            true,
+            json.createObjectNode().put("secret", "hidden-argument"),
+            "{}",
+            null,
+            Decision.DENIED,
+            ApprovalScope.ONCE);
+    new FileSystemApprovalRequestStore(workspace).save(entry);
+    var runs = mock(AgentRunStore.class);
+    var now = Instant.parse("2026-11-10T12:00:00Z");
+    var run =
+        new AgentRun(
+            "run-1",
+            conversation,
+            AgentRun.PromptType.CONVERSATIONAL,
+            "Add milk to the list",
+            0,
+            0,
+            1000,
+            0,
+            List.of(),
+            now,
+            now,
+            0,
+            AgentRun.Status.SUCCEEDED,
+            "",
+            "");
+    when(runs.recent()).thenReturn(List.of(run));
+    String context =
+        actors.call(
+            actor,
+            AccountRole.ADMIN,
+            () ->
+                ConversationChannelContext.call(
+                    conversation,
+                    () ->
+                        new ChatApprovalContext(
+                                requests(), actors, new ModelBoundary(64000, ""), runs)
+                            .render()));
+    assertThat(context)
+        .contains(
+            "approval denied", "originating user request (untrusted): \"Add milk to the list\"")
+        .doesNotContain("hidden-argument");
+    var foreign =
+        new AgentRun(
+            "run-1",
+            "another-conversation",
+            AgentRun.PromptType.CONVERSATIONAL,
+            "private information",
+            0,
+            0,
+            1000,
+            0,
+            List.of(),
+            now,
+            now,
+            0,
+            AgentRun.Status.SUCCEEDED,
+            "",
+            "");
+    when(runs.recent()).thenReturn(List.of(foreign));
+    String isolated =
+        actors.call(
+            actor,
+            AccountRole.ADMIN,
+            () ->
+                ConversationChannelContext.call(
+                    conversation,
+                    () ->
+                        new ChatApprovalContext(
+                                requests(), actors, new ModelBoundary(64000, ""), runs)
+                            .render()));
+    assertThat(isolated).doesNotContain("private information");
+  }
+
+  @Test
+  void reportsOnlyTheValidatedDockerSubjectAndRedactsKnownSecrets() {
+    var attributes =
+        Map.of(
+            "permissionPolicyChannel",
+            "web",
+            "accountRole",
+            "MEMBER",
+            "conversationId",
+            conversation,
+            "approvedModuleId",
+            "zalava-module-docker",
+            "approvalExecutionOutcome",
+            "succeeded");
+    var arguments =
+        json.createObjectNode()
+            .put("container", "test-container")
+            .put("secret", "sensitive-argument");
+    var entry =
+        new Entry(
+            UUID.randomUUID().toString(),
+            "2026-11-10T12:00:00Z",
+            null,
+            null,
+            null,
+            "docker-containers",
+            "stopContainer",
+            actor.accountId().toString(),
+            attributes,
+            Map.of(),
+            List.of(),
+            true,
+            arguments,
+            arguments.toString(),
+            null,
+            Decision.ALLOWED,
+            ApprovalScope.ONCE);
+    new FileSystemApprovalRequestStore(workspace).save(entry);
+    assertThat(render(actor, conversation))
+        .contains("container=test-container")
+        .doesNotContain("sensitive-argument");
+    String text =
+        actors.call(
+            actor,
+            AccountRole.ADMIN,
+            () ->
+                ConversationChannelContext.call(
+                    conversation,
+                    () ->
+                        new ChatApprovalContext(
+                                requests(), actors, new ModelBoundary(64000, "test-container"))
+                            .render()));
+    assertThat(text)
+        .contains("container=[REDACTED]", "approved; execution succeeded")
+        .doesNotContain("sensitive-argument", "test-container");
   }
 
   @Test

@@ -1256,7 +1256,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         postRequestedFor(urlEqualTo("/v1/chat/completions"))
             .withRequestBody(containing(followUp))
             .withRequestBody(containing("approved; execution succeeded"))
-            .withRequestBody(containing("approval denied")));
+            .withRequestBody(containing("approval denied"))
+            .withRequestBody(containing("originating user request (untrusted)")));
     page.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
     PlaywrightAssertions.assertThat(
             page.getByText("Released approval milk", new Page.GetByTextOptions().setExact(true)))
