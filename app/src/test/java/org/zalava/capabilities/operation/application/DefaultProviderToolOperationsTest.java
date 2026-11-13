@@ -16,6 +16,9 @@ import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaOperationResult;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
+import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
+import org.zalava.capabilities.operation.adapter.out.approval.ZalavaToolApprovalAdapter;
+import org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder;
 import org.zalava.capabilities.operation.application.model.ToolApproval;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
@@ -40,6 +43,62 @@ class DefaultProviderToolOperationsTest {
           approvals,
           List.of(observer),
           new org.zalava.capabilities.operation.adapter.out.json.JacksonToolArgumentDecoder());
+
+  @Test
+  void aNewChatTurnGetsFreshApprovalWhileSameRunCannotRepeatAnExecution() {
+    var store = new ZalavaToolApprovalRequests();
+    var service =
+        new DefaultProviderToolOperations(
+            providerId ->
+                "test-provider".equals(providerId) ? Optional.of(provider) : Optional.empty(),
+            new ZalavaToolApprovalAdapter(store),
+            List.of(observer),
+            new JacksonToolArgumentDecoder());
+    var first =
+        new InvocationContext(
+            "operator-1",
+            false,
+            Map.of(
+                "source",
+                "agent",
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-a",
+                "zalava.runId",
+                "run-1"));
+    var next =
+        new InvocationContext(
+            "operator-1",
+            false,
+            Map.of(
+                "source",
+                "agent",
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-a",
+                "zalava.runId",
+                "run-2"));
+    var command =
+        ProviderToolOperations.ToolInvocationCommand.task(
+            "test-provider", "write", "{\"path\":\"notes/a.txt\"}", first, null);
+    var pending = service.invoke(command);
+    service.allowUnscoped(pending.approval().requestId());
+    assertThat(provider.calls).hasValue(1);
+    assertThat(((Map<?, ?>) service.invoke(command).result().content()).get("status"))
+        .isEqualTo("already_executed");
+    assertThat(provider.calls).hasValue(1);
+    var fresh =
+        service.invoke(
+            ProviderToolOperations.ToolInvocationCommand.task(
+                "test-provider", "write", "{\"path\":\"notes/a.txt\"}", next, null));
+    assertThat(fresh.status())
+        .isEqualTo(ProviderToolOperations.ToolInvocationStatus.PENDING_APPROVAL);
+    assertThat(fresh.approval().requestId()).isNotEqualTo(pending.approval().requestId());
+    service.allowUnscoped(fresh.approval().requestId());
+    assertThat(provider.calls).hasValue(2);
+  }
 
   @Test
   void executesSafeToolAndRecordsSuccess() {

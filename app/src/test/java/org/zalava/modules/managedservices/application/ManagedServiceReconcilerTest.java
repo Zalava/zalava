@@ -29,6 +29,18 @@ class ManagedServiceReconcilerTest {
           states, engine, Clock.fixed(Instant.parse("2026-09-09T12:00:00Z"), ZoneOffset.UTC));
 
   @Test
+  void recordsSafeActionableReasonForNameConflictWithoutLeakingEngineErrors() {
+    engine.createFailure =
+        "A foreign container occupies the deterministic Zalava name: home-service";
+    var conflict = reconciler.reconcile(authority(), record(ManagedServiceLifecycle.RUNNING));
+    assertThat(conflict.failureReason())
+        .contains("Another container already uses this service name");
+    engine.createFailure = "secret engine credential";
+    var unknown = reconciler.reconcile(authority(), record(ManagedServiceLifecycle.RUNNING));
+    assertThat(unknown.failureReason()).contains("could not be started").doesNotContain("secret");
+  }
+
+  @Test
   void createsStartsAndPersistsAReadyOwnedService() {
     engine.readyAfterStart = true;
 
@@ -197,12 +209,14 @@ class ManagedServiceReconcilerTest {
     int starts;
     int stops;
     int removes;
+    String createFailure;
 
     public Observation inspect(String serviceId) {
       return new Observation(exists, running, readyAfterStart && running, owner, "data-home-1");
     }
 
     public void create(ManagedServiceRecord record) {
+      if (createFailure != null) throw new IllegalStateException(createFailure);
       exists = true;
       creates++;
     }

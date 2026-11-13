@@ -79,6 +79,14 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
   }
 
   @Override
+  public Optional<ToolApproval> findDirectChatDecision(
+      InvocationContext context, String providerId, String toolName, String argumentsJson) {
+    return requests
+        .findDirectChatDecision(context, providerId, toolName, arguments(argumentsJson))
+        .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
   public Optional<ToolApproval> findAllowedToolPolicy(
       String actorId,
       String providerId,

@@ -93,6 +93,26 @@ class DefaultManagedServiceInstallationTest {
   }
 
   @Test
+  void explicitRetryCanRecoverAnApprovedFailureWithoutRepeatingCompletedServices() {
+    engine.failCreateFor.add("app");
+    String requestId = plan("database", "app");
+    installation.allow(requestId);
+    var failed = states.find("app").orElseThrow();
+    assertThat(failed.failureReason()).contains("could not be started");
+    engine.failCreateFor.clear();
+    var result = installation.retry(requestId);
+    assertThat(result.status()).isEqualTo(ManagedServiceInstallRequest.Status.SUCCEEDED);
+    assertThat(engine.createCount("database")).isEqualTo(1);
+    assertThat(states.find("app").orElseThrow().failureReason()).isNull();
+    assertThatThrownBy(() -> installation.retry(requestId))
+        .isInstanceOf(ManagedServiceInstallException.class);
+    String denied = plan("other");
+    installation.deny(denied);
+    assertThatThrownBy(() -> installation.retry(denied))
+        .isInstanceOf(ManagedServiceInstallException.class);
+  }
+
+  @Test
   void retryAfterPartialFailureSkipsCompletedServicesAndSucceeds() {
     engine.failCreateFor.add("app");
     String requestId = plan("database", "app", "worker");

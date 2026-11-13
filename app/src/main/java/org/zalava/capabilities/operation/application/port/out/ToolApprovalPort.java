@@ -23,6 +23,12 @@ public interface ToolApprovalPort {
   Optional<ToolApproval> findUnscopedDecision(
       String actorId, String providerId, String toolName, String argumentsJson);
 
+  /** Find a decision belonging to this exact direct-chat run, never an earlier turn. */
+  default Optional<ToolApproval> findDirectChatDecision(
+      InvocationContext context, String providerId, String toolName, String argumentsJson) {
+    return Optional.empty();
+  }
+
   Optional<ToolApproval> findAllowedToolPolicy(
       String actorId, String providerId, String toolName, Map<String, String> providerScope);
 

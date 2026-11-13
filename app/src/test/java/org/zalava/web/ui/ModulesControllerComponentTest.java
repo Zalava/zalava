@@ -36,6 +36,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -53,6 +54,7 @@ import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.catalog.install.application.port.in.LocalDevelopmentProjectInstallation;
+import org.zalava.modules.managedservices.application.ManagedServiceInstallRequest;
 import org.zalava.modules.managedservices.application.ManagedServiceObservedState;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 import org.zalava.modules.managedservices.application.port.out.ManagedServiceInstallRequestStore;
@@ -386,6 +388,53 @@ class ModulesControllerComponentTest {
         .andExpect(content().string(containsString("permissions")))
         .andExpect(content().string(containsString("1 permission")))
         .andExpect(content().string(not(containsString("1 permissions"))));
+  }
+
+  @Test
+  void failedManagedServiceShowsRetryAndProtectsItFromMembers() throws Exception {
+    mockMvc
+        .perform(post("/modules/zalava-module-declared/managed-services/request"))
+        .andExpect(status().is3xxRedirection());
+    var original = managedServiceInstallRequestStore.recent(1).getFirst();
+    var failed =
+        new ManagedServiceInstallRequest(
+            original.requestId(),
+            original.createdAt(),
+            original.services(),
+            original.aggregate(),
+            ManagedServiceInstallRequest.Status.FAILED,
+            original.decidedAt(),
+            "Service failed");
+    managedServiceInstallRequestStore.save(failed);
+    var planned = original.services().getFirst();
+    managedServiceStateStore.save(
+        new ManagedServiceRecord(
+            planned.serviceId(),
+            planned.desiredState(),
+            planned.desiredRevision(),
+            planned.grant(),
+            planned.grantRevision(),
+            ManagedServiceObservedState.FAILED,
+            null,
+            "managed-" + planned.serviceId(),
+            1,
+            null,
+            "Another container already uses this service name. Resolve the name conflict before retrying."));
+    mockMvc
+        .perform(get("/modules/zalava-module-declared"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("Retry installation")))
+        .andExpect(
+            content().string(containsString("Another container already uses this service name")));
+    var member = accounts.newActivated(AccountRole.MEMBER);
+    mockMvc
+        .perform(
+            post("/modules/zalava-module-declared/managed-services/retry")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .with(accounts.authenticatedAs(member)))
+        .andExpect(status().isForbidden());
+    assertThat(managedServiceInstallRequestStore.find(original.requestId()).orElseThrow().status())
+        .isEqualTo(ManagedServiceInstallRequest.Status.FAILED);
   }
 
   @Test
