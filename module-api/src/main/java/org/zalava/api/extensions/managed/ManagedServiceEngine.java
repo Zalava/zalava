@@ -25,6 +25,16 @@ public interface ManagedServiceEngine {
   /** Observes the current engine state of one Zalava-owned managed service without mutating it. */
   Observation inspect(String serviceId);
 
+  /** Reports support for enforcing isolation and inspecting it on owned resources. */
+  default boolean supportsNetworkIsolation() {
+    return false;
+  }
+
+  /** Returns whether the owned resource currently has no external network access. */
+  default boolean isNetworkIsolated(String serviceId) {
+    return false;
+  }
+
   /**
    * Acquires and provisions the digest-pinned artifact for one service record. Implementations
    * verify the artifact digest during acquisition and stamp ownership metadata on everything they

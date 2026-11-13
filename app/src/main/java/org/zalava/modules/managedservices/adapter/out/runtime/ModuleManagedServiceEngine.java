@@ -47,6 +47,16 @@ public final class ModuleManagedServiceEngine implements OciServiceEngine {
   }
 
   @Override
+  public boolean supportsNetworkIsolation() {
+    return engine().supportsNetworkIsolation();
+  }
+
+  @Override
+  public boolean isNetworkIsolated(String serviceId) {
+    return engine().isNetworkIsolated(serviceId);
+  }
+
+  @Override
   public void create(ManagedServiceRecord record) {
     engine()
         .create(

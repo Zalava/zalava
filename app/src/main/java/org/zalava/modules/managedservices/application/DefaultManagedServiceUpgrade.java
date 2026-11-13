@@ -317,7 +317,8 @@ public final class DefaultManagedServiceUpgrade implements ManagedServiceUpgrade
             previous.devices(),
             previous.limits(),
             previous.readinessDeadline(),
-            previous.restartLimit());
+            previous.restartLimit(),
+            previous.networkIsolated());
     ManagedServiceRecord target =
         new ManagedServiceRecord(
             record.serviceId(),
