@@ -3,6 +3,7 @@ package org.zalava.modules.managedservices.adapter.out.filesystem;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Set;
@@ -34,6 +35,52 @@ class FileSystemManagedServiceStateStoreTest {
     var store = new FileSystemManagedServiceStateStore(root);
 
     assertThatIllegalArgumentException().isThrownBy(() -> store.find("../escape"));
+  }
+
+  @Test
+  void readsRecordsWrittenBeforeNetworkIsolationWasAdded() throws Exception {
+    var store = new FileSystemManagedServiceStateStore(root);
+    store.save(record());
+    Path saved = root.resolve("managed-services/home-service.json");
+    String json = Files.readString(saved).replaceAll(",\\s*\"networkIsolated\"\\s*:\\s*false", "");
+    Files.writeString(saved, json);
+
+    assertThat(store.find("home-service")).contains(record());
+  }
+
+  @Test
+  void persistsNetworkIsolation() {
+    var base = record();
+    var state = base.desiredState();
+    var isolated =
+        new ManagedServiceDesiredState(
+            state.resourceId(),
+            state.artifactReference(),
+            state.revision(),
+            state.lifecycle(),
+            state.secretReferences(),
+            state.dataPaths(),
+            state.ports(),
+            state.devices(),
+            state.limits(),
+            state.readinessDeadline(),
+            state.restartLimit(),
+            true);
+    var record =
+        new ManagedServiceRecord(
+            base.serviceId(),
+            isolated,
+            base.desiredRevision(),
+            base.grant(),
+            base.grantRevision(),
+            base.observedState(),
+            base.observedRevision(),
+            base.ownedDataIdentity(),
+            0,
+            null);
+    var store = new FileSystemManagedServiceStateStore(root);
+    store.save(record);
+    assertThat(store.find("home-service")).contains(record);
   }
 
   private static ManagedServiceRecord record() {

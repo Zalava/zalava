@@ -3,6 +3,7 @@ package org.zalava.modules.managedservices.adapter.out.filesystem;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -31,6 +32,32 @@ class FileSystemManagedServiceUpgradeRequestStoreTest {
 
     assertThat(new FileSystemManagedServiceUpgradeRequestStore(root).find("req-1"))
         .contains(request);
+  }
+
+  @Test
+  void preservesIsolationAndReadsOlderRequests() throws Exception {
+    var mapper = new ObjectMapper().findAndRegisterModules();
+    var old = planned("database").candidateState();
+    var isolated =
+        new ManagedServiceDesiredState(
+            old.resourceId(),
+            old.artifactReference(),
+            old.revision(),
+            old.lifecycle(),
+            old.secretReferences(),
+            old.dataPaths(),
+            old.ports(),
+            old.devices(),
+            old.limits(),
+            old.readinessDeadline(),
+            old.restartLimit(),
+            true);
+
+    String isolatedJson = mapper.writeValueAsString(isolated);
+    assertThat(mapper.readValue(isolatedJson, ManagedServiceDesiredState.class))
+        .isEqualTo(isolated);
+    String oldJson = mapper.writeValueAsString(old).replace(",\"networkIsolated\":false", "");
+    assertThat(mapper.readValue(oldJson, ManagedServiceDesiredState.class)).isEqualTo(old);
   }
 
   @Test

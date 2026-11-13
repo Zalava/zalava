@@ -7,6 +7,14 @@ import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 public interface OciServiceEngine {
   Observation inspect(String serviceId);
 
+  default boolean supportsNetworkIsolation() {
+    return false;
+  }
+
+  default boolean isNetworkIsolated(String serviceId) {
+    return false;
+  }
+
   void create(ManagedServiceRecord record);
 
   void start(String serviceId);
