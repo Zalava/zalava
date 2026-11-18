@@ -130,6 +130,93 @@ class ManagedServiceReconcilerTest {
         .managedServiceAuthority();
   }
 
+  @Test
+  void isolatedServiceFailsClosedWithAnOldEngine() {
+    engine.exists = true;
+    engine.running = true;
+    ManagedServiceRecord result = reconciler.reconcile(authority(), isolatedRecord());
+    assertThat(result.observedState()).isEqualTo(ManagedServiceObservedState.FAILED);
+    assertThat(engine.stops).isEqualTo(1);
+    assertThat(engine.starts).isZero();
+  }
+
+  @Test
+  void isolatedServiceIsCheckedBeforeAndAfterStarting() {
+    engine.isolationSupported = true;
+    engine.isolated = true;
+    engine.readyAfterStart = true;
+    ManagedServiceRecord result = reconciler.reconcile(authority(), isolatedRecord());
+    assertThat(result.observedState()).isEqualTo(ManagedServiceObservedState.RUNNING);
+    assertThat(engine.isolationChecks).isEqualTo(2);
+  }
+
+  @Test
+  void serviceWithoutIsolationIsStopped() {
+    engine.isolationSupported = true;
+    engine.exists = true;
+    engine.running = true;
+    ManagedServiceRecord result = reconciler.reconcile(authority(), isolatedRecord());
+    assertThat(result.observedState()).isEqualTo(ManagedServiceObservedState.FAILED);
+    assertThat(engine.stops).isEqualTo(1);
+    assertThat(engine.starts).isZero();
+  }
+
+  @Test
+  void stopsRunningServiceWhenIsolationInspectionFails() {
+    engine.isolationSupported = true;
+    engine.exists = true;
+    engine.running = true;
+    engine.failIsolationCheck = 1;
+
+    ManagedServiceRecord result = reconciler.reconcile(authority(), isolatedRecord());
+
+    assertThat(result.observedState()).isEqualTo(ManagedServiceObservedState.FAILED);
+    assertThat(engine.stops).isEqualTo(1);
+  }
+
+  @Test
+  void stopsNewServiceWhenIsolationInspectionFailsAfterStart() {
+    engine.isolationSupported = true;
+    engine.isolated = true;
+    engine.failIsolationCheck = 2;
+
+    ManagedServiceRecord result = reconciler.reconcile(authority(), isolatedRecord());
+
+    assertThat(result.observedState()).isEqualTo(ManagedServiceObservedState.FAILED);
+    assertThat(engine.starts).isEqualTo(1);
+    assertThat(engine.stops).isEqualTo(1);
+  }
+
+  private static ManagedServiceRecord isolatedRecord() {
+    ManagedServiceRecord base = record(ManagedServiceLifecycle.RUNNING);
+    ManagedServiceDesiredState state = base.desiredState();
+    ManagedServiceDesiredState isolated =
+        new ManagedServiceDesiredState(
+            state.resourceId(),
+            state.artifactReference(),
+            state.revision(),
+            state.lifecycle(),
+            state.secretReferences(),
+            state.dataPaths(),
+            state.ports(),
+            state.devices(),
+            state.limits(),
+            state.readinessDeadline(),
+            state.restartLimit(),
+            true);
+    return new ManagedServiceRecord(
+        base.serviceId(),
+        isolated,
+        base.desiredRevision(),
+        base.grant(),
+        base.grantRevision(),
+        base.observedState(),
+        base.observedRevision(),
+        base.ownedDataIdentity(),
+        0,
+        null);
+  }
+
   private static ManagedServiceRecord record(ManagedServiceLifecycle lifecycle) {
     var desired =
         new ManagedServiceDesiredState(
@@ -197,6 +284,21 @@ class ManagedServiceReconcilerTest {
     int starts;
     int stops;
     int removes;
+    boolean isolationSupported;
+    boolean isolated;
+    int isolationChecks;
+    int failIsolationCheck;
+
+    public boolean supportsNetworkIsolation() {
+      return isolationSupported;
+    }
+
+    public boolean isNetworkIsolated(String serviceId) {
+      isolationChecks++;
+      if (isolationChecks == failIsolationCheck)
+        throw new IllegalStateException("inspection failed");
+      return isolated;
+    }
 
     public Observation inspect(String serviceId) {
       return new Observation(exists, running, readyAfterStart && running, owner, "data-home-1");
