@@ -41,6 +41,7 @@ import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
 import org.zalava.modules.catalog.install.application.port.in.ModuleReleaseInstallation;
 import org.zalava.modules.catalog.install.application.port.in.UploadedModuleInstallation;
 import org.zalava.modules.managedservices.application.ManagedServiceInstallException;
+import org.zalava.modules.managedservices.application.ManagedServiceInstallRequest;
 import org.zalava.modules.managedservices.application.port.in.DeclaredManagedServices;
 import org.zalava.modules.managedservices.application.port.in.ManagedServiceQueries;
 import org.zalava.modules.managedservices.application.port.in.ModuleManagedServiceInstallation;
@@ -457,6 +458,24 @@ public class ModulesController {
     return "redirect:/modules/" + moduleId;
   }
 
+  @PostMapping("/modules/{moduleId}/managed-services/retry")
+  public String retryManagedServiceInstallation(
+      @PathVariable String moduleId, RedirectAttributes redirectAttributes) {
+    module(moduleId);
+    try {
+      var result = moduleManagedServiceInstallation.retryLatest(moduleId);
+      if (result.status() == ManagedServiceInstallRequest.Status.SUCCEEDED)
+        redirectAttributes.addFlashAttribute("moduleMessage", "Managed service is running.");
+      else
+        redirectAttributes.addFlashAttribute(
+            "managedServiceError", "The service is still not ready. Review the details below.");
+    } catch (IllegalArgumentException | ManagedServiceInstallException exception) {
+      redirectAttributes.addFlashAttribute(
+          "managedServiceError", "Unable to retry this installation.");
+    }
+    return "redirect:/modules/" + moduleId;
+  }
+
   @PostMapping("/modules/{moduleId}/managed-services/deny")
   public String denyManagedServiceInstallation(
       @PathVariable String moduleId, RedirectAttributes redirectAttributes) {
@@ -818,6 +837,11 @@ public class ModulesController {
         artifactReference,
         endpoints,
         consecutiveFailures,
+        installed == null
+            ? null
+            : installed.failureReason() == null && "FAILED".equals(observedState)
+                ? "The previous attempt failed; its reason was not recorded. Check the service and Docker settings before retrying."
+                : installed.failureReason(),
         declared != null && installed == null);
   }
 
@@ -1138,6 +1162,7 @@ public class ModulesController {
       String artifactReference,
       List<String> endpoints,
       int consecutiveFailures,
+      String failureReason,
       boolean declared) {}
 
   public record ProviderEntry(

@@ -93,6 +93,22 @@ public final class DefaultManagedServiceInstallation implements ManagedServiceIn
   }
 
   @Override
+  public synchronized ManagedServiceInstallRequest retry(String requestId) {
+    ManagedServiceInstallRequest request = load(requestId);
+    if (request.status() != ManagedServiceInstallRequest.Status.FAILED
+        && request.status() != ManagedServiceInstallRequest.Status.PARTIALLY_FAILED)
+      throw new ManagedServiceInstallException("Only a failed installation can be retried");
+    var retryable = new ArrayList<ManagedServiceRecord>();
+    for (var planned : request.services()) {
+      var current = states.find(planned.serviceId()).orElse(null);
+      if (current != null && !atTarget(current))
+        retryable.add(requireMatchingRecord(planned, current));
+    }
+    retryable.forEach(record -> states.save(record.readyToRetry()));
+    return execute(request);
+  }
+
+  @Override
   public synchronized ManagedServiceInstallRequest deny(String requestId) {
     ManagedServiceInstallRequest request = load(requestId);
     if (request.status() == ManagedServiceInstallRequest.Status.DENIED) {

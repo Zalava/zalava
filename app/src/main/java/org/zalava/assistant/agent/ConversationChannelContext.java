@@ -14,7 +14,11 @@ public final class ConversationChannelContext {
     String previous = CONVERSATION.get();
     CONVERSATION.set(conversationId);
     try {
-      return InvocationChannelContext.call(channel(conversationId), conversationId, operation);
+      return InvocationChannelContext.call(
+          channel(conversationId),
+          conversationId,
+          AgentRunContext.current().orElse(null),
+          operation);
     } finally {
       if (previous == null) CONVERSATION.remove();
       else CONVERSATION.set(previous);

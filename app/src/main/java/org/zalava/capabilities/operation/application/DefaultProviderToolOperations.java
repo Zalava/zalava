@@ -144,12 +144,22 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     }
 
     if (command.approvalMode() == ApprovalMode.TASK && setting.isEmpty()) {
+      boolean directChat =
+          "web".equals(command.context().attributes().get("permissionPolicyChannel"))
+              && !command.context().attributes().containsKey("actorTaskReference")
+              && !command.context().attributes().getOrDefault("conversationId", "").isBlank();
       Optional<ToolApproval> decision =
-          approvalPort.findUnscopedDecision(
-              command.context().actorId(),
-              command.providerId(),
-              command.toolName(),
-              command.argumentsJson());
+          directChat
+              ? approvalPort.findDirectChatDecision(
+                  command.context(),
+                  command.providerId(),
+                  command.toolName(),
+                  command.argumentsJson())
+              : approvalPort.findUnscopedDecision(
+                  command.context().actorId(),
+                  command.providerId(),
+                  command.toolName(),
+                  command.argumentsJson());
       if (decision.isPresent()) {
         ToolApproval approval = decision.get();
         if (approval.decision() == ToolApproval.Decision.DENIED)

@@ -30,7 +30,8 @@ public final class DefaultManagedServiceQueries implements ManagedServiceQueries
                     record.observedRevision(),
                     record.desiredState().artifactReference(),
                     record.desiredState().ports(),
-                    record.consecutiveFailures()))
+                    record.consecutiveFailures(),
+                    record.failureReason()))
         .toList();
   }
 }

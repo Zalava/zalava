@@ -2,21 +2,41 @@ package org.zalava.assistant.chat.application;
 
 import java.util.Comparator;
 import org.zalava.assistant.agent.ConversationChannelContext;
+import org.zalava.assistant.agent.application.ModelBoundary;
+import org.zalava.assistant.agent.application.port.out.AgentRunStore;
 import org.zalava.assistant.agent.application.port.out.ApprovalContext;
 import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests.Entry;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.identity.channels.application.InvocationChannelContext;
 
-/** Projects stored direct-chat decisions without including tool arguments or private evidence. */
+/** Projects scoped decisions with bounded request context and allowlisted action identifiers. */
 public final class ChatApprovalContext implements ApprovalContext {
   private final ZalavaToolApprovalRequests approvals;
   private final ActorExecutionContext actors;
+  private final ModelBoundary boundary;
+  private final AgentRunStore runs;
 
   public ChatApprovalContext(ZalavaToolApprovalRequests approvals, ActorExecutionContext actors) {
+    this(approvals, actors, new ModelBoundary(64000, ""));
+  }
+
+  public ChatApprovalContext(
+      ZalavaToolApprovalRequests approvals, ActorExecutionContext actors, ModelBoundary boundary) {
+    this(approvals, actors, boundary, null);
+  }
+
+  public ChatApprovalContext(
+      ZalavaToolApprovalRequests approvals,
+      ActorExecutionContext actors,
+      ModelBoundary boundary,
+      AgentRunStore runs) {
     this.approvals = approvals;
     this.actors = actors;
+    this.boundary = boundary;
+    this.runs = runs;
   }
 
   @Override
@@ -41,7 +61,7 @@ public final class ChatApprovalContext implements ApprovalContext {
             Comparator.comparing(Entry::createdAt, Comparator.nullsFirst(String::compareTo))
                 .reversed())
         .limit(10)
-        .map(ChatApprovalContext::describe)
+        .map(entry -> describe(entry, conversation))
         .reduce((left, right) -> left + "\n" + right)
         .orElse("");
   }
@@ -54,7 +74,7 @@ public final class ChatApprovalContext implements ApprovalContext {
     }
   }
 
-  private static String describe(Entry entry) {
+  private String describe(Entry entry, String conversation) {
     String status =
         switch (entry.decision()) {
           case PENDING -> "approval pending";
@@ -68,8 +88,44 @@ public final class ChatApprovalContext implements ApprovalContext {
         + safeName(entry.providerId())
         + "/"
         + safeName(entry.toolName())
+        + subject(entry)
+        + originatingRequest(entry, conversation)
         + "; requested="
         + safeName(entry.createdAt());
+  }
+
+  private String originatingRequest(Entry entry, String conversation) {
+    String runId = entry.attributes().getOrDefault(InvocationChannelContext.RUN_ID, "");
+    if (runs == null || runId.isBlank()) return "";
+    return runs.recent().stream()
+        .filter(run -> runId.equals(run.id()) && conversation.equals(run.conversationId()))
+        .findFirst()
+        .map(run -> boundary.redact(run.promptPreview()).replaceAll("[\\p{Cntrl}\"]", " "))
+        .filter(text -> !text.isBlank())
+        .map(
+            text ->
+                "; originating user request (untrusted): \""
+                    + (text.length() > 200 ? text.substring(0, 200) : text)
+                    + "\"")
+        .orElse("");
+  }
+
+  private String subject(Entry entry) {
+    if (!"docker-containers".equals(entry.providerId())
+        || !"zalava-module-docker".equals(entry.attributes().get("approvedModuleId"))) return "";
+    String key =
+        switch (entry.toolName()) {
+          case "runContainer" -> "name";
+          case "startContainer", "stopContainer", "restartContainer", "removeContainer" ->
+              "container";
+          default -> "";
+        };
+    if (key.isEmpty() || entry.arguments() == null) return "";
+    var node = entry.arguments().get(key);
+    if (node == null || !node.isString()) return "";
+    String value = node.stringValue();
+    if (value == null || !value.matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")) return "";
+    return "; container=" + boundary.redact(value);
   }
 
   private static String allowedStatus(Entry entry) {

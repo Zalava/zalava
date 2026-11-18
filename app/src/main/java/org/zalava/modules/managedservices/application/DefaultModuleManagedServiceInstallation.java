@@ -71,6 +71,19 @@ public final class DefaultModuleManagedServiceInstallation
   }
 
   @Override
+  public ManagedServiceInstallRequest retryLatest(String moduleId) {
+    var request =
+        latestForModule(moduleId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("No managed-service installation to retry"));
+    if (request.status() != ManagedServiceInstallRequest.Status.FAILED
+        && request.status() != ManagedServiceInstallRequest.Status.PARTIALLY_FAILED)
+      throw new IllegalArgumentException(
+          "Only a failed managed-service installation can be retried");
+    return installations.retry(request.requestId());
+  }
+
+  @Override
   public ManagedServiceInstallRequest denyLatest(String moduleId) {
     return installations.deny(pendingForModule(moduleId).requestId());
   }

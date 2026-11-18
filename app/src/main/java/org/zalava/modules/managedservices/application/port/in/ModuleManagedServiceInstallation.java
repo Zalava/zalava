@@ -22,6 +22,8 @@ public interface ModuleManagedServiceInstallation {
    */
   ManagedServiceInstallRequest approveLatest(String moduleId);
 
+  ManagedServiceInstallRequest retryLatest(String moduleId);
+
   /** Denies the module's pending install request. Throws when the module has no pending request. */
   ManagedServiceInstallRequest denyLatest(String moduleId);
 }

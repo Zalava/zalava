@@ -17,6 +17,8 @@ public interface ManagedServiceInstallation {
 
   ManagedServiceInstallRequest allow(String requestId);
 
+  ManagedServiceInstallRequest retry(String requestId);
+
   ManagedServiceInstallRequest deny(String requestId);
 
   /** One submitted service; Zalava binds the module authority from the submitted module id. */
