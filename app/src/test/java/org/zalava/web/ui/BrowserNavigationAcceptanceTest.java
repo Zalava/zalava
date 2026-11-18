@@ -9,6 +9,8 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.Response;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
@@ -314,7 +316,9 @@ class BrowserNavigationAcceptanceTest {
                 "/settings?section=channels",
                 "/settings?section=permissions",
                 "/zalava/control")) {
-          assertThat(page.navigate(baseUrl() + path).status()).isEqualTo(200);
+          assertThat(navigateForVisualCheck(page, baseUrl() + path).status())
+              .as("Navigation response for %s at %s px", path, width)
+              .isEqualTo(200);
           if (path.equals("/chat")) {
             page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
             assertThat(page.getByText("Model not configured").isVisible()).isTrue();
@@ -818,6 +822,19 @@ class BrowserNavigationAcceptanceTest {
       page.getByText("Stored metadata", new Page.GetByTextOptions().setExact(true)).click();
       assertThat(page.locator("[data-memory-id]").isVisible()).isTrue();
       capture(page, "memory-metadata-expanded-1440");
+    }
+  }
+
+  private static Response navigateForVisualCheck(Page page, String url) {
+    try {
+      return page.navigate(url);
+    } catch (PlaywrightException failure) {
+      // Chromium can abort a local GET when another CI task changes Docker networking.
+      if (failure.getMessage() == null
+          || !failure.getMessage().contains("net::ERR_NETWORK_CHANGED at " + url)) {
+        throw failure;
+      }
+      return page.navigate(url);
     }
   }
 

@@ -1435,9 +1435,10 @@ class ReleasedModuleDistributableAcceptanceTest {
                 .setFullPage(true));
       }
       member.setViewportSize(1440, 900);
+      // The checkbox submits the form and disappears from the active list after navigation.
       member
           .locator("form:has(input[name=name][value='Member automatic milk']) input[type=checkbox]")
-          .check();
+          .click();
       member.getByText("Bought Member automatic milk").waitFor();
       member.navigate(baseUrl + "/apps/zalava-module-shopping-list/shopping-list");
       PlaywrightAssertions.assertThat(
