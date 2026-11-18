@@ -59,6 +59,7 @@ import org.testcontainers.utility.DockerImageName;
 import org.zalava.capabilities.discovery.adapter.out.springai.ZalavaToolCallbackNames;
 import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.support.AcceptanceTiming;
 import org.zalava.support.DigitalPdfFixture;
 import org.zalava.tasks.adapter.in.jobrunr.TaskHandler;
 import org.zalava.tasks.adapter.out.filesystem.ActorFileSystemTaskStore;
@@ -117,7 +118,13 @@ class ReleasedModuleDistributableAcceptanceTest {
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext admin = browser.newContext()) {
       catalogProxy = proxy;
-      postgres.start();
+      AcceptanceTiming.measure(
+          diagnostics,
+          "database-startup",
+          () -> {
+            postgres.start();
+            return null;
+          });
       Page page = admin.newPage();
       try {
         start(postgres, workspace, "dev");
@@ -394,6 +401,11 @@ class ReleasedModuleDistributableAcceptanceTest {
   }
 
   private List<Release> downloadReleases(Set<String> selected) throws Exception {
+    return AcceptanceTiming.measure(
+        diagnostics, "released-artifact-downloads", () -> downloadReleasesMeasured(selected));
+  }
+
+  private List<Release> downloadReleasesMeasured(Set<String> selected) throws Exception {
     Properties pins = new Properties();
     try (var input = getClass().getResourceAsStream("/released-modules.properties")) {
       assertThat(input).as("immutable released-module pins").isNotNull();
@@ -417,14 +429,21 @@ class ReleasedModuleDistributableAcceptanceTest {
                   + pin[0]
                   + "/"
                   + asset);
-      HttpResponse<byte[]> response = download(uri);
-      assertThat(response.statusCode()).as("released artifact %s", uri).isEqualTo(200);
-      String digest =
-          HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(response.body()));
-      assertThat(digest).as("immutable digest %s", moduleId).isEqualTo(pin[1]);
-      Path path = diagnostics.resolve(asset);
-      Files.write(path, response.body());
-      result.add(new Release(moduleId, pin[0], path));
+      result.add(
+          AcceptanceTiming.measure(
+              diagnostics,
+              "artifact-" + moduleId,
+              () -> {
+                HttpResponse<byte[]> response = download(uri);
+                assertThat(response.statusCode()).as("released artifact %s", uri).isEqualTo(200);
+                String digest =
+                    HexFormat.of()
+                        .formatHex(MessageDigest.getInstance("SHA-256").digest(response.body()));
+                assertThat(digest).as("immutable digest %s", moduleId).isEqualTo(pin[1]);
+                Path path = diagnostics.resolve(asset);
+                Files.write(path, response.body());
+                return new Release(moduleId, pin[0], path);
+              }));
     }
     return result;
   }
@@ -587,7 +606,13 @@ class ReleasedModuleDistributableAcceptanceTest {
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext admin = browser.newContext()) {
       catalogProxy = proxy;
-      postgres.start();
+      AcceptanceTiming.measure(
+          diagnostics,
+          "database-startup",
+          () -> {
+            postgres.start();
+            return null;
+          });
       Page page = admin.newPage();
       try {
         start(postgres, workspace, "dev");
@@ -685,7 +710,13 @@ class ReleasedModuleDistributableAcceptanceTest {
         Browser browser =
             playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext admin = browser.newContext()) {
-      postgres.start();
+      AcceptanceTiming.measure(
+          diagnostics,
+          "database-startup",
+          () -> {
+            postgres.start();
+            return null;
+          });
       Page page = admin.newPage();
       page.onPageError(
           error -> {
@@ -2049,6 +2080,18 @@ class ReleasedModuleDistributableAcceptanceTest {
   private void start(
       PostgreSQLContainer postgres, Path workspace, String profile, boolean jobsEnabled)
       throws Exception {
+    AcceptanceTiming.measure(
+        diagnostics,
+        "host-startup",
+        () -> {
+          startMeasured(postgres, workspace, profile, jobsEnabled);
+          return null;
+        });
+  }
+
+  private void startMeasured(
+      PostgreSQLContainer postgres, Path workspace, String profile, boolean jobsEnabled)
+      throws Exception {
     Path jar =
         Path.of(System.getProperty("zalava.test.boot-jar", "unused-oci.jar")).toAbsolutePath();
     if (ociImage == null) assertThat(jar).exists();
@@ -2168,6 +2211,16 @@ class ReleasedModuleDistributableAcceptanceTest {
   }
 
   private void stop() throws Exception {
+    AcceptanceTiming.measure(
+        diagnostics,
+        "host-shutdown",
+        () -> {
+          stopMeasured();
+          return null;
+        });
+  }
+
+  private void stopMeasured() throws Exception {
     if (process != null) {
       if (ociComposeFleet != null) {
         ociComposeFleet.stop();
