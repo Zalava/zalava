@@ -1,6 +1,7 @@
 package org.zalava.api.extensions.managed;
 
 import java.util.List;
+import java.util.Optional;
 import org.zalava.api.ZalavaServiceContract;
 
 /**
@@ -41,6 +42,15 @@ public interface ManagedServiceEngine {
    * create.
    */
   void create(Request request);
+
+  /**
+   * Exchanges a bounded OCR request with the approved worker. Implementations must check the
+   * immutable container identity, approved artifact, ownership, readiness and isolation before
+   * forwarding document bytes. Engines that lack the transport report it unavailable.
+   */
+  default Optional<String> extractOcr(Request worker, ManagedOcrService.Request request) {
+    return Optional.empty();
+  }
 
   /** Starts the owned, created service. Never addresses foreign resources. */
   void start(String serviceId);
