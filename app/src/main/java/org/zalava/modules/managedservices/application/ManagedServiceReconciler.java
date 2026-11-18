@@ -43,8 +43,17 @@ public final class ManagedServiceReconciler {
         return states.save(
             record.observed(ManagedServiceObservedState.STOPPED, record.desiredRevision()));
       }
+      if (record.desiredState().networkIsolated()) {
+        checkIsolationSupport(record.serviceId(), actual.exists() && actual.running());
+      }
       if (!actual.exists()) engine.create(record);
+      if (record.desiredState().networkIsolated()) {
+        checkIsolation(record.serviceId(), actual.exists() && actual.running());
+      }
       if (!actual.running()) engine.start(record.serviceId());
+      if (record.desiredState().networkIsolated()) {
+        checkIsolation(record.serviceId(), true);
+      }
       OciServiceEngine.Observation ready = engine.inspect(record.serviceId());
       if (ready.ready())
         return states.save(
@@ -67,6 +76,38 @@ public final class ManagedServiceReconciler {
               : "The service could not be started. Check the service and Docker settings before retrying.";
       return states.save(
           record.failed(now.plus(record.desiredState().readinessDeadline()), reason));
+    }
+  }
+
+  private void checkIsolationSupport(String serviceId, boolean running) {
+    try {
+      if (!engine.supportsNetworkIsolation()) {
+        throw new IllegalStateException("Managed-service engine cannot enforce network isolation");
+      }
+    } catch (RuntimeException ex) {
+      stopAfterFailedIsolationCheck(serviceId, running, ex);
+      throw ex;
+    }
+  }
+
+  private void checkIsolation(String serviceId, boolean running) {
+    try {
+      if (!engine.isNetworkIsolated(serviceId)) {
+        throw new IllegalStateException("Managed service is not network isolated");
+      }
+    } catch (RuntimeException ex) {
+      stopAfterFailedIsolationCheck(serviceId, running, ex);
+      throw ex;
+    }
+  }
+
+  private void stopAfterFailedIsolationCheck(
+      String serviceId, boolean running, RuntimeException failure) {
+    if (!running) return;
+    try {
+      engine.stop(serviceId);
+    } catch (RuntimeException stopFailure) {
+      failure.addSuppressed(stopFailure);
     }
   }
 }

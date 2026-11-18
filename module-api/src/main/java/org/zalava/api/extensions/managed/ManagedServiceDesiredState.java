@@ -16,7 +16,8 @@ public record ManagedServiceDesiredState(
     Set<String> devices,
     ManagedServiceLimits limits,
     Duration readinessDeadline,
-    int restartLimit) {
+    int restartLimit,
+    Boolean networkIsolated) {
 
   private static final Pattern ID = Pattern.compile("[a-z][a-z0-9-]{0,62}");
   private static final Pattern DIGEST = Pattern.compile(".+@sha256:[a-f0-9]{64}");
@@ -41,7 +42,39 @@ public record ManagedServiceDesiredState(
     secretReferences = immutableIds(secretReferences, "secretReferences");
     dataPaths = ManagedServicePaths.immutablePaths(dataPaths, "dataPaths", false);
     ports = immutablePorts(ports);
+    networkIsolated = Boolean.TRUE.equals(networkIsolated);
+    if (networkIsolated && !ports.isEmpty()) {
+      throw new IllegalArgumentException("network-isolated services cannot publish ports");
+    }
     devices = ManagedServicePaths.immutablePaths(devices, "devices", true);
+  }
+
+  /** Preserves the original constructor for existing modules and service records. */
+  public ManagedServiceDesiredState(
+      String resourceId,
+      String artifactReference,
+      String revision,
+      ManagedServiceLifecycle lifecycle,
+      Set<String> secretReferences,
+      Set<String> dataPaths,
+      Set<Integer> ports,
+      Set<String> devices,
+      ManagedServiceLimits limits,
+      Duration readinessDeadline,
+      int restartLimit) {
+    this(
+        resourceId,
+        artifactReference,
+        revision,
+        lifecycle,
+        secretReferences,
+        dataPaths,
+        ports,
+        devices,
+        limits,
+        readinessDeadline,
+        restartLimit,
+        false);
   }
 
   static void requireId(String value, String name) {
