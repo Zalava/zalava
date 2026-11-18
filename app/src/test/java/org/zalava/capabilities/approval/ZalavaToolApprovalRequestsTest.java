@@ -17,6 +17,7 @@ import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.adapter.out.filesystem.FileSystemApprovalRequestStore;
+import org.zalava.identity.channels.application.InvocationChannelContext;
 import tools.jackson.databind.ObjectMapper;
 
 class ZalavaToolApprovalRequestsTest {
@@ -54,6 +55,59 @@ class ZalavaToolApprovalRequestsTest {
     // Add via store and reload
     new FileSystemApprovalRequestStore(workspace).save(entry);
     return entry.requestId();
+  }
+
+  @Test
+  void directChatDecisionsAreBoundToTheExactRunAndConversation() {
+    var p = provider("module");
+    var tool = new ZalavaToolDescriptor("stopContainer", "Stop", true);
+    var args = JSON.createObjectNode().put("container", "example");
+    var first =
+        new InvocationContext(
+            "actor",
+            false,
+            Map.of(
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-a",
+                InvocationChannelContext.RUN_ID,
+                "run-1"));
+    var second =
+        new InvocationContext(
+            "actor",
+            false,
+            Map.of(
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-a",
+                InvocationChannelContext.RUN_ID,
+                "run-2"));
+    var otherConversation =
+        new InvocationContext(
+            "actor",
+            false,
+            Map.of(
+                "permissionPolicyChannel",
+                "web",
+                "conversationId",
+                "conversation-b",
+                InvocationChannelContext.RUN_ID,
+                "run-1"));
+    var pending = requests.create(p, tool, first, args);
+    assertThat(requests.create(p, tool, first, args).requestId()).isEqualTo(pending.requestId());
+    assertThat(requests.create(p, tool, otherConversation, args).requestId())
+        .isNotEqualTo(pending.requestId());
+    requests.allowUnscoped(pending.requestId());
+    assertThat(
+            requests.findDirectChatDecision(first, p.descriptor().providerId(), tool.name(), args))
+        .hasValueSatisfying(e -> assertThat(e.requestId()).isEqualTo(pending.requestId()));
+    assertThat(
+            requests.findDirectChatDecision(second, p.descriptor().providerId(), tool.name(), args))
+        .isEmpty();
+    assertThat(requests.create(p, tool, second, args).requestId())
+        .isNotEqualTo(pending.requestId());
   }
 
   @Test

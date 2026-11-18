@@ -407,6 +407,7 @@ public class ZalavaConfiguration {
       TaskExecutionContext taskExecutionContext,
       ChatToolConfirmation chatToolConfirmation,
       ZalavaToolApprovalRequests approvalRequests,
+      AgentRunStore runStore,
       ModelBoundary modelBoundary) {
     return new DefaultAgentContextAssembler(
         characterBudget,
@@ -434,7 +435,7 @@ public class ZalavaConfiguration {
                 approvalRequests)),
         new ContextSourceBudgets(
             toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget),
-        new ChatApprovalContext(approvalRequests, actorExecutionContext));
+        new ChatApprovalContext(approvalRequests, actorExecutionContext, modelBoundary, runStore));
   }
 
   @Bean

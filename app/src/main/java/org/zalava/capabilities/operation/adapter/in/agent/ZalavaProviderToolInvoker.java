@@ -79,6 +79,8 @@ public final class ZalavaProviderToolInvoker {
         .ifPresent(channel -> attributes.put("permissionPolicyChannel", channel));
     InvocationChannelContext.conversation()
         .ifPresent(value -> attributes.put("conversationId", value));
+    InvocationChannelContext.runId()
+        .ifPresent(value -> attributes.put(InvocationChannelContext.RUN_ID, value));
     taskReference.ifPresent(reference -> attributes.put("taskReference", reference.path()));
     actorTaskReference.ifPresent(
         reference ->

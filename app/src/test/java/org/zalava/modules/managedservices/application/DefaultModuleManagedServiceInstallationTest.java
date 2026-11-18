@@ -120,6 +120,11 @@ class DefaultModuleManagedServiceInstallationTest {
     }
 
     @Override
+    public ManagedServiceInstallRequest retry(String requestId) {
+      return requests.getFirst();
+    }
+
+    @Override
     public ManagedServiceInstallRequest deny(String requestId) {
       denied = requestId;
       return requests.getFirst();

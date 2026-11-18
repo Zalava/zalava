@@ -19,7 +19,33 @@ public record ManagedServiceRecord(
     String observedRevision,
     String ownedDataIdentity,
     int consecutiveFailures,
-    Instant nextAttemptAt) {
+    Instant nextAttemptAt,
+    String failureReason) {
+  public ManagedServiceRecord(
+      String serviceId,
+      ManagedServiceDesiredState desiredState,
+      String desiredRevision,
+      ManagedServiceResourceGrant grant,
+      String grantRevision,
+      ManagedServiceObservedState observedState,
+      String observedRevision,
+      String ownedDataIdentity,
+      int consecutiveFailures,
+      Instant nextAttemptAt) {
+    this(
+        serviceId,
+        desiredState,
+        desiredRevision,
+        grant,
+        grantRevision,
+        observedState,
+        observedRevision,
+        ownedDataIdentity,
+        consecutiveFailures,
+        nextAttemptAt,
+        null);
+  }
+
   public ManagedServiceRecord {
     Objects.requireNonNull(serviceId, "serviceId");
     if (serviceId.isBlank()) throw new IllegalArgumentException("serviceId must not be blank");
@@ -48,10 +74,32 @@ public record ManagedServiceRecord(
         revision,
         ownedDataIdentity,
         consecutiveFailures,
-        nextAttemptAt);
+        nextAttemptAt,
+        state == ManagedServiceObservedState.FAILED ? failureReason : null);
   }
 
   public ManagedServiceRecord failed(Instant retryAt) {
+    return failed(
+        retryAt,
+        "The service could not be started. Check the service and Docker settings before retrying.");
+  }
+
+  public ManagedServiceRecord readyToRetry() {
+    return new ManagedServiceRecord(
+        serviceId,
+        desiredState,
+        desiredRevision,
+        grant,
+        grantRevision,
+        observedState,
+        observedRevision,
+        ownedDataIdentity,
+        0,
+        null,
+        failureReason);
+  }
+
+  public ManagedServiceRecord failed(Instant retryAt, String reason) {
     return new ManagedServiceRecord(
         serviceId,
         desiredState,
@@ -62,6 +110,7 @@ public record ManagedServiceRecord(
         observedRevision,
         ownedDataIdentity,
         consecutiveFailures + 1,
-        retryAt);
+        retryAt,
+        reason);
   }
 }
