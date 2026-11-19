@@ -159,7 +159,7 @@ class ManagedServiceReconcilerTest {
     engine.readyAfterStart = true;
     ManagedServiceRecord result = reconciler.reconcile(authority(), isolatedRecord());
     assertThat(result.observedState()).isEqualTo(ManagedServiceObservedState.RUNNING);
-    assertThat(engine.isolationChecks).isEqualTo(2);
+    assertThat(engine.isolationChecks).isEqualTo(3);
   }
 
   @Test
