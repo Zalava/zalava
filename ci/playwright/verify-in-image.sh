@@ -1,7 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-image=${1:?Usage: verify-in-image.sh <image-reference> [gradle-options...]}
+image=${1:?Usage: verify-in-image.sh <image-reference> [--lane all|host|oci-default|oci-full-jre] [gradle-options...]}
+shift
+lane=all
+if [[ "${1:-}" == --lane ]]; then
+    lane=${2:?--lane requires a value}
+    shift 2
+fi
+# The union of CI lanes is the unchanged full local gate. Only the two OCI
+# test tasks move out of host; their independent runners still execute them.
+case "$lane" in
+    all) tasks=(:module-api:test :module-api-test:check :app:check) ;;
+    host) tasks=(:module-api:test :module-api-test:check :app:check
+        --exclude-task :app:ociImageAcceptanceTest
+        --exclude-task :app:ociFullJreImageAcceptanceTest) ;;
+    oci-default) tasks=(:app:ociImageAcceptanceTest :app:ociComposeAcceptanceTest) ;;
+    oci-full-jre) tasks=(:app:ociFullJreImageAcceptanceTest) ;;
+    *) echo "Unknown verification lane: $lane" >&2; exit 1 ;;
+esac
 repository=$(pwd -P)
 docker_cli=$(command -v docker)
 docker compose version >/dev/null
@@ -28,7 +45,7 @@ docker run --rm --network host \
     --env "GRADLE_USER_HOME=$gradle_home" \
     --env CI --env GITHUB_ACTIONS \
     "$image" \
-    ./gradlew :module-api:test :module-api-test:check :app:check --profile "${@:2}"
+    ./gradlew "${tasks[@]}" --profile "$@"
 
 docker run --rm --entrypoint bash "$image" -ec '
     if compgen -G "$PLAYWRIGHT_BROWSERS_PATH/firefox-*" > /dev/null ||

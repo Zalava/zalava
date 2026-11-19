@@ -127,5 +127,93 @@ class WorkflowBoundaryTest(unittest.TestCase):
         self.assertIn('worktree root', result.stderr)
 
 
+class VerificationImageTest(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.tools = self.root / 'tools'
+        self.tools.mkdir()
+        self.compose = self.tools / 'docker-compose'
+        self.compose.touch()
+        self.calls = self.root / 'calls.jsonl'
+        docker = self.tools / 'docker'
+        docker.write_text('#!/usr/bin/env python3\n'
+                          'import json, os, sys\n'
+                          'from pathlib import Path\n'
+                          'args = sys.argv[1:]\n'
+                          'if args[0] == "info": print(os.environ["COMPOSE_FIXTURE"])\n'
+                          'if args[0] == "run":\n'
+                          '    with Path(os.environ["DOCKER_CALLS"]).open("a") as out:\n'
+                          '        out.write(json.dumps(args) + "\\n")\n'
+                          '    sys.exit(int(os.environ.get("DOCKER_RUN_EXIT", "0")))\n')
+        docker.chmod(0o755)
+        self.environment = dict(os.environ, PATH=str(self.tools) + os.pathsep + os.environ['PATH'],
+                                HOME=str(self.root / 'home'), COMPOSE_FIXTURE=str(self.compose),
+                                DOCKER_CALLS=str(self.calls))
+        self.environment.pop('GRADLE_USER_HOME', None)
+        self.wrapper = WORKFLOW.parent.parent / 'ci/playwright/verify-in-image.sh'
+
+    def invoke(self, *arguments):
+        return subprocess.run(['bash', str(self.wrapper), 'pinned-image', *arguments],
+                              cwd=self.root, env=self.environment, capture_output=True, text=True)
+
+    def invocations(self):
+        return [json.loads(line) for line in self.calls.read_text().splitlines()]
+
+    def test_default_keeps_the_complete_gate_and_forwards_options(self):
+        result = self.invoke('--rerun-tasks', '--no-build-cache')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = self.invocations()
+        self.assertEqual(len(calls), 2)  # gate plus unused-browser inspection
+        gate = calls[0][calls[0].index('./gradlew'):]
+        self.assertEqual(gate, ['./gradlew', ':module-api:test', ':module-api-test:check',
+                                ':app:check', '--profile', '--rerun-tasks', '--no-build-cache'])
+        home = str(self.root / 'home/.gradle')
+        self.assertIn('GRADLE_USER_HOME=' + home, calls[0])
+        self.assertIn(home + ':' + home, calls[0])
+
+    def test_host_moves_only_the_two_oci_tasks_to_required_runners(self):
+        result = self.invoke('--lane', 'host')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        gate = self.invocations()[0]
+        self.assertEqual(gate[gate.index('./gradlew'):],
+                         ['./gradlew', ':module-api:test', ':module-api-test:check', ':app:check',
+                          '--exclude-task', ':app:ociImageAcceptanceTest', '--exclude-task',
+                          ':app:ociFullJreImageAcceptanceTest', '--profile'])
+
+    def test_oci_runners_execute_both_variants_and_compose(self):
+        cases = [('oci-default', [':app:ociImageAcceptanceTest', ':app:ociComposeAcceptanceTest']),
+                 ('oci-full-jre', [':app:ociFullJreImageAcceptanceTest'])]
+        for lane, tasks in cases:
+            with self.subTest(lane=lane):
+                self.calls.unlink(missing_ok=True)
+                result = self.invoke('--lane', lane, '--rerun-tasks')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                gate = self.invocations()[0]
+                self.assertEqual(gate[gate.index('./gradlew'):],
+                                 ['./gradlew', *tasks, '--profile', '--rerun-tasks'])
+
+    def test_explicit_gradle_home_is_preserved(self):
+        home = str(self.root / 'configured-home')
+        self.environment['GRADLE_USER_HOME'] = home
+        result = self.invoke()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('GRADLE_USER_HOME=' + home, self.invocations()[0])
+
+    def test_gate_failure_is_propagated_without_running_inspection(self):
+        self.environment['DOCKER_RUN_EXIT'] = '37'
+        result = self.invoke('--lane', 'host')
+        self.assertEqual(result.returncode, 37, result.stderr)
+        self.assertEqual(len(self.invocations()), 1)
+
+    def test_invalid_or_missing_lane_fails_before_docker(self):
+        for arguments in [('--lane', 'unknown'), ('--lane',)]:
+            with self.subTest(arguments=arguments):
+                result = self.invoke(*arguments)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(self.calls.exists())
+
+
 if __name__ == '__main__':
     unittest.main()
