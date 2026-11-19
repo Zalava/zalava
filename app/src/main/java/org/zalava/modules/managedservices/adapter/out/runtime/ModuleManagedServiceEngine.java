@@ -2,6 +2,8 @@ package org.zalava.modules.managedservices.adapter.out.runtime;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import org.zalava.api.extensions.managed.ManagedOcrService;
 import org.zalava.api.extensions.managed.ManagedServiceEngine;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 import org.zalava.modules.managedservices.application.port.out.OciServiceEngine;
@@ -65,6 +67,24 @@ public final class ModuleManagedServiceEngine implements OciServiceEngine {
                 record.desiredState(),
                 record.grant(),
                 record.ownedDataIdentity()));
+  }
+
+  @Override
+  public Optional<String> extractOcr(
+      ManagedServiceRecord worker, ManagedOcrService.Request request) {
+    return runtime
+        .findService(ManagedServiceEngine.CONTRACT)
+        .flatMap(
+            loaded ->
+                loaded
+                    .service()
+                    .extractOcr(
+                        new ManagedServiceEngine.Request(
+                            worker.serviceId(),
+                            worker.desiredState(),
+                            worker.grant(),
+                            worker.ownedDataIdentity()),
+                        request));
   }
 
   @Override
