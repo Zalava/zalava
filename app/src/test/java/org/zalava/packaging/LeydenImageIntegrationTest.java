@@ -15,6 +15,7 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.zalava.support.AcceptanceTiming;
 
 @Tag("leyden-image")
 class LeydenImageIntegrationTest {
@@ -39,33 +40,47 @@ class LeydenImageIntegrationTest {
                 .withPassword(databasePassword)
                 .withNetwork(network)
                 .withNetworkAliases(DATABASE_ALIAS)) {
-      postgres.start();
       Path diagnostics =
           Files.createDirectories(Path.of("build/reports/oci-image", UUID.randomUUID().toString()))
               .toAbsolutePath();
+      AcceptanceTiming.measure(
+          diagnostics,
+          "training-database-startup",
+          () -> {
+            postgres.start();
+            return null;
+          });
       Path buildLog = diagnostics.resolve("build.log");
       try {
-        Process build =
-            new ProcessBuilder(
-                    "./gradlew",
-                    ":app:bootBuildImage",
-                    "--imageName",
-                    imageName,
-                    "-Poci.cache-prefix=" + cachePrefix,
-                    "-Poci.jlink=" + System.getProperty("oci.jlink", "false"),
-                    "-Poci.aot=" + System.getProperty("oci.aot", "true"),
-                    "-Pleyden.training.network=" + network.getId(),
-                    "-Pleyden.training.jdbc-url=jdbc:postgresql://"
-                        + DATABASE_ALIAS
-                        + ":5432/zalava_leyden",
-                    "-Pleyden.training.username=" + postgres.getUsername(),
-                    "-Pleyden.training.password=" + databasePassword)
-                .directory(Path.of("..").toFile())
-                .redirectErrorStream(true)
-                .redirectOutput(buildLog.toFile())
-                .start();
+        AcceptanceTiming.measure(
+            diagnostics,
+            "oci-image-build",
+            () -> {
+              Process build =
+                  new ProcessBuilder(
+                          "./gradlew",
+                          ":app:bootBuildImage",
+                          "--imageName",
+                          imageName,
+                          "-Poci.cache-prefix=" + cachePrefix,
+                          "-Poci.jlink=" + System.getProperty("oci.jlink", "false"),
+                          "-Poci.aot=" + System.getProperty("oci.aot", "true"),
+                          "-Pleyden.training.network=" + network.getId(),
+                          "-Pleyden.training.jdbc-url=jdbc:postgresql://"
+                              + DATABASE_ALIAS
+                              + ":5432/zalava_leyden",
+                          "-Pleyden.training.username=" + postgres.getUsername(),
+                          "-Pleyden.training.password=" + databasePassword)
+                      .directory(Path.of("..").toFile())
+                      .redirectErrorStream(true)
+                      .redirectOutput(buildLog.toFile())
+                      .start();
 
-        assertThat(build.waitFor()).as("Buildpacks build; diagnostics: %s", buildLog).isZero();
+              assertThat(build.waitFor())
+                  .as("Buildpacks build; diagnostics: %s", buildLog)
+                  .isZero();
+              return null;
+            });
         var image = dockerClient.inspectImageCmd(imageName).exec();
         assertThat(image.getConfig().getUser())
             .isNotBlank()
@@ -78,19 +93,33 @@ class LeydenImageIntegrationTest {
                 value ->
                     value.startsWith("SPRING_DATASOURCE_") || value.contains(databasePassword));
         if (Boolean.getBoolean("zalava.test.oci.acceptance")) {
-          verifyJvm(imageName, diagnostics);
+          AcceptanceTiming.measure(
+              diagnostics,
+              "jvm-probes",
+              () -> {
+                verifyJvm(imageName, diagnostics);
+                return null;
+              });
           OciAcceptanceJourneys.verify(
+              () ->
+                  AcceptanceTiming.measure(
+                      diagnostics,
+                      "docker-journey",
+                      () -> {
+                        new OciRuntimeAcceptance(imageName, diagnostics).verify();
+                        verifyReleasedModules(imageName, false);
+                        return null;
+                      }),
               () -> {
-                new OciRuntimeAcceptance(imageName, diagnostics).verify();
-                verifyReleasedModules(imageName, false);
-                return null;
-              },
-              () -> {
-                if (Boolean.getBoolean("zalava.test.oci.compose")) {
-                  new OciComposeAcceptance(imageName, diagnostics).verify();
-                  verifyReleasedModules(imageName, true);
-                }
-                return null;
+                if (!Boolean.getBoolean("zalava.test.oci.compose")) return null;
+                return AcceptanceTiming.measure(
+                    diagnostics,
+                    "compose-journey",
+                    () -> {
+                      new OciComposeAcceptance(imageName, diagnostics).verify();
+                      verifyReleasedModules(imageName, true);
+                      return null;
+                    });
               });
         }
       } finally {
