@@ -264,6 +264,9 @@ class JdkModuleLocatorReleaseLocatorExtendedTest {
       if (statusCode != 200) {
         return new SimpleResponse<>(request, statusCode, null);
       }
+      if (request.uri().getPath().endsWith("/git/ref/heads/published-release-index")) {
+        return new SimpleResponse<>(request, 404, null);
+      }
       byte[] body = isGithubApi ? commitsBody : catalogBody;
       @SuppressWarnings("unchecked")
       T b = (T) (body != null ? body : new byte[0]);
