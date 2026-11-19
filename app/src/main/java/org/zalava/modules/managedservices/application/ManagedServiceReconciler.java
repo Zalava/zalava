@@ -1,7 +1,9 @@
 package org.zalava.modules.managedservices.application;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 import org.zalava.api.ManagedServiceAuthority;
 import org.zalava.api.extensions.managed.ManagedServiceLifecycle;
 import org.zalava.api.extensions.managed.ManagedServiceLifecycleResult;
@@ -54,7 +56,10 @@ public final class ManagedServiceReconciler {
       if (record.desiredState().networkIsolated()) {
         checkIsolation(record.serviceId(), true);
       }
-      OciServiceEngine.Observation ready = engine.inspect(record.serviceId());
+      OciServiceEngine.Observation ready =
+          record.desiredState().networkIsolated()
+              ? awaitIsolatedReadiness(record)
+              : engine.inspect(record.serviceId());
       if (ready.ready())
         return states.save(
             record.observed(ManagedServiceObservedState.RUNNING, record.desiredRevision()));
@@ -77,6 +82,28 @@ public final class ManagedServiceReconciler {
       return states.save(
           record.failed(now.plus(record.desiredState().readinessDeadline()), reason));
     }
+  }
+
+  private OciServiceEngine.Observation awaitIsolatedReadiness(ManagedServiceRecord record) {
+    String serviceId = record.serviceId();
+    long deadline = System.nanoTime() + record.desiredState().readinessDeadline().toNanos();
+    OciServiceEngine.Observation state = engine.inspect(serviceId);
+    while (state.running() && !state.ready()) {
+      long remaining = deadline - System.nanoTime();
+      if (remaining <= 0) return state;
+      try {
+        TimeUnit.NANOSECONDS.sleep(Math.min(remaining, Duration.ofMillis(250).toNanos()));
+      } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(
+            "Interrupted while waiting for the isolated service", exception);
+      }
+      state = engine.inspect(serviceId);
+    }
+    if (state.ready()) {
+      checkIsolation(serviceId, state.running());
+    }
+    return state;
   }
 
   private void checkIsolationSupport(String serviceId, boolean running) {
