@@ -208,13 +208,16 @@
                             <strong>${service.serviceId()}</strong>
                             <span class="tag ${service.stateClass()}" data-managed-service-state>${service.stateLabel()}</span>
                             @if(service.consecutiveFailures() > 0)
-                                <span class="tag is-danger is-light">${service.consecutiveFailures()} failed attempt(s)</span>
+                                <span class="tag is-danger is-light">${service.consecutiveFailures()} failed ${service.consecutiveFailures() == 1 ? "attempt" : "attempts"}</span>
                             @endif
                         </p>
-                        <p class="has-text-grey is-size-7">Image ${service.artifactReference()}</p>
+                        @if(service.failureReason() != null)
+                            <p role="status">${service.failureReason()}</p>
+                        @endif
+                        <p class="has-text-grey is-size-7 managed-service-image">Image ${service.artifactReference()}</p>
                         @if(service.endpoints().isEmpty())
                             <p class="has-text-grey is-size-7 mt-2">No published endpoint yet.</p>
-                        @else
+                        @elseif(!service.stateLabel().equals("Failed"))
                             @for(String endpoint : service.endpoints())
                                 <p class="mt-2">
                                     <a class="button is-small is-link is-light" href="${endpoint}" target="_blank" rel="noopener" data-managed-service-endpoint>Open service interface — ${endpoint}</a>
@@ -223,6 +226,12 @@
                         @endif
                     </article>
                 @endfor
+                @if(model.managedServiceRequestStatus() != null && (model.managedServiceRequestStatus().equals("FAILED") || model.managedServiceRequestStatus().equals("PARTIALLY_FAILED")))
+                    <form method="post" action="/modules/${model.moduleId()}/managed-services/retry" class="mb-4">
+                        <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
+                        <button class="button is-primary is-small" type="submit">Retry installation</button>
+                    </form>
+                @endif
             </section>
         @endif
 

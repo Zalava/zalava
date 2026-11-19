@@ -21,6 +21,7 @@ import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.approval.adapter.out.filesystem.FileSystemApprovalRequestStore;
 import org.zalava.capabilities.approval.application.port.out.ApprovalRequestStore;
 import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.identity.channels.application.InvocationChannelContext;
 import org.zalava.tasks.domain.ActorTaskExecutionReference;
 import org.zalava.tasks.domain.ActorTaskReference;
 import org.zalava.tasks.domain.TaskReference;
@@ -82,11 +83,21 @@ public class ZalavaToolApprovalRequests {
                 Objects.equals(
                     entry.attributes().get("accountRole"), context.attributes().get("accountRole")))
         .filter(entry -> channel(entry.attributes()).equals(channel(context.attributes())))
+        .filter(entry -> sameDirectChatRun(entry, context))
         .filter(entry -> entry.decision() == Decision.PENDING)
         .filter(
             entry ->
-                entry.matches(
-                    taskReference, provider.descriptor().providerId(), tool.name(), argumentsJson))
+                taskReference == null
+                    ? entry.matchesUnscoped(
+                        context.actorId(),
+                        provider.descriptor().providerId(),
+                        tool.name(),
+                        argumentsJson)
+                    : entry.matches(
+                        taskReference,
+                        provider.descriptor().providerId(),
+                        tool.name(),
+                        argumentsJson))
         .findFirst()
         .orElseGet(() -> add(provider, tool, context, arguments, argumentsJson, taskReference));
   }
@@ -319,6 +330,34 @@ public class ZalavaToolApprovalRequests {
             entry -> entry.decision() == Decision.ALLOWED || entry.decision() == Decision.DENIED)
         .filter(entry -> entry.matchesUnscoped(actorId, providerId, toolName, argumentsJson))
         .findFirst();
+  }
+
+  public synchronized Optional<Entry> findDirectChatDecision(
+      InvocationContext context, String providerId, String toolName, JsonNode arguments) {
+    if (context.attributes().getOrDefault(InvocationChannelContext.RUN_ID, "").isBlank()
+        || context.attributes().getOrDefault("conversationId", "").isBlank())
+      return Optional.empty();
+    String argumentsJson = json(arguments);
+    return entries.stream()
+        .filter(
+            entry -> entry.decision() == Decision.ALLOWED || entry.decision() == Decision.DENIED)
+        .filter(
+            entry -> entry.matchesUnscoped(context.actorId(), providerId, toolName, argumentsJson))
+        .filter(entry -> sameDirectChatRun(entry, context))
+        .findFirst();
+  }
+
+  private static boolean sameDirectChatRun(Entry entry, InvocationContext context) {
+    if (!"web".equals(context.attributes().get("permissionPolicyChannel"))
+        || context.attributes().containsKey(ACTOR_TASK_REFERENCE)
+        || context.attributes().getOrDefault("conversationId", "").isBlank()) return true;
+    String runId = context.attributes().getOrDefault(InvocationChannelContext.RUN_ID, "");
+    return !runId.isBlank()
+        && runId.equals(entry.attributes().get(InvocationChannelContext.RUN_ID))
+        && context
+            .attributes()
+            .get("conversationId")
+            .equals(entry.attributes().get("conversationId"));
   }
 
   public synchronized Optional<Entry> findAllowedToolPolicy(

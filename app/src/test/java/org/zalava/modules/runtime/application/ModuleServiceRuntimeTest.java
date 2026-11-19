@@ -5,14 +5,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.zalava.api.FactorySecretAccess;
 import org.zalava.api.ModuleDescriptor;
+import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.RequirementMode;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaServiceContract;
 import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.api.ZalavaServiceFactory;
 import org.zalava.api.ZalavaServiceRequirement;
+import org.zalava.api.extensions.managed.ManagedOcrService;
 
 class ModuleServiceRuntimeTest {
   private static final ZalavaServiceContract<Service> A =
@@ -114,6 +119,28 @@ class ModuleServiceRuntimeTest {
                     .service(A))
         .hasMessageContaining("did not declare service service-a");
     runtime.close();
+  }
+
+  @Test
+  void scopesTheHostOcrCapabilityToItsAssignedModule() {
+    ManagedOcrService ocr = request -> Optional.empty();
+    var contract = ManagedOcrService.CONTRACT;
+    var requirement =
+        new ZalavaServiceRequirement(
+            contract.serviceId(), contract.contractVersion(), RequirementMode.OPTIONAL);
+    var context =
+        new ProviderFactoryContext(
+            Map.of(),
+            FactorySecretAccess.none(),
+            Map.of(),
+            Map.of("tika", Map.of(ManagedOcrService.class, ocr)));
+    var tika = module("tika", List.of(), List.of(requirement));
+    var other = module("other", List.of(), List.of(requirement));
+    try (var runtime = new ModuleServiceRuntime(List.of(tika, other), context)) {
+      var scoped = runtime.providerContext(context);
+      assertThat(scoped.forFactory("tika", "services").service(contract)).contains(ocr);
+      assertThat(scoped.forFactory("other", "services").service(contract)).isEmpty();
+    }
   }
 
   private static ZalavaServiceRequirement required(ZalavaServiceContract<?> contract) {

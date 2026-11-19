@@ -23,6 +23,7 @@ import org.zalava.modules.managedservices.application.DefaultManagedServiceQueri
 import org.zalava.modules.managedservices.application.DefaultManagedServiceUpgrade;
 import org.zalava.modules.managedservices.application.DefaultModuleManagedServiceInstallation;
 import org.zalava.modules.managedservices.application.ManagedServiceInstallPlanning;
+import org.zalava.modules.managedservices.application.ManagedServiceInstallRequest;
 import org.zalava.modules.managedservices.application.ManagedServiceReconciler;
 import org.zalava.modules.managedservices.application.ManagedServiceUpgradeRequest;
 import org.zalava.modules.managedservices.application.port.in.DeclaredManagedServices;
@@ -182,6 +183,12 @@ class ManagedServiceConfiguration {
           String requestId) {
         return authorization.call(
             "managed-service-install-allow:" + requestId, () -> delegate.allow(requestId));
+      }
+
+      @Override
+      public ManagedServiceInstallRequest retry(String requestId) {
+        return authorization.call(
+            "managed-service-install-retry:" + requestId, () -> delegate.retry(requestId));
       }
 
       @Override

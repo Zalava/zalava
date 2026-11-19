@@ -21,6 +21,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.model.SpringAIModelProperties;
 import org.springframework.ai.tool.toolsearch.ToolIndex;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,6 +34,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
+import org.zalava.api.extensions.managed.ManagedOcrService;
 import org.zalava.assistant.agent.Agent;
 import org.zalava.assistant.agent.AgentRequestTools;
 import org.zalava.assistant.agent.DefaultAgent;
@@ -142,6 +144,9 @@ import org.zalava.modules.development.adapter.in.agent.DevelopmentRequestTools;
 import org.zalava.modules.development.application.port.in.DevelopmentCandidateSubmission;
 import org.zalava.modules.development.application.port.in.DevelopmentRequestManagement;
 import org.zalava.modules.development.application.port.in.DevelopmentWorkspaceExport;
+import org.zalava.modules.managedservices.application.ApprovedManagedOcrService;
+import org.zalava.modules.managedservices.application.port.out.ManagedServiceStateStore;
+import org.zalava.modules.managedservices.application.port.out.OciServiceEngine;
 import org.zalava.modules.runtime.ExternalZalavaModuleLoader;
 import org.zalava.modules.runtime.ManagedZalavaRuntime;
 import org.zalava.modules.runtime.StaticZalavaModuleRegistry;
@@ -402,6 +407,7 @@ public class ZalavaConfiguration {
       TaskExecutionContext taskExecutionContext,
       ChatToolConfirmation chatToolConfirmation,
       ZalavaToolApprovalRequests approvalRequests,
+      AgentRunStore runStore,
       ModelBoundary modelBoundary) {
     return new DefaultAgentContextAssembler(
         characterBudget,
@@ -429,7 +435,7 @@ public class ZalavaConfiguration {
                 approvalRequests)),
         new ContextSourceBudgets(
             toolSummaryBudget, toolDefinitionBudget, memoryBudget, knowledgeBudget, skillBudget),
-        new ChatApprovalContext(approvalRequests, actorExecutionContext));
+        new ChatApprovalContext(approvalRequests, actorExecutionContext, modelBoundary, runStore));
   }
 
   @Bean
@@ -764,7 +770,9 @@ public class ZalavaConfiguration {
   public ProviderFactoryContext zalavaProviderFactoryContext(
       ZalavaModuleProperties moduleProperties,
       FileSystemModuleConfigurationStore configurations,
-      org.zalava.api.extensions.tasks.TaskService taskService) {
+      org.zalava.api.extensions.tasks.TaskService taskService,
+      ManagedServiceStateStore managedServiceStates,
+      ObjectProvider<OciServiceEngine> managedServiceEngine) {
     java.util.Map<String, Object> modules = new java.util.HashMap<>(moduleProperties.modules());
     java.util.Map<String, org.zalava.api.FactorySecretAccess> secrets = new java.util.HashMap<>();
     configurations
@@ -780,7 +788,12 @@ public class ZalavaConfiguration {
         secrets,
         java.util.Map.of(
             "zalava-module-tasks",
-            java.util.Map.of(org.zalava.api.extensions.tasks.TaskService.class, taskService)));
+            java.util.Map.of(org.zalava.api.extensions.tasks.TaskService.class, taskService),
+            "zalava-module-tika",
+            java.util.Map.of(
+                ManagedOcrService.class,
+                new ApprovedManagedOcrService(
+                    "zalava-module-tika", managedServiceStates, managedServiceEngine::getObject))));
   }
 
   ProviderFactoryContext zalavaProviderFactoryContext(

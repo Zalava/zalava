@@ -14,6 +14,7 @@ import org.zalava.api.ZalavaServiceContract;
 import org.zalava.api.ZalavaServiceFactory;
 import org.zalava.api.ZalavaServiceFactoryContext;
 import org.zalava.api.ZalavaServiceRequirement;
+import org.zalava.api.extensions.managed.ManagedOcrService;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 /** Fail-closed resolver for Zalava-owned typed services, independent of Spring. */
@@ -69,6 +70,9 @@ final class ModuleServiceRuntime implements AutoCloseable {
           "Zalava service factories must declare a descriptor and contract");
     }
     String id = factory.descriptor().serviceId();
+    if (ManagedOcrService.CONTRACT.serviceId().equals(id)) {
+      throw new IllegalStateException("Module cannot provide host service " + id);
+    }
     if (!module.descriptor().moduleId().equals(factory.descriptor().moduleId())) {
       throw new IllegalStateException("Zalava service " + id + " is declared by the wrong module");
     }
@@ -115,6 +119,9 @@ final class ModuleServiceRuntime implements AutoCloseable {
 
   private void create(ZalavaModule module, ZalavaServiceFactory<?> factory) {
     String id = factory.descriptor().serviceId();
+    if (ManagedOcrService.CONTRACT.serviceId().equals(id)) {
+      throw new IllegalStateException("Module cannot provide host service " + id);
+    }
     if (instances.containsKey(id)) return;
     Object value = factory.create(scope(module));
     if (!factory.contract().serviceType().isInstance(value)) {
@@ -138,6 +145,11 @@ final class ModuleServiceRuntime implements AutoCloseable {
       }
     }
     ProviderFactoryContext scoped = source.forFactory(module.descriptor().moduleId(), "services");
+    if (requirements.containsKey(ManagedOcrService.CONTRACT.serviceId())) {
+      scoped
+          .service(ManagedOcrService.class)
+          .ifPresent(service -> available.put(ManagedOcrService.CONTRACT, service));
+    }
     return new ZalavaServiceFactoryContext(
         module.descriptor().moduleId(),
         available,
