@@ -54,3 +54,27 @@ The required Compose deployment lane also uses the host Docker Compose plugin
 pinned tool image continues to supply Java/Node/Chromium; the host daemon, CLI
 and Compose plugin are explicit prerequisites. Tests start only UUID-owned
 projects and remove their volumes. See `docs/development/oci-compose.md`.
+
+Regular PR/main verification runs three independent runners through the same
+wrapper: `host` runs API/contract-kit and the full host check with only the two
+OCI test tasks excluded; `oci-default` runs the default image and its Docker
+and Compose journeys; `oci-full-jre` runs the full-JRE fallback. All lanes are
+required by the final `check` job. A failed, skipped or cancelled lane prevents
+that check from passing. Matrix failures do not cancel the other lanes, and
+reports are uploaded as `verification-reports-<lane>`. Each runner builds from
+the same checkout and pinned tool image with independent fixtures and caches.
+This trades additional runner minutes and repeated compilation for independent
+CPU/memory during the heavy journeys; compare complete workflow wall time and
+phase reports before claiming an improvement.
+
+The wrapper defaults to the complete gate, including both OCI variants. Local
+pre-push verification remains:
+
+```sh
+CI=true GITHUB_ACTIONS=true bash ci/playwright/verify-in-image.sh "$(cat ci/playwright/image.txt)" --rerun-tasks --no-build-cache
+```
+
+For diagnosing one CI runner, put `--lane host`, `--lane oci-default` or
+`--lane oci-full-jre` immediately after the image reference. A single lane
+is partial verification and does not satisfy the local pre-push requirement.
+Candidate CI-image trials continue to run the complete default gate.
