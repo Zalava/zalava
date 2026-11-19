@@ -34,6 +34,52 @@ class JdkModuleLocatorReleaseLocatorTest {
   }
 
   @Test
+  void prefersPublishedIndexAndPinsItsCommit() {
+    String publishedSha = "b".repeat(40);
+    String ref =
+        """
+        {"ref":"refs/heads/published-release-index","object":{"type":"commit","sha":"%s"}}
+        """
+            .formatted(publishedSha);
+    var locator = locatorWithIndexRef(200, ref);
+    assertThat(locator.resolve("fixture").manifestUri())
+        .isEqualTo(
+            URI.create(
+                "https://raw.githubusercontent.com/Zalava/zalava-module-fixture/"
+                    + publishedSha
+                    + "/releases/index.yaml"));
+  }
+
+  @Test
+  void rejectsMalformedPublishedIndexRefWithoutFallingBack() {
+    assertThatThrownBy(() -> locatorWithIndexRef(200, "{}").resolve("fixture"))
+        .isInstanceOf(SourceModuleInstallationException.class)
+        .hasMessageContaining("did not return a module release-index revision");
+  }
+
+  @Test
+  void propagatesPublishedIndexRefErrorsWithoutFallingBack() {
+    assertThatThrownBy(() -> locatorWithIndexRef(403, "{}").resolve("fixture"))
+        .isInstanceOf(SourceModuleInstallationException.class)
+        .hasMessageContaining("HTTP 403");
+  }
+
+  private JdkModuleLocatorReleaseLocator locatorWithIndexRef(int status, String body) {
+    var client =
+        new FixedClient(
+            CATALOG.getBytes(),
+            ("[{\"sha\":\"" + SHA + "\"}]").getBytes(),
+            status,
+            body.getBytes());
+    return new JdkModuleLocatorReleaseLocator(
+        client,
+        URI.create("https://catalog.example"),
+        new ModuleLocatorIndexLoader(),
+        new ObjectMapper(),
+        null);
+  }
+
+  @Test
   void rejectsUnknownModule() {
     var locator =
         new JdkModuleLocatorReleaseLocator(
@@ -57,17 +103,28 @@ class JdkModuleLocatorReleaseLocatorTest {
   private static final class FixedClient extends HttpClient {
     private final byte[] catalog;
     private final byte[] commits;
+    private final int indexRefStatus;
+    private final byte[] indexRef;
 
     FixedClient(byte[] catalog, byte[] commits) {
+      this(catalog, commits, 404, new byte[0]);
+    }
+
+    FixedClient(byte[] catalog, byte[] commits, int indexRefStatus, byte[] indexRef) {
       this.catalog = catalog;
       this.commits = commits;
+      this.indexRefStatus = indexRefStatus;
+      this.indexRef = indexRef;
     }
 
     @Override
     public <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) {
+      boolean isIndexRef =
+          request.uri().getPath().endsWith("/git/ref/heads/published-release-index");
+      byte[] payload = request.uri().getHost().equals("api.github.com") ? commits : catalog;
       @SuppressWarnings("unchecked")
-      T body = (T) (request.uri().getHost().equals("api.github.com") ? commits : catalog);
-      return new Response<>(request, body);
+      T body = (T) (isIndexRef ? indexRef : payload);
+      return new Response<>(request, body, isIndexRef ? indexRefStatus : 200);
     }
 
     @Override
@@ -128,11 +185,8 @@ class JdkModuleLocatorReleaseLocatorTest {
     }
   }
 
-  private record Response<T>(HttpRequest request, T body) implements HttpResponse<T> {
-    public int statusCode() {
-      return 200;
-    }
-
+  private record Response<T>(HttpRequest request, T body, int statusCode)
+      implements HttpResponse<T> {
     public HttpRequest request() {
       return request;
     }

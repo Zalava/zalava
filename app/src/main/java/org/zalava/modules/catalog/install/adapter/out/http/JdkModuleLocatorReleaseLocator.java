@@ -21,6 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 /** Resolves public locator entries and pins module release indexes to their Git commit. */
 public final class JdkModuleLocatorReleaseLocator implements ModuleLocatorReleaseLocator {
   private static final int MAX_BYTES = 256 * 1024;
+  private static final String PUBLISHED_INDEX_REF = "heads/published-release-index";
   private static final Pattern COMMIT = Pattern.compile("[0-9a-fA-F]{40}");
 
   private final HttpClient client;
@@ -95,26 +96,10 @@ public final class JdkModuleLocatorReleaseLocator implements ModuleLocatorReleas
   }
 
   private URI immutableManifestUri(ModuleLocatorIndex.Module module, String[] repository) {
-    String encodedPath =
-        URLEncoder.encode(module.releaseIndexPath(), StandardCharsets.UTF_8).replace("+", "%20");
-    URI commitUri =
-        URI.create(
-            "https://api.github.com/repos/"
-                + repository[0]
-                + "/"
-                + repository[1]
-                + "/commits?path="
-                + encodedPath
-                + "&per_page=1");
-    String revision;
-    try {
-      JsonNode commits = json.readTree(request(commitUri, "application/vnd.github+json"));
-      revision =
-          commits.isArray() && !commits.isEmpty() ? commits.get(0).path("sha").stringValue("") : "";
-    } catch (RuntimeException exception) {
-      throw new SourceModuleInstallationException(
-          "Unable to parse GitHub module revision", exception);
-    }
+    String repositoryApi = "https://api.github.com/repos/" + repository[0] + "/" + repository[1];
+    URI publishedIndexRef = URI.create(repositoryApi + "/git/ref/" + PUBLISHED_INDEX_REF);
+    byte[] ref = request(publishedIndexRef, "application/vnd.github+json", true);
+    String revision = ref == null ? legacyIndexRevision(module, repositoryApi) : refRevision(ref);
     if (!COMMIT.matcher(revision).matches())
       throw new SourceModuleInstallationException(
           "GitHub did not return a module release-index revision");
@@ -129,7 +114,40 @@ public final class JdkModuleLocatorReleaseLocator implements ModuleLocatorReleas
             + module.releaseIndexPath());
   }
 
+  private String refRevision(byte[] ref) {
+    JsonNode document = parseRevisionResponse(ref);
+    JsonNode object = document.path("object");
+    if (document.path("ref").stringValue("").equals("refs/" + PUBLISHED_INDEX_REF)
+        && object.path("type").stringValue("").equals("commit")) {
+      return object.path("sha").stringValue("");
+    }
+    return "";
+  }
+
+  private String legacyIndexRevision(ModuleLocatorIndex.Module module, String repositoryApi) {
+    String encodedPath =
+        URLEncoder.encode(module.releaseIndexPath(), StandardCharsets.UTF_8).replace("+", "%20");
+    URI uri = URI.create(repositoryApi + "/commits?path=" + encodedPath + "&per_page=1");
+    JsonNode commits = parseRevisionResponse(request(uri, "application/vnd.github+json"));
+    return commits.isArray() && !commits.isEmpty()
+        ? commits.get(0).path("sha").stringValue("")
+        : "";
+  }
+
+  private JsonNode parseRevisionResponse(byte[] body) {
+    try {
+      return json.readTree(body);
+    } catch (RuntimeException exception) {
+      throw new SourceModuleInstallationException(
+          "Unable to parse GitHub module revision", exception);
+    }
+  }
+
   private byte[] request(URI uri, String accept) {
+    return request(uri, accept, false);
+  }
+
+  private byte[] request(URI uri, String accept, boolean allowMissingRef) {
     try {
       HttpRequest.Builder request =
           HttpRequest.newBuilder(uri)
@@ -140,6 +158,7 @@ public final class JdkModuleLocatorReleaseLocator implements ModuleLocatorReleas
       if (accessToken != null) request.header("Authorization", "Bearer " + accessToken);
       HttpResponse<byte[]> response =
           client.send(request.build(), HttpResponse.BodyHandlers.ofByteArray());
+      if (allowMissingRef && response.statusCode() == 404) return null;
       if (response.statusCode() != 200)
         throw new SourceModuleInstallationException(
             "Module locator request failed: HTTP " + response.statusCode());
