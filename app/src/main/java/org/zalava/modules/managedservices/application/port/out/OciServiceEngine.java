@@ -1,6 +1,8 @@
 package org.zalava.modules.managedservices.application.port.out;
 
 import java.util.List;
+import java.util.Optional;
+import org.zalava.api.extensions.managed.ManagedOcrService;
 import org.zalava.modules.managedservices.application.ManagedServiceRecord;
 
 /** Narrow engine-neutral lifecycle boundary; Docker and Podman adapters are later work. */
@@ -16,6 +18,11 @@ public interface OciServiceEngine {
   }
 
   void create(ManagedServiceRecord record);
+
+  default Optional<String> extractOcr(
+      ManagedServiceRecord worker, ManagedOcrService.Request request) {
+    return Optional.empty();
+  }
 
   void start(String serviceId);
 
