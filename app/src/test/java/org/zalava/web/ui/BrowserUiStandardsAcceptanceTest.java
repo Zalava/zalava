@@ -5,10 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.junit.UsePlaywright;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import java.nio.charset.StandardCharsets;
@@ -49,6 +48,7 @@ import reactor.core.publisher.Flux;
 /** Real host/browser regressions for shared UI states and actor-owned library actions. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@UsePlaywright
 @Import(BrowserUiStandardsAcceptanceTest.ModelConfiguration.class)
 class BrowserUiStandardsAcceptanceTest {
   private static final Path WORKSPACE = workspace();
@@ -57,8 +57,6 @@ class BrowserUiStandardsAcceptanceTest {
   @Autowired private AccountLifecycle accounts;
   @Autowired private MemoryPromotions promotions;
   private Actor actor;
-  private Playwright playwright;
-  private Browser browser;
   private BrowserContext context;
   private Page page;
 
@@ -80,13 +78,11 @@ class BrowserUiStandardsAcceptanceTest {
   }
 
   @BeforeEach
-  void signIn() {
+  void signIn(Browser browser) {
     String login = "ui-standards-" + UUID.randomUUID();
     var account = accounts.create(login, PASSWORD, AccountRole.ADMIN);
     accounts.changePassword(account.id(), PASSWORD, PASSWORD + "-changed");
     actor = new Actor(account.id());
-    playwright = Playwright.create();
-    browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
     context = browser.newContext();
     page = context.newPage();
     page.navigate(base() + "/login");
@@ -98,8 +94,6 @@ class BrowserUiStandardsAcceptanceTest {
   @AfterEach
   void close() {
     if (context != null) context.close();
-    if (browser != null) browser.close();
-    if (playwright != null) playwright.close();
   }
 
   @Test
