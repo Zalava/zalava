@@ -73,3 +73,13 @@ Phases can nest and run concurrently, so do not sum them as elapsed build time.
 Compare the same revision, commands, runner resources and cache conditions.
 Measure cold and warm builds separately, keep failures separate from passing
 baselines, and repeat representative runs before attributing an improvement.
+
+For browser classes with several tests, the pinned Playwright Java dependency
+provides `@UsePlaywright` and an injected `Browser` fixture. Reuse that process
+while creating and closing a fresh `BrowserContext` for every test or actor.
+Do not close the injected browser in an individual test; the extension owns its
+lifecycle. Keep traces inside context ownership so they stop before the context
+closes. Navigation, Chat and UI Standards acceptance demonstrate this pattern.
+The extension API is experimental, so verify these lifecycles when upgrading
+Playwright. Browser reuse does not authorize sharing sessions, accounts or
+application state between tests.

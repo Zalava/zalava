@@ -5,13 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.gson.JsonParser;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.Response;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.junit.UsePlaywright;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.FilePayload;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -53,6 +52,7 @@ import org.zalava.support.ZalavaComponentTestConfiguration;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@UsePlaywright
 @Import({
   ZalavaComponentTestConfiguration.class,
   BrowserNavigationAcceptanceTest.AccountConfiguration.class
@@ -106,11 +106,9 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void administratorSeesEveryPageNavigationOnEveryPageAndChatMounts() throws IOException {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void administratorSeesEveryPageNavigationOnEveryPageAndChatMounts(Browser browser)
+      throws IOException {
+    try (BrowserContext context = browser.newContext()) {
       startTrace(context);
       try {
         Page page = context.newPage();
@@ -138,11 +136,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void moduleFreeSettingsDoesNotAdvertiseChannelConfiguration() throws IOException {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void moduleFreeSettingsDoesNotAdvertiseChannelConfiguration(Browser browser) throws IOException {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
       assertThat(page.navigate(baseUrl() + "/settings?section=channels").status()).isEqualTo(200);
@@ -158,12 +153,9 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void adaptiveNavigationRetainsAuthorizedDestinationsAcrossRepresentativeWidths()
+  void adaptiveNavigationRetainsAuthorizedDestinationsAcrossRepresentativeWidths(Browser browser)
       throws IOException {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
       for (int[] viewport :
@@ -209,11 +201,9 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void expandedDashboardPreservesReviewedLayoutAndRetainsScreenshot() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void expandedDashboardPreservesReviewedLayoutAndRetainsScreenshot(Browser browser)
+      throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.setViewportSize(1366, 768);
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
@@ -256,11 +246,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void memberOnlySeesAuthorizedNavigation() throws IOException {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void memberOnlySeesAuthorizedNavigation(Browser browser) throws IOException {
+    try (BrowserContext context = browser.newContext()) {
       startTrace(context);
       try {
         Page page = context.newPage();
@@ -289,11 +276,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void changedScreensRemainContainedAndRetainVisualEvidence() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void changedScreensRemainContainedAndRetainVisualEvidence(Browser browser) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.route("https://**", route -> route.abort());
       for (int width : List.of(390, 768, 1440)) {
@@ -403,16 +387,13 @@ class BrowserNavigationAcceptanceTest {
   @Autowired KnowledgeExtractionRecordStore extractionRecords;
 
   @Test
-  void temporaryAdministratorMustChangePasswordBeforeChatAndOldPasswordStopsWorking()
+  void temporaryAdministratorMustChangePasswordBeforeChatAndOldPasswordStopsWorking(Browser browser)
       throws Exception {
     String login = "browser-temporary-" + UUID.randomUUID();
     String temporary = "TemporaryBrowserPassword-123";
     String replacement = "ReplacementBrowserPassword-456";
     var account = accounts.create(login, temporary, AccountRole.ADMIN);
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.setViewportSize(1440, 1000);
       signIn(page, login, temporary);
@@ -449,10 +430,7 @@ class BrowserNavigationAcceptanceTest {
       page.waitForURL("**/chat");
       assertThat(accounts.findByLoginName(login).orElseThrow().passwordChangeRequired()).isFalse();
     }
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.setViewportSize(1440, 1000);
       signIn(page, login, temporary);
@@ -465,11 +443,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void accountsAndCompactNavigationRemainReadableAndContained() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void accountsAndCompactNavigationRemainReadableAndContained(Browser browser) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
       page.waitForURL("**/chat");
@@ -512,11 +487,8 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void tabletNavigationDisplaysFullDestinationNames() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void tabletNavigationDisplaysFullDestinationNames(Browser browser) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.setViewportSize(768, 900);
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
@@ -538,12 +510,10 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void accountActionsConfirmPersistenceAndPreserveSafeDuplicateInput() throws Exception {
+  void accountActionsConfirmPersistenceAndPreserveSafeDuplicateInput(Browser browser)
+      throws Exception {
     String login = "browser-managed-" + UUID.randomUUID();
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.setViewportSize(1440, 900);
       signIn(page, ADMIN_LOGIN, ADMIN_PASSWORD);
@@ -593,11 +563,9 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void memberPersonalPageAndDeniedPagesRetainSafeRecoveryAtAllWidths() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void memberPersonalPageAndDeniedPagesRetainSafeRecoveryAtAllWidths(Browser browser)
+      throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
       page.waitForURL("**/chat");
@@ -633,20 +601,17 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void knowledgeSearchControlsStayWithinViewport() throws Exception {
-    checkLibrarySearch("/knowledge");
+  void knowledgeSearchControlsStayWithinViewport(Browser browser) throws Exception {
+    checkLibrarySearch(browser, "/knowledge");
   }
 
   @Test
-  void memorySearchControlsStayWithinViewport() throws Exception {
-    checkLibrarySearch("/memory");
+  void memorySearchControlsStayWithinViewport(Browser browser) throws Exception {
+    checkLibrarySearch(browser, "/memory");
   }
 
-  private void checkLibrarySearch(String path) throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  private void checkLibrarySearch(Browser browser, String path) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
       page.waitForURL("**/chat");
@@ -679,12 +644,10 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void knowledgeUploadSharingAndMemberReadOnlyViewsWorkThroughTheUi() throws Exception {
+  void knowledgeUploadSharingAndMemberReadOnlyViewsWorkThroughTheUi(Browser browser)
+      throws Exception {
     String name = "browser-library-" + UUID.randomUUID() + ".txt";
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext adminContext = browser.newContext();
+    try (BrowserContext adminContext = browser.newContext();
         BrowserContext memberContext = browser.newContext()) {
       Page admin = adminContext.newPage();
       signIn(admin, ADMIN_LOGIN, ADMIN_PASSWORD);
@@ -792,12 +755,9 @@ class BrowserNavigationAcceptanceTest {
   }
 
   @Test
-  void memoryScopeExplanationReviewAndDetailsRemainReadable() throws Exception {
+  void memoryScopeExplanationReviewAndDetailsRemainReadable(Browser browser) throws Exception {
     String text = "Browser private preference " + UUID.randomUUID();
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signIn(page, MEMBER_LOGIN, MEMBER_PASSWORD);
       page.waitForURL("**/chat");
