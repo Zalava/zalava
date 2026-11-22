@@ -85,6 +85,47 @@ class ManagedZalavaRuntimeTest {
     assertThat(SERVICE_FACTORY_CREATIONS).hasValue(0);
   }
 
+  @Test
+  void upgradedModuleUsesCompatibleSavedConfiguration() {
+    var lifecycle = new FileSystemModuleLifecycleStore(directory);
+    var configurations = new FileSystemModuleConfigurationStore(directory);
+    var old = snapshot("ready");
+    configurations.saveCandidate(
+        new ModuleConfigurationSnapshot(
+            old.moduleId(), "0.9.0", old.schemaId(), old.factories(), old.secretReferences()),
+        Map.of());
+    configurations.promoteCandidate("fixture");
+    lifecycle.set("fixture", DesiredState.RUNNING);
+
+    try (var runtime = runtime(lifecycle, configurations)) {
+      assertThat(runtime.state("fixture").state()).isEqualTo(ManagedZalavaRuntime.State.RUNNING);
+      assertThat(configurations.active("fixture").orElseThrow().version()).isEqualTo("0.9.0");
+    }
+  }
+
+  @Test
+  void upgradedModuleRequestsSetupWhenSavedConfigurationViolatesSchema() {
+    var lifecycle = new FileSystemModuleLifecycleStore(directory);
+    var configurations = new FileSystemModuleConfigurationStore(directory);
+    configurations.saveCandidate(
+        new ModuleConfigurationSnapshot(
+            "fixture", "0.9.0", "old", Map.of("fixture-factory", "invalid"), Map.of()),
+        Map.of());
+    configurations.promoteCandidate("fixture");
+    lifecycle.set("fixture", DesiredState.RUNNING);
+
+    try (var runtime = runtime(lifecycle, configurations)) {
+      assertThat(runtime.state("fixture").state())
+          .isEqualTo(ManagedZalavaRuntime.State.SETUP_REQUIRED);
+      assertThat(configurations.active("fixture").orElseThrow().factories())
+          .containsEntry("fixture-factory", "invalid");
+      configurations.saveCandidate(snapshot("ready"), Map.of());
+      runtime.applyCandidate("fixture");
+      runtime.start("fixture");
+      assertThat(runtime.state("fixture").state()).isEqualTo(ManagedZalavaRuntime.State.RUNNING);
+    }
+  }
+
   private ManagedZalavaRuntime runtime(
       FileSystemModuleLifecycleStore lifecycle, FileSystemModuleConfigurationStore configurations) {
     return new ManagedZalavaRuntime(

@@ -605,6 +605,9 @@ public class ModulesController {
             : zalavaRuntime instanceof ManagedZalavaRuntime managedRuntime
                 ? managedRuntime.state(moduleId).state().name()
                 : "RUNNING";
+    if ("SETUP_REQUIRED".equals(lifecycleState)) {
+      health = new ConfigurationHealth("Setup required", "is-warning is-light");
+    }
     String version =
         enabled != null ? enabled.version() : loaded != null ? loaded.descriptor().version() : null;
     String displayName =
@@ -687,6 +690,12 @@ public class ModulesController {
         managedServiceRequestStatus,
         managedServiceError,
         lifecycleState,
+        loaded != null
+                && zalavaRuntime instanceof ManagedZalavaRuntime managedRuntime
+                && managedRuntime.state(moduleId).state()
+                    == ManagedZalavaRuntime.State.SETUP_REQUIRED
+            ? managedRuntime.state(moduleId).failure()
+            : "",
         moduleMessage,
         moduleError,
         configurationMessage,
@@ -1150,6 +1159,7 @@ public class ModulesController {
       String managedServiceRequestStatus,
       String managedServiceError,
       String lifecycleState,
+      String configurationIssue,
       String moduleMessage,
       String moduleError,
       String configurationMessage,

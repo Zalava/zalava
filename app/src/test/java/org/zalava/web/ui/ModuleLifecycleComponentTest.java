@@ -32,6 +32,8 @@ import org.zalava.api.ProviderFactoryDescriptor;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.identity.accounts.domain.AccountRole;
+import org.zalava.modules.catalog.FileSystemModuleConfigurationStore;
+import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
 import org.zalava.modules.runtime.StaticZalavaModuleRegistry;
 import org.zalava.modules.runtime.ZalavaModuleRegistry;
@@ -59,6 +61,7 @@ class ModuleLifecycleComponentTest {
 
   @Autowired MockMvc mvc;
   @Autowired ComponentTestAccounts accounts;
+  @Autowired FileSystemModuleConfigurationStore configurations;
 
   @Test
   void configurationAndStartStopAreVisibleThroughTheModulePage() throws Exception {
@@ -93,6 +96,35 @@ class ModuleLifecycleComponentTest {
         .andExpect(status().is3xxRedirection());
     mvc.perform(get("/modules/lifecycle-fixture"))
         .andExpect(content().string(containsString("data-runtime-state=\"STOPPED\"")));
+
+    configurations.saveCandidate(
+        new ModuleConfigurationSnapshot(
+            "lifecycle-fixture",
+            "0.9.0",
+            "previous",
+            Map.of("fixture", Map.of("endpoint", 123)),
+            Map.of()),
+        Map.of());
+    configurations.promoteCandidate("lifecycle-fixture");
+    mvc.perform(post("/modules/lifecycle-fixture/start").with(csrf()))
+        .andExpect(status().is3xxRedirection());
+    mvc.perform(get("/modules/lifecycle-fixture"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("data-runtime-state=\"SETUP_REQUIRED\"")))
+        .andExpect(
+            content().string(containsString("Review the saved settings for this module version.")))
+        .andExpect(content().string(containsString("Check settings at")))
+        .andExpect(content().string(containsString("Configure before starting")));
+    mvc.perform(
+            post("/modules/lifecycle-fixture/configuration")
+                .with(csrf())
+                .param("configuration.fixture.endpoint", "ready"))
+        .andExpect(status().is3xxRedirection());
+    mvc.perform(post("/modules/lifecycle-fixture/start").with(csrf()))
+        .andExpect(status().is3xxRedirection());
+    mvc.perform(get("/modules/lifecycle-fixture"))
+        .andExpect(content().string(containsString("data-runtime-state=\"RUNNING\"")));
+    mvc.perform(post("/modules/lifecycle-fixture/stop").with(csrf()));
   }
 
   @Test

@@ -40,13 +40,27 @@ public final class ModuleConfigurationValidator {
           violations.stream()
               .min(Comparator.comparing(v -> v.getInstanceLocation().toString()))
               .orElseThrow();
-      throw new IllegalArgumentException(
+      throw new InvalidConfigurationException(
+          violation.getInstanceLocation().toString(),
           "Module configuration violates schema at "
               + (violation.getInstanceLocation().toString().isBlank()
                   ? "$"
                   : violation.getInstanceLocation())
               + ": "
               + violation.getMessage());
+    }
+  }
+
+  public static final class InvalidConfigurationException extends IllegalArgumentException {
+    private final String location;
+
+    InvalidConfigurationException(String location, String message) {
+      super(message);
+      this.location = location;
+    }
+
+    public String location() {
+      return location;
     }
   }
 
