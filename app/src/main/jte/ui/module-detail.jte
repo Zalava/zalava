@@ -68,7 +68,7 @@
                     <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
                     @if("SETUP_REQUIRED".equals(model.lifecycleState()))
                         <a class="button is-link is-light" href="#configuration">Configure before starting</a>
-                        <p class="help">Save the required settings below, then start the module. Finding a local connection example does not save or test it.</p>
+                        <p class="help">Review and save the settings below, then start the module. Required settings are marked in the form. Finding a local connection example does not save or test it.</p>
                     @else
                         <button class="button is-link" type="submit">Start module</button>
                     @endif
@@ -101,6 +101,9 @@
                 </div>
             </div>
         @if(!model.configurationFields().isEmpty())
+            @if("SETUP_REQUIRED".equals(model.lifecycleState()))
+                <p class="notification is-warning" role="status">${model.configurationIssue().isBlank() ? "Review the settings required by this module version." : model.configurationIssue()} Save the configuration before starting the module.</p>
+            @endif
             <form method="post" action="/modules/${model.moduleId()}/configuration" class="mt-5" id="configuration">
                 <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
                 @for(var section : ModuleConfigurationForm.sections(model.configurationFields()))

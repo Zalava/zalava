@@ -46,6 +46,7 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
   private final ProviderFactoryContext baseContext;
   private final ModuleConfigurationValidator validator = new ModuleConfigurationValidator();
   private final Map<String, String> failures = new HashMap<>();
+  private final Map<String, String> invalidConfigurations = new HashMap<>();
   private final ScheduledExecutorService retirement =
       Executors.newSingleThreadScheduledExecutor(
           Thread.ofVirtual().name("module-retirement-", 0).factory());
@@ -88,6 +89,9 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
   public synchronized ModuleState state(String moduleId) {
     ZalavaModule module = requireLoaded(moduleId);
     if (activeIds.contains(moduleId)) return new ModuleState(State.RUNNING, "");
+    if (invalidConfigurations.containsKey(moduleId)) {
+      return new ModuleState(State.SETUP_REQUIRED, invalidConfigurations.get(moduleId));
+    }
     String failure = failures.get(moduleId);
     if (failure != null) {
       return new ModuleState(
@@ -118,6 +122,7 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
       lifecycle.set(moduleId, DesiredState.RUNNING);
       publish(candidate, next);
       failures.remove(moduleId);
+      invalidConfigurations.remove(moduleId);
     } catch (RuntimeException failure) {
       failures.put(moduleId, safeFailure(failure));
       throw failure;
@@ -160,6 +165,7 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
       configurations.promoteCandidate(moduleId);
       if (candidate != null) publish(candidate, activeIds);
       failures.remove(moduleId);
+      invalidConfigurations.remove(moduleId);
     } catch (RuntimeException failure) {
       if (candidate != null) candidate.close();
       failures.put(moduleId, safeFailure(failure));
@@ -178,7 +184,25 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
           override != null && override.moduleId().equals(module.descriptor().moduleId())
               ? override
               : configurations.active(module.descriptor().moduleId()).orElse(null);
-      if (snapshot != null) validateConfiguration(module, snapshot);
+      if (snapshot != null) {
+        try {
+          validateConfiguration(module, snapshot);
+          invalidConfigurations.remove(module.descriptor().moduleId());
+        } catch (IllegalArgumentException invalid) {
+          String location =
+              invalid
+                      instanceof
+                      ModuleConfigurationValidator.InvalidConfigurationException violation
+                  ? violation.location()
+                  : "";
+          String message = "Review the saved settings for this module version.";
+          if (!location.isBlank() && !location.equals("$")) {
+            message += " Check settings at " + location + ".";
+          }
+          invalidConfigurations.put(module.descriptor().moduleId(), message);
+          throw invalid;
+        }
+      }
     }
     Map<String, Object> modulesConfiguration = new HashMap<>();
     Object existing = baseContext.configuration().get("modules");
@@ -241,9 +265,8 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
   }
 
   private void validateConfiguration(ZalavaModule module, ModuleConfigurationSnapshot snapshot) {
-    if (!module.descriptor().moduleId().equals(snapshot.moduleId())
-        || !module.descriptor().version().equals(snapshot.version())) {
-      throw new IllegalArgumentException("Configuration does not match the loaded module version");
+    if (!module.descriptor().moduleId().equals(snapshot.moduleId())) {
+      throw new IllegalArgumentException("Configuration does not match the loaded module");
     }
     validator.validateDocument(module.configuration(), snapshot.factories());
   }
