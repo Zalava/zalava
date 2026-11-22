@@ -6,12 +6,11 @@ import static org.mockito.Mockito.when;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
+import com.microsoft.playwright.junit.UsePlaywright;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.SameSiteAttribute;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -58,6 +57,7 @@ import tools.jackson.databind.node.JsonNodeFactory;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@UsePlaywright
 @Import({
   ChatControllerComponentTest.ChatModelTestConfiguration.class,
   BrowserChatAccountConfiguration.class
@@ -96,11 +96,9 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void realPendingApprovalRevealsItsTabAndPreservesDraftWithReadableArguments() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void realPendingApprovalRevealsItsTabAndPreservesDraftWithReadableArguments(Browser browser)
+      throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       Actor actor = signInDisposableMember(page);
       for (int width : new int[] {1440, 768, 390}) {
@@ -199,11 +197,9 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void compactComposerAndMessagesKeepTablesReadableAcrossViewports() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void compactComposerAndMessagesKeepTablesReadableAcrossViewports(Browser browser)
+      throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signInDisposableMember(page);
       page.locator("#message").fill("container response table");
@@ -307,12 +303,9 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void sendsAStreamingChatTurnAndKeepsItAfterReload() throws IOException {
+  void sendsAStreamingChatTurnAndKeepsItAfterReload(Browser browser) throws IOException {
     Path diagnosticDirectory = Files.createDirectories(Path.of("build", "browser-acceptance"));
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+    try (BrowserContext context = browser.newContext()) {
       context
           .tracing()
           .start(
@@ -521,11 +514,8 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void userMarkdownHeadingsRemainVisible() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void userMarkdownHeadingsRemainVisible(Browser browser) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signInDisposableMember(page);
       page.locator("#message").fill("## A visible formatting heading\n\nA plain sentence.");
@@ -542,11 +532,8 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void firstTokenWaitIsVisibleInsideTheAssistantBubble() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void firstTokenWaitIsVisibleInsideTheAssistantBubble(Browser browser) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signInDisposableMember(page);
       for (int width : List.of(390, 768, 1440)) {
@@ -575,11 +562,8 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void memoryReviewLinkWorksEvenWhenTheModelDoesNotRepeatTheUrl() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void memoryReviewLinkWorksEvenWhenTheModelDoesNotRepeatTheUrl(Browser browser) throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signInDisposableMember(page);
       page.locator("#message").fill("propose a greeting memory");
@@ -646,11 +630,9 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void titlesDatesAndUserNamingReplaceIdsAndRestoreTheSelectedConversation() throws Exception {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void titlesDatesAndUserNamingReplaceIdsAndRestoreTheSelectedConversation(Browser browser)
+      throws Exception {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       signInDisposableMember(page);
       var selector =
@@ -723,11 +705,9 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void waitsForTheInitialSnapshotBeforeConversationActionsAndPreservesChannelSelection() {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void waitsForTheInitialSnapshotBeforeConversationActionsAndPreservesChannelSelection(
+      Browser browser) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       Actor actor = signInDisposableMember(page);
       var selector = page.locator("select[aria-label='Select conversation']");
@@ -819,11 +799,8 @@ class BrowserChatAcceptanceTest {
   }
 
   @Test
-  void signsOutThroughTheCsrfProtectedFormAndInvalidatesTheSession() {
-    try (Playwright playwright = Playwright.create();
-        Browser browser =
-            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        BrowserContext context = browser.newContext()) {
+  void signsOutThroughTheCsrfProtectedFormAndInvalidatesTheSession(Browser browser) {
+    try (BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       page.setViewportSize(1440, 900);
       signInDisposableMember(page);
