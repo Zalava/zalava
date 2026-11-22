@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.AriaRole;
@@ -35,9 +36,9 @@ import org.zalava.modules.runtime.ZalavaRuntime;
 @ActiveProfiles("test")
 @Import({
   ModuleLifecycleComponentTest.FixtureConfiguration.class,
-  ModuleUpgradeBrowserAcceptanceTest.AccountConfiguration.class
+  BrowserModuleUpgradeAcceptanceTest.AccountConfiguration.class
 })
-class ModuleUpgradeBrowserAcceptanceTest {
+class BrowserModuleUpgradeAcceptanceTest {
   private static final Path WORKSPACE = workspace();
   private static final String LOGIN = "upgrade-browser-" + UUID.randomUUID();
   @LocalServerPort int port;
@@ -72,10 +73,7 @@ class ModuleUpgradeBrowserAcceptanceTest {
         .isInstanceOf(IllegalArgumentException.class);
     try (Playwright playwright = Playwright.create();
         Browser browser =
-            playwright
-                .chromium()
-                .launch(
-                    new com.microsoft.playwright.BrowserType.LaunchOptions().setHeadless(true));
+            playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext context = browser.newContext()) {
       Page page = context.newPage();
       String base = "http://127.0.0.1:" + port;
@@ -89,22 +87,12 @@ class ModuleUpgradeBrowserAcceptanceTest {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password"))
           .click();
       page.navigate(base + "/modules/lifecycle-fixture");
-      Path screenshots = Path.of("/tmp/zalava-upgrade-recovery-screenshots");
-      Files.createDirectories(screenshots);
-      for (int width : new int[] {1440, 768, 390}) {
-        page.setViewportSize(width, 900);
-        page.navigate(base + "/modules/lifecycle-fixture");
-        assertThat(
-                page.getByText(
-                        "Review the saved settings for this module version.",
-                        new Page.GetByTextOptions().setExact(false))
-                    .isVisible())
-            .isTrue();
-        page.screenshot(
-            new Page.ScreenshotOptions()
-                .setPath(screenshots.resolve(width + ".png"))
-                .setFullPage(true));
-      }
+      assertThat(
+              page.getByText(
+                      "Review the saved settings for this module version.",
+                      new Page.GetByTextOptions().setExact(false))
+                  .isVisible())
+          .isTrue();
       page.locator("input[name='configuration.fixture.endpoint']").fill("ready");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save configuration"))
           .click();
