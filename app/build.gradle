@@ -388,6 +388,7 @@ tasks.register('ocrWorkerAcceptanceTest', Test) {
     group = 'verification'
     description = 'Runs the opt-in real zalava-ocr-worker acceptance lane against disposable Zalava.'
     dependsOn tasks.named('testClasses')
+    dependsOn installPlaywrightChromium
     dependsOn tasks.named('precompileJte')
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
