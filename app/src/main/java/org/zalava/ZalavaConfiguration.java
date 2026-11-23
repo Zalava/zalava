@@ -952,14 +952,16 @@ public class ZalavaConfiguration {
       ZalavaToolApprovalRequests approvalRequests,
       List<ToolInvocationObserver> observers,
       MemberToolAccess access,
-      ChatToolConfirmation confirmation) {
+      ChatToolConfirmation confirmation,
+      AccountLifecycle accounts) {
     return new DefaultProviderToolOperations(
         new ZalavaRuntimeProviderCatalog(zalavaRuntime),
         new ZalavaToolApprovalAdapter(approvalRequests),
         observers,
         new MemberProviderCapabilityPolicy(access),
         new JacksonToolArgumentDecoder(),
-        confirmation);
+        confirmation,
+        accounts);
   }
 
   @Bean

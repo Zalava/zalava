@@ -347,6 +347,41 @@ public class ZalavaToolApprovalRequests {
         .findFirst();
   }
 
+  public synchronized Optional<Entry> findScopedDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      JsonNode arguments) {
+    String argumentsJson = json(arguments);
+    return entries.stream()
+        .filter(
+            entry -> entry.decision() == Decision.ALLOWED || entry.decision() == Decision.DENIED)
+        .filter(
+            entry ->
+                entry.matchesUnscoped(
+                    context.actorId(),
+                    provider.descriptor().providerId(),
+                    tool.name(),
+                    argumentsJson))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("approvedModuleId"), provider.descriptor().moduleId()))
+        .filter(entry -> entry.scope().equals(provider.descriptor().scope()))
+        .filter(entry -> channel(entry.attributes()).equals(channel(context.attributes())))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("conversationId"),
+                    context.attributes().get("conversationId")))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("accountRole"), context.attributes().get("accountRole")))
+        .filter(entry -> sameDirectChatRun(entry, context))
+        .findFirst();
+  }
+
   private static boolean sameDirectChatRun(Entry entry, InvocationContext context) {
     if (!"web".equals(context.attributes().get("permissionPolicyChannel"))
         || context.attributes().containsKey(ACTOR_TASK_REFERENCE)
@@ -385,6 +420,30 @@ public class ZalavaToolApprovalRequests {
 
   public synchronized List<Entry> activeToolPolicies() {
     return entries.stream().filter(Entry::isActiveToolPolicy).toList();
+  }
+
+  public synchronized Optional<Entry> findAllowedToolPolicy(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      JsonNode arguments) {
+    String channel = channel(context.attributes());
+    return entries.stream()
+        .filter(entry -> entry.matchesPolicy(context.actorId(), provider, tool, channel))
+        .filter(entry -> entry.arguments().equals(arguments))
+        .filter(entry -> entry.scope().equals(provider.descriptor().scope()))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("conversationId"),
+                    context.attributes().get("conversationId")))
+        .filter(
+            entry ->
+                Objects.equals(
+                    entry.attributes().get("accountRole"), context.attributes().get("accountRole")))
+        .max(
+            Comparator.comparing(Entry::decidedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(Entry::requestId));
   }
 
   public synchronized Entry get(String requestId) {
@@ -803,14 +862,19 @@ public class ZalavaToolApprovalRequests {
       String safeActorId = actorId == null ? "unknown-actor" : actorId;
       String safeModuleId = moduleId == null || moduleId.isBlank() ? "unknown-module" : moduleId;
       String safeChannel = channel == null || channel.isBlank() ? "unknown-channel" : channel;
+      boolean homeAction =
+          "zalava-module-home-assistant".equals(safeModuleId)
+              && "home_assistant_execute_action".equals(safeToolName);
       return new RequestSummary(
           "Zalava requests approval to run %s on provider %s from module %s for actor %s via %s."
               .formatted(safeToolName, safeProviderId, safeModuleId, safeActorId, safeChannel),
           effect,
-          preview(argumentsJson),
+          homeAction ? argumentsJson : preview(argumentsJson),
           "Allow this exact request once.",
-          "Always allow actor %s to run tool %s on provider %s from module %s via %s without another prompt."
-              .formatted(safeActorId, safeToolName, safeProviderId, safeModuleId, safeChannel),
+          homeAction
+              ? "Allow this exact Home Assistant action, target and parameters in this conversation until revoked or the provider restarts."
+              : "Always allow actor %s to run tool %s on provider %s from module %s via %s without another prompt."
+                  .formatted(safeActorId, safeToolName, safeProviderId, safeModuleId, safeChannel),
           "Deny this request and do not run the tool.",
           scope,
           policyTags);

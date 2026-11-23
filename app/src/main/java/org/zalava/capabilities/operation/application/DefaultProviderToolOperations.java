@@ -19,6 +19,7 @@ import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
 import org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
+import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 
 public final class DefaultProviderToolOperations implements ProviderToolOperations {
 
@@ -28,6 +29,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   private final List<ToolInvocationObserver> observers;
   private final MemberProviderCapabilityPolicy memberCapabilities;
   private final ChatToolConfirmation confirmation;
+  private final HomeAssistantActionPolicy homeAssistantPolicy;
 
   public DefaultProviderToolOperations(
       ProviderCatalog providerCatalog,
@@ -53,7 +55,19 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       MemberProviderCapabilityPolicy memberCapabilities,
       ToolArgumentDecoder decoder,
       ChatToolConfirmation confirmation) {
+    this(providerCatalog, approvalPort, observers, memberCapabilities, decoder, confirmation, null);
+  }
+
+  public DefaultProviderToolOperations(
+      ProviderCatalog providerCatalog,
+      ToolApprovalPort approvalPort,
+      List<ToolInvocationObserver> observers,
+      MemberProviderCapabilityPolicy memberCapabilities,
+      ToolArgumentDecoder decoder,
+      ChatToolConfirmation confirmation,
+      AccountLifecycle accounts) {
     this.confirmation = confirmation;
+    this.homeAssistantPolicy = accounts == null ? null : new HomeAssistantActionPolicy(accounts);
     this.decoder = Objects.requireNonNull(decoder);
     this.providerCatalog = providerCatalog;
     this.approvalPort = approvalPort;
@@ -67,6 +81,15 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     ZalavaToolDescriptor tool = findTool(provider, command.toolName());
     requireMemberAccess(provider, tool, command.context());
     Map<String, Object> arguments = decoder.decode(command.argumentsJson());
+    boolean homeAction = HomeAssistantActionPolicy.applies(provider, tool);
+    if (homeAction && command.argumentsJson().length() > 1000)
+      throw deniedHome(
+          provider,
+          tool,
+          command.context(),
+          arguments,
+          "Home Assistant action is too large to review");
+    if (homeAction) requireHomeAction(provider, tool, arguments, command.context());
 
     Optional<Boolean> setting =
         confirmation == null || command.taskReference() != null
@@ -100,6 +123,15 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
               command.argumentsJson());
       if (decision.isPresent()) {
         ToolApproval approval = decision.get();
+        if ((homeAction || isHomeApproval(approval))
+            && !matchesHomeApproval(approval, provider, command.context(), arguments)) {
+          throw deniedHome(
+              provider,
+              tool,
+              command.context(),
+              arguments,
+              "Home Assistant approval no longer matches the invocation");
+        }
         if (approval.decision() == ToolApproval.Decision.DENIED)
           return denied(provider, tool, command.context(), approval);
         return ToolInvocationOutcome.executed(
@@ -111,7 +143,7 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       }
     }
 
-    if (setting.isPresent() && !setting.get()) {
+    if (!homeAction && setting.isPresent() && !setting.get()) {
       Map<String, String> attributes = new LinkedHashMap<>(command.context().attributes());
       attributes.put("approvalPolicy", "chat-confirmation-setting");
       return ToolInvocationOutcome.executed(
@@ -124,7 +156,13 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
     Optional<ToolApproval> policy =
         setting.orElse(false)
             ? Optional.empty()
-            : approvalPort.findAllowedToolPolicy(command.context(), provider, tool);
+            : homeAction
+                ? approvalPort.findAllowedToolPolicy(
+                    command.context(), provider, tool, command.argumentsJson())
+                : approvalPort.findAllowedToolPolicy(command.context(), provider, tool);
+    if (homeAction) {
+      policy = policy.filter(p -> matchesHomeApproval(p, provider, command.context(), arguments));
+    }
     if (policy.isPresent()) {
       return ToolInvocationOutcome.executed(
           execute(
@@ -149,17 +187,20 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
               && !command.context().attributes().containsKey("actorTaskReference")
               && !command.context().attributes().getOrDefault("conversationId", "").isBlank();
       Optional<ToolApproval> decision =
-          directChat
-              ? approvalPort.findDirectChatDecision(
-                  command.context(),
-                  command.providerId(),
-                  command.toolName(),
-                  command.argumentsJson())
-              : approvalPort.findUnscopedDecision(
-                  command.context().actorId(),
-                  command.providerId(),
-                  command.toolName(),
-                  command.argumentsJson());
+          homeAction
+              ? approvalPort.findScopedDecision(
+                  command.context(), provider, tool, command.argumentsJson())
+              : directChat
+                  ? approvalPort.findDirectChatDecision(
+                      command.context(),
+                      command.providerId(),
+                      command.toolName(),
+                      command.argumentsJson())
+                  : approvalPort.findUnscopedDecision(
+                      command.context().actorId(),
+                      command.providerId(),
+                      command.toolName(),
+                      command.argumentsJson());
       if (decision.isPresent()) {
         ToolApproval approval = decision.get();
         if (approval.decision() == ToolApproval.Decision.DENIED)
@@ -204,13 +245,36 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
 
   @Override
   public ToolInvocationOutcome allowUnscoped(String requestId) {
+    validatePendingHomeApproval(requestId);
     return executeUnscopedApproval(approvalDecision(() -> approvalPort.allowUnscoped(requestId)));
   }
 
   @Override
   public ToolInvocationOutcome allowUnscopedTool(String requestId) {
+    validatePendingHomeApproval(requestId);
     return executeUnscopedApproval(
         approvalDecision(() -> approvalPort.allowUnscopedTool(requestId)));
+  }
+
+  private void validatePendingHomeApproval(String requestId) {
+    ToolApproval approval = approvalDecision(() -> approvalPort.get(requestId));
+    ZalavaProvider provider = findProvider(approval.providerId());
+    ZalavaToolDescriptor tool = findTool(provider, approval.toolName());
+    if (!HomeAssistantActionPolicy.applies(provider, tool) && !isHomeApproval(approval)) return;
+    var context = new InvocationContext(approval.actorId(), false, approval.attributes());
+    Map<String, Object> arguments = decoder.decode(approval.argumentsJson());
+    if (approval.argumentsJson().length() > 1000 && isHomeApproval(approval))
+      throw deniedHome(
+          provider, tool, context, arguments, "Home Assistant action is too large to review");
+    if (!matchesHomeApproval(approval, provider, context, arguments))
+      throw deniedHome(
+          provider,
+          tool,
+          context,
+          arguments,
+          "Home Assistant approval no longer matches the provider");
+    requireMemberAccess(provider, tool, context);
+    requireHomeAction(provider, tool, arguments, context);
   }
 
   private ToolInvocationOutcome executeUnscopedApproval(ToolApproval approval) {
@@ -224,6 +288,15 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
             operatorApprovedAttributes(approval.attributes(), approval.requestId()));
     ZalavaOperationResult result;
     try {
+      if ((HomeAssistantActionPolicy.applies(provider, tool) || isHomeApproval(approval))
+          && !matchesHomeApproval(approval, provider, context, arguments)) {
+        throw deniedHome(
+            provider,
+            tool,
+            context,
+            arguments,
+            "Home Assistant approval no longer matches the provider");
+      }
       result = execute(provider, tool, arguments, context);
     } catch (RuntimeException failure) {
       try {
@@ -307,10 +380,32 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       Map<String, Object> arguments,
       InvocationContext context) {
     requireMemberAccess(provider, tool, context);
+    if (HomeAssistantActionPolicy.applies(provider, tool)) {
+      ZalavaProvider current = findProvider(provider.descriptor().providerId());
+      if (!current.descriptor().moduleId().equals(provider.descriptor().moduleId())
+          || !current.descriptor().scope().equals(provider.descriptor().scope()))
+        throw deniedHome(
+            provider, tool, context, arguments, "Home Assistant provider changed before dispatch");
+      requireHomeAction(provider, tool, arguments, context);
+      if ("tool".equals(context.attributes().get("approvalPolicy"))
+          && !approvalPort.isScopedPolicyActive(
+              context.attributes().get("approvalRequestId"), context, current, tool, arguments))
+        throw deniedHome(
+            provider, tool, context, arguments, "Home Assistant approval was revoked or changed");
+    }
     long startedAt = System.nanoTime();
     try {
       ZalavaOperationResult result = provider.callTool(tool.name(), arguments, context);
-      observe(provider, tool, context, true, null, null, result, startedAt, arguments);
+      observe(
+          provider,
+          tool,
+          context,
+          result.success(),
+          result.success() ? null : "provider_failure",
+          null,
+          result,
+          startedAt,
+          arguments);
       return result;
     } catch (UnsupportedOperationException ex) {
       observe(
@@ -344,6 +439,76 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       throw new ProviderToolOperationException(
           ProviderToolOperationException.Code.EXECUTION, "Zalava operation failed", ex);
     }
+  }
+
+  private void requireHomeAction(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      Map<String, Object> arguments,
+      InvocationContext context) {
+    try {
+      if (homeAssistantPolicy == null)
+        throw new ProviderToolOperationException(
+            ProviderToolOperationException.Code.UNSUPPORTED,
+            "Home Assistant action policy unavailable");
+      if (!tool.sideEffecting())
+        throw new ProviderToolOperationException(
+            ProviderToolOperationException.Code.UNSUPPORTED,
+            "Home Assistant action must be declared side-effecting");
+      homeAssistantPolicy.require(context, arguments);
+    } catch (ProviderToolOperationException denied) {
+      observe(
+          provider,
+          tool,
+          context,
+          false,
+          "permission_denied",
+          denied.getMessage(),
+          null,
+          System.nanoTime(),
+          arguments);
+      throw denied;
+    }
+  }
+
+  private ProviderToolOperationException deniedHome(
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      InvocationContext context,
+      Map<String, Object> arguments,
+      String message) {
+    observe(
+        provider,
+        tool,
+        context,
+        false,
+        "permission_denied",
+        message,
+        null,
+        System.nanoTime(),
+        arguments);
+    return new ProviderToolOperationException(
+        ProviderToolOperationException.Code.UNSUPPORTED, message);
+  }
+
+  private boolean matchesHomeApproval(
+      ToolApproval approval,
+      ZalavaProvider provider,
+      InvocationContext context,
+      Map<String, Object> arguments) {
+    return approval.actorId().equals(context.actorId())
+        && provider.descriptor().moduleId().equals(approval.attributes().get("approvedModuleId"))
+        && approval.providerScope().equals(provider.descriptor().scope())
+        && Objects.equals(
+            approval.attributes().get("accountRole"), context.attributes().get("accountRole"))
+        && Objects.equals(
+            approval.attributes().get("conversationId"), context.attributes().get("conversationId"))
+        && decoder.decode(approval.argumentsJson()).equals(arguments);
+  }
+
+  private static boolean isHomeApproval(ToolApproval approval) {
+    return "zalava-module-home-assistant".equals(approval.attributes().get("approvedModuleId"))
+        && "home_assistant_execute_action".equals(approval.toolName());
   }
 
   private static ZalavaOperationResult alreadyExecuted(ToolApproval approval) {
