@@ -79,6 +79,17 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
   }
 
   @Override
+  public Optional<ToolApproval> findScopedDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      String argumentsJson) {
+    return requests
+        .findScopedDecision(context, provider, tool, arguments(argumentsJson))
+        .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
   public Optional<ToolApproval> findDirectChatDecision(
       InvocationContext context, String providerId, String toolName, String argumentsJson) {
     return requests
@@ -106,8 +117,42 @@ public final class ZalavaToolApprovalAdapter implements ToolApprovalPort {
   }
 
   @Override
+  public Optional<ToolApproval> findAllowedToolPolicy(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      String argumentsJson) {
+    return requests
+        .findAllowedToolPolicy(context, provider, tool, arguments(argumentsJson))
+        .map(ZalavaToolApprovalAdapter::map);
+  }
+
+  @Override
+  public boolean isScopedPolicyActive(
+      String requestId,
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      Map<String, Object> arguments) {
+    return requests
+        .findAllowedToolPolicy(
+            context, provider, tool, JSON.readTree(JSON.writeValueAsBytes(arguments)))
+        .filter(entry -> requestId.equals(entry.requestId()))
+        .isPresent();
+  }
+
+  @Override
   public void recordExecutionOutcome(String requestId, boolean succeeded) {
     requests.recordExecutionOutcome(requestId, succeeded);
+  }
+
+  @Override
+  public ToolApproval get(String requestId) {
+    try {
+      return map(requests.get(requestId));
+    } catch (ZalavaToolApprovalRequests.NotFoundException ex) {
+      throw new ApprovalNotFoundException(requestId);
+    }
   }
 
   @Override

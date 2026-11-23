@@ -12,6 +12,7 @@ import java.nio.file.*;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /** Disposable HTTPS fixture serving an actual released module artifact. */
 final class CatalogReleaseProxy implements AutoCloseable {
@@ -73,6 +74,14 @@ final class CatalogReleaseProxy implements AutoCloseable {
     server.start();
     try {
       restoreLocator();
+      server.stubFor(
+          get(urlPathEqualTo(
+                  "/repos/Zalava/zalava-module-time/git/ref/heads/published-release-index"))
+              .willReturn(
+                  okJson(
+                      "{\"ref\":\"refs/heads/published-release-index\",\"object\":{\"type\":\"commit\",\"sha\":\""
+                          + REVISION
+                          + "\"}}")));
       server.stubFor(
           get(urlPathEqualTo("/repos/Zalava/zalava-module-time/commits"))
               .willReturn(okJson("[{\"sha\":\"" + REVISION + "\"}]")));
@@ -159,6 +168,18 @@ final class CatalogReleaseProxy implements AutoCloseable {
 
   Path trustStore() {
     return trustStore;
+  }
+
+  String requests() {
+    return server.getAllServeEvents().stream()
+        .map(
+            event ->
+                event.getRequest().getMethod()
+                    + " "
+                    + event.getRequest().getUrl()
+                    + " -> "
+                    + event.getResponse().getStatus())
+        .collect(Collectors.joining("\n"));
   }
 
   @Override

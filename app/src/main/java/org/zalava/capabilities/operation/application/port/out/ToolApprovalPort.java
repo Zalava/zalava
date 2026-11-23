@@ -23,6 +23,14 @@ public interface ToolApprovalPort {
   Optional<ToolApproval> findUnscopedDecision(
       String actorId, String providerId, String toolName, String argumentsJson);
 
+  default Optional<ToolApproval> findScopedDecision(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      String argumentsJson) {
+    return Optional.empty();
+  }
+
   /** Find a decision belonging to this exact direct-chat run, never an earlier turn. */
   default Optional<ToolApproval> findDirectChatDecision(
       InvocationContext context, String providerId, String toolName, String argumentsJson) {
@@ -42,6 +50,23 @@ public interface ToolApprovalPort {
         provider.descriptor().scope());
   }
 
+  default boolean isScopedPolicyActive(
+      String requestId,
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      Map<String, Object> arguments) {
+    return false;
+  }
+
+  default Optional<ToolApproval> findAllowedToolPolicy(
+      InvocationContext context,
+      ZalavaProvider provider,
+      ZalavaToolDescriptor tool,
+      String argumentsJson) {
+    return Optional.empty();
+  }
+
   default Optional<ToolApproval> consumeChatReadDecision(
       InvocationContext context,
       ZalavaProvider provider,
@@ -58,6 +83,8 @@ public interface ToolApprovalPort {
   void recordExecutionOutcome(String requestId, boolean succeeded);
 
   ToolApproval allowUnscoped(String requestId);
+
+  ToolApproval get(String requestId);
 
   ToolApproval allowUnscopedTool(String requestId);
 

@@ -415,6 +415,14 @@ class DefaultProviderToolOperationsTest {
     private int sequence;
 
     @Override
+    public ToolApproval get(String requestId) {
+      return requests.stream()
+          .filter(request -> request.requestId().equals(requestId))
+          .findFirst()
+          .orElseThrow(() -> new ApprovalNotFoundException(requestId));
+    }
+
+    @Override
     public ToolApproval create(
         ZalavaProvider provider,
         ZalavaToolDescriptor tool,

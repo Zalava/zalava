@@ -135,6 +135,11 @@ class DefaultProviderToolOperationsBranchesTest {
   private static final class ThrowingApprovals implements ToolApprovalPort {
 
     @Override
+    public ToolApproval get(String requestId) {
+      throw new ApprovalNotFoundException(requestId);
+    }
+
+    @Override
     public ToolApproval create(
         ZalavaProvider provider,
         ZalavaToolDescriptor tool,

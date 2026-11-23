@@ -20,6 +20,29 @@ import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 
 class ZalavaRuntimeProviderCatalogTest {
   @Test
+  void homeAssistantScopeTracksTheActualLoadedProviderGeneration() {
+    var first = provider("zalava-module-home-assistant", List.of());
+    var second = provider("zalava-module-home-assistant", List.of());
+    var runtime = mock(RuntimeQueries.class);
+    var module = new ModuleDescriptor("zalava-module-home-assistant", "1", "Module", "Description");
+    var factory =
+        new ProviderFactoryDescriptor(
+            "factory", module.moduleId(), "test", "Factory", "Description");
+    when(runtime.loadedProviders())
+        .thenReturn(List.of(new LoadedZalavaProvider(module, factory, first)));
+    var catalog = new ZalavaRuntimeProviderCatalog(runtime);
+    var original = catalog.providers().getFirst().descriptor().scope();
+    assertThat(original).containsKey("zalavaProviderGeneration");
+    assertThat(catalog.providers().getFirst().descriptor().scope()).isEqualTo(original);
+    when(runtime.loadedProviders())
+        .thenReturn(List.of(new LoadedZalavaProvider(module, factory, second)));
+    assertThat(catalog.providers().getFirst().descriptor().scope()).isNotEqualTo(original);
+    assertThat(
+            new ZalavaRuntimeProviderCatalog(runtime).providers().getFirst().descriptor().scope())
+        .isNotEqualTo(original);
+  }
+
+  @Test
   void hostEstablishesProvenanceAndPreservesProviderOperations() {
     var provider = provider("module", List.of("read-only"));
     var catalog = catalog(provider, "module");

@@ -29,6 +29,8 @@ body {
     border-radius: 8px;
 }
 
+.home-action-details { white-space: pre-wrap; overflow-wrap: anywhere; }
+
 .zalava-advanced { --bs-primary: #1959a6; --bs-primary-rgb: 25,89,166; --bs-link-color: #1959a6; font-family: var(--zalava-font-sans, system-ui, sans-serif); background: var(--zalava-surface); color: var(--zalava-ink); }
 .zalava-advanced .navbar { display: block; padding: 0; }
 .zalava-advanced .navbar-brand { display: flex; align-items: center; }

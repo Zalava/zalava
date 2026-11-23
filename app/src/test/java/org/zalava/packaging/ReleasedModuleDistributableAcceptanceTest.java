@@ -244,6 +244,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(JSON.readTree(invalidTime.text()).path("success").booleanValue()).isFalse();
         assertThat(invalidTime.text()).contains("error");
 
+        verifyReleasedHomeAssistantAction(admin, page, postgres);
+
         APIResponse denied =
             invoke(
                 admin, page, "shopping-list-household", "add_item", Map.of("name", "Denied milk"));
@@ -316,6 +318,8 @@ class ReleasedModuleDistributableAcceptanceTest {
                 .setPath(diagnostics.resolve("shopping-after-restart.png")));
       } catch (Throwable failure) {
         try {
+          Files.writeString(
+              diagnostics.resolve("catalog-proxy-requests.txt"), catalogProxy.requests());
           page.screenshot(new Page.ScreenshotOptions().setPath(diagnostics.resolve("failure.png")));
           Files.writeString(diagnostics.resolve("failure.html"), page.content());
         } catch (RuntimeException ignored) {
@@ -363,6 +367,139 @@ class ReleasedModuleDistributableAcceptanceTest {
       scheduler.<TaskHandler>schedule(due, handler -> handler.executeTask(token, JobContext.Null));
     }
     return new JobEvidenceFixture(report.value(), future.value(), due, output);
+  }
+
+  private void verifyReleasedHomeAssistantAction(
+      BrowserContext admin, Page page, PostgreSQLContainer postgres) throws Exception {
+    WireMockServer ha = new WireMockServer(0);
+    ha.start();
+    try {
+      ha.stubFor(
+          get(urlEqualTo("/api/services"))
+              .willReturn(
+                  okJson(
+                      "[{\"domain\":\"light\",\"services\":{\"turn_on\":{\"target\":{},\"fields\":{}}}}]")));
+      ha.stubFor(
+          get(urlEqualTo("/api/states/light.room"))
+              .willReturn(okJson("{\"entity_id\":\"light.room\",\"state\":\"off\"}")));
+      ha.stubFor(
+          WireMock.post(urlEqualTo("/api/services/light/turn_on"))
+              .withHeader("Authorization", equalTo("Bearer ha-fixture-secret"))
+              .withRequestBody(equalToJson("{\"entity_id\":\"light.room\"}"))
+              .willReturn(okJson("[]")));
+
+      page.navigate(baseUrl + "/modules/zalava-module-home-assistant");
+      page.locator("input[name='configuration.home-assistant.baseUrl']").fill(ha.baseUrl());
+      page.locator("input[name='configuration.home-assistant.tokenRef']").fill("ha-fixture-token");
+      page.locator("input[data-secret-replacement='home-assistant.tokenRef']")
+          .fill("ha-fixture-secret");
+      page.locator("#configuration button[type=submit]").first().click();
+      startModule(page, "zalava-module-home-assistant");
+      var dataSource =
+          new DriverManagerDataSource(
+              postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+      UUID accountId;
+      try (var connection = dataSource.getConnection();
+          var statement =
+              connection.prepareStatement("SELECT id FROM zalava_account WHERE login_name = ?")) {
+        statement.setString(1, LOGIN);
+        try (var row = statement.executeQuery()) {
+          assertThat(row.next()).isTrue();
+          accountId = row.getObject(1, UUID.class);
+        }
+      }
+      var args =
+          Map.<String, Object>of("domain", "light", "action", "turn_on", "entityId", "light.room");
+      var body =
+          Map.<String, Object>of(
+              "actorId",
+              accountId.toString(),
+              "confirmed",
+              false,
+              "attributes",
+              Map.of(
+                  "accountRole",
+                  "ADMIN",
+                  "permissionPolicyChannel",
+                  "web",
+                  "conversationId",
+                  "released-ha"),
+              "arguments",
+              args);
+      String endpoint =
+          "/api/zalava/providers/home-assistant/tools/home_assistant_execute_action/invoke";
+      APIResponse pending = post(admin, page, endpoint, body);
+      assertThat(pending.status()).isEqualTo(202);
+      ha.verify(0, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      String requestId = JSON.readTree(pending.text()).path("requestId").stringValue();
+      APIResponse allowed =
+          post(
+              admin,
+              page,
+              "/api/zalava/permission-requests/" + requestId + "/allow-tool",
+              Map.of());
+      assertThat(allowed.status()).isEqualTo(200);
+      assertThat(JSON.readTree(allowed.text()).path("success").booleanValue()).isTrue();
+      assertThat(allowed.text()).contains("physicalOutcomeVerified");
+      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      page.navigate(baseUrl + "/zalava/control");
+      var policy =
+          page.getByText(
+              "Allow this exact Home Assistant action, target and parameters in this conversation until revoked or the provider restarts.");
+      policy.waitFor();
+      for (int width : List.of(375, 768, 1440)) {
+        page.setViewportSize(width, 900);
+        page.navigate(baseUrl + "/zalava/control");
+        policy.waitFor();
+        if (width <= 1024)
+          page.waitForFunction(
+              "() => getComputedStyle(document.querySelector('#zalava-product-navigation')).visibility === 'hidden'");
+        policy.scrollIntoViewIfNeeded();
+        assertThat(
+                (Boolean)
+                    page.locator(".home-action-details")
+                        .first()
+                        .evaluate("el => el.scrollWidth <= el.clientWidth"))
+            .as("action details fit the %s px viewport", width)
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("home-assistant-policy-" + width + ".png")));
+      }
+      page.setViewportSize(375, 900);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Revoke"))
+          .first()
+          .focus();
+      page.keyboard().press("Tab");
+      assertThat(
+              (Boolean)
+                  page.locator("input[name=expiresAt]")
+                      .first()
+                      .evaluate("el => el === document.activeElement"))
+          .as("keyboard can reach the policy expiry control")
+          .isTrue();
+      page.setViewportSize(1280, 720);
+      var deniedBody =
+          Map.<String, Object>of(
+              "actorId",
+              accountId.toString(),
+              "confirmed",
+              false,
+              "attributes",
+              Map.of(
+                  "accountRole",
+                  "ADMIN",
+                  "permissionPolicyChannel",
+                  "web",
+                  "conversationId",
+                  "released-ha"),
+              "arguments",
+              Map.of("domain", "script", "action", "turn_on", "entityId", "script.all"));
+      assertThat(post(admin, page, endpoint, deniedBody).status()).isEqualTo(501);
+      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+    } finally {
+      ha.stop();
+    }
   }
 
   private void assertJobEvidence(

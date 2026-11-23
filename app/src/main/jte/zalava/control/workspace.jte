@@ -180,12 +180,20 @@
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                     <h3 class="h6 mb-0">${policy.toolName()}</h3>
                                     <code class="small">${policy.providerId()}</code>
-                                    <span class="badge text-bg-success">always allow tool</span>
+                                    @if("home_assistant_execute_action".equals(policy.toolName()) && "zalava-module-home-assistant".equals(policy.attributes().get("approvedModuleId")))
+                                        <span class="badge text-bg-success">allow this action</span>
+                                    @else
+                                        <span class="badge text-bg-success">always allow tool</span>
+                                    @endif
                                 </div>
                                 <div class="text-body-secondary small">
                                     Actor ${policy.actorId()} · policy request <code>${policy.requestId()}</code>
                                 </div>
                                 <p class="small mt-2 mb-0">${policy.summary().allowToolPolicy()}</p>
+                                @if("home_assistant_execute_action".equals(policy.toolName()) && "zalava-module-home-assistant".equals(policy.attributes().get("approvedModuleId")))
+                                    <p class="small mt-2 mb-1">Approved action details</p>
+                                    <pre class="verification-body home-action-details small mb-0"><code>${policy.summary().argumentsPreview()}</code></pre>
+                                @endif
                     <div class="text-body-secondary small">
                         Created <code>${policy.createdAt()}</code>
                         @if(policy.decidedAt() != null)
@@ -211,15 +219,19 @@
                             </div>
                         </div>
                         <div class="row g-3">
+                            @if(!(policy.summary().scope().size() == 1 && policy.summary().scope().containsKey("zalavaProviderGeneration")))
                             <div class="col-12 col-lg-6">
                                 <div class="small text-body-secondary mb-1">Scope</div>
                                 <dl class="row small mb-0">
                                     @for(var scope : policy.summary().scope().entrySet())
+                                      @if(!"zalavaProviderGeneration".equals(scope.getKey()))
                                         <dt class="col-sm-4 text-body-secondary">${scope.getKey()}</dt>
                                         <dd class="col-sm-8"><code>${scope.getValue()}</code></dd>
+                                      @endif
                                     @endfor
                                 </dl>
                             </div>
+                            @endif
                             <div class="col-12 col-lg-6">
                                 <div class="small text-body-secondary mb-1">Policy tags</div>
                                 <div class="d-flex flex-wrap gap-1">
@@ -230,8 +242,10 @@
                     </div>
                 </div>
                 <form class="row g-2 mt-2" hx-post="/zalava/control/permission-policies/${policy.requestId()}/narrow" hx-target="#zalava-control" hx-swap="innerHTML">
+                    @if(!("home_assistant_execute_action".equals(policy.toolName()) && "zalava-module-home-assistant".equals(policy.attributes().get("approvedModuleId"))))
                     <div class="col-12 col-lg-3"><input class="form-control form-control-sm" name="scopeKey" maxlength="100" placeholder="Additional scope key"></div>
                     <div class="col-12 col-lg-3"><input class="form-control form-control-sm" name="scopeValue" maxlength="500" placeholder="Additional scope value"></div>
+                    @endif
                     <div class="col-12 col-lg-4"><input class="form-control form-control-sm" name="expiresAt" maxlength="64" placeholder="Expiry UTC (ISO-8601)"></div>
                     <div class="col-12 col-lg-2"><button class="btn btn-sm btn-outline-primary w-100" type="submit">Narrow policy</button></div>
                 </form>
@@ -299,7 +313,11 @@
                                             hx-post="/api/zalava/permission-requests/${request.requestId()}/allow-tool"
                                             hx-swap="none"
                                             hx-on::after-request="htmx.ajax('GET', '/zalava/control/workspace', {target:'#zalava-control', swap:'innerHTML'})">
-                                        Always allow tool
+                                        @if("home_assistant_execute_action".equals(request.toolName()) && "zalava-module-home-assistant".equals(request.attributes().get("approvedModuleId")))
+                                            Always allow this action
+                                        @else
+                                            Always allow tool
+                                        @endif
                                     </button>
                                     <span class="visually-hidden">${request.summary().allowToolPolicy()}</span>
                                     <button class="btn btn-sm btn-outline-danger"
@@ -321,14 +339,16 @@
                         <div class="row g-3">
                             <div class="col-12 col-lg-6">
                                 <div class="small text-body-secondary mb-1">Arguments preview</div>
-                                <pre class="verification-body small mb-0"><code>${request.summary().argumentsPreview()}</code></pre>
+                                <pre class="verification-body ${"home_assistant_execute_action".equals(request.toolName()) && "zalava-module-home-assistant".equals(request.attributes().get("approvedModuleId")) ? "home-action-details" : ""} small mb-0"><code>${request.summary().argumentsPreview()}</code></pre>
                             </div>
                             <div class="col-12 col-lg-6">
                                 <div class="small text-body-secondary mb-1">Scope and policy</div>
                                 <dl class="row small mb-2">
                                     @for(var scope : request.summary().scope().entrySet())
+                                      @if(!"zalavaProviderGeneration".equals(scope.getKey()))
                                         <dt class="col-sm-4 text-body-secondary">${scope.getKey()}</dt>
                                         <dd class="col-sm-8"><code>${scope.getValue()}</code></dd>
+                                      @endif
                                     @endfor
                                 </dl>
                                 <div class="d-flex flex-wrap gap-1">
