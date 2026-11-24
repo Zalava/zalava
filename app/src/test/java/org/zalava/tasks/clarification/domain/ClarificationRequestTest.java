@@ -145,21 +145,61 @@ class ClarificationRequestTest {
   }
 
   @Test
-  void answersAreOnlyAddressableUntilTheRequestIsPending() {
+  void anAnswerAtTheDeadlineClosesTheRequest() {
     ClarificationRequest request =
         request("actor-1", List.of(question("q1", false)), ClarificationRequest.Status.PENDING);
+    Instant deadline = request.expiry();
 
     ClarificationRequest answered =
-        request.answered(
-            List.of(new ClarificationRequest.Answer("q1", "a", null)),
-            Instant.parse("2026-09-16T11:00:00Z"));
+        request.answered(List.of(new ClarificationRequest.Answer("q1", "a", null)), deadline);
 
     assertThat(answered.status()).isEqualTo(ClarificationRequest.Status.ANSWERED);
-    assertThat(answered.answeredAt()).isEqualTo("2026-09-16T11:00:00Z");
-    assertThat(answered.cancelled(Instant.parse("2026-09-16T12:00:00Z")).status())
+    assertThat(answered.answeredAt()).isEqualTo(deadline.toString());
+    assertThat(answered.expireIfDue(deadline.plusNanos(1))).isSameAs(answered);
+    assertThatThrownBy(() -> answered.cancelled(deadline))
+        .isInstanceOf(ClarificationRequest.StaleClarificationException.class);
+  }
+
+  @Test
+  void anIdenticalAnswerCanBeRetriedInAnyOrder() {
+    ClarificationRequest request =
+        request(
+            "actor-1",
+            List.of(question("q1", false), question("q2", false)),
+            ClarificationRequest.Status.PENDING);
+    List<ClarificationRequest.Answer> answers =
+        List.of(
+            new ClarificationRequest.Answer("q1", "a", null),
+            new ClarificationRequest.Answer("q2", "b", null));
+    ClarificationRequest answered = request.answered(answers, request.expiry());
+
+    assertThat(answered.answered(answers.reversed(), request.expiry().plusNanos(1)))
+        .isSameAs(answered);
+    assertThatThrownBy(() -> answered.answered(List.of(answers.getFirst()), request.expiry()))
+        .isInstanceOf(ClarificationRequest.AlreadyAnsweredException.class);
+  }
+
+  @Test
+  void onlyAnOverduePendingRequestExpires() {
+    ClarificationRequest request = requestBuilder().build();
+    Instant deadline = request.expiry();
+    Instant overdue = deadline.plusNanos(1);
+
+    assertThat(request.expireIfDue(deadline)).isSameAs(request);
+    assertThat(request.cancelled(deadline).expireIfDue(overdue).status())
         .isEqualTo(ClarificationRequest.Status.CANCELLED);
-    assertThat(answered.expired(Instant.parse("2026-09-16T12:00:00Z")).status())
-        .isEqualTo(ClarificationRequest.Status.EXPIRED);
+    ClarificationRequest expired = request.expireIfDue(overdue);
+    assertThat(expired.status()).isEqualTo(ClarificationRequest.Status.EXPIRED);
+    assertThat(expired.resolvedAt()).isEqualTo(overdue.toString());
+    assertThat(expired.expireIfDue(overdue)).isSameAs(expired);
+    assertThatThrownBy(() -> request.cancelled(overdue))
+        .isInstanceOfSatisfying(
+            ClarificationRequest.StaleClarificationException.class,
+            error -> assertThat(error.status()).isEqualTo(ClarificationRequest.Status.EXPIRED));
+    assertThatThrownBy(() -> request.answered(List.of(), overdue))
+        .isInstanceOfSatisfying(
+            ClarificationRequest.StaleClarificationException.class,
+            error -> assertThat(error.status()).isEqualTo(ClarificationRequest.Status.EXPIRED));
   }
 
   @Test

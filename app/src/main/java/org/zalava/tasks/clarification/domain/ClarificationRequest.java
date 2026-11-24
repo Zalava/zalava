@@ -75,6 +75,16 @@ public record ClarificationRequest(
   }
 
   public ClarificationRequest answered(List<Answer> answered, Instant at) {
+    if (status == Status.ANSWERED) {
+      List<Answer> candidate = answered == null ? List.of() : answered;
+      if (answers.size() == candidate.size()
+          && answers.containsAll(candidate)
+          && candidate.containsAll(answers)) {
+        return this;
+      }
+      throw new AlreadyAnsweredException(requestId);
+    }
+    requirePending(at);
     validateAnswers(answered);
     return new ClarificationRequest(
         requestId,
@@ -92,11 +102,21 @@ public record ClarificationRequest(
   }
 
   public ClarificationRequest cancelled(Instant at) {
+    requirePending(at);
     return resolved(Status.CANCELLED, at);
   }
 
-  public ClarificationRequest expired(Instant at) {
-    return resolved(Status.EXPIRED, at);
+  public ClarificationRequest expireIfDue(Instant at) {
+    return status == Status.PENDING && isExpired(at) ? resolved(Status.EXPIRED, at) : this;
+  }
+
+  private void requirePending(Instant at) {
+    if (status != Status.PENDING) {
+      throw new StaleClarificationException(requestId, status);
+    }
+    if (isExpired(at)) {
+      throw new StaleClarificationException(requestId, Status.EXPIRED);
+    }
   }
 
   private ClarificationRequest resolved(Status resolvedStatus, Instant at) {
@@ -251,6 +271,26 @@ public record ClarificationRequest(
   public static final class InvalidAnswerException extends RuntimeException {
     public InvalidAnswerException(String message) {
       super(message);
+    }
+  }
+
+  public static final class AlreadyAnsweredException extends RuntimeException {
+    public AlreadyAnsweredException(String requestId) {
+      super("Zalava clarification request was already answered: " + requestId);
+    }
+  }
+
+  public static final class StaleClarificationException extends RuntimeException {
+    private final Status status;
+
+    public StaleClarificationException(String requestId, Status status) {
+      super(
+          "Zalava clarification request is no longer pending: " + requestId + " (" + status + ")");
+      this.status = status;
+    }
+
+    public Status status() {
+      return status;
     }
   }
 }

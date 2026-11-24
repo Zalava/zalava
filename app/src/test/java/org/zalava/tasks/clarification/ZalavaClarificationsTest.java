@@ -63,11 +63,13 @@ class ZalavaClarificationsTest {
     ClarificationRequest created = clarifications.create(owner, task, draft());
 
     ClarificationRequest first = clarifications.answer(owner, created.requestId(), answer("a"));
+    int writes = store.writes;
     ClarificationRequest duplicate = clarifications.answer(owner, created.requestId(), answer("a"));
 
-    assertThat(duplicate).isEqualTo(first);
+    assertThat(duplicate).isSameAs(first);
     assertThat(duplicate.status()).isEqualTo(ClarificationRequest.Status.ANSWERED);
     assertThat(store.load()).hasSize(1);
+    assertThat(store.writes).isEqualTo(writes);
   }
 
   @Test
@@ -76,7 +78,7 @@ class ZalavaClarificationsTest {
     clarifications.answer(owner, created.requestId(), answer("a"));
 
     assertThatThrownBy(() -> clarifications.answer(owner, created.requestId(), answer("b")))
-        .isInstanceOf(ZalavaClarifications.AlreadyAnsweredException.class);
+        .isInstanceOf(ClarificationRequest.AlreadyAnsweredException.class);
     assertThat(clarifications.get(owner, created.requestId()).answers().getFirst().choiceId())
         .isEqualTo("a");
   }
@@ -89,11 +91,14 @@ class ZalavaClarificationsTest {
 
     assertThatThrownBy(() -> clarifications.answer(owner, created.requestId(), answer("a")))
         .isInstanceOfSatisfying(
-            ZalavaClarifications.StaleClarificationException.class,
+            ClarificationRequest.StaleClarificationException.class,
             exception ->
                 assertThat(exception.status()).isEqualTo(ClarificationRequest.Status.EXPIRED));
     assertThat(clarifications.get(owner, created.requestId()).status())
         .isEqualTo(ClarificationRequest.Status.EXPIRED);
+    assertThat(new ZalavaClarifications(store, clock::get).find(owner, created.requestId()))
+        .hasValueSatisfying(
+            request -> assertThat(request.status()).isEqualTo(ClarificationRequest.Status.EXPIRED));
   }
 
   @Test
@@ -104,9 +109,26 @@ class ZalavaClarificationsTest {
 
     assertThat(cancelled.status()).isEqualTo(ClarificationRequest.Status.CANCELLED);
     assertThatThrownBy(() -> clarifications.cancel(owner, created.requestId()))
-        .isInstanceOf(ZalavaClarifications.StaleClarificationException.class);
+        .isInstanceOf(ClarificationRequest.StaleClarificationException.class);
     assertThatThrownBy(() -> clarifications.answer(owner, created.requestId(), answer("a")))
-        .isInstanceOf(ZalavaClarifications.StaleClarificationException.class);
+        .isInstanceOf(ClarificationRequest.StaleClarificationException.class);
+  }
+
+  @Test
+  void aFailedWriteLeavesTheRequestPendingAndTheAnswerCanBeRetried() {
+    ClarificationRequest created = clarifications.create(owner, task, draft());
+    store.failWrites = true;
+
+    assertThatThrownBy(() -> clarifications.answer(owner, created.requestId(), answer("a")))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("store unavailable");
+    assertThat(clarifications.get(owner, created.requestId())).isSameAs(created);
+    assertThat(store.load()).containsExactly(created);
+
+    store.failWrites = false;
+    ClarificationRequest answered = clarifications.answer(owner, created.requestId(), answer("a"));
+    assertThat(answered.status()).isEqualTo(ClarificationRequest.Status.ANSWERED);
+    assertThat(store.load()).containsExactly(answered);
   }
 
   @Test
@@ -210,6 +232,8 @@ class ZalavaClarificationsTest {
 
   private static final class InMemoryStore implements ClarificationStore {
     private final List<ClarificationRequest> values = new ArrayList<>();
+    private int writes;
+    private boolean failWrites;
 
     @Override
     public List<ClarificationRequest> load() {
@@ -218,6 +242,8 @@ class ZalavaClarificationsTest {
 
     @Override
     public void save(ClarificationRequest request) {
+      if (failWrites) throw new IllegalStateException("store unavailable");
+      writes++;
       values.removeIf(value -> value.requestId().equals(request.requestId()));
       values.add(request);
     }

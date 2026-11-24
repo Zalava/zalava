@@ -186,6 +186,15 @@ class PortsAndAdaptersArchitectureTest {
           .resideInAnyPackage("org.zalava.tasks.application..", "org.zalava.tasks.adapter..");
 
   @ArchTest
+  static final ArchRule clarification_domain_must_not_depend_on_clarification_application =
+      noClasses()
+          .that()
+          .resideInAPackage("org.zalava.tasks.clarification.domain..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("org.zalava.tasks.clarification.application..");
+
+  @ArchTest
   static final ArchRule task_application_must_not_depend_on_task_adapters_or_jobrunr =
       noClasses()
           .that()

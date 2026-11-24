@@ -47,9 +47,7 @@ public class DefaultTaskExecution implements TaskExecution {
   public ExecutionOutcome execute(String taskId, FailureHandling failureHandling) {
     long startedAt = System.nanoTime();
     Task task = taskStore.getTaskById(taskId);
-    requireQueued(task);
-
-    Task inProgress = taskStore.save(task.withStatus(Task.Status.in_progress));
+    Task inProgress = taskStore.save(task.start());
     TaskReference taskReference = taskStore.getReference(inProgress);
     try {
       TaskAgent.Result result =
@@ -60,7 +58,7 @@ public class DefaultTaskExecution implements TaskExecution {
                 Task.Status.awaiting_human_input, formatPendingApprovals(taskReference));
       }
       Task finished =
-          taskStore.save(inProgress.withFeedback(result.feedback()).withStatus(result.newStatus()));
+          taskStore.save(inProgress.recordAttemptResult(result.newStatus(), result.feedback()));
       taskNotifier.notify(task.getName(), result.newStatus(), result.feedback());
       observe("succeeded", finished.getStatus(), startedAt);
       return new ExecutionOutcome(finished.getName(), finished.getStatus());
@@ -79,22 +77,11 @@ public class DefaultTaskExecution implements TaskExecution {
     }
   }
 
-  private void requireQueued(Task task) {
-    if (!Task.Status.todo.equals(task.getStatus())) {
-      throw new IllegalStateException(
-          "Cannot handle task '"
-              + task.getName()
-              + "' with status "
-              + task.getStatus()
-              + ". Only tasks that have status todo can be run");
-    }
-  }
-
   private Task failedAttempt(Task inProgress, FailureHandling failureHandling) {
     if (failureHandling == FailureHandling.TERMINAL) {
-      return inProgress.withStatus(Task.Status.failed).withFailureDetail(TERMINAL_FAILURE_DETAIL);
+      return inProgress.fail(TERMINAL_FAILURE_DETAIL);
     }
-    return inProgress.withStatus(Task.Status.todo);
+    return inProgress.retry();
   }
 
   private String formatPendingApprovals(TaskReference taskReference) {

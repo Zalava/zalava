@@ -86,15 +86,15 @@ public final class ClarificationController {
         .body(Map.of("error", exception.getMessage()));
   }
 
-  @ExceptionHandler(ZalavaClarifications.AlreadyAnsweredException.class)
+  @ExceptionHandler(ClarificationRequest.AlreadyAnsweredException.class)
   ResponseEntity<Map<String, String>> alreadyAnswered(
-      ZalavaClarifications.AlreadyAnsweredException exception) {
+      ClarificationRequest.AlreadyAnsweredException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", exception.getMessage()));
   }
 
-  @ExceptionHandler(ZalavaClarifications.StaleClarificationException.class)
+  @ExceptionHandler(ClarificationRequest.StaleClarificationException.class)
   ResponseEntity<Map<String, String>> stale(
-      ZalavaClarifications.StaleClarificationException exception) {
+      ClarificationRequest.StaleClarificationException exception) {
     HttpStatus status =
         exception.status() == ClarificationRequest.Status.EXPIRED
             ? HttpStatus.GONE

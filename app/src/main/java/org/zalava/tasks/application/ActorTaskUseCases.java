@@ -52,10 +52,7 @@ public final class ActorTaskUseCases implements ActorTaskCommands {
   @Override
   public void resume(Actor actor, ActorTaskReference reference) {
     Task task = tasks.get(actor, reference);
-    if (task.getStatus() != Task.Status.awaiting_human_input) {
-      throw new IllegalStateException("Only tasks awaiting human input can be resumed");
-    }
-    tasks.save(actor, reference, task.withStatus(Task.Status.todo));
+    tasks.save(actor, reference, task.resume());
     scheduler.enqueue(new ActorTaskExecutionReference(actor, reference).encode());
   }
 }

@@ -46,12 +46,13 @@ public final class ActorTaskExecution {
   public Task.Status execute(String schedulerToken) {
     ActorTaskExecutionReference execution = ActorTaskExecutionReference.parse(schedulerToken);
     Task task = tasks.get(execution.actor(), execution.taskReference());
-    if (task.getStatus() != Task.Status.todo) {
-      throw new IllegalStateException("Only queued actor tasks can execute");
+    Task started;
+    try {
+      started = task.start();
+    } catch (Task.NotQueuedException exception) {
+      throw new IllegalStateException("Only queued actor tasks can execute", exception);
     }
-    Task inProgress =
-        tasks.save(
-            execution.actor(), execution.taskReference(), task.withStatus(Task.Status.in_progress));
+    Task inProgress = tasks.save(execution.actor(), execution.taskReference(), started);
     try {
       ActorTaskAgent.Result result =
           agent.execute(
@@ -70,13 +71,12 @@ public final class ActorTaskExecution {
           tasks.save(
               execution.actor(),
               execution.taskReference(),
-              inProgress.withFeedback(result.feedback()).withStatus(result.newStatus()));
+              inProgress.recordAttemptResult(result.newStatus(), result.feedback()));
       notifier.notify(
           execution.actor(), finished.getName(), finished.getStatus(), result.feedback());
       return finished.getStatus();
     } catch (RuntimeException exception) {
-      tasks.save(
-          execution.actor(), execution.taskReference(), inProgress.withStatus(Task.Status.todo));
+      tasks.save(execution.actor(), execution.taskReference(), inProgress.retry());
       throw exception;
     }
   }

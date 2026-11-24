@@ -63,10 +63,7 @@ class JobEvidenceControllerComponentTest {
     tasks.save(
         actor,
         report,
-        Task.newTask("Owner report", "Goal")
-            .withStatus(Task.Status.failed)
-            .withFeedback(saved)
-            .withFailureDetail("Recorded failure"));
+        Task.newTask("Owner report", "Goal").start().withFeedback(saved).fail("Recorded failure"));
     tasks.save(actor, pending, Task.newTask("Owner future job", "Goal"));
     tasks.save(
         new Actor(other.id()),

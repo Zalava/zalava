@@ -126,7 +126,9 @@ class ActorTaskClarificationLoopTest {
     store.save(
         owner,
         reference,
-        Task.newTask("work", "goal").withStatus(Task.Status.awaiting_human_input));
+        Task.newTask("work", "goal")
+            .start()
+            .recordAttemptResult(Task.Status.awaiting_human_input, ""));
     ClarificationRequest request = clarifications.create(owner, reference, draft());
     RecordingScheduler scheduler = new RecordingScheduler();
     ActorTaskCommands commands = new ActorTaskUseCases(store, scheduler);

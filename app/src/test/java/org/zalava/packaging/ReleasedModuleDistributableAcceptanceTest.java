@@ -356,8 +356,8 @@ class ReleasedModuleDistributableAcceptanceTest {
         actor,
         report,
         Task.newTask("Packaged saved report", "Restart fixture")
-            .withStatus(Task.Status.completed)
-            .withFeedback(output));
+            .start()
+            .recordAttemptResult(Task.Status.completed, output));
     store.save(actor, future, Task.newTask("Packaged future job", "Restart fixture"));
     var due = Instant.parse("2050-01-02T12:00:00Z");
     try (var storage = new PostgresStorageProvider(dataSource)) {
