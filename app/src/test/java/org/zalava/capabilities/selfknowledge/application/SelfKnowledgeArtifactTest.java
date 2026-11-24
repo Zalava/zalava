@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProviderCatalog;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
 import org.zalava.capabilities.selfknowledge.application.port.out.MemberToolVisibility;
@@ -42,7 +43,10 @@ class SelfKnowledgeArtifactTest {
               mock(WebExtensionRoutes.class),
               mock(ModulePageAccess.class),
               ignored -> RuntimeState.UNKNOWN,
-              mock(ModuleQueries.class));
+              mock(ModuleQueries.class),
+              mock(ModuleSuggestions.class),
+              () -> false,
+              () -> "test-version");
 
       var result =
           actors.call(

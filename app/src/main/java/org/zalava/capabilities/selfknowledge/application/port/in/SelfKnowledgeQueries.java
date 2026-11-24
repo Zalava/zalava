@@ -9,6 +9,34 @@ public interface SelfKnowledgeQueries {
 
   Optional<Capability> find(String id);
 
+  /** Resolve a documentation reference returned by a capability. */
+  Optional<Documentation> documentation(String reference);
+
+  record Documentation(String reference, String title, String text) {}
+
+  /** Catalog results are suggestions only and do not establish installation or permission. */
+  CatalogResult suggestCatalog(String query);
+
+  enum CatalogStatus {
+    MATCH,
+    NO_MATCH,
+    UNAVAILABLE,
+    DISABLED
+  }
+
+  enum Installation {
+    NOT_ENABLED_OR_LOADED,
+    UNKNOWN
+  }
+
+  record CatalogResult(CatalogStatus status, List<CatalogSuggestion> suggestions) {
+    public CatalogResult {
+      suggestions = List.copyOf(suggestions);
+    }
+  }
+
+  record CatalogSuggestion(String id, String name, String description, Installation installation) {}
+
   enum RuntimeState {
     CORE,
     ACTIVE,
@@ -23,6 +51,12 @@ public interface SelfKnowledgeQueries {
     UNKNOWN
   }
 
+  enum ProviderSelection {
+    SELECTED,
+    NOT_SELECTED,
+    UNKNOWN
+  }
+
   record Capability(
       String id,
       String name,
@@ -30,6 +64,7 @@ public interface SelfKnowledgeQueries {
       String source,
       String version,
       RuntimeState runtimeState,
+      ProviderSelection providerSelection,
       Readiness readiness,
       List<Operation> operations,
       List<Page> pages,
