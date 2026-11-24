@@ -46,6 +46,11 @@ public final class DirectChatApprovals {
     }
     try {
       var outcome = operations.allowUnscoped(requestId);
+      if (outcome.result().success()
+          && "home-assistant".equals(entry.providerId())
+          && "home_assistant_execute_action".equals(entry.toolName())) {
+        return "Home Assistant accepted the action. The physical outcome has not been verified.";
+      }
       return outcome.result().success()
           ? "Permission allowed once; operation completed."
           : "Permission allowed once, but the operation returned an error. Check the result before retrying.";

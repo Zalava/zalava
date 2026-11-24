@@ -18,6 +18,10 @@ class WorkspaceAgentPromptTest {
             "never invent a call",
             "Do not put",
             "Workspace > Tools",
-            "Never bypass");
+            "Never bypass",
+            "Ask the user to clarify when multiple targets match",
+            "never guess a target",
+            "physical outcome has not been",
+            "unrelated state changes are not proof");
   }
 }

@@ -481,6 +481,10 @@ function friendlyAction(value = "") {
   const label = value.split("/").at(-1).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_.]/g, " ").toLowerCase().replace(/\bapi\b/g, "API");
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+function approvalOutcome(tool) {
+  if (tool.approvalStatus === "succeeded" && tool.provider === "home-assistant" && tool.name === "home_assistant_execute_action") return "Home Assistant accepted the action; the physical outcome has not been verified.";
+  return ({succeeded:"completed after approval.",failed:"failed after approval.",denied:"permission denied or revoked.",unknown:"approval outcome is unavailable."}[tool.approvalStatus] ?? "approval outcome is unknown.");
+}
 function ApprovalArguments({value}) {
   let fields;
   try { fields = JSON.parse(value); } catch { fields = null; }
@@ -507,7 +511,7 @@ function ConversationAnswer() {
     <header className="answer-heading">{original.role === "assistant" && <span className="answer-timing">{original.streaming ? "Responding…" : formatDuration(timing?.totalStreamTime)}</span>}</header>
     {original.streaming && !original.content && <p className="assistant-pending" role="status">Zalava is responding…</p>}
     <div className="answer-content"><MessagePrimitive.Parts components={{Text:MessageText,tools:{Fallback:HIDDEN_TEXT}}}/></div>
-    {original.role === "assistant" && original.tools?.some(tool => tool.approvalStatus && tool.approvalStatus !== "pending") && <div className="approval-updates"><strong>Approval updates</strong>{original.tools.map((tool,index) => tool.approvalStatus && tool.approvalStatus !== "pending" && <p className="approval-outcome" role="status" key={`${tool.name}-${index}`}>Action {index+1} · {friendlyAction(tool.name)}: {({succeeded:"completed after approval.",failed:"failed after approval.",denied:"permission denied or revoked.",unknown:"approval outcome is unavailable."}[tool.approvalStatus] ?? "approval outcome is unknown." )} <a href={`#approval-tool-${original.runId}-${index}`} onClick={() => { const target = document.getElementById(`approval-tool-${original.runId}-${index}`); if (target) { const parent = target.closest("details.answer-execution"); if (parent) parent.open = true; target.open = true; } }}>View action {index+1} details</a></p>)}</div>}
+    {original.role === "assistant" && original.tools?.some(tool => tool.approvalStatus && tool.approvalStatus !== "pending") && <div className="approval-updates"><strong>Approval updates</strong>{original.tools.map((tool,index) => tool.approvalStatus && tool.approvalStatus !== "pending" && <p className="approval-outcome" role="status" key={`${tool.name}-${index}`}>Action {index+1} · {friendlyAction(tool.name)}: {approvalOutcome(tool)} <a href={`#approval-tool-${original.runId}-${index}`} onClick={() => { const target = document.getElementById(`approval-tool-${original.runId}-${index}`); if (target) { const parent = target.closest("details.answer-execution"); if (parent) parent.open = true; target.open = true; } }}>View action {index+1} details</a></p>)}</div>}
     {original.attachmentNames?.map(name => <span className="attachment-chip" key={name}>{name}</span>)}
     {original.jobIds?.map(id => <a href={`/jobs/${id}`} key={id}>View task</a>)}
     {original.role === "assistant" && !original.streaming && <details className="answer-execution" data-run-id={run?.id}><summary aria-label="Execution details" title="Execution details"><span aria-hidden="true">ⓘ</span><span className="sr-only">Execution details</span></summary>
