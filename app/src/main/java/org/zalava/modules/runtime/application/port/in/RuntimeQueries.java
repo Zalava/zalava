@@ -34,6 +34,11 @@ public interface RuntimeQueries {
     return findLoadedProvider(providerId).map(LoadedZalavaProvider::provider);
   }
 
+  /** Descriptors of instantiated services; this does not grant service access or imply health. */
+  default List<ZalavaServiceDescriptor> loadedServiceDescriptors() {
+    return List.of();
+  }
+
   /**
    * Resolves one active Zalava-owned typed service without exposing its factory, classloader,
    * module configuration, or any Spring infrastructure.

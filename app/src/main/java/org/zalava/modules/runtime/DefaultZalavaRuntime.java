@@ -4,6 +4,7 @@ import java.util.List;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.modules.runtime.application.DefaultRuntimeQueries;
 
 public final class DefaultZalavaRuntime implements ZalavaRuntime {
@@ -23,6 +24,11 @@ public final class DefaultZalavaRuntime implements ZalavaRuntime {
   @Override
   public List<LoadedZalavaProvider> loadedProviders() {
     return delegate.loadedProviders();
+  }
+
+  @Override
+  public List<ZalavaServiceDescriptor> loadedServiceDescriptors() {
+    return delegate.loadedServiceDescriptors();
   }
 
   @Override

@@ -11,10 +11,13 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.selfknowledge.adapter.out.HostMemberToolVisibility;
 import org.zalava.capabilities.selfknowledge.application.DefaultSelfKnowledgeQueries;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries;
+import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ConfigurationState;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
+import org.zalava.modules.catalog.application.port.in.ModuleConfigurationStatusQueries;
 import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
+import org.zalava.modules.managedservices.application.port.in.ManagedServiceQueries;
 import org.zalava.modules.runtime.ManagedZalavaRuntime;
 import org.zalava.modules.runtime.ZalavaRuntime;
 import org.zalava.modules.web.application.port.in.ModulePageAccess;
@@ -33,7 +36,9 @@ public class SelfKnowledgeConfiguration {
       ModuleQueries installedModules,
       ModuleSuggestions suggestions,
       ChatProviderStatus chatProvider,
-      ObjectProvider<BuildProperties> buildProperties) {
+      ObjectProvider<BuildProperties> buildProperties,
+      ModuleConfigurationStatusQueries moduleConfiguration,
+      ManagedServiceQueries managedServices) {
     return new DefaultSelfKnowledgeQueries(
         actors,
         accounts,
@@ -49,7 +54,16 @@ public class SelfKnowledgeConfiguration {
         () -> {
           BuildProperties build = buildProperties.getIfAvailable();
           return build == null ? "" : build.getVersion();
-        });
+        },
+        moduleId ->
+            switch (moduleConfiguration.status(moduleId)) {
+              case ACTIVE -> ConfigurationState.ACTIVE;
+              case SETUP_REQUIRED -> ConfigurationState.SETUP_REQUIRED;
+              case RESTART_REQUIRED -> ConfigurationState.CHANGES_PENDING;
+              case CONFIGURATION_INVALID -> ConfigurationState.INVALID;
+              case ACTIVATION_FAILED -> ConfigurationState.ACTIVATION_FAILED;
+            },
+        managedServices);
   }
 
   private static RuntimeState moduleState(ZalavaRuntime runtime, String moduleId) {
