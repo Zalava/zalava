@@ -53,7 +53,7 @@ class FileSystemTaskRepositoryTest {
   void saveTaskUpdatesExistingFile() {
     Task task = repository.save(Task.newTask("handle-email", "Process unread email messages"));
 
-    Task updated = repository.save(task.withStatus(Task.Status.in_progress));
+    Task updated = repository.save(task.start());
 
     Task reloaded = repository.getTaskById(task.getId());
     assertThat(reloaded.getStatus()).isEqualTo(Task.Status.in_progress);
@@ -127,8 +127,8 @@ class FileSystemTaskRepositoryTest {
         repository.save(
             Task.newTask("handle-email", "Process unread email messages")
                 .withFeedback("Processed one message before stopping.")
-                .withStatus(Task.Status.failed)
-                .withFailureDetail("Zalava could not complete this job after multiple attempts."));
+                .start()
+                .fail("Zalava could not complete this job after multiple attempts."));
 
     String persisted = Files.readString(Path.of(saved.getId()));
     Task loaded = repository.getTaskById(saved.getId());
@@ -257,7 +257,7 @@ class FileSystemTaskRepositoryTest {
   void getTasksFiltersCorrectlyByStatus() {
     repository.save(Task.newTask("task-a", "First task"));
     Task taskB = repository.save(Task.newTask("task-b", "Second task"));
-    repository.save(taskB.withStatus(Task.Status.completed));
+    repository.save(taskB.start().recordAttemptResult(Task.Status.completed, ""));
 
     List<Task> todoTasks = repository.getTasks(LocalDate.now(), Task.Status.todo);
     List<Task> completedTasks = repository.getTasks(LocalDate.now(), Task.Status.completed);

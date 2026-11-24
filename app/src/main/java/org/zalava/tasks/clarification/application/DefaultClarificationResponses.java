@@ -7,7 +7,6 @@ import org.zalava.tasks.clarification.ZalavaClarifications;
 import org.zalava.tasks.clarification.application.port.in.ClarificationResponses;
 import org.zalava.tasks.clarification.domain.ClarificationRequest;
 import org.zalava.tasks.domain.ActorTaskReference;
-import org.zalava.tasks.domain.Task;
 
 /**
  * Applies an actor-owned clarification response and resumes the paused job through the existing
@@ -50,7 +49,7 @@ public final class DefaultClarificationResponses implements ClarificationRespons
 
   private void resumeIfIdle(Actor actor, ClarificationRequest request) {
     ActorTaskReference reference = new ActorTaskReference(request.taskReference());
-    if (tasks.get(actor, reference).getStatus() != Task.Status.awaiting_human_input) return;
+    if (!tasks.get(actor, reference).isAwaitingHumanInput()) return;
     tasks.resume(actor, reference);
   }
 }

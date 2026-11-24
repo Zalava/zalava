@@ -171,7 +171,10 @@ class ActorTaskExecutionApprovalPathsTest {
 
   @Test
   void nonTodoTasksRefuseExecution() {
-    store.save(owner, reference, Task.newTask("work", "goal").withStatus(Task.Status.completed));
+    store.save(
+        owner,
+        reference,
+        Task.newTask("work", "goal").start().recordAttemptResult(Task.Status.completed, ""));
 
     assertThatThrownBy(() -> executionForEmptyApprovals().execute(token()))
         .isInstanceOf(IllegalStateException.class)

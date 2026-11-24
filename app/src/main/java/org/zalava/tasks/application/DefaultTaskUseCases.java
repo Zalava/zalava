@@ -85,10 +85,7 @@ public class DefaultTaskUseCases implements TaskCommands, TaskQueries {
   @Override
   public void resume(TaskReference reference) {
     Task task = taskStore.getTask(reference);
-    if (task.getStatus() != Task.Status.awaiting_human_input) {
-      throw new IllegalStateException("Only tasks awaiting human input can be resumed");
-    }
-    Task queued = taskStore.save(task.withStatus(Task.Status.todo));
+    Task queued = taskStore.save(task.resume());
     taskScheduler.enqueue(queued.getId());
     log.info(
         "Task '{}' ({}) has been requeued after an approval decision.",
