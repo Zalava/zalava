@@ -66,6 +66,20 @@ public final class DefaultMemberToolAccess implements MemberToolAccess {
   }
 
   @Override
+  public boolean canUse(String memberId, ToolKey key) {
+    return catalog
+            .findProvider(key.providerId())
+            .filter(provider -> provider.descriptor().moduleId().equals(key.moduleId()))
+            .map(
+                provider ->
+                    provider.listTools().stream()
+                        .filter(tool -> tool.name().equals(key.toolName()))
+                        .anyMatch(tool -> MemberProviderCapabilityPolicy.eligible(provider, tool)))
+            .orElse(false)
+        && allowed(memberId, key);
+  }
+
+  @Override
   public List<Decision> decisions(String administratorId, String memberId) {
     requireAdministrator(administratorId);
     requireMember(memberId);
