@@ -479,6 +479,28 @@ class ReleasedModuleDistributableAcceptanceTest {
           .as("keyboard can reach the policy expiry control")
           .isTrue();
       page.setViewportSize(1280, 720);
+      APIResponse covered = post(admin, page, endpoint, body);
+      assertThat(covered.status()).as("the exact-action grant works before restart").isEqualTo(200);
+      assertThat(JSON.readTree(covered.text()).path("success").booleanValue()).isTrue();
+      ha.verify(2, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      page.navigate(baseUrl + "/modules/zalava-module-home-assistant");
+      page.locator("form[action='/modules/zalava-module-home-assistant/stop'] button").click();
+      startModule(page, "zalava-module-home-assistant");
+      APIResponse afterRestart = post(admin, page, endpoint, body);
+      assertThat(afterRestart.status())
+          .as("a provider restart invalidates the previous exact-action grant")
+          .isEqualTo(202);
+      ha.verify(2, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      String afterRestartId = JSON.readTree(afterRestart.text()).path("requestId").asString();
+      assertThat(afterRestartId).isNotBlank();
+      assertThat(
+              post(
+                      admin,
+                      page,
+                      "/api/zalava/permission-requests/" + afterRestartId + "/deny",
+                      Map.of())
+                  .status())
+          .isEqualTo(200);
       var deniedBody =
           Map.<String, Object>of(
               "actorId",
@@ -496,7 +518,7 @@ class ReleasedModuleDistributableAcceptanceTest {
               "arguments",
               Map.of("domain", "script", "action", "turn_on", "entityId", "script.all"));
       assertThat(post(admin, page, endpoint, deniedBody).status()).isEqualTo(501);
-      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      ha.verify(2, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
     } finally {
       ha.stop();
     }
