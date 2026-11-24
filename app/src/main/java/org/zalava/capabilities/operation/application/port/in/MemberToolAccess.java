@@ -12,6 +12,9 @@ public interface MemberToolAccess {
 
   boolean allowed(String accountId, ToolKey key);
 
+  /** Checks both the current host eligibility ceiling and the member's effective grant. */
+  boolean canUse(String accountId, ToolKey key);
+
   List<Decision> decisions(String administratorId, String memberId);
 
   void decide(String administratorId, String memberId, ToolKey key, boolean allowed);
