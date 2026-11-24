@@ -1261,7 +1261,7 @@ class ReleasedModuleDistributableAcceptanceTest {
               new Page.ScreenshotOptions()
                   .setPath(diagnostics.resolve("released-time-member-inline.png")));
         }
-        proveReleasedHomeAssistantChat(page, modelServer);
+        proveReleasedHomeAssistantChat(page, browser, modelServer);
         proveDirectShoppingApprovals(page, modelServer);
         proveChatConfirmationSettings(page, browser, modelServer);
         proveUnifiedPermissions(page, modelServer);
@@ -1291,8 +1291,8 @@ class ReleasedModuleDistributableAcceptanceTest {
     }
   }
 
-  private void proveReleasedHomeAssistantChat(Page page, WireMockServer modelServer)
-      throws Exception {
+  private void proveReleasedHomeAssistantChat(
+      Page page, Browser browser, WireMockServer modelServer) throws Exception {
     page.setViewportSize(1440, 900);
     WireMockServer ha = new WireMockServer(0);
     ha.start();
@@ -1456,6 +1456,47 @@ class ReleasedModuleDistributableAcceptanceTest {
       var approved = cards.filter(new Locator.FilterOptions().setHasText("light.room"));
       var denied = cards.filter(new Locator.FilterOptions().setHasText("light.denied"));
       var offline = cards.filter(new Locator.FilterOptions().setHasText("light.offline"));
+      var tool =
+          page.locator(".message.assistant")
+              .last()
+              .locator(".answer-tool")
+              .filter(new Locator.FilterOptions().setHasText("light.room"));
+      String preview = tool.locator("pre").last().textContent();
+      String requestId =
+          JSON.readTree(preview).path("content").path("approvalRequestId").asString();
+      assertThat(requestId).isNotBlank();
+      try (var outsider = browser.newContext()) {
+        Page outsiderPage = outsider.newPage();
+        signIn(outsiderPage, "released-clock-member", INITIAL_PASSWORD + "-changed", false);
+        outsiderPage.navigate(baseUrl + "/chat");
+        outsiderPage.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+        String attempt =
+            (String)
+                outsiderPage.evaluate(
+                    """
+                    requestId => new Promise((resolve, reject) => {
+                      const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/ui/chat`);
+                      const timeout = setTimeout(() => { socket.close(); reject(new Error('permission response timed out')); }, 10000);
+                      socket.onmessage = event => {
+                        const message = JSON.parse(event.data);
+                        if (message.type === 'permission.direct') {
+                          if (JSON.stringify(message).includes(requestId)) {
+                            clearTimeout(timeout); socket.close(); reject(new Error('another user request was exposed')); return;
+                          }
+                          socket.send(JSON.stringify({protocol:'zalava.ui/v1', type:'permission.decide', requestId, decision:'allow-once'}));
+                        }
+                        if (message.type === 'failure') {
+                          clearTimeout(timeout); socket.close(); resolve(JSON.stringify(message));
+                        }
+                      };
+                      socket.onerror = () => { clearTimeout(timeout); reject(new Error('permission socket failed')); };
+                    })
+                    """,
+                    requestId);
+        assertThat(attempt).contains("failure");
+      }
+      ha.verify(0, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      PlaywrightAssertions.assertThat(cards).hasCount(3);
       approved
           .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once"))
           .click();
