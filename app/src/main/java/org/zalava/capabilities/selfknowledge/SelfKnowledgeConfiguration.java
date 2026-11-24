@@ -1,7 +1,11 @@
 package org.zalava.capabilities.selfknowledge;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.zalava.assistant.chat.application.port.in.ChatProviderStatus;
+import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProviderCatalog;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.selfknowledge.adapter.out.HostMemberToolVisibility;
@@ -26,7 +30,10 @@ public class SelfKnowledgeConfiguration {
       MemberToolAccess access,
       WebExtensionRoutes routes,
       ModulePageAccess pageAccess,
-      ModuleQueries installedModules) {
+      ModuleQueries installedModules,
+      ModuleSuggestions suggestions,
+      ChatProviderStatus chatProvider,
+      ObjectProvider<BuildProperties> buildProperties) {
     return new DefaultSelfKnowledgeQueries(
         actors,
         accounts,
@@ -36,7 +43,13 @@ public class SelfKnowledgeConfiguration {
         routes,
         pageAccess,
         moduleId -> moduleState(runtime, moduleId),
-        installedModules);
+        installedModules,
+        suggestions,
+        chatProvider::configured,
+        () -> {
+          BuildProperties build = buildProperties.getIfAvailable();
+          return build == null ? "" : build.getVersion();
+        });
   }
 
   private static RuntimeState moduleState(ZalavaRuntime runtime, String moduleId) {

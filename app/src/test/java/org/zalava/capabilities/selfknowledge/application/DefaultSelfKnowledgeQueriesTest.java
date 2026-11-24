@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.zalava.api.ModuleDescriptor;
 import org.zalava.api.ProviderCapabilities;
@@ -15,7 +16,11 @@ import org.zalava.api.ProviderDescriptor;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaToolDescriptor;
+import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
+import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.CatalogStatus;
+import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.Installation;
+import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ProviderSelection;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
 import org.zalava.capabilities.selfknowledge.application.port.out.MemberToolVisibility;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
@@ -31,6 +36,101 @@ import org.zalava.modules.web.application.port.in.ModulePageAccess;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
 
 class DefaultSelfKnowledgeQueriesTest {
+  @Test
+  void chatProviderSelectionIsFreshAndDoesNotClaimHealth() {
+    var actors = new ActorExecutionContext();
+    var accounts = mock(AccountLifecycle.class);
+    var account = mock(Account.class);
+    var id = AccountId.newId();
+    when(accounts.findById(id)).thenReturn(Optional.of(account));
+    when(account.enabled()).thenReturn(true);
+    when(account.role()).thenReturn(AccountRole.MEMBER);
+    var selected = new AtomicBoolean(false);
+    var queries =
+        new DefaultSelfKnowledgeQueries(
+            actors,
+            accounts,
+            mock(RuntimeQueries.class),
+            mock(ProviderCatalog.class),
+            mock(MemberToolVisibility.class),
+            mock(WebExtensionRoutes.class),
+            mock(ModulePageAccess.class),
+            ignored -> RuntimeState.UNKNOWN,
+            mock(ModuleQueries.class),
+            mock(ModuleSuggestions.class),
+            selected::get,
+            () -> "test-version");
+    var actor = new Actor(id);
+
+    var first =
+        actors.call(actor, AccountRole.MEMBER, () -> queries.find("core:chat")).orElseThrow();
+    assertThat(first.providerSelection()).isEqualTo(ProviderSelection.NOT_SELECTED);
+    selected.set(true);
+    var second =
+        actors.call(actor, AccountRole.MEMBER, () -> queries.find("core:chat")).orElseThrow();
+    assertThat(second.providerSelection()).isEqualTo(ProviderSelection.SELECTED);
+    assertThat(second.version()).isEqualTo("test-version");
+    assertThat(second.readiness().name()).isEqualTo("UNKNOWN");
+    assertThat(second.documentation()).isEqualTo("core:chat");
+    var documentation =
+        actors.call(actor, AccountRole.MEMBER, () -> queries.documentation(second.documentation()));
+    assertThat(documentation).isPresent();
+    assertThat(documentation.orElseThrow().text()).contains("does not establish valid credentials");
+  }
+
+  @Test
+  void catalogSuggestionsDoNotRevealInstallationToMembers() {
+    var actors = new ActorExecutionContext();
+    var accounts = mock(AccountLifecycle.class);
+    var account = mock(Account.class);
+    var id = AccountId.newId();
+    when(accounts.findById(id)).thenReturn(Optional.of(account));
+    when(account.enabled()).thenReturn(true);
+    when(account.role()).thenReturn(AccountRole.MEMBER, AccountRole.ADMIN, AccountRole.ADMIN);
+    var installed = mock(ModuleQueries.class);
+    when(installed.enabledModules())
+        .thenReturn(List.of(new ModuleQueries.EnabledModule("notes", "1", "", "", List.of())));
+    var suggestions = mock(ModuleSuggestions.class);
+    when(suggestions.suggest("notes"))
+        .thenReturn(
+            new ModuleSuggestions.Outcome(
+                ModuleSuggestions.Status.MATCH,
+                List.of(
+                    new ModuleSuggestions.Module("notes", "Notes", "Notes"),
+                    new ModuleSuggestions.Module("tasks", "Tasks", "Tasks"))));
+    when(suggestions.suggest("offline"))
+        .thenReturn(ModuleSuggestions.Outcome.of(ModuleSuggestions.Status.UNAVAILABLE));
+    var queries =
+        new DefaultSelfKnowledgeQueries(
+            actors,
+            accounts,
+            mock(RuntimeQueries.class),
+            mock(ProviderCatalog.class),
+            mock(MemberToolVisibility.class),
+            mock(WebExtensionRoutes.class),
+            mock(ModulePageAccess.class),
+            ignored -> RuntimeState.UNKNOWN,
+            installed,
+            suggestions,
+            () -> false,
+            () -> "test-version");
+    var actor = new Actor(id);
+
+    var member = actors.call(actor, AccountRole.MEMBER, () -> queries.suggestCatalog("notes"));
+    assertThat(member.status()).isEqualTo(CatalogStatus.MATCH);
+    assertThat(member.suggestions())
+        .hasSize(2)
+        .allMatch(s -> s.installation() == Installation.UNKNOWN);
+    var admin = actors.call(actor, AccountRole.ADMIN, () -> queries.suggestCatalog("notes"));
+    assertThat(admin.suggestions()).hasSize(1);
+    assertThat(admin.suggestions().getFirst().id()).isEqualTo("module:tasks");
+    assertThat(admin.suggestions().getFirst().installation())
+        .isEqualTo(Installation.NOT_ENABLED_OR_LOADED);
+    assertThat(
+            actors.call(actor, AccountRole.ADMIN, () -> queries.suggestCatalog("offline")).status())
+        .isEqualTo(CatalogStatus.UNAVAILABLE);
+  }
+
   @Test
   void pageOnlyModuleIsVisibleOnlyWhilePageAccessIsGranted() {
     var actors = new ActorExecutionContext();
@@ -64,7 +164,10 @@ class DefaultSelfKnowledgeQueriesTest {
             routes,
             pages,
             ignored -> RuntimeState.STOPPED,
-            mock(ModuleQueries.class));
+            mock(ModuleQueries.class),
+            mock(ModuleSuggestions.class),
+            () -> false,
+            () -> "test-version");
     var actor = new Actor(id);
 
     var visible = actors.call(actor, AccountRole.MEMBER, () -> queries.find("module:notes"));
@@ -121,7 +224,10 @@ class DefaultSelfKnowledgeQueriesTest {
             mock(WebExtensionRoutes.class),
             mock(ModulePageAccess.class),
             ignored -> RuntimeState.STOPPED,
-            mock(ModuleQueries.class));
+            mock(ModuleQueries.class),
+            mock(ModuleSuggestions.class),
+            () -> false,
+            () -> "test-version");
 
     var first = actors.call(actor, AccountRole.MEMBER, () -> queries.find("module:notes"));
     assertThat(first).isPresent();
@@ -145,8 +251,13 @@ class DefaultSelfKnowledgeQueriesTest {
             mock(WebExtensionRoutes.class),
             mock(ModulePageAccess.class),
             ignored -> RuntimeState.STOPPED,
-            mock(ModuleQueries.class));
+            mock(ModuleQueries.class),
+            mock(ModuleSuggestions.class),
+            () -> false,
+            () -> "test-version");
     assertThatThrownBy(() -> queries.search("", 1)).isInstanceOf(SecurityException.class);
+    assertThatThrownBy(() -> queries.documentation("core:chat"))
+        .isInstanceOf(SecurityException.class);
     assertThatThrownBy(() -> queries.search("", 51)).isInstanceOf(IllegalArgumentException.class);
     var id = AccountId.newId();
     var account = mock(Account.class);
@@ -186,7 +297,10 @@ class DefaultSelfKnowledgeQueriesTest {
             mock(WebExtensionRoutes.class),
             mock(ModulePageAccess.class),
             ignored -> RuntimeState.SETUP_REQUIRED,
-            installed);
+            installed,
+            mock(ModuleSuggestions.class),
+            () -> false,
+            () -> "test-version");
 
     var result = actors.call(new Actor(id), AccountRole.ADMIN, () -> queries.find("module:notes"));
     assertThat(result).isPresent();
