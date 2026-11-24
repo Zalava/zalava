@@ -3,6 +3,7 @@ package org.zalava.capabilities.selfknowledge.application;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
+import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.api.ZalavaToolDescriptor;
 import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
@@ -17,6 +19,7 @@ import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQu
 import org.zalava.capabilities.selfknowledge.application.port.out.ChatProviderSelection;
 import org.zalava.capabilities.selfknowledge.application.port.out.CoreVersion;
 import org.zalava.capabilities.selfknowledge.application.port.out.MemberToolVisibility;
+import org.zalava.capabilities.selfknowledge.application.port.out.ModuleConfigurationStateQueries;
 import org.zalava.capabilities.selfknowledge.application.port.out.ModuleStateQueries;
 import org.zalava.capabilities.selfknowledge.domain.CapabilityIdentity;
 import org.zalava.capabilities.selfknowledge.domain.CapabilitySearch;
@@ -26,6 +29,7 @@ import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.Account;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
+import org.zalava.modules.managedservices.application.port.in.ManagedServiceQueries;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 import org.zalava.modules.web.application.RegisteredWebPage;
 import org.zalava.modules.web.application.port.in.ModulePageAccess;
@@ -47,6 +51,8 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
   private final ModuleSuggestions suggestions;
   private final ChatProviderSelection chatProvider;
   private final CoreVersion coreVersion;
+  private final ModuleConfigurationStateQueries moduleConfiguration;
+  private final ManagedServiceQueries managedServices;
 
   public DefaultSelfKnowledgeQueries(
       ActorExecutionContext actors,
@@ -60,7 +66,9 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
       ModuleQueries installedModules,
       ModuleSuggestions suggestions,
       ChatProviderSelection chatProvider,
-      CoreVersion coreVersion) {
+      CoreVersion coreVersion,
+      ModuleConfigurationStateQueries moduleConfiguration,
+      ManagedServiceQueries managedServices) {
     this.actors = Objects.requireNonNull(actors);
     this.accounts = Objects.requireNonNull(accounts);
     this.runtime = Objects.requireNonNull(runtime);
@@ -73,6 +81,8 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
     this.suggestions = Objects.requireNonNull(suggestions);
     this.chatProvider = Objects.requireNonNull(chatProvider);
     this.coreVersion = Objects.requireNonNull(coreVersion);
+    this.moduleConfiguration = Objects.requireNonNull(moduleConfiguration);
+    this.managedServices = Objects.requireNonNull(managedServices);
   }
 
   @Override
@@ -82,7 +92,7 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
         .filter(
             value ->
                 search.matches(
-                    value.id(), value.name(), value.description(), searchableOperations(value)))
+                    value.id(), value.name(), value.description(), searchableDetails(value)))
         .sorted(Comparator.comparing(Capability::id))
         .limit(limit)
         .toList();
@@ -148,7 +158,12 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
         runtime.activeModules().stream()
             .map(module -> module.descriptor().moduleId())
             .collect(Collectors.toUnmodifiableSet());
-    var source = new ModuleSources(active, providers.providers(), routes.pages());
+    var source =
+        new ModuleSources(
+            active,
+            providers.providers(),
+            routes.pages(),
+            account.role() == AccountRole.ADMIN ? runtime.loadedServiceDescriptors() : List.of());
     List<Capability> result = new ArrayList<>();
     result.add(coreChat());
     modules.stream()
@@ -170,7 +185,10 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
         text(coreVersion.version()),
         RuntimeState.CORE,
         chatProvider.selected() ? ProviderSelection.SELECTED : ProviderSelection.NOT_SELECTED,
+        ConfigurationState.NOT_APPLICABLE,
         Readiness.UNKNOWN,
+        List.of(),
+        List.of(),
         List.of(),
         List.of(),
         "core:chat");
@@ -184,6 +202,7 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
     if (identity.isEmpty()) return Optional.empty();
     List<Operation> operations = visibleOperations(account, moduleId, source.providers());
     List<Page> pages = visiblePages(account, moduleId, source.pages());
+    List<Service> services = visibleServices(moduleId, source.services());
     if (account.role() != AccountRole.ADMIN && operations.isEmpty() && pages.isEmpty()) {
       return Optional.empty();
     }
@@ -196,9 +215,12 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
             text(descriptor.version()),
             source.active().contains(moduleId) ? RuntimeState.ACTIVE : moduleStates.state(moduleId),
             ProviderSelection.UNKNOWN,
+            configurationState(module),
             Readiness.UNKNOWN,
             operations,
             pages,
+            services,
+            account.role() == AccountRole.ADMIN ? managedDependencies(moduleId) : List.of(),
             ""));
   }
 
@@ -236,6 +258,40 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
         .toList();
   }
 
+  private List<Service> visibleServices(
+      String moduleId, List<ZalavaServiceDescriptor> descriptors) {
+    return descriptors.stream()
+        .filter(service -> moduleId.equals(service.moduleId()))
+        .filter(service -> CapabilityIdentity.validPart(service.serviceId()))
+        .map(service -> new Service(service.serviceId(), text(service.contractVersion())))
+        .sorted(Comparator.comparing(Service::id))
+        .limit(MAX_RESULTS)
+        .toList();
+  }
+
+  private List<ManagedDependency> managedDependencies(String moduleId) {
+    return managedServices.forModule(moduleId).stream()
+        .filter(service -> CapabilityIdentity.validPart(service.serviceId()))
+        .map(
+            service ->
+                new ManagedDependency(service.serviceId(), managedState(service.observedState())))
+        .sorted(Comparator.comparing(ManagedDependency::id))
+        .limit(MAX_RESULTS)
+        .toList();
+  }
+
+  private static ManagedServiceState managedState(String state) {
+    if (state == null) return ManagedServiceState.UNKNOWN;
+    return switch (state) {
+      case "ABSENT" -> ManagedServiceState.ABSENT;
+      case "STARTING" -> ManagedServiceState.STARTING;
+      case "RUNNING" -> ManagedServiceState.RUNNING;
+      case "STOPPED" -> ManagedServiceState.STOPPED;
+      case "FAILED" -> ManagedServiceState.FAILED;
+      default -> ManagedServiceState.UNKNOWN;
+    };
+  }
+
   private List<Capability> unloadedModules(List<ZalavaModule> modules) {
     Set<String> loadedIds =
         modules.stream().map(module -> module.descriptor().moduleId()).collect(Collectors.toSet());
@@ -254,7 +310,10 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
                     text(module.version()),
                     RuntimeState.NOT_LOADED,
                     ProviderSelection.UNKNOWN,
+                    ConfigurationState.UNKNOWN,
                     Readiness.UNKNOWN,
+                    List.of(),
+                    List.of(),
                     List.of(),
                     List.of(),
                     ""))
@@ -262,7 +321,20 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
   }
 
   private record ModuleSources(
-      Set<String> active, List<ZalavaProvider> providers, List<RegisteredWebPage> pages) {}
+      Set<String> active,
+      List<ZalavaProvider> providers,
+      List<RegisteredWebPage> pages,
+      List<ZalavaServiceDescriptor> services) {}
+
+  private ConfigurationState configurationState(ZalavaModule module) {
+    var descriptor = module.configuration();
+    if (descriptor == null) return ConfigurationState.UNKNOWN;
+    Object properties = descriptor.jsonSchema().get("properties");
+    if (!(properties instanceof Map<?, ?> map)) return ConfigurationState.UNKNOWN;
+    return map.isEmpty()
+        ? ConfigurationState.NOT_REQUIRED
+        : moduleConfiguration.state(module.descriptor().moduleId());
+  }
 
   private Account currentAccount() {
     return actors
@@ -288,9 +360,14 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
     return new CapabilityText(value).value();
   }
 
-  private static String searchableOperations(Capability capability) {
-    return capability.operations().stream()
-        .map(operation -> operation.name() + " " + operation.description())
+  private static String searchableDetails(Capability capability) {
+    Stream<String> operations =
+        capability.operations().stream()
+            .map(operation -> operation.name() + " " + operation.description());
+    Stream<String> pages =
+        capability.pages().stream().map(page -> page.title() + " " + page.description());
+    Stream<String> services = capability.services().stream().map(Service::id);
+    return Stream.concat(Stream.concat(operations, pages), services)
         .collect(Collectors.joining(" "));
   }
 }

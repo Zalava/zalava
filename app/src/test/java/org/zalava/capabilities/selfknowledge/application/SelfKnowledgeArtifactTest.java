@@ -6,8 +6,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.zalava.api.extensions.content.ContentExtractor;
 import org.zalava.capabilities.discovery.application.port.in.ModuleSuggestions;
 import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProviderCatalog;
+import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ConfigurationState;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
 import org.zalava.capabilities.selfknowledge.application.port.out.MemberToolVisibility;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
@@ -17,6 +19,7 @@ import org.zalava.identity.accounts.domain.AccountId;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
 import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
+import org.zalava.modules.managedservices.application.port.in.ManagedServiceQueries;
 import org.zalava.modules.web.application.port.in.ModulePageAccess;
 import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
 import org.zalava.support.DocumentFixtureRuntime;
@@ -46,7 +49,9 @@ class SelfKnowledgeArtifactTest {
               mock(ModuleQueries.class),
               mock(ModuleSuggestions.class),
               () -> false,
-              () -> "test-version");
+              () -> "test-version",
+              ignored -> ConfigurationState.UNKNOWN,
+              mock(ManagedServiceQueries.class));
 
       var result =
           actors.call(
@@ -55,7 +60,19 @@ class SelfKnowledgeArtifactTest {
               () -> queries.find("module:zalava-external-module-fixture"));
       assertThat(result).isPresent();
       assertThat(result.orElseThrow().runtimeState()).isEqualTo(RuntimeState.ACTIVE);
+      assertThat(result.orElseThrow().services())
+          .anyMatch(service -> service.id().equals(ContentExtractor.CONTRACT.serviceId()));
       assertThat(result.toString()).doesNotContain("fixture-secret", "credentialRef");
+      runtime.available = false;
+      var stopped =
+          actors
+              .call(
+                  new Actor(id),
+                  AccountRole.ADMIN,
+                  () -> queries.find("module:zalava-external-module-fixture"))
+              .orElseThrow();
+      assertThat(stopped.runtimeState()).isEqualTo(RuntimeState.UNKNOWN);
+      assertThat(stopped.services()).isEmpty();
     }
   }
 }
