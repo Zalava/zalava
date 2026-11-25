@@ -87,6 +87,7 @@ class SelfKnowledgeManagedArtifactTest {
         runtime.start(MODULE);
         var active = find(queries, actors, actor);
         assertThat(active.runtimeState()).isEqualTo(RuntimeState.ACTIVE);
+        assertThat(active.declaredRuntimeCompatibility()).isEqualTo(">=0.1.0");
         assertThat(active.services())
             .anyMatch(service -> service.id().equals(ContentExtractor.CONTRACT.serviceId()));
         runtime.stop(MODULE);
