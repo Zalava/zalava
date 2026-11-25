@@ -27,6 +27,7 @@ import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.identity.accounts.domain.Actor;
+import org.zalava.identity.channels.application.InvocationChannelContext;
 import org.zalava.support.AuthenticatedZalavaComponentTest;
 import org.zalava.support.ComponentTestAccounts;
 import org.zalava.web.control.application.InvocationLog;
@@ -41,6 +42,82 @@ class ConversationEvidenceComponentTest {
   @Autowired AgentRunStore runs;
   @Autowired InvocationLog calls;
   @Autowired ZalavaToolApprovalRequests approvals;
+
+  @Test
+  void retainedHomeActionApprovalIsOwnerScopedAndDoesNotExposeServiceData() throws Exception {
+    var owner = accounts.newActivated(AccountRole.MEMBER);
+    var outsider = accounts.newActivated(AccountRole.MEMBER);
+    var actor = new Actor(owner.id());
+    var conversation = conversations.createWebConversation(actor);
+    String internal = new ActorConversationId(actor, conversation).value();
+    var provider = mock(ZalavaProvider.class);
+    when(provider.descriptor())
+        .thenReturn(
+            new ProviderDescriptor(
+                "home-assistant",
+                "zalava-module-home-assistant",
+                "home",
+                "Home Assistant",
+                "Fixture",
+                "1",
+                null,
+                List.of(),
+                Map.of()));
+    var arguments = JsonNodeFactory.instance.objectNode();
+    arguments.put("domain", "light");
+    arguments.put("action", "turn_on");
+    arguments.put("entityId", "light.room");
+    arguments.putObject("serviceData").put("private_note", "do-not-expose");
+    var request =
+        approvals.create(
+            provider,
+            new ZalavaToolDescriptor("home_assistant_execute_action", "Execute", true),
+            new InvocationContext(
+                owner.id().toString(),
+                false,
+                Map.of(
+                    "conversationId",
+                    internal,
+                    "permissionPolicyChannel",
+                    "web",
+                    InvocationChannelContext.RUN_ID,
+                    "retained-home-run")),
+            arguments);
+    approvals.allowUnscoped(request.requestId());
+    approvals.recordExecutionOutcome(request.requestId(), true);
+    String route = "/chat/" + conversation.value() + "/evidence";
+    mvc.perform(get(route).with(accounts.authenticatedAs(owner)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.tools.length()").value(1))
+        .andExpect(jsonPath("$.tools[0].runId").value("retained-home-run"))
+        .andExpect(jsonPath("$.tools[0].approvalStatus").value("succeeded"))
+        .andExpect(jsonPath("$.tools[0].input").value(containsString("light.room")))
+        .andExpect(jsonPath("$.tools[0].input").value(containsString("Other parameters omitted")))
+        .andExpect(content().string(not(containsString("do-not-expose"))));
+    mvc.perform(get(route).with(accounts.authenticatedAs(outsider)))
+        .andExpect(status().isNotFound());
+
+    calls.record(
+        new Entry(
+            Instant.now().toString(),
+            "home-assistant",
+            "home_assistant_execute_action",
+            owner.id().toString(),
+            false,
+            "home",
+            List.of(),
+            true,
+            false,
+            "pending_approval",
+            null,
+            "{\"content\":{\"approvalRequestId\":\"" + request.requestId() + "\"}}",
+            0,
+            internal,
+            "safe input",
+            "retained-home-run"));
+    mvc.perform(get(route).with(accounts.authenticatedAs(owner)))
+        .andExpect(jsonPath("$.tools.length()").value(1));
+  }
 
   @Test
   void retainedPendingEvidenceReflectsActualApprovalOutcomeWithoutExposingAnotherConversation()
