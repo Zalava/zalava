@@ -1627,6 +1627,9 @@ class ReleasedModuleDistributableAcceptanceTest {
               "Home Assistant accepted the action; the physical outcome has not been verified.");
       PlaywrightAssertions.assertThat(restored).containsText("permission denied or revoked.");
       PlaywrightAssertions.assertThat(restored).containsText("failed after approval.");
+      restored.locator(".answer-execution > summary").click();
+      PlaywrightAssertions.assertThat(restored.locator(".answer-tool > summary").first())
+          .containsText("Timing unavailable");
       ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
       for (int width : new int[] {1440, 768, 390}) {
         page.setViewportSize(width, 900);
