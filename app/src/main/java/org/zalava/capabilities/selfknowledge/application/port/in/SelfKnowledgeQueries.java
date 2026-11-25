@@ -87,6 +87,8 @@ public interface SelfKnowledgeQueries {
       String description,
       String source,
       String version,
+      String declaredRuntimeCompatibility,
+      List<String> declaredRequirements,
       RuntimeState runtimeState,
       ProviderSelection providerSelection,
       ConfigurationState configuration,
@@ -97,6 +99,7 @@ public interface SelfKnowledgeQueries {
       List<ManagedDependency> managedDependencies,
       String documentation) {
     public Capability {
+      declaredRequirements = List.copyOf(declaredRequirements);
       operations = List.copyOf(operations);
       pages = List.copyOf(pages);
       services = List.copyOf(services);

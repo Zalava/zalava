@@ -7,6 +7,14 @@ import org.junit.jupiter.api.Test;
 
 class CapabilityDomainTest {
   @Test
+  void compatibilityRequiresAnExactKnownVersion() {
+    assertThat(CapabilityCompatibility.matchesVersion("1.0", "1.0")).isTrue();
+    assertThat(CapabilityCompatibility.matchesVersion("1.0", "2.0")).isFalse();
+    assertThat(CapabilityCompatibility.matchesVersion("", "")).isFalse();
+    assertThat(CapabilityCompatibility.matchesVersion(null, "1.0")).isFalse();
+  }
+
+  @Test
   void moduleIdentityRejectsMalformedExternalIds() {
     assertThat(CapabilityIdentity.module("weather-1"))
         .get()

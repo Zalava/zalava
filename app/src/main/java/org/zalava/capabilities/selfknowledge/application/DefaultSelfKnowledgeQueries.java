@@ -21,6 +21,7 @@ import org.zalava.capabilities.selfknowledge.application.port.out.CoreVersion;
 import org.zalava.capabilities.selfknowledge.application.port.out.MemberToolVisibility;
 import org.zalava.capabilities.selfknowledge.application.port.out.ModuleConfigurationStateQueries;
 import org.zalava.capabilities.selfknowledge.application.port.out.ModuleStateQueries;
+import org.zalava.capabilities.selfknowledge.domain.CapabilityCompatibility;
 import org.zalava.capabilities.selfknowledge.domain.CapabilityIdentity;
 import org.zalava.capabilities.selfknowledge.domain.CapabilitySearch;
 import org.zalava.capabilities.selfknowledge.domain.CapabilityText;
@@ -154,6 +155,7 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
   private List<Capability> visibleCapabilities() {
     Account account = currentAccount();
     List<ZalavaModule> modules = runtime.modules();
+    List<ModuleQueries.EnabledModule> enabled = installedModules.enabledModules();
     Set<String> active =
         runtime.activeModules().stream()
             .map(module -> module.descriptor().moduleId())
@@ -163,7 +165,8 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
             active,
             providers.providers(),
             routes.pages(),
-            account.role() == AccountRole.ADMIN ? runtime.loadedServiceDescriptors() : List.of());
+            account.role() == AccountRole.ADMIN ? runtime.loadedServiceDescriptors() : List.of(),
+            enabled);
     List<Capability> result = new ArrayList<>();
     result.add(coreChat());
     modules.stream()
@@ -171,7 +174,7 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
         .flatMap(Optional::stream)
         .forEach(result::add);
     if (account.role() == AccountRole.ADMIN) {
-      result.addAll(unloadedModules(modules));
+      result.addAll(unloadedModules(modules, enabled));
     }
     return result;
   }
@@ -183,6 +186,8 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
         "Converse with the configured assistant.",
         "core",
         text(coreVersion.version()),
+        "",
+        List.of(),
         RuntimeState.CORE,
         chatProvider.selected() ? ProviderSelection.SELECTED : ProviderSelection.NOT_SELECTED,
         ConfigurationState.NOT_APPLICABLE,
@@ -206,6 +211,18 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
     if (account.role() != AccountRole.ADMIN && operations.isEmpty() && pages.isEmpty()) {
       return Optional.empty();
     }
+    var matched =
+        source.enabled().stream()
+            .filter(item -> moduleId.equals(item.moduleId()))
+            .filter(
+                item ->
+                    CapabilityCompatibility.matchesVersion(descriptor.version(), item.version()))
+            .findFirst();
+    String compatibility = matched.map(item -> text(item.runtimeCompatibility())).orElse("");
+    List<String> requirements =
+        account.role() == AccountRole.ADMIN
+            ? matched.map(this::requirements).orElseGet(List::of)
+            : List.of();
     return Optional.of(
         new Capability(
             identity.orElseThrow().value(),
@@ -213,6 +230,8 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
             text(descriptor.description()),
             "module",
             text(descriptor.version()),
+            compatibility,
+            requirements,
             source.active().contains(moduleId) ? RuntimeState.ACTIVE : moduleStates.state(moduleId),
             ProviderSelection.UNKNOWN,
             configurationState(module),
@@ -292,10 +311,11 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
     };
   }
 
-  private List<Capability> unloadedModules(List<ZalavaModule> modules) {
+  private List<Capability> unloadedModules(
+      List<ZalavaModule> modules, List<ModuleQueries.EnabledModule> enabled) {
     Set<String> loadedIds =
         modules.stream().map(module -> module.descriptor().moduleId()).collect(Collectors.toSet());
-    return installedModules.enabledModules().stream()
+    return enabled.stream()
         .filter(
             module ->
                 CapabilityIdentity.validPart(module.moduleId())
@@ -308,6 +328,8 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
                     "Installed module is not loaded in this runtime.",
                     "module",
                     text(module.version()),
+                    text(module.runtimeCompatibility()),
+                    requirements(module),
                     RuntimeState.NOT_LOADED,
                     ProviderSelection.UNKNOWN,
                     ConfigurationState.UNKNOWN,
@@ -324,7 +346,18 @@ public final class DefaultSelfKnowledgeQueries implements SelfKnowledgeQueries {
       Set<String> active,
       List<ZalavaProvider> providers,
       List<RegisteredWebPage> pages,
-      List<ZalavaServiceDescriptor> services) {}
+      List<ZalavaServiceDescriptor> services,
+      List<ModuleQueries.EnabledModule> enabled) {}
+
+  private List<String> requirements(ModuleQueries.EnabledModule module) {
+    return module.declaredPermissions().stream()
+        .map(DefaultSelfKnowledgeQueries::text)
+        .filter(value -> !value.isBlank())
+        .distinct()
+        .sorted()
+        .limit(MAX_RESULTS)
+        .toList();
+  }
 
   private ConfigurationState configurationState(ZalavaModule module) {
     var descriptor = module.configuration();
