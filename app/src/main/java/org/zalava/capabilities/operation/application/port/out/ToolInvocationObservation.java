@@ -21,6 +21,9 @@ public record ToolInvocationObservation(
     ZalavaOperationResult result,
     long durationMillis,
     Map<String, Object> arguments) {
+  public static final String HOME_AUDIT_MODULE = "zalavaAuditHomeModuleId";
+  public static final String HOME_AUDIT_EXECUTION = "zalavaAuditHomeExecutionId";
+
   public ToolInvocationObservation(
       String providerId,
       String toolName,

@@ -1643,6 +1643,7 @@ class ReleasedModuleDistributableAcceptanceTest {
                     diagnostics.resolve("home-assistant-restored-outcomes-" + width + ".png")));
       }
       page.setViewportSize(1440, 900);
+      proveStandingHomeActionHistory(page, browser, modelServer, ha, postgres, workspace);
       startModule(page, "zalava-module-time");
       startModule(page, "zalava-module-shopping-list");
     } catch (Throwable failure) {
@@ -1660,6 +1661,189 @@ class ReleasedModuleDistributableAcceptanceTest {
     } finally {
       ha.stop();
     }
+  }
+
+  private void proveStandingHomeActionHistory(
+      Page page,
+      Browser browser,
+      WireMockServer modelServer,
+      WireMockServer ha,
+      PostgreSQLContainer postgres,
+      Path workspace)
+      throws Exception {
+    startModule(page, "zalava-module-home-assistant");
+    String firstMarker = "Home Assistant grant light.room";
+    String repeatMarker = "Home Assistant repeat light.room";
+    String unavailableMarker = "Home Assistant unavailable light.room";
+    String callback =
+        ZalavaToolCallbackNames.forTool("home-assistant", "home_assistant_execute_action");
+    String arguments =
+        JSON.writeValueAsString(
+            JSON.writeValueAsString(
+                Map.of("domain", "light", "action", "turn_on", "entityId", "light.room")));
+    String actionCall =
+        """
+        data: {"id":"ha-standing","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"standing-action","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+        data: {"id":"ha-standing","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(callback, arguments);
+    stubHomeActionTurn(
+        modelServer, firstMarker, -20, actionCall, "The light action needs approval.");
+    stubHomeActionTurn(
+        modelServer,
+        repeatMarker,
+        -22,
+        actionCall,
+        "Home Assistant accepted the action; its physical outcome is not verified.");
+    stubHomeActionTurn(
+        modelServer,
+        unavailableMarker,
+        -24,
+        actionCall,
+        "The target is unavailable; check its state before retrying.");
+    page.navigate(baseUrl + "/chat");
+    page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+        .click();
+    page.locator("#message").fill(firstMarker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("The light action needs approval.").waitFor();
+    String conversation =
+        page.getByRole(
+                AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+            .inputValue();
+    var firstTool = page.locator(".message.assistant").last().locator(".answer-tool").first();
+    String requestId =
+        JSON.readTree(firstTool.locator("pre").last().textContent())
+            .path("content")
+            .path("approvalRequestId")
+            .asString();
+    assertThat(requestId).isNotBlank();
+    APIResponse grant =
+        post(
+            page.context(),
+            page,
+            "/api/zalava/permission-requests/" + requestId + "/allow-tool",
+            Map.of());
+    assertThat(grant.status()).isEqualTo(200);
+    assertThat(JSON.readTree(grant.text()).path("success").booleanValue()).isTrue();
+    ha.verify(2, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+    page.navigate(baseUrl + "/chat");
+    page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+    page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+        .selectOption(conversation);
+    page.locator("#message").fill(repeatMarker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("Home Assistant accepted the action; its physical outcome is not verified.")
+        .waitFor();
+    ha.verify(3, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+    modelServer.verify(
+        postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(repeatMarker))
+            .withRequestBody(containing("physicalOutcomeVerified")));
+    var liveAnswer = page.locator(".message.assistant").last();
+    liveAnswer.locator(".answer-execution > summary").click();
+    PlaywrightAssertions.assertThat(liveAnswer.locator(".answer-tool > summary")).hasCount(1);
+    ha.stubFor(
+        get(urlEqualTo("/api/states/light.room"))
+            .atPriority(1)
+            .willReturn(okJson("{\"entity_id\":\"light.room\",\"state\":\"unavailable\"}")));
+    page.locator("#message").fill(unavailableMarker);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+        .click();
+    page.getByText("The target is unavailable; check its state before retrying.").waitFor();
+    ha.verify(3, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+    modelServer.verify(
+        postRequestedFor(urlEqualTo("/v1/chat/completions"))
+            .withRequestBody(containing(unavailableMarker))
+            .withRequestBody(containing("Target entity is unavailable")));
+
+    stop();
+    start(postgres, workspace, "dev");
+    page.context().clearCookies();
+    signIn(page, LOGIN, PASSWORD, false);
+    page.navigate(baseUrl + "/chat");
+    page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+    page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+        .selectOption(conversation);
+    var restored =
+        page.locator(".message.assistant")
+            .filter(
+                new Locator.FilterOptions()
+                    .setHasText(
+                        "Home Assistant accepted the action; its physical outcome is not verified."));
+    PlaywrightAssertions.assertThat(restored)
+        .containsText(
+            "Home Assistant accepted the action; the physical outcome has not been verified.");
+    restored.locator(".answer-execution > summary").click();
+    PlaywrightAssertions.assertThat(restored.locator(".answer-tool > summary")).hasCount(1);
+    restored.locator(".answer-tool > summary").first().click();
+    PlaywrightAssertions.assertThat(restored).containsText("Other parameters omitted");
+    var uncertain = page.locator(".message.assistant").last();
+    PlaywrightAssertions.assertThat(uncertain).containsText("action outcome is unavailable.");
+    uncertain.locator(".answer-execution > summary").click();
+    uncertain.locator(".answer-tool > summary").first().click();
+    PlaywrightAssertions.assertThat(uncertain)
+        .containsText("The action outcome could not be verified. Check its state before retrying.");
+    ha.verify(3, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+    try (var outsider = browser.newContext()) {
+      Page outsiderPage = outsider.newPage();
+      signIn(outsiderPage, "released-clock-member", INITIAL_PASSWORD + "-changed", false);
+      assertThat(outsider.request().get(baseUrl + "/chat/" + conversation + "/evidence").status())
+          .isEqualTo(404);
+    }
+    for (int width : new int[] {1440, 768, 390}) {
+      page.setViewportSize(width, 900);
+      if (width <= 1024)
+        page.waitForFunction(
+            "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+      assertThat((Boolean) restored.evaluate("e => e.scrollWidth <= e.clientWidth")).isTrue();
+      restored.locator(".answer-tool").first().scrollIntoViewIfNeeded();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("home-assistant-standing-history-" + width + ".png")));
+      uncertain.locator(".answer-tool").first().scrollIntoViewIfNeeded();
+      assertThat((Boolean) uncertain.evaluate("e => e.scrollWidth <= e.clientWidth")).isTrue();
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("home-assistant-standing-unknown-" + width + ".png")));
+    }
+    page.setViewportSize(1440, 900);
+  }
+
+  private void stubHomeActionTurn(
+      WireMockServer modelServer, String marker, int priority, String actionCall, String reply) {
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(priority)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(actionCall)));
+    String completed =
+        """
+        data: {"id":"ha-standing-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":%s},"finish_reason":null}]}
+
+        data: {"id":"ha-standing-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+        data: [DONE]
+
+        """
+            .formatted(JSON.writeValueAsString(reply));
+    modelServer.stubFor(
+        WireMock.post(urlEqualTo("/v1/chat/completions"))
+            .atPriority(priority - 1)
+            .withRequestBody(
+                matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+            .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+            .willReturn(
+                aResponse().withHeader("Content-Type", "text/event-stream").withBody(completed)));
   }
 
   private void proveDirectShoppingApprovals(Page page, WireMockServer modelServer)

@@ -21,7 +21,45 @@ public interface InvocationLogQueries {
       long durationMillis,
       String conversationId,
       String inputPreview,
-      String runId) {
+      String runId,
+      String auditExecutionId) {
+    public Entry(
+        String timestamp,
+        String providerId,
+        String toolName,
+        String actorId,
+        boolean confirmed,
+        String classification,
+        List<String> policyTags,
+        boolean sideEffecting,
+        boolean success,
+        String errorType,
+        String errorMessage,
+        String resultPreview,
+        long durationMillis,
+        String conversationId,
+        String inputPreview,
+        String runId) {
+      this(
+          timestamp,
+          providerId,
+          toolName,
+          actorId,
+          confirmed,
+          classification,
+          policyTags,
+          sideEffecting,
+          success,
+          errorType,
+          errorMessage,
+          resultPreview,
+          durationMillis,
+          conversationId,
+          inputPreview,
+          runId,
+          null);
+    }
+
     public Entry(
         String timestamp,
         String providerId,

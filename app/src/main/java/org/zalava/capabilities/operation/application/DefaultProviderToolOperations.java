@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 import org.zalava.api.InvocationContext;
 import org.zalava.api.ZalavaOperationResult;
@@ -169,7 +170,10 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
               provider,
               tool,
               arguments,
-              approvedByToolPolicyContext(command.context(), policy.get().requestId())));
+              approvedByToolPolicyContext(
+                  command.context(),
+                  policy.get().requestId(),
+                  homeAction ? provider.descriptor().moduleId() : null)));
     }
 
     if (command.approvalMode() == ApprovalMode.OPERATOR) {
@@ -577,8 +581,14 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
   }
 
   private static InvocationContext approvedByToolPolicyContext(
-      InvocationContext context, String requestId) {
+      InvocationContext context, String requestId, String homeModuleId) {
     Map<String, String> approved = new LinkedHashMap<>(context.attributes());
+    approved.remove(ToolInvocationObservation.HOME_AUDIT_MODULE);
+    approved.remove(ToolInvocationObservation.HOME_AUDIT_EXECUTION);
+    if (homeModuleId != null) {
+      approved.put(ToolInvocationObservation.HOME_AUDIT_MODULE, homeModuleId);
+      approved.put(ToolInvocationObservation.HOME_AUDIT_EXECUTION, UUID.randomUUID().toString());
+    }
     approved.put("approvalPolicy", "tool");
     approved.put("approvalRequestId", requestId);
     return new InvocationContext(context.actorId(), true, Map.copyOf(approved));
