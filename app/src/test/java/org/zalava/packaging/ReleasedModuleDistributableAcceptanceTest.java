@@ -1312,7 +1312,7 @@ class ReleasedModuleDistributableAcceptanceTest {
               new Page.ScreenshotOptions()
                   .setPath(diagnostics.resolve("released-time-member-inline.png")));
         }
-        proveReleasedHomeAssistantChat(page, browser, modelServer);
+        proveReleasedHomeAssistantChat(page, browser, modelServer, postgres, workspace);
         proveDirectShoppingApprovals(page, modelServer);
         proveChatConfirmationSettings(page, browser, modelServer);
         proveUnifiedPermissions(page, modelServer);
@@ -1343,7 +1343,12 @@ class ReleasedModuleDistributableAcceptanceTest {
   }
 
   private void proveReleasedHomeAssistantChat(
-      Page page, Browser browser, WireMockServer modelServer) throws Exception {
+      Page page,
+      Browser browser,
+      WireMockServer modelServer,
+      PostgreSQLContainer postgres,
+      Path workspace)
+      throws Exception {
     page.setViewportSize(1440, 900);
     WireMockServer ha = new WireMockServer(0);
     ha.start();
@@ -1604,6 +1609,39 @@ class ReleasedModuleDistributableAcceptanceTest {
       PlaywrightAssertions.assertThat(page.locator(".message.assistant").last())
           .containsText(
               "Home Assistant accepted the action; the physical outcome has not been verified.");
+      String retainedConversation =
+          page.getByRole(
+                  AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+              .inputValue();
+      stop();
+      start(postgres, workspace, "dev");
+      page.context().clearCookies();
+      signIn(page, LOGIN, PASSWORD, false);
+      page.navigate(baseUrl + "/chat");
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
+          .selectOption(retainedConversation);
+      var restored = page.locator(".message.assistant").last();
+      PlaywrightAssertions.assertThat(restored)
+          .containsText(
+              "Home Assistant accepted the action; the physical outcome has not been verified.");
+      PlaywrightAssertions.assertThat(restored).containsText("permission denied or revoked.");
+      PlaywrightAssertions.assertThat(restored).containsText("failed after approval.");
+      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) restored.evaluate("e => e.scrollWidth <= e.clientWidth")).isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(
+                    diagnostics.resolve("home-assistant-restored-outcomes-" + width + ".png")));
+      }
+      page.setViewportSize(1440, 900);
+      startModule(page, "zalava-module-time");
+      startModule(page, "zalava-module-shopping-list");
     } catch (Throwable failure) {
       Files.writeString(diagnostics.resolve("home-assistant-chat-failure.html"), page.content());
       page.screenshot(
