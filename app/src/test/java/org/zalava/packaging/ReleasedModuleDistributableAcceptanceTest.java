@@ -1535,9 +1535,22 @@ class ReleasedModuleDistributableAcceptanceTest {
           .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once"))
           .click();
       page.getByText(
-              "Permission allowed once, but the operation returned an error. Check the result before retrying.")
+              "Home Assistant reports that the target is unavailable. Check its state before retrying.")
           .waitFor();
       ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        page.getByText(
+                "Home Assistant reports that the target is unavailable. Check its state before retrying.")
+            .scrollIntoViewIfNeeded();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("home-assistant-unavailable-" + width + ".png")));
+      }
+      page.setViewportSize(1440, 900);
       var answer = page.locator(".message.assistant").last();
       PlaywrightAssertions.assertThat(answer)
           .containsText(
