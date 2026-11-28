@@ -26,6 +26,7 @@ public final class DefaultModuleQueries implements ModuleQueries {
         module.version(),
         module.sourceRepository(),
         module.binaryRepositoryId(),
-        module.declaredPermissions());
+        module.declaredPermissions(),
+        module.zalavaRuntimeCompatibility());
   }
 }

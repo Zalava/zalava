@@ -14,6 +14,7 @@ import org.zalava.api.FactorySecretAccess;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.modules.catalog.ModuleConfigurationSnapshot;
 import org.zalava.modules.catalog.ModuleConfigurationValidator;
 import org.zalava.modules.catalog.application.port.out.ModuleConfigurations;
@@ -302,6 +303,11 @@ public final class ManagedZalavaRuntime implements ZalavaRuntime {
   @Override
   public List<LoadedZalavaProvider> loadedProviders() {
     return current.loadedProviders();
+  }
+
+  @Override
+  public List<ZalavaServiceDescriptor> loadedServiceDescriptors() {
+    return current.loadedServiceDescriptors();
   }
 
   @Override

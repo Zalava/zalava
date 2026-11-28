@@ -6,6 +6,7 @@ import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.modules.runtime.LoadedZalavaProvider;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 import org.zalava.modules.runtime.application.port.out.RuntimeModuleRegistry;
@@ -57,6 +58,11 @@ public final class DefaultRuntimeQueries implements RuntimeQueries, AutoCloseabl
   @Override
   public List<LoadedZalavaProvider> loadedProviders() {
     return loadedProviders;
+  }
+
+  @Override
+  public List<ZalavaServiceDescriptor> loadedServiceDescriptors() {
+    return services.loadedDescriptors();
   }
 
   @Override

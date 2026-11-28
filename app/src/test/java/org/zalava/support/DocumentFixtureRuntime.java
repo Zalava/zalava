@@ -14,6 +14,7 @@ import org.zalava.api.FactorySecretAccess;
 import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.api.extensions.content.ContentExtractor;
 import org.zalava.modules.catalog.install.adapter.out.filesystem.FileSystemModuleEnablement;
 import org.zalava.modules.catalog.install.application.port.out.ModuleEnablement;
@@ -79,6 +80,11 @@ public final class DocumentFixtureRuntime implements ZalavaRuntime {
   @Override
   public List<LoadedZalavaProvider> loadedProviders() {
     return delegate.loadedProviders();
+  }
+
+  @Override
+  public List<ZalavaServiceDescriptor> loadedServiceDescriptors() {
+    return available ? delegate.loadedServiceDescriptors() : List.of();
   }
 
   @Override
