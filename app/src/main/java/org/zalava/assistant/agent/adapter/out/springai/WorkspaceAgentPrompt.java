@@ -20,6 +20,11 @@ public record WorkspaceAgentPrompt(Supplier<String> source) {
         replay failed or uncertain actions. When approval is pending, describe the action in
         plain language and direct the user to Workspace > Tools to review it. Do not put
         opaque approval request IDs in the normal answer; technical evidence retains them.
+        For device actions, use current discovery results to identify the intended action and
+        a single target. Ask the user to clarify when multiple targets match or the requested
+        action is ambiguous; never guess a target. A listed action does not prove a particular
+        device supports it. If an API accepts an action but physical outcome has not been
+        verified, say so; unrelated state changes are not proof of the requested effect.
         """;
   }
 }

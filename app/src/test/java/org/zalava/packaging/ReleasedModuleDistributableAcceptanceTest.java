@@ -1156,6 +1156,17 @@ class ReleasedModuleDistributableAcceptanceTest {
                     + shoppingRelease.version()
                     + " installed")
             .waitFor();
+        Release homeAssistantRelease = downloadReleases(Set.of("home-assistant")).getFirst();
+        page.locator("[data-module-developer-options] summary").click();
+        page.locator("input[name=moduleJar]").setInputFiles(homeAssistantRelease.path());
+        page.locator("[data-action=upload-module]").click();
+        page.getByText(
+                "Uploaded "
+                    + homeAssistantRelease.moduleId()
+                    + " "
+                    + homeAssistantRelease.version()
+                    + " installed")
+            .waitFor();
         stop();
         admin.clearCookies();
         start(postgres, workspace, "dev");
@@ -1250,6 +1261,7 @@ class ReleasedModuleDistributableAcceptanceTest {
               new Page.ScreenshotOptions()
                   .setPath(diagnostics.resolve("released-time-member-inline.png")));
         }
+        proveReleasedHomeAssistantChat(page, modelServer);
         proveDirectShoppingApprovals(page, modelServer);
         proveChatConfirmationSettings(page, browser, modelServer);
         proveUnifiedPermissions(page, modelServer);
@@ -1276,6 +1288,231 @@ class ReleasedModuleDistributableAcceptanceTest {
       }
     } finally {
       modelServer.stop();
+    }
+  }
+
+  private void proveReleasedHomeAssistantChat(Page page, WireMockServer modelServer)
+      throws Exception {
+    page.setViewportSize(1440, 900);
+    WireMockServer ha = new WireMockServer(0);
+    ha.start();
+    try {
+      ha.stubFor(
+          get(urlEqualTo("/api/states"))
+              .willReturn(
+                  okJson(
+                      "[{\"entity_id\":\"light.room\",\"state\":\"off\",\"attributes\":{\"friendly_name\":\"Room light\"}},{\"entity_id\":\"light.denied\",\"state\":\"off\",\"attributes\":{\"friendly_name\":\"Other room light\"}}]")));
+      ha.stubFor(
+          get(urlEqualTo("/api/states/light.offline"))
+              .willReturn(okJson("{\"entity_id\":\"light.offline\",\"state\":\"unavailable\"}")));
+      ha.stubFor(
+          get(urlEqualTo("/api/services"))
+              .willReturn(
+                  okJson(
+                      "[{\"domain\":\"light\",\"services\":{\"turn_on\":{\"target\":{},\"fields\":{}},\"turn_off\":{\"target\":{},\"fields\":{}}}}]")));
+      ha.stubFor(
+          get(urlEqualTo("/api/states/light.room"))
+              .willReturn(okJson("{\"entity_id\":\"light.room\",\"state\":\"off\"}")));
+      ha.stubFor(
+          WireMock.post(urlEqualTo("/api/services/light/turn_on"))
+              .withHeader("Authorization", equalTo("Bearer ha-chat-secret"))
+              .withRequestBody(equalToJson("{\"entity_id\":\"light.room\"}"))
+              .willReturn(okJson("[]")));
+      page.navigate(baseUrl + "/modules/zalava-module-home-assistant");
+      page.locator("input[name='configuration.home-assistant.baseUrl']").fill(ha.baseUrl());
+      page.locator("input[name='configuration.home-assistant.tokenRef']").fill("ha-chat-token");
+      page.locator("input[data-secret-replacement='home-assistant.tokenRef']")
+          .fill("ha-chat-secret");
+      page.locator("#configuration button[type=submit]").first().click();
+      startModule(page, "zalava-module-home-assistant");
+
+      String discoveryMarker = "Home Assistant find entities and actions";
+      String entityCallback =
+          ZalavaToolCallbackNames.forTool("home-assistant", "home_assistant_entities");
+      String actionsCallback =
+          ZalavaToolCallbackNames.forTool("home-assistant", "home_assistant_actions");
+      String discoveryCalls =
+          """
+          data: {"id":"ha-discovery","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"ha-entities","type":"function","function":{"name":"%s","arguments":"{}"}},{"index":1,"id":"ha-actions","type":"function","function":{"name":"%s","arguments":"{}"}}]},"finish_reason":null}]}
+
+          data: {"id":"ha-discovery","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+          data: [DONE]
+
+          """
+              .formatted(entityCallback, actionsCallback);
+      modelServer.stubFor(
+          WireMock.post(urlEqualTo("/v1/chat/completions"))
+              .atPriority(-3)
+              .withRequestBody(
+                  matchingJsonPath(
+                      "$.messages[?(@.role == 'user')].content", containing(discoveryMarker)))
+              .willReturn(
+                  aResponse()
+                      .withHeader("Content-Type", "text/event-stream")
+                      .withBody(discoveryCalls)));
+      modelServer.stubFor(
+          WireMock.post(urlEqualTo("/v1/chat/completions"))
+              .atPriority(-4)
+              .withRequestBody(
+                  matchingJsonPath(
+                      "$.messages[?(@.role == 'user')].content", containing(discoveryMarker)))
+              .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+              .willReturn(
+                  aResponse()
+                      .withHeader("Content-Type", "text/event-stream")
+                      .withBody(
+                          """
+          data: {"id":"ha-discovered","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Which room light do you mean?"},"finish_reason":null}]}
+
+          data: {"id":"ha-discovered","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+          data: [DONE]
+
+          """)));
+      page.navigate(baseUrl + "/chat");
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+          .click();
+      page.locator("#message").fill(discoveryMarker);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.getByText("Which room light do you mean?").waitFor();
+      ha.verify(1, getRequestedFor(urlEqualTo("/api/states")));
+      ha.verify(1, getRequestedFor(urlEqualTo("/api/services")));
+      ha.verify(0, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      modelServer.verify(
+          postRequestedFor(urlEqualTo("/v1/chat/completions"))
+              .withRequestBody(containing("light.room"))
+              .withRequestBody(containing("light.denied"))
+              .withRequestBody(containing("turn_on")));
+
+      String marker = "Home Assistant turn on light.room and light.denied";
+      String callback =
+          ZalavaToolCallbackNames.forTool("home-assistant", "home_assistant_execute_action");
+      String arguments =
+          JSON.writeValueAsString(
+              JSON.writeValueAsString(
+                  Map.of("domain", "light", "action", "turn_on", "entityId", "light.room")));
+      String deniedArguments =
+          JSON.writeValueAsString(
+              JSON.writeValueAsString(
+                  Map.of("domain", "light", "action", "turn_on", "entityId", "light.denied")));
+      String offlineArguments =
+          JSON.writeValueAsString(
+              JSON.writeValueAsString(
+                  Map.of("domain", "light", "action", "turn_on", "entityId", "light.offline")));
+      String call =
+          """
+          data: {"id":"ha","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"ha-action","type":"function","function":{"name":"%s","arguments":%s}},{"index":1,"id":"ha-denied","type":"function","function":{"name":"%s","arguments":%s}},{"index":2,"id":"ha-offline","type":"function","function":{"name":"%s","arguments":%s}}]},"finish_reason":null}]}
+
+          data: {"id":"ha","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}
+
+          data: [DONE]
+
+          """
+              .formatted(
+                  callback, arguments, callback, deniedArguments, callback, offlineArguments);
+      modelServer.stubFor(
+          WireMock.post(urlEqualTo("/v1/chat/completions"))
+              .atPriority(-1)
+              .withRequestBody(
+                  matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+              .willReturn(
+                  aResponse().withHeader("Content-Type", "text/event-stream").withBody(call)));
+      modelServer.stubFor(
+          WireMock.post(urlEqualTo("/v1/chat/completions"))
+              .atPriority(-2)
+              .withRequestBody(
+                  matchingJsonPath("$.messages[?(@.role == 'user')].content", containing(marker)))
+              .withRequestBody(matchingJsonPath("$.messages[?(@.role == 'tool')]"))
+              .willReturn(
+                  aResponse()
+                      .withHeader("Content-Type", "text/event-stream")
+                      .withBody(
+                          """
+          data: {"id":"ha-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{"role":"assistant","content":"The light action awaits your approval."},"finish_reason":null}]}
+
+          data: {"id":"ha-result","object":"chat.completion.chunk","created":1,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+          data: [DONE]
+
+          """)));
+      page.navigate(baseUrl + "/chat");
+      page.getByText("Connected", new Page.GetByTextOptions().setExact(true)).waitFor();
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New conversation"))
+          .click();
+      page.locator("#message").fill(marker);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send").setExact(true))
+          .click();
+      page.getByText("The light action awaits your approval.").waitFor();
+      ha.verify(0, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Review permissions"))
+          .click();
+      var cards =
+          page.getByRole(
+              AriaRole.REGION, new Page.GetByRoleOptions().setName("Pending permission"));
+      PlaywrightAssertions.assertThat(cards).hasCount(3);
+      var approved = cards.filter(new Locator.FilterOptions().setHasText("light.room"));
+      var denied = cards.filter(new Locator.FilterOptions().setHasText("light.denied"));
+      var offline = cards.filter(new Locator.FilterOptions().setHasText("light.offline"));
+      approved
+          .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once"))
+          .click();
+      page.getByText(
+              "Home Assistant accepted the action. The physical outcome has not been verified.")
+          .waitFor();
+      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      denied
+          .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny").setExact(true))
+          .click();
+      page.getByText("Permission denied; operation was not run.").waitFor();
+      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      offline
+          .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once"))
+          .click();
+      page.getByText(
+              "Permission allowed once, but the operation returned an error. Check the result before retrying.")
+          .waitFor();
+      ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      var answer = page.locator(".message.assistant").last();
+      PlaywrightAssertions.assertThat(answer)
+          .containsText(
+              "Home Assistant accepted the action; the physical outcome has not been verified.");
+      PlaywrightAssertions.assertThat(answer).containsText("permission denied or revoked.");
+      PlaywrightAssertions.assertThat(answer).containsText("failed after approval.");
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Workspace details"))
+          .click();
+      for (int width : new int[] {1440, 768, 390}) {
+        page.setViewportSize(width, 900);
+        if (width <= 1024)
+          page.waitForFunction(
+              "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
+        assertThat((Boolean) page.evaluate("document.documentElement.scrollWidth<=innerWidth"))
+            .isTrue();
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(diagnostics.resolve("home-assistant-chat-outcome-" + width + ".png")));
+      }
+      page.setViewportSize(1440, 900);
+      page.reload();
+      PlaywrightAssertions.assertThat(page.locator(".message.assistant").last())
+          .containsText(
+              "Home Assistant accepted the action; the physical outcome has not been verified.");
+    } catch (Throwable failure) {
+      Files.writeString(diagnostics.resolve("home-assistant-chat-failure.html"), page.content());
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(diagnostics.resolve("home-assistant-chat-failure.png")));
+      Files.writeString(
+          diagnostics.resolve("home-assistant-chat-model-requests.txt"),
+          modelServer.getAllServeEvents().stream()
+              .map(event -> event.getRequest().getBodyAsString())
+              .toList()
+              .toString());
+      throw failure;
+    } finally {
+      ha.stop();
     }
   }
 
