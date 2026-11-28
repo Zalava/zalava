@@ -21,6 +21,12 @@ through explicit inbound and outbound ports. Outbound adapters implement those
 ports and contain framework and infrastructure mapping. Dependencies point
 inward, and Spring wiring remains at a composition boundary.
 
+When designing or changing a use case, look for pure business rules that belong
+in its domain and keep host-port coordination in focused application components.
+Review long methods and dependency-heavy classes for distinct responsibilities;
+split them when that makes the flow easier to follow. Preserve authorization
+and fresh-state behavior, and avoid moving complexity into generic wrappers.
+
 Do not introduce a Gradle subproject merely to represent a context. Split build
 modules only when independent compilation, release, ownership, or dependency
 isolation requires it. Prefer an incremental vertical-slice migration to a

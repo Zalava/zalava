@@ -11,6 +11,7 @@ import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.selfknowledge.adapter.out.HostMemberToolVisibility;
 import org.zalava.capabilities.selfknowledge.application.DefaultSelfKnowledgeQueries;
 import org.zalava.capabilities.selfknowledge.application.ModuleCapabilityProjection;
+import org.zalava.capabilities.selfknowledge.application.ModuleVisibleEntries;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ConfigurationState;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
@@ -43,10 +44,11 @@ public class SelfKnowledgeConfiguration {
     var modules =
         new ModuleCapabilityProjection(
             runtime,
-            new ZalavaRuntimeProviderCatalog(runtime),
-            new HostMemberToolVisibility(access),
-            routes,
-            pageAccess,
+            new ModuleVisibleEntries(
+                new ZalavaRuntimeProviderCatalog(runtime),
+                new HostMemberToolVisibility(access),
+                routes,
+                pageAccess),
             moduleId -> moduleState(runtime, moduleId),
             installedModules,
             moduleId ->

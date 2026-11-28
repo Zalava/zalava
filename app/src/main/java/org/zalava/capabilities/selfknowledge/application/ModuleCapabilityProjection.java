@@ -9,10 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.zalava.api.ZalavaModule;
-import org.zalava.api.ZalavaProvider;
 import org.zalava.api.ZalavaServiceDescriptor;
-import org.zalava.api.ZalavaToolDescriptor;
-import org.zalava.capabilities.operation.application.port.out.ProviderCatalog;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.Capability;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ConfigurationState;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ManagedDependency;
@@ -23,7 +20,6 @@ import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQu
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.Readiness;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.Service;
-import org.zalava.capabilities.selfknowledge.application.port.out.MemberToolVisibility;
 import org.zalava.capabilities.selfknowledge.application.port.out.ModuleConfigurationStateQueries;
 import org.zalava.capabilities.selfknowledge.application.port.out.ModuleStateQueries;
 import org.zalava.capabilities.selfknowledge.domain.CapabilityCompatibility;
@@ -35,18 +31,12 @@ import org.zalava.identity.accounts.domain.AccountRole;
 import org.zalava.modules.catalog.install.application.port.in.ModuleQueries;
 import org.zalava.modules.managedservices.application.port.in.ManagedServiceQueries;
 import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
-import org.zalava.modules.web.application.RegisteredWebPage;
-import org.zalava.modules.web.application.port.in.ModulePageAccess;
-import org.zalava.modules.web.application.port.in.WebExtensionRoutes;
 
 /** Projects the runtime's modules for a particular account. */
 public final class ModuleCapabilityProjection {
   private static final int MAX_RESULTS = CapabilitySearch.MAX_RESULTS;
   private final RuntimeQueries runtime;
-  private final ProviderCatalog providers;
-  private final MemberToolVisibility access;
-  private final WebExtensionRoutes routes;
-  private final ModulePageAccess pageAccess;
+  private final ModuleVisibleEntries entries;
   private final ModuleStateQueries moduleStates;
   private final ModuleQueries installedModules;
   private final ModuleConfigurationStateQueries moduleConfiguration;
@@ -54,19 +44,13 @@ public final class ModuleCapabilityProjection {
 
   public ModuleCapabilityProjection(
       RuntimeQueries runtime,
-      ProviderCatalog providers,
-      MemberToolVisibility access,
-      WebExtensionRoutes routes,
-      ModulePageAccess pageAccess,
+      ModuleVisibleEntries entries,
       ModuleStateQueries moduleStates,
       ModuleQueries installedModules,
       ModuleConfigurationStateQueries moduleConfiguration,
       ManagedServiceQueries managedServices) {
     this.runtime = Objects.requireNonNull(runtime);
-    this.providers = Objects.requireNonNull(providers);
-    this.access = Objects.requireNonNull(access);
-    this.routes = Objects.requireNonNull(routes);
-    this.pageAccess = Objects.requireNonNull(pageAccess);
+    this.entries = Objects.requireNonNull(entries);
     this.moduleStates = Objects.requireNonNull(moduleStates);
     this.installedModules = Objects.requireNonNull(installedModules);
     this.moduleConfiguration = Objects.requireNonNull(moduleConfiguration);
@@ -83,8 +67,7 @@ public final class ModuleCapabilityProjection {
     var source =
         new ModuleSources(
             active,
-            providers.providers(),
-            routes.pages(),
+            entries.snapshot(),
             account.role() == AccountRole.ADMIN ? runtime.loadedServiceDescriptors() : List.of(),
             enabled);
     List<Capability> result = new ArrayList<>();
@@ -102,8 +85,9 @@ public final class ModuleCapabilityProjection {
     String moduleId = descriptor.moduleId();
     var identity = CapabilityIdentity.module(moduleId);
     if (identity.isEmpty()) return Optional.empty();
-    List<Operation> operations = visibleOperations(account, moduleId, source.providers());
-    List<Page> pages = visiblePages(account, moduleId, source.pages());
+    List<Operation> operations =
+        entries.operations(account, moduleId, source.entries().providers());
+    List<Page> pages = entries.pages(account, moduleId, source.entries().pages());
     List<Service> services = visibleServices(moduleId, source.services());
     if (account.role() != AccountRole.ADMIN && operations.isEmpty() && pages.isEmpty()) {
       return Optional.empty();
@@ -138,40 +122,6 @@ public final class ModuleCapabilityProjection {
             services,
             account.role() == AccountRole.ADMIN ? managedDependencies(moduleId) : List.of(),
             ""));
-  }
-
-  private List<Operation> visibleOperations(
-      Account account, String moduleId, List<ZalavaProvider> providers) {
-    return providers.stream()
-        .filter(provider -> moduleId.equals(provider.descriptor().moduleId()))
-        .flatMap(
-            provider ->
-                provider.listTools().stream()
-                    .filter(tool -> permitted(account, provider, tool))
-                    .map(
-                        tool ->
-                            new Operation(
-                                provider.descriptor().providerId(),
-                                tool.name(),
-                                text(tool.description()),
-                                tool.sideEffecting())))
-        .sorted(Comparator.comparing(Operation::providerId).thenComparing(Operation::name))
-        .limit(MAX_RESULTS)
-        .toList();
-  }
-
-  private List<Page> visiblePages(Account account, String moduleId, List<RegisteredWebPage> pages) {
-    if (!validPageId(moduleId)) return List.of();
-    return pages.stream()
-        .filter(page -> moduleId.equals(page.moduleId()))
-        .filter(page -> validPageId(page.pageId()))
-        .filter(page -> pageAccess.allowed(account.id().toString(), moduleId, page.pageId()))
-        .map(
-            page ->
-                new Page(page.pageId(), text(page.title()), text(page.description()), page.path()))
-        .sorted(Comparator.comparing(Page::id))
-        .limit(MAX_RESULTS)
-        .toList();
   }
 
   private List<Service> visibleServices(
@@ -241,8 +191,7 @@ public final class ModuleCapabilityProjection {
 
   private record ModuleSources(
       Set<String> active,
-      List<ZalavaProvider> providers,
-      List<RegisteredWebPage> pages,
+      ModuleVisibleEntries.Snapshot entries,
       List<ZalavaServiceDescriptor> services,
       List<ModuleQueries.EnabledModule> enabled) {}
 
@@ -264,18 +213,6 @@ public final class ModuleCapabilityProjection {
     return map.isEmpty()
         ? ConfigurationState.NOT_REQUIRED
         : moduleConfiguration.state(module.descriptor().moduleId());
-  }
-
-  private boolean permitted(Account account, ZalavaProvider provider, ZalavaToolDescriptor tool) {
-    if (!CapabilityIdentity.validPart(provider.descriptor().providerId())
-        || !CapabilityIdentity.validPart(tool.name())) return false;
-    if (account.role() == AccountRole.ADMIN) return true;
-    return account.role() == AccountRole.MEMBER
-        && access.allowed(account.id().toString(), provider, tool);
-  }
-
-  private static boolean validPageId(String value) {
-    return value != null && value.length() <= 160 && value.matches("[a-z0-9][a-z0-9-]*");
   }
 
   private static String text(String value) {

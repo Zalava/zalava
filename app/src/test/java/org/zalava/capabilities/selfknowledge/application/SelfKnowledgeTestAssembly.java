@@ -37,10 +37,7 @@ final class SelfKnowledgeTestAssembly {
     var modules =
         new ModuleCapabilityProjection(
             runtime,
-            providers,
-            access,
-            routes,
-            pageAccess,
+            new ModuleVisibleEntries(providers, access, routes, pageAccess),
             moduleStates,
             installedModules,
             moduleConfiguration,
