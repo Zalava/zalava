@@ -21,7 +21,7 @@ import org.zalava.modules.runtime.application.port.in.RuntimeQueries;
 /** Adds host-owned provenance only to providers actually instantiated by a loaded module. */
 public final class ZalavaRuntimeProviderCatalog implements ProviderCatalog {
   private final RuntimeQueries runtimeQueries;
-  private final Map<ZalavaProvider, String> homeAssistantGenerations = new IdentityHashMap<>();
+  private final Map<ZalavaProvider, UUID> providerGenerations = new IdentityHashMap<>();
 
   public ZalavaRuntimeProviderCatalog(RuntimeQueries runtimeQueries) {
     this.runtimeQueries = runtimeQueries;
@@ -37,7 +37,7 @@ public final class ZalavaRuntimeProviderCatalog implements ProviderCatalog {
   @Override
   public synchronized List<ZalavaProvider> providers() {
     var loadedProviders = runtimeQueries.loadedProviders();
-    homeAssistantGenerations
+    providerGenerations
         .keySet()
         .removeIf(
             provider ->
@@ -46,22 +46,41 @@ public final class ZalavaRuntimeProviderCatalog implements ProviderCatalog {
         .map(
             loaded -> {
               ZalavaProvider provider = loaded.provider();
+              boolean owned = loaded.module().moduleId().equals(provider.descriptor().moduleId());
               return (ZalavaProvider)
-                  new Hosted(
-                      provider,
-                      loaded.module().moduleId().equals(provider.descriptor().moduleId()),
-                      generation(provider));
+                  new Hosted(provider, owned, owned ? generation(provider) : null);
             })
         .toList();
   }
 
-  private String generation(ZalavaProvider provider) {
-    if (!"zalava-module-home-assistant".equals(provider.descriptor().moduleId())) return null;
-    return homeAssistantGenerations.computeIfAbsent(
-        provider, ignored -> UUID.randomUUID().toString());
+  private UUID generation(ZalavaProvider provider) {
+    return providerGenerations.computeIfAbsent(provider, ignored -> UUID.randomUUID());
   }
 
-  private record Hosted(ZalavaProvider delegate, boolean owned, String generation)
+  @Override
+  public synchronized Optional<UUID> generationOf(ZalavaProvider provider) {
+    if (!(provider instanceof Hosted hosted)
+        || !hosted.owned()
+        || !hosted.generation().equals(providerGenerations.get(hosted.delegate()))) {
+      return Optional.empty();
+    }
+    boolean stillLoaded =
+        runtimeQueries.loadedProviders().stream()
+            .anyMatch(
+                loaded ->
+                    loaded.provider() == hosted.delegate()
+                        && loaded
+                            .module()
+                            .moduleId()
+                            .equals(hosted.delegate().descriptor().moduleId()));
+    if (!stillLoaded) {
+      providerGenerations.remove(hosted.delegate());
+      return Optional.empty();
+    }
+    return Optional.of(hosted.generation());
+  }
+
+  private record Hosted(ZalavaProvider delegate, boolean owned, UUID generation)
       implements ZalavaProvider {
     @Override
     public ProviderDescriptor descriptor() {
@@ -84,9 +103,11 @@ public final class ZalavaRuntimeProviderCatalog implements ProviderCatalog {
     }
 
     private Map<String, String> scope(ProviderDescriptor descriptor) {
-      if (generation == null) return descriptor.scope();
+      // Compatibility for approvals created under the previous scope-based scheme.
+      if (generation == null || !"zalava-module-home-assistant".equals(descriptor.moduleId()))
+        return descriptor.scope();
       Map<String, String> scope = new LinkedHashMap<>(descriptor.scope());
-      scope.put("zalavaProviderGeneration", generation);
+      scope.put("zalavaProviderGeneration", generation.toString());
       return Map.copyOf(scope);
     }
 
