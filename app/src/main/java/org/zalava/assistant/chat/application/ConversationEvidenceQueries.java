@@ -1,15 +1,22 @@
 package org.zalava.assistant.chat.application;
 
+import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zalava.assistant.agent.application.ModelBoundary;
 import org.zalava.assistant.agent.application.port.in.AgentRunQueries;
 import org.zalava.assistant.agent.domain.AgentRun;
 import org.zalava.assistant.chat.application.port.in.ActorChatQueries;
+import org.zalava.assistant.chat.application.port.out.StandingHomeActionEvidenceStore;
 import org.zalava.assistant.conversation.domain.ActorConversationId;
 import org.zalava.assistant.conversation.domain.ConversationReference;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
@@ -20,12 +27,14 @@ import org.zalava.web.control.application.port.in.InvocationLogQueries;
 
 /** Composes bounded, owner-scoped conversation evidence and current approval outcomes. */
 public final class ConversationEvidenceQueries {
+  private static final Logger LOG = LoggerFactory.getLogger(ConversationEvidenceQueries.class);
   private final ActorChatQueries conversations;
   private final AgentRunQueries runs;
   private final InvocationLogQueries tools;
   private final ModelBoundary boundary;
   private final ZalavaToolApprovalRequests approvals;
   private final ToolArgumentDecoder decoder;
+  private final StandingHomeActionEvidenceStore standingHomeActions;
 
   public ConversationEvidenceQueries(
       ActorChatQueries conversations,
@@ -33,13 +42,15 @@ public final class ConversationEvidenceQueries {
       InvocationLogQueries tools,
       ModelBoundary boundary,
       ZalavaToolApprovalRequests approvals,
-      ToolArgumentDecoder decoder) {
+      ToolArgumentDecoder decoder,
+      StandingHomeActionEvidenceStore standingHomeActions) {
     this.conversations = conversations;
     this.runs = runs;
     this.tools = tools;
     this.boundary = boundary;
     this.approvals = approvals;
     this.decoder = decoder;
+    this.standingHomeActions = standingHomeActions;
   }
 
   public Evidence evidence(Actor actor, String conversationId) {
@@ -72,34 +83,39 @@ public final class ConversationEvidenceQueries {
 
   private List<Tool> toolEvidence(Actor actor, String internalId) {
     Set<String> observedApprovals = new HashSet<>();
-    List<Tool> evidence =
-        new ArrayList<>(
-            tools.recentEntries().stream()
-                .filter(
-                    tool ->
-                        internalId.equals(tool.conversationId())
-                            && actor.accountId().toString().equals(tool.actorId()))
-                .limit(50)
-                .map(
-                    tool -> {
-                      String approvalId = approvalId(tool);
-                      if (approvalId != null) observedApprovals.add(approvalId);
-                      String approvalStatus = approvalState(tool, actor, internalId);
-                      return new Tool(
-                          tool.timestamp(),
-                          tool.providerId(),
-                          tool.toolName(),
-                          tool.success(),
-                          tool.durationMillis(),
-                          boundary.redact(tool.errorMessage()),
-                          boundary.redact(tool.resultPreview()),
-                          boundary.redact(tool.inputPreview()),
-                          tool.runId(),
-                          "pending_approval".equals(tool.errorType())
-                              && approvalStatus.equals("pending"),
-                          approvalStatus);
-                    })
-                .toList());
+    Map<String, Deque<Integer>> observedExecutions = new HashMap<>();
+    List<Tool> evidence = new ArrayList<>();
+    for (var tool :
+        tools.recentEntries().stream()
+            .filter(
+                entry ->
+                    internalId.equals(entry.conversationId())
+                        && actor.accountId().toString().equals(entry.actorId()))
+            .limit(50)
+            .toList()) {
+      String approvalId = approvalId(tool);
+      if (approvalId != null) observedApprovals.add(approvalId);
+      String executionKey = standingKey(tool);
+      if (executionKey != null)
+        observedExecutions
+            .computeIfAbsent(executionKey, ignored -> new ArrayDeque<>())
+            .add(evidence.size());
+      String approvalStatus = approvalState(tool, actor, internalId);
+      evidence.add(
+          new Tool(
+              tool.timestamp(),
+              tool.providerId(),
+              tool.toolName(),
+              tool.success(),
+              tool.durationMillis(),
+              boundary.redact(tool.errorMessage()),
+              boundary.redact(tool.resultPreview()),
+              boundary.redact(tool.inputPreview()),
+              tool.runId(),
+              "pending_approval".equals(tool.errorType()) && approvalStatus.equals("pending"),
+              approvalStatus,
+              null));
+    }
     approvals.recentEntries().stream()
         .filter(entry -> "home-assistant".equals(entry.providerId()))
         .filter(entry -> "home_assistant_execute_action".equals(entry.toolName()))
@@ -112,7 +128,48 @@ public final class ConversationEvidenceQueries {
         .filter(entry -> !observedApprovals.contains(entry.requestId()))
         .map(this::retainedHomeAction)
         .forEach(evidence::add);
-    return evidence.stream().sorted(Comparator.comparing(Tool::at).reversed()).limit(50).toList();
+    try {
+      for (var execution : standingHomeActions.recent(actor, internalId)) {
+        String key = execution.executionId();
+        Deque<Integer> observed = observedExecutions.get(key);
+        String outcome = execution.success() ? "accepted" : "unknown";
+        if (observed != null && !observed.isEmpty()) {
+          int index = observed.removeFirst();
+          evidence.set(index, evidence.get(index).withActionOutcome(outcome));
+          continue;
+        }
+        evidence.add(
+            new Tool(
+                execution.timestamp(),
+                "home-assistant",
+                "home_assistant_execute_action",
+                execution.success(),
+                execution.durationMillis(),
+                null,
+                execution.success()
+                    ? "Home Assistant accepted the action; the physical outcome was not verified."
+                    : "The action outcome could not be verified. Check its state before retrying.",
+                homeActionSummary(execution.domain(), execution.action(), execution.entityId()),
+                execution.runId(),
+                false,
+                "",
+                outcome));
+      }
+    } catch (RuntimeException unavailable) {
+      LOG.warn("Could not read Home Assistant standing-grant evidence");
+    }
+    return evidence.stream()
+        .sorted(Comparator.comparing((Tool tool) -> evidenceTimestamp(tool.at())).reversed())
+        .limit(50)
+        .toList();
+  }
+
+  private static Instant evidenceTimestamp(String timestamp) {
+    try {
+      return Instant.parse(timestamp);
+    } catch (RuntimeException invalid) {
+      return Instant.EPOCH;
+    }
   }
 
   private Tool retainedHomeAction(ZalavaToolApprovalRequests.Entry entry) {
@@ -128,7 +185,8 @@ public final class ConversationEvidenceQueries {
         homeActionSummary(entry),
         entry.attributes().get(InvocationChannelContext.RUN_ID),
         "pending".equals(state),
-        state);
+        state,
+        null);
   }
 
   private static String homeActionSummary(ZalavaToolApprovalRequests.Entry entry) {
@@ -142,6 +200,10 @@ public final class ConversationEvidenceQueries {
         || !entity.matches("[a-z0-9_]{1,128}\\.[a-z0-9_]{1,128}")) {
       return "Action details unavailable";
     }
+    return homeActionSummary(domain, action, entity);
+  }
+
+  private static String homeActionSummary(String domain, String action, String entity) {
     return "Action: "
         + domain
         + "."
@@ -149,6 +211,17 @@ public final class ConversationEvidenceQueries {
         + "\nTarget: "
         + entity
         + "\nOther parameters omitted";
+  }
+
+  private String standingKey(InvocationLogQueries.Entry tool) {
+    if (!"home-assistant".equals(tool.providerId())
+        || !"home_assistant_execute_action".equals(tool.toolName())
+        || !tool.confirmed()
+        || tool.runId() == null
+        || (tool.errorType() != null
+            && !Set.of("provider_failure", "execution", "validation", "unsupported")
+                .contains(tool.errorType()))) return null;
+    return tool.auditExecutionId();
   }
 
   private String approvalId(InvocationLogQueries.Entry tool) {
@@ -217,5 +290,22 @@ public final class ConversationEvidenceQueries {
       String input,
       String runId,
       boolean pendingApproval,
-      String approvalStatus) {}
+      String approvalStatus,
+      String actionOutcome) {
+    private Tool withActionOutcome(String outcome) {
+      return new Tool(
+          at,
+          provider,
+          name,
+          success,
+          durationMillis,
+          error,
+          result,
+          input,
+          runId,
+          pendingApproval,
+          approvalStatus,
+          outcome);
+    }
+  }
 }

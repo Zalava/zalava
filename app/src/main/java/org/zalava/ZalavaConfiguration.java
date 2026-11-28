@@ -74,6 +74,7 @@ import org.zalava.assistant.chat.application.port.out.ChatApprovalCommands;
 import org.zalava.assistant.chat.application.port.out.ChatConversationIdGenerator;
 import org.zalava.assistant.chat.application.port.out.ChatConversationStore;
 import org.zalava.assistant.chat.application.port.out.ChatMessageEvents;
+import org.zalava.assistant.chat.application.port.out.StandingHomeActionEvidenceStore;
 import org.zalava.assistant.conversation.adapter.out.filesystem.FileSystemConversationStore;
 import org.zalava.assistant.conversation.adapter.out.springai.MessageChatMemoryAdvisor;
 import org.zalava.assistant.conversation.adapter.out.springai.MessageWindowChatMemory;
@@ -688,9 +689,16 @@ public class ZalavaConfiguration {
       AgentRunQueries runs,
       InvocationLogQueries tools,
       ModelBoundary boundary,
-      ZalavaToolApprovalRequests approvals) {
+      ZalavaToolApprovalRequests approvals,
+      StandingHomeActionEvidenceStore standingHomeActions) {
     return new ConversationEvidenceQueries(
-        conversations, runs, tools, boundary, approvals, new JacksonToolArgumentDecoder());
+        conversations,
+        runs,
+        tools,
+        boundary,
+        approvals,
+        new JacksonToolArgumentDecoder(),
+        standingHomeActions);
   }
 
   @Bean
