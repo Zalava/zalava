@@ -21,6 +21,15 @@ through explicit inbound and outbound ports. Outbound adapters implement those
 ports and contain framework and infrastructure mapping. Dependencies point
 inward, and Spring wiring remains at a composition boundary.
 
+Zalava host code must not depend on a particular external module, provider ID,
+tool name, module-specific data schema, or vendor-specific text. Put integration
+behavior in the owning module and use provider-neutral, versioned contracts at
+the host boundary. The host retains authorization, fresh-state checks and other
+security decisions; module declarations must never grant permissions or bypass
+those decisions. Test generic behavior with unrelated modules and enforce known
+coupling regressions with architecture checks. Module-specific fixtures are
+permitted in tests, not in production host behavior.
+
 Do not introduce a Gradle subproject merely to represent a context. Split build
 modules only when independent compilation, release, ownership, or dependency
 isolation requires it. Prefer an incremental vertical-slice migration to a
