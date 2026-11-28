@@ -8,6 +8,10 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +21,23 @@ import org.zalava.architecture.fixture.domain.SpringCoupledDomainFixture;
 
 @AnalyzeClasses(packages = "org.zalava", importOptions = ImportOption.DoNotIncludeTests.class)
 class PortsAndAdaptersArchitectureTest {
+  @Test
+  void genericChatMustNotHardCodeKnownExternalModules() throws Exception {
+    var forbidden =
+        Pattern.compile("home[ _-]?assistant|shopping[ _-]?list", Pattern.CASE_INSENSITIVE);
+    for (var file :
+        List.of(
+            "src/main/java/org/zalava/assistant/chat/application/DirectChatApprovals.java",
+            "src/main/java/org/zalava/assistant/chat/application/ConversationEvidenceQueries.java",
+            "src/main/java/org/zalava/assistant/agent/adapter/out/springai/WorkspaceAgentPrompt.java",
+            "frontend/src/main.jsx",
+            "frontend/src/action-outcomes.js")) {
+      assertThat(forbidden.matcher(Files.readString(Path.of(file))).find())
+          .as("Generic chat must not depend on specific modules: %s", file)
+          .isFalse();
+    }
+  }
+
   @Test
   void hostPackagesUseTheReviewedOwnershipGroups() {
     var classes =
