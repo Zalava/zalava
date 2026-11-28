@@ -14,6 +14,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { hasActionUpdate, providerReturnedSuccess } from "./action-outcomes.js";
 import "./style.css";
 
 const providerConfigured = document.getElementById("root").dataset.providerConfigured === "true";
@@ -482,9 +483,9 @@ function friendlyAction(value = "") {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 function approvalOutcome(tool) {
-  if ((tool.approvalStatus === "succeeded" || tool.actionOutcome === "accepted") && tool.provider === "home-assistant" && tool.name === "home_assistant_execute_action") return "Home Assistant accepted the action; the physical outcome has not been verified.";
   if (tool.actionOutcome === "unknown") return "action outcome is unavailable. Check its state before retrying.";
-  return ({succeeded:"completed after approval.",failed:"failed after approval.",denied:"permission denied or revoked.",unknown:"approval outcome is unavailable."}[tool.approvalStatus] ?? "approval outcome is unknown.");
+  if (providerReturnedSuccess(tool)) return "the provider returned success; external effects were not independently verified.";
+  return ({failed:"failed after approval.",denied:"permission denied or revoked.",unknown:"approval outcome is unavailable."}[tool.approvalStatus] ?? "approval outcome is unknown.");
 }
 function ApprovalArguments({value}) {
   let fields;
@@ -500,7 +501,7 @@ function ApprovalArguments({value}) {
     <details className="approval-technical"><summary>Technical details</summary><pre className="permission-input">{value}</pre></details></>;
 }
 function ToolEvidence({toolName,argsText,result,isError}) {
-  return <details id={result?.evidenceId} className="answer-tool"><summary>Action {result?.callNumber}: {toolName} · {result?.actionOutcome ? ({accepted:"Accepted by Home Assistant",unknown:"Action outcome unknown"}[result.actionOutcome] ?? "Action outcome unknown") : result?.approvalStatus && result.approvalStatus !== "pending" ? ({succeeded:"Completed after approval",failed:"Failed after approval",denied:"Permission denied",unknown:"Approval outcome unknown"}[result.approvalStatus] ?? "Approval outcome unknown") : result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && (!result?.approvalStatus || result.approvalStatus === "pending") && <p role="alert">{result.error}</p>}</details>;
+  return <details id={result?.evidenceId} className="answer-tool"><summary>Action {result?.callNumber}: {toolName} · {result?.actionOutcome ? ({accepted:"Provider returned success",unknown:"Action outcome unknown"}[result.actionOutcome] ?? "Action outcome unknown") : result?.approvalStatus && result.approvalStatus !== "pending" ? ({succeeded:"Provider returned success",failed:"Failed after approval",denied:"Permission denied",unknown:"Approval outcome unknown"}[result.approvalStatus] ?? "Approval outcome unknown") : result?.pendingApproval ? "Awaiting permission" : isError ? "Failed" : "Completed"} · {formatDuration(result?.durationMillis)}</summary><p>Provider: {result?.provider}</p><strong>Input</strong><pre>{argsText}</pre><strong>Result</strong><pre>{result?.preview ?? "No result recorded"}</pre>{result?.error && (!result?.approvalStatus || result.approvalStatus === "pending") && <p role="alert">{result.error}</p>}</details>;
 }
 const HIDDEN_TEXT = () => null;
 function ConversationAnswer() {
@@ -512,7 +513,7 @@ function ConversationAnswer() {
     <header className="answer-heading">{original.role === "assistant" && <span className="answer-timing">{original.streaming ? "Responding…" : formatDuration(timing?.totalStreamTime)}</span>}</header>
     {original.streaming && !original.content && <p className="assistant-pending" role="status">Zalava is responding…</p>}
     <div className="answer-content"><MessagePrimitive.Parts components={{Text:MessageText,tools:{Fallback:HIDDEN_TEXT}}}/></div>
-    {original.role === "assistant" && original.tools?.some(tool => tool.actionOutcome || (tool.approvalStatus && tool.approvalStatus !== "pending")) && <div className="approval-updates"><strong>Action updates</strong>{original.tools.map((tool,index) => (tool.actionOutcome || (tool.approvalStatus && tool.approvalStatus !== "pending")) && <p className="approval-outcome" role="status" key={`${tool.name}-${index}`}>Action {index+1} · {friendlyAction(tool.name)}: {approvalOutcome(tool)} <a href={`#approval-tool-${original.runId}-${index}`} onClick={() => { const target = document.getElementById(`approval-tool-${original.runId}-${index}`); if (target) { const parent = target.closest("details.answer-execution"); if (parent) parent.open = true; target.open = true; } }}>View action {index+1} details</a></p>)}</div>}
+    {original.role === "assistant" && original.tools?.some(hasActionUpdate) && <div className="approval-updates"><strong>Action updates</strong>{original.tools.map((tool,index) => hasActionUpdate(tool) && <p className="approval-outcome" role="status" key={`${tool.name}-${index}`}>Action {index+1} · {friendlyAction(tool.name)}: {approvalOutcome(tool)} <a href={`#approval-tool-${original.runId}-${index}`} onClick={() => { const target = document.getElementById(`approval-tool-${original.runId}-${index}`); if (target) { const parent = target.closest("details.answer-execution"); if (parent) parent.open = true; target.open = true; } }}>View action {index+1} details</a></p>)}</div>}
     {original.attachmentNames?.map(name => <span className="attachment-chip" key={name}>{name}</span>)}
     {original.jobIds?.map(id => <a href={`/jobs/${id}`} key={id}>View task</a>)}
     {original.role === "assistant" && !original.streaming && <details className="answer-execution" data-run-id={run?.id}><summary aria-label="Execution details" title="Execution details"><span aria-hidden="true">ⓘ</span><span className="sr-only">Execution details</span></summary>

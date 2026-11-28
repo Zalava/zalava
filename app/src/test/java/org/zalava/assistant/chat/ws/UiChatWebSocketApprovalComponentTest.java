@@ -87,7 +87,9 @@ class UiChatWebSocketApprovalComponentTest {
         .contains("permission.direct", id, "ui-interact-provider/write", "milk");
     handler.handleTextMessage(session, directCommand(id, "allow-once"));
     assertThat(approvals.get(id).decision()).isEqualTo(ZalavaToolApprovalRequests.Decision.ALLOWED);
-    assertThat(payloads(session)).contains("Permission allowed once; operation completed.");
+    assertThat(payloads(session))
+        .contains(
+            "Permission allowed once; the provider returned success. External effects were not independently verified.");
     WebSocketSession replay = session(owner.loginName());
     handler.handleTextMessage(replay, directCommand(id, "allow-once"));
     assertThat(payloads(replay)).contains("failure");

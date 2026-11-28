@@ -1,7 +1,6 @@
 package org.zalava.assistant.chat.application;
 
 import java.util.List;
-import java.util.Map;
 import org.zalava.capabilities.approval.ZalavaToolApprovalRequests;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperationException;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
@@ -47,17 +46,8 @@ public final class DirectChatApprovals {
     }
     try {
       var outcome = operations.allowUnscoped(requestId);
-      if (outcome.result().success() && isHomeAssistantAction(entry)) {
-        return "Home Assistant accepted the action. The physical outcome has not been verified.";
-      }
-      if (!outcome.result().success()
-          && isHomeAssistantAction(entry)
-          && outcome.result().content() instanceof Map<?, ?> content
-          && "Target entity is unavailable".equals(content.get("error"))) {
-        return "Home Assistant reports that the target is unavailable. Check its state before retrying.";
-      }
       return outcome.result().success()
-          ? "Permission allowed once; operation completed."
+          ? "Permission allowed once; the provider returned success. External effects were not independently verified."
           : "Permission allowed once, but the operation returned an error. Check the result before retrying.";
     } catch (ProviderToolOperationException failure) {
       if (failure.code() != ProviderToolOperationException.Code.VALIDATION
@@ -65,11 +55,6 @@ public final class DirectChatApprovals {
           && failure.code() != ProviderToolOperationException.Code.UNSUPPORTED) throw failure;
       return "The approved action failed: " + failure.getMessage() + ". It was not retried.";
     }
-  }
-
-  private static boolean isHomeAssistantAction(ZalavaToolApprovalRequests.Entry entry) {
-    return "home-assistant".equals(entry.providerId())
-        && "home_assistant_execute_action".equals(entry.toolName());
   }
 
   private static boolean directFor(

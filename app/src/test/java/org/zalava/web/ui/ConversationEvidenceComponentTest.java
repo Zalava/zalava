@@ -83,6 +83,28 @@ class ConversationEvidenceComponentTest {
     calls.record(
         new Entry(
             Instant.now().toString(),
+            "other-provider",
+            "write",
+            owner.id().toString(),
+            true,
+            "write",
+            List.of(),
+            true,
+            true,
+            null,
+            null,
+            "success",
+            1,
+            internal,
+            "safe",
+            runId,
+            executionId));
+    mvc.perform(get(route).with(accounts.authenticatedAs(owner)))
+        .andExpect(jsonPath("$.tools.length()").value(2))
+        .andExpect(content().string(containsString("Other parameters omitted")));
+    calls.record(
+        new Entry(
+            Instant.now().toString(),
             "home-assistant",
             "home_assistant_execute_action",
             owner.id().toString(),
@@ -100,7 +122,7 @@ class ConversationEvidenceComponentTest {
             runId,
             executionId));
     mvc.perform(get(route).with(accounts.authenticatedAs(owner)))
-        .andExpect(jsonPath("$.tools.length()").value(1))
+        .andExpect(jsonPath("$.tools.length()").value(2))
         .andExpect(jsonPath("$.tools[0].actionOutcome").value("accepted"));
     standingHomeActions.record(
         actor,
@@ -115,7 +137,7 @@ class ConversationEvidenceComponentTest {
             true,
             24));
     mvc.perform(get(route).with(accounts.authenticatedAs(owner)))
-        .andExpect(jsonPath("$.tools.length()").value(2));
+        .andExpect(jsonPath("$.tools.length()").value(3));
   }
 
   @Test

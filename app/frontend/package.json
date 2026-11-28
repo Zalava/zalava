@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "vite build"
+    "build": "node --test src/action-outcomes.test.js && vite build"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.22",

@@ -1557,7 +1557,7 @@ class ReleasedModuleDistributableAcceptanceTest {
           .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once"))
           .click();
       page.getByText(
-              "Home Assistant accepted the action. The physical outcome has not been verified.")
+              "Permission allowed once; the provider returned success. External effects were not independently verified.")
           .waitFor();
       ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
       denied
@@ -1569,7 +1569,7 @@ class ReleasedModuleDistributableAcceptanceTest {
           .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once"))
           .click();
       page.getByText(
-              "Home Assistant reports that the target is unavailable. Check its state before retrying.")
+              "Permission allowed once, but the operation returned an error. Check the result before retrying.")
           .waitFor();
       ha.verify(1, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
       for (int width : new int[] {1440, 768, 390}) {
@@ -1578,7 +1578,7 @@ class ReleasedModuleDistributableAcceptanceTest {
           page.waitForFunction(
               "getComputedStyle(document.querySelector('.zalava-navbar .navbar-menu')).visibility==='hidden' && document.querySelector('.zalava-navbar .navbar-menu').getBoundingClientRect().right<=0");
         page.getByText(
-                "Home Assistant reports that the target is unavailable. Check its state before retrying.")
+                "Permission allowed once, but the operation returned an error. Check the result before retrying.")
             .scrollIntoViewIfNeeded();
         page.screenshot(
             new Page.ScreenshotOptions()
@@ -1588,7 +1588,7 @@ class ReleasedModuleDistributableAcceptanceTest {
       var answer = page.locator(".message.assistant").last();
       PlaywrightAssertions.assertThat(answer)
           .containsText(
-              "Home Assistant accepted the action; the physical outcome has not been verified.");
+              "the provider returned success; external effects were not independently verified.");
       PlaywrightAssertions.assertThat(answer).containsText("permission denied or revoked.");
       PlaywrightAssertions.assertThat(answer).containsText("failed after approval.");
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Workspace details"))
@@ -1608,7 +1608,7 @@ class ReleasedModuleDistributableAcceptanceTest {
       page.reload();
       PlaywrightAssertions.assertThat(page.locator(".message.assistant").last())
           .containsText(
-              "Home Assistant accepted the action; the physical outcome has not been verified.");
+              "the provider returned success; external effects were not independently verified.");
       String retainedConversation =
           page.getByRole(
                   AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Select conversation"))
@@ -1624,7 +1624,7 @@ class ReleasedModuleDistributableAcceptanceTest {
       var restored = page.locator(".message.assistant").last();
       PlaywrightAssertions.assertThat(restored)
           .containsText(
-              "Home Assistant accepted the action; the physical outcome has not been verified.");
+              "the provider returned success; external effects were not independently verified.");
       PlaywrightAssertions.assertThat(restored).containsText("permission denied or revoked.");
       PlaywrightAssertions.assertThat(restored).containsText("failed after approval.");
       restored.locator(".answer-execution > summary").click();
@@ -1780,7 +1780,7 @@ class ReleasedModuleDistributableAcceptanceTest {
                         "Home Assistant accepted the action; its physical outcome is not verified."));
     PlaywrightAssertions.assertThat(restored)
         .containsText(
-            "Home Assistant accepted the action; the physical outcome has not been verified.");
+            "the provider returned success; external effects were not independently verified.");
     restored.locator(".answer-execution > summary").click();
     PlaywrightAssertions.assertThat(restored.locator(".answer-tool > summary")).hasCount(1);
     restored.locator(".answer-tool > summary").first().click();
@@ -1934,7 +1934,9 @@ class ReleasedModuleDistributableAcceptanceTest {
     var bread = cards.filter(new Locator.FilterOptions().setHasText("Released denied bread"));
     milk.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Allow once")).focus();
     page.keyboard().press("Enter");
-    page.getByText("Permission allowed once; operation completed.").waitFor();
+    page.getByText(
+            "Permission allowed once; the provider returned success. External effects were not independently verified.")
+        .waitFor();
     PlaywrightAssertions.assertThat(cards).hasCount(1);
     bread
         .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Deny").setExact(true))
@@ -1942,7 +1944,9 @@ class ReleasedModuleDistributableAcceptanceTest {
     page.getByText("Permission denied; operation was not run.").waitFor();
     PlaywrightAssertions.assertThat(cards).hasCount(0);
     PlaywrightAssertions.assertThat(answer.locator(".approval-outcome")).hasCount(2);
-    PlaywrightAssertions.assertThat(answer).containsText("completed after approval.");
+    PlaywrightAssertions.assertThat(answer)
+        .containsText(
+            "the provider returned success; external effects were not independently verified.");
     PlaywrightAssertions.assertThat(answer).containsText("permission denied or revoked.");
     page.reload();
     PlaywrightAssertions.assertThat(
