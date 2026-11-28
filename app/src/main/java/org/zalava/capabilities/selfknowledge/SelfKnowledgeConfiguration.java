@@ -10,6 +10,7 @@ import org.zalava.capabilities.operation.adapter.out.runtime.ZalavaRuntimeProvid
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.selfknowledge.adapter.out.HostMemberToolVisibility;
 import org.zalava.capabilities.selfknowledge.application.DefaultSelfKnowledgeQueries;
+import org.zalava.capabilities.selfknowledge.application.ModuleCapabilityProjection;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.ConfigurationState;
 import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries.RuntimeState;
@@ -39,15 +40,28 @@ public class SelfKnowledgeConfiguration {
       ObjectProvider<BuildProperties> buildProperties,
       ModuleConfigurationStatusQueries moduleConfiguration,
       ManagedServiceQueries managedServices) {
+    var modules =
+        new ModuleCapabilityProjection(
+            runtime,
+            new ZalavaRuntimeProviderCatalog(runtime),
+            new HostMemberToolVisibility(access),
+            routes,
+            pageAccess,
+            moduleId -> moduleState(runtime, moduleId),
+            installedModules,
+            moduleId ->
+                switch (moduleConfiguration.status(moduleId)) {
+                  case ACTIVE -> ConfigurationState.ACTIVE;
+                  case SETUP_REQUIRED -> ConfigurationState.SETUP_REQUIRED;
+                  case RESTART_REQUIRED -> ConfigurationState.CHANGES_PENDING;
+                  case CONFIGURATION_INVALID -> ConfigurationState.INVALID;
+                  case ACTIVATION_FAILED -> ConfigurationState.ACTIVATION_FAILED;
+                },
+            managedServices);
     return new DefaultSelfKnowledgeQueries(
         actors,
         accounts,
         runtime,
-        new ZalavaRuntimeProviderCatalog(runtime),
-        new HostMemberToolVisibility(access),
-        routes,
-        pageAccess,
-        moduleId -> moduleState(runtime, moduleId),
         installedModules,
         suggestions,
         chatProvider::configured,
@@ -55,15 +69,7 @@ public class SelfKnowledgeConfiguration {
           BuildProperties build = buildProperties.getIfAvailable();
           return build == null ? "" : build.getVersion();
         },
-        moduleId ->
-            switch (moduleConfiguration.status(moduleId)) {
-              case ACTIVE -> ConfigurationState.ACTIVE;
-              case SETUP_REQUIRED -> ConfigurationState.SETUP_REQUIRED;
-              case RESTART_REQUIRED -> ConfigurationState.CHANGES_PENDING;
-              case CONFIGURATION_INVALID -> ConfigurationState.INVALID;
-              case ACTIVATION_FAILED -> ConfigurationState.ACTIVATION_FAILED;
-            },
-        managedServices);
+        modules);
   }
 
   private static RuntimeState moduleState(ZalavaRuntime runtime, String moduleId) {

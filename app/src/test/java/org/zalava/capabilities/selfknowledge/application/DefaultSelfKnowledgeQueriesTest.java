@@ -67,7 +67,7 @@ class DefaultSelfKnowledgeQueriesTest {
                 new ModuleQueries.EnabledModule(
                     "notes", "1", "", "", List.of("tools:write"), ">=1.0")));
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             runtime,
@@ -114,7 +114,7 @@ class DefaultSelfKnowledgeQueriesTest {
     var runtime = mock(RuntimeQueries.class);
     when(runtime.modules()).thenReturn(List.of(valid, invalid));
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             runtime,
@@ -177,7 +177,7 @@ class DefaultSelfKnowledgeQueriesTest {
                 new ManagedServiceQueries.ManagedServiceSummary(
                     "worker", "UNRECOGNIZED", "", "", "secret-artifact", Set.of(1234), 0)));
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             runtime,
@@ -227,7 +227,7 @@ class DefaultSelfKnowledgeQueriesTest {
     when(account.role()).thenReturn(AccountRole.MEMBER);
     var selected = new AtomicBoolean(false);
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             mock(RuntimeQueries.class),
@@ -283,7 +283,7 @@ class DefaultSelfKnowledgeQueriesTest {
     when(suggestions.suggest("offline"))
         .thenReturn(ModuleSuggestions.Outcome.of(ModuleSuggestions.Status.UNAVAILABLE));
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             mock(RuntimeQueries.class),
@@ -339,7 +339,7 @@ class DefaultSelfKnowledgeQueriesTest {
                     "notes", "Notes", "main", "list", "List", "Notes list", "apps", List.of())));
     when(pages.allowed(id.toString(), "notes", "list")).thenReturn(true, true, false);
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             runtime,
@@ -412,7 +412,7 @@ class DefaultSelfKnowledgeQueriesTest {
                 new ModuleQueries.EnabledModule(
                     "notes", "1", "", "", List.of("tools:write"), ">=1.0")));
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             runtime,
@@ -444,7 +444,7 @@ class DefaultSelfKnowledgeQueriesTest {
     var actors = new ActorExecutionContext();
     var accounts = mock(AccountLifecycle.class);
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             mock(RuntimeQueries.class),
@@ -492,7 +492,7 @@ class DefaultSelfKnowledgeQueriesTest {
     when(installed.enabledModules())
         .thenReturn(List.of(new ModuleQueries.EnabledModule("queued", "2", "", "", List.of())));
     var queries =
-        new DefaultSelfKnowledgeQueries(
+        SelfKnowledgeTestAssembly.create(
             actors,
             accounts,
             runtime,

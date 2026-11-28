@@ -37,7 +37,7 @@ class SelfKnowledgeArtifactTest {
       when(account.id()).thenReturn(id);
       when(account.role()).thenReturn(AccountRole.ADMIN);
       var queries =
-          new DefaultSelfKnowledgeQueries(
+          SelfKnowledgeTestAssembly.create(
               actors,
               accounts,
               runtime,
