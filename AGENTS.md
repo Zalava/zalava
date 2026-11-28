@@ -27,6 +27,15 @@ Review long methods and dependency-heavy classes for distinct responsibilities;
 split them when that makes the flow easier to follow. Preserve authorization
 and fresh-state behavior, and avoid moving complexity into generic wrappers.
 
+When adding or changing business behavior, put invariants, lifecycle transitions,
+and retry decisions on the domain entity or value object that owns them. Use a
+named domain policy when the rule spans several domain objects. Pass facts such
+as the current time into the rule explicitly. Use cases coordinate actor-scoped
+lookup, persistence, transactions, and follow-up effects. Apply this guidance
+incrementally to the slice being changed. When reviewing an invariant change,
+check rule ownership and cover the invariant with direct domain tests. See
+[domain behavior](docs/development/architecture.md#domain-behavior).
+
 Do not introduce a Gradle subproject merely to represent a context. Split build
 modules only when independent compilation, release, ownership, or dependency
 isolation requires it. Prefer an incremental vertical-slice migration to a

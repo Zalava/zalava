@@ -103,16 +103,47 @@ public class Task {
     return Optional.ofNullable(failureDetail).filter(detail -> !detail.isBlank());
   }
 
-  public Task withStatus(Status newStatus) {
-    return new Task(id, name, createdAt, newStatus, description, agentFeedback, failureDetail);
+  public Task start() {
+    if (status != Status.todo) {
+      throw new NotQueuedException(name, status);
+    }
+    return new Task(id, name, createdAt, Status.in_progress, description, agentFeedback);
+  }
+
+  public boolean isAwaitingHumanInput() {
+    return status == Status.awaiting_human_input;
+  }
+
+  public Task resume() {
+    if (!isAwaitingHumanInput()) {
+      throw new IllegalStateException("Only tasks awaiting human input can be resumed");
+    }
+    return new Task(id, name, createdAt, Status.todo, description, agentFeedback);
+  }
+
+  public Task recordAttemptResult(Status outcome, String feedback) {
+    requireInProgress();
+    return new Task(id, name, createdAt, outcome, description, feedback.strip());
+  }
+
+  public Task retry() {
+    requireInProgress();
+    return new Task(id, name, createdAt, Status.todo, description, agentFeedback);
+  }
+
+  public Task fail(String detail) {
+    requireInProgress();
+    return new Task(id, name, createdAt, Status.failed, description, agentFeedback, detail);
+  }
+
+  private void requireInProgress() {
+    if (status != Status.in_progress) {
+      throw new IllegalStateException("Only tasks in progress can finish or retry an attempt");
+    }
   }
 
   public Task withFeedback(String feedback) {
     return new Task(id, name, createdAt, status, description, feedback.strip(), failureDetail);
-  }
-
-  public Task withFailureDetail(String detail) {
-    return new Task(id, name, createdAt, status, description, agentFeedback, detail);
   }
 
   private static String goalDescription(String description) {
@@ -147,5 +178,16 @@ public class Task {
   @Override
   public String toString() {
     return "Task '" + name + "'";
+  }
+
+  public static final class NotQueuedException extends IllegalStateException {
+    private NotQueuedException(String name, Status status) {
+      super(
+          "Cannot handle task '"
+              + name
+              + "' with status "
+              + status
+              + ". Only tasks that have status todo can be run");
+    }
   }
 }

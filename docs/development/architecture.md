@@ -50,6 +50,20 @@ sidebar, card layout and surface color and retains its screenshot; a PNG byte
 hash is not a portable pixel comparison across operating-system font renderers.
 Generated template build output must not enter the host distributable.
 
+## Domain behavior
+
+Domain entities and value objects enforce their own invariants, legal state
+transitions, and retry decisions. A named domain policy can express a business
+rule that spans several domain objects. Pass the facts a decision depends on,
+such as the current time, as explicit inputs. Test those decisions directly
+with domain objects.
+
+For example, `ClarificationRequest` decides whether a supplied answer can
+resolve the request at the given time and whether a repeated answer is
+identical. The use case loads the actor-owned request, saves a changed
+transition, and coordinates task resumption. The HTTP adapter maps domain
+errors to responses. The filesystem adapter handles atomic file replacement.
+
 ## Framework boundaries
 
 Account and knowledge lifecycle use cases remain framework independent. Spring transaction decorators live in outbound infrastructure adapters and are wired only in composition. Administrator count-and-mutation operations retain SERIALIZABLE isolation; every existing knowledge lifecycle transaction, including read-only ownership lookup, is preserved. Password hashing uses the AccountPasswords port. Knowledge ownership denial is a domain exception; the existing UI retains its failure handling.

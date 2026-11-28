@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -78,8 +79,7 @@ public class ZalavaClarifications {
             .findFirst();
     if (existing.isPresent()) {
       ClarificationRequest pending = existing.get();
-      if (!pending.isExpired(now)) return pending;
-      replace(pending, pending.expired(now));
+      if (expireIfDue(pending, now) == pending) return pending;
     }
     ClarificationRequest request =
         new ClarificationRequest(
@@ -88,22 +88,21 @@ public class ZalavaClarifications {
             taskReference.value(),
             draft.prompt(),
             draft.toQuestions(),
-            java.util.Map.of(),
+            Map.of(),
             ClarificationRequest.Status.PENDING,
             now.toString(),
             now.plus(ttl).toString(),
             null,
             null,
             List.of());
-    entries.addFirst(request);
     persist(request);
+    entries.addFirst(request);
     trim();
     return request;
   }
 
   public synchronized ClarificationRequest get(Actor actor, String requestId) {
-    ClarificationRequest request = find(requestId).orElseThrow(() -> notFound(requestId));
-    requireOwner(actor, request);
+    ClarificationRequest request = ownedRequest(actor, requestId);
     return expireIfDue(request, clock.get());
   }
 
@@ -149,24 +148,17 @@ public class ZalavaClarifications {
    */
   public synchronized ClarificationRequest answer(
       Actor actor, String requestId, List<ClarificationRequest.Answer> answers) {
-    ClarificationRequest existing = get(actor, requestId);
-    if (existing.status() == ClarificationRequest.Status.ANSWERED) {
-      if (sameAnswers(existing.answers(), answers)) return existing;
-      throw new AlreadyAnsweredException(requestId);
-    }
-    if (existing.status() != ClarificationRequest.Status.PENDING) {
-      throw new StaleClarificationException(requestId, existing.status());
-    }
+    ClarificationRequest request = ownedRequest(actor, requestId);
     Instant now = clock.get();
+    ClarificationRequest existing = expireIfDue(request, now);
     return replace(existing, existing.answered(answers, now));
   }
 
   public synchronized ClarificationRequest cancel(Actor actor, String requestId) {
-    ClarificationRequest existing = get(actor, requestId);
-    if (existing.status() != ClarificationRequest.Status.PENDING) {
-      throw new StaleClarificationException(requestId, existing.status());
-    }
-    return replace(existing, existing.cancelled(clock.get()));
+    ClarificationRequest request = ownedRequest(actor, requestId);
+    Instant now = clock.get();
+    ClarificationRequest existing = expireIfDue(request, now);
+    return replace(existing, existing.cancelled(now));
   }
 
   /** Transitions every due pending clarification to {@code EXPIRED} and returns them. */
@@ -174,8 +166,8 @@ public class ZalavaClarifications {
     Instant now = clock.get();
     List<ClarificationRequest> expired = new ArrayList<>();
     for (ClarificationRequest request : new ArrayList<>(entries)) {
-      if (request.status() == ClarificationRequest.Status.PENDING && request.isExpired(now)) {
-        ClarificationRequest updated = replace(request, request.expired(now));
+      ClarificationRequest updated = expireIfDue(request, now);
+      if (updated != request) {
         expired.add(updated);
       }
     }
@@ -193,17 +185,12 @@ public class ZalavaClarifications {
 
   private void expedite(Instant now) {
     for (ClarificationRequest request : new ArrayList<>(entries)) {
-      if (request.status() == ClarificationRequest.Status.PENDING && request.isExpired(now)) {
-        replace(request, request.expired(now));
-      }
+      expireIfDue(request, now);
     }
   }
 
   private ClarificationRequest expireIfDue(ClarificationRequest request, Instant now) {
-    if (request.status() == ClarificationRequest.Status.PENDING && request.isExpired(now)) {
-      return replace(request, request.expired(now));
-    }
-    return request;
+    return replace(request, request.expireIfDue(now));
   }
 
   private Optional<ClarificationRequest> find(String requestId) {
@@ -211,17 +198,20 @@ public class ZalavaClarifications {
     return entries.stream().filter(entry -> entry.requestId().equals(requestId)).findFirst();
   }
 
-  private void requireOwner(Actor actor, ClarificationRequest request) {
+  private ClarificationRequest ownedRequest(Actor actor, String requestId) {
+    ClarificationRequest request = find(requestId).orElseThrow(() -> notFound(requestId));
     if (actor == null || !request.ownedBy(actor.accountId().toString())) {
       throw notFound(request.requestId());
     }
+    return request;
   }
 
   private ClarificationRequest replace(
       ClarificationRequest existing, ClarificationRequest replacement) {
+    if (replacement == existing) return existing;
+    persist(replacement);
     entries.remove(existing);
     entries.addFirst(replacement);
-    persist(replacement);
     return replacement;
   }
 
@@ -243,13 +233,6 @@ public class ZalavaClarifications {
     if (store != null) store.save(request);
   }
 
-  private static boolean sameAnswers(
-      List<ClarificationRequest.Answer> left, List<ClarificationRequest.Answer> right) {
-    List<ClarificationRequest.Answer> safeRight = right == null ? List.of() : right;
-    if (left.size() != safeRight.size()) return false;
-    return left.containsAll(safeRight) && safeRight.containsAll(left);
-  }
-
   private static NotFoundException notFound(String requestId) {
     return new NotFoundException(requestId);
   }
@@ -257,26 +240,6 @@ public class ZalavaClarifications {
   public static final class NotFoundException extends RuntimeException {
     public NotFoundException(String requestId) {
       super("Zalava clarification request not found: " + requestId);
-    }
-  }
-
-  public static final class AlreadyAnsweredException extends RuntimeException {
-    public AlreadyAnsweredException(String requestId) {
-      super("Zalava clarification request was already answered: " + requestId);
-    }
-  }
-
-  public static final class StaleClarificationException extends RuntimeException {
-    private final ClarificationRequest.Status status;
-
-    public StaleClarificationException(String requestId, ClarificationRequest.Status status) {
-      super(
-          "Zalava clarification request is no longer pending: " + requestId + " (" + status + ")");
-      this.status = status;
-    }
-
-    public ClarificationRequest.Status status() {
-      return status;
     }
   }
 }

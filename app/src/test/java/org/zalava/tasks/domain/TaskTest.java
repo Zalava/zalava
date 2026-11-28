@@ -1,6 +1,7 @@
 package org.zalava.tasks.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -60,8 +61,8 @@ class TaskTest {
     Task task =
         Task.newTask("Example", "Original goal.")
             .withFeedback("Partial progress.")
-            .withStatus(Task.Status.failed)
-            .withFailureDetail("The remote service was unavailable.");
+            .start()
+            .fail("The remote service was unavailable.");
 
     assertThat(task.getGoalDescription()).isEqualTo("Original goal.");
     assertThat(task.getAgentFeedback()).contains("Partial progress.");
@@ -72,8 +73,8 @@ class TaskTest {
   void boundsAndFlattensFailureDetailForSafeDisplay() {
     Task task =
         Task.newTask("Example", "Original goal.")
-            .withStatus(Task.Status.failed)
-            .withFailureDetail("  First line.\nSecond line. " + "x".repeat(1000));
+            .start()
+            .fail("  First line.\nSecond line. " + "x".repeat(1000));
 
     assertThat(task.getFailureDetail())
         .hasValueSatisfying(
@@ -84,14 +85,33 @@ class TaskTest {
   }
 
   @Test
-  void clearsFailureDetailWhenTaskLeavesFailedStatus() {
-    Task completed =
-        Task.newTask("Example", "Original goal.")
-            .withStatus(Task.Status.failed)
-            .withFailureDetail("Generic failure detail.")
-            .withStatus(Task.Status.completed);
+  void aFailedTaskRejectsFurtherExecutionTransitions() {
+    Task failed = Task.newTask("Example", "Original goal.").start().fail("Recorded failure");
 
-    assertThat(completed.getFailureDetail()).isEmpty();
+    assertThatThrownBy(failed::start).isInstanceOf(Task.NotQueuedException.class);
+    assertThatThrownBy(failed::resume).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(failed::retry).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> failed.fail("Different failure"))
+        .isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> failed.recordAttemptResult(Task.Status.completed, "Done"))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void preservesTaskIdentityAndFeedbackWhenResumingAndRetrying() {
+    Instant createdAt = Instant.parse("2026-06-08T12:00:00Z");
+    Task queued = new Task("task-id", "Example", createdAt, Task.Status.todo, "Original goal.");
+    Task paused = queued.start().recordAttemptResult(Task.Status.awaiting_human_input, " Waiting ");
+    Task resumed = paused.resume();
+    Task retried = resumed.start().retry();
+
+    assertThat(paused.isAwaitingHumanInput()).isTrue();
+    assertThat(resumed.getStatus()).isEqualTo(Task.Status.todo);
+    assertThat(retried.getStatus()).isEqualTo(Task.Status.todo);
+    assertThat(retried.getId()).isEqualTo(queued.getId());
+    assertThat(retried.getCreatedAt()).isEqualTo(createdAt);
+    assertThat(retried.getGoalDescription()).isEqualTo("Original goal.");
+    assertThat(retried.getAgentFeedback()).contains("Waiting");
   }
 
   @Test

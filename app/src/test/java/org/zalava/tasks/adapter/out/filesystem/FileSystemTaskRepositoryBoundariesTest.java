@@ -122,9 +122,9 @@ class FileSystemTaskRepositoryBoundariesTest {
     Task saved =
         first.save(
             Task.newTask("handle-email", NOW(), "Process unread email messages")
-                .withStatus(Task.Status.failed)
+                .start()
                 .withFeedback("Partial progress.")
-                .withFailureDetail("Rate limited twice."));
+                .fail("Rate limited twice."));
 
     var second = new FileSystemTaskRepository(new FileSystemResource(workspaceDir));
     Task loaded = second.getTaskById(saved.getId());
