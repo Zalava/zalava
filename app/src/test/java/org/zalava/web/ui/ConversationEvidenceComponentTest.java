@@ -3,6 +3,7 @@ package org.zalava.web.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -90,6 +91,7 @@ class ConversationEvidenceComponentTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.tools.length()").value(1))
         .andExpect(jsonPath("$.tools[0].runId").value("retained-home-run"))
+        .andExpect(jsonPath("$.tools[0].durationMillis").value(nullValue()))
         .andExpect(jsonPath("$.tools[0].approvalStatus").value("succeeded"))
         .andExpect(jsonPath("$.tools[0].input").value(containsString("light.room")))
         .andExpect(jsonPath("$.tools[0].input").value(containsString("Other parameters omitted")))
