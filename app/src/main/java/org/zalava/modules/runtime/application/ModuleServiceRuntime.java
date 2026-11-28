@@ -1,6 +1,7 @@
 package org.zalava.modules.runtime.application;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.zalava.api.ProviderFactoryContext;
 import org.zalava.api.RequirementMode;
 import org.zalava.api.ZalavaModule;
 import org.zalava.api.ZalavaServiceContract;
+import org.zalava.api.ZalavaServiceDescriptor;
 import org.zalava.api.ZalavaServiceFactory;
 import org.zalava.api.ZalavaServiceFactoryContext;
 import org.zalava.api.ZalavaServiceRequirement;
@@ -46,6 +48,14 @@ final class ModuleServiceRuntime implements AutoCloseable {
     for (ZalavaModule module : modules.values())
       scopes.put(module.descriptor().moduleId(), scope(module));
     return source.withTypedServices(scopes);
+  }
+
+  List<ZalavaServiceDescriptor> loadedDescriptors() {
+    return factories.entrySet().stream()
+        .filter(entry -> instances.containsKey(entry.getKey()))
+        .map(entry -> entry.getValue().descriptor())
+        .sorted(Comparator.comparing(ZalavaServiceDescriptor::serviceId))
+        .toList();
   }
 
   <T> java.util.Optional<RuntimeQueries.LoadedZalavaService<T>> findService(

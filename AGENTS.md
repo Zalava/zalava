@@ -21,6 +21,12 @@ through explicit inbound and outbound ports. Outbound adapters implement those
 ports and contain framework and infrastructure mapping. Dependencies point
 inward, and Spring wiring remains at a composition boundary.
 
+When designing or changing a use case, look for pure business rules that belong
+in its domain and keep host-port coordination in focused application components.
+Review long methods and dependency-heavy classes for distinct responsibilities;
+split them when that makes the flow easier to follow. Preserve authorization
+and fresh-state behavior, and avoid moving complexity into generic wrappers.
+
 When adding or changing business behavior, put invariants, lifecycle transitions,
 and retry decisions on the domain entity or value object that owns them. Use a
 named domain policy when the rule spans several domain objects. Pass facts such

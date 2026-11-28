@@ -24,6 +24,7 @@ import org.zalava.capabilities.operation.application.DefaultMemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess;
 import org.zalava.capabilities.operation.application.port.in.MemberToolAccess.ToolKey;
 import org.zalava.capabilities.operation.application.port.in.ProviderToolOperations;
+import org.zalava.capabilities.selfknowledge.application.port.in.SelfKnowledgeQueries;
 import org.zalava.identity.accounts.application.ActorExecutionContext;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 import org.zalava.identity.accounts.domain.AccessDecision;
@@ -48,6 +49,7 @@ class MemberToolAccessComponentTest {
   @Autowired ActorExecutionContext actors;
   @Autowired AgentRequestTools agentTools;
   @Autowired ZalavaToolCallbackCatalog callbacks;
+  @Autowired SelfKnowledgeQueries selfKnowledge;
   Account admin, first, second;
   static final String PASSWORD = "MemberAccessPassword-123";
 
@@ -83,6 +85,29 @@ class MemberToolAccessComponentTest {
             tool,
             "{}",
             new InvocationContext(id(a), false, Map.of("accountRole", a.role().name()))));
+  }
+
+  @Test
+  void selfKnowledgeReflectsPersistentGrantsAndRevocationForEachActor() {
+    var firstActor = new Actor(first.id());
+    var secondActor = new Actor(second.id());
+    String capabilityId = "module:" + MemberToolAccessFixture.MODULE;
+    var key = key("current_time");
+
+    assertThat(actors.call(firstActor, AccountRole.MEMBER, () -> selfKnowledge.find(capabilityId)))
+        .isEmpty();
+    access.decide(id(admin), id(first), key, true);
+    var visible =
+        actors.call(firstActor, AccountRole.MEMBER, () -> selfKnowledge.find(capabilityId));
+    assertThat(visible).isPresent();
+    assertThat(visible.orElseThrow().operations())
+        .extracting("name")
+        .containsExactly("current_time");
+    assertThat(actors.call(secondActor, AccountRole.MEMBER, () -> selfKnowledge.find(capabilityId)))
+        .isEmpty();
+    access.decide(id(admin), id(first), key, false);
+    assertThat(actors.call(firstActor, AccountRole.MEMBER, () -> selfKnowledge.find(capabilityId)))
+        .isEmpty();
   }
 
   @Test

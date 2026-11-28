@@ -9,11 +9,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.zalava.api.FactorySecretAccess;
 import org.zalava.api.ModuleConfigurationStatus;
+import org.zalava.modules.catalog.application.port.in.ModuleConfigurationStatusQueries;
+import org.zalava.modules.catalog.application.port.out.ModuleConfigurations;
 import tools.jackson.databind.ObjectMapper;
 
 /** Private host filesystem storage for candidate/active configuration and secret values. */
 public final class FileSystemModuleConfigurationStore
-    implements org.zalava.modules.catalog.application.port.out.ModuleConfigurations {
+    implements ModuleConfigurations, ModuleConfigurationStatusQueries {
   private static final ObjectMapper JSON = new ObjectMapper();
   private final Path root;
 
@@ -54,6 +56,7 @@ public final class FileSystemModuleConfigurationStore
     move(moduleId, "candidate", "quarantine");
   }
 
+  @Override
   public synchronized ModuleConfigurationStatus status(String moduleId) {
     if (Files.exists(root.resolve(moduleId).resolve("quarantine")))
       return ModuleConfigurationStatus.CONFIGURATION_INVALID;

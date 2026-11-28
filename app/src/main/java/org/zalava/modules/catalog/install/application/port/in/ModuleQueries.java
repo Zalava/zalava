@@ -11,7 +11,17 @@ public interface ModuleQueries {
       String version,
       String sourceRepository,
       String binaryRepositoryId,
-      List<String> declaredPermissions) {
+      List<String> declaredPermissions,
+      String runtimeCompatibility) {
+
+    public EnabledModule(
+        String moduleId,
+        String version,
+        String sourceRepository,
+        String binaryRepositoryId,
+        List<String> declaredPermissions) {
+      this(moduleId, version, sourceRepository, binaryRepositoryId, declaredPermissions, null);
+    }
 
     public EnabledModule {
       declaredPermissions = List.copyOf(declaredPermissions);
