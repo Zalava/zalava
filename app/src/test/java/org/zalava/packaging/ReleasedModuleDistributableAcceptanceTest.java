@@ -244,7 +244,7 @@ class ReleasedModuleDistributableAcceptanceTest {
         assertThat(JSON.readTree(invalidTime.text()).path("success").booleanValue()).isFalse();
         assertThat(invalidTime.text()).contains("error");
 
-        verifyReleasedHomeAssistantAction(admin, page, postgres);
+        verifyReleasedHomeAssistantAction(admin, page, postgres, workspace);
 
         APIResponse denied =
             invoke(
@@ -370,7 +370,8 @@ class ReleasedModuleDistributableAcceptanceTest {
   }
 
   private void verifyReleasedHomeAssistantAction(
-      BrowserContext admin, Page page, PostgreSQLContainer postgres) throws Exception {
+      BrowserContext admin, Page page, PostgreSQLContainer postgres, Path workspace)
+      throws Exception {
     WireMockServer ha = new WireMockServer(0);
     ha.start();
     try {
@@ -497,7 +498,35 @@ class ReleasedModuleDistributableAcceptanceTest {
               post(
                       admin,
                       page,
-                      "/api/zalava/permission-requests/" + afterRestartId + "/deny",
+                      "/api/zalava/permission-requests/" + afterRestartId + "/allow-tool",
+                      Map.of())
+                  .status())
+          .isEqualTo(200);
+      APIResponse coveredBeforeHostRestart = post(admin, page, endpoint, body);
+      assertThat(coveredBeforeHostRestart.status())
+          .as("the replacement provider's new grant works before host restart")
+          .isEqualTo(200);
+      assertThat(JSON.readTree(coveredBeforeHostRestart.text()).path("success").booleanValue())
+          .isTrue();
+      ha.verify(4, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      stop();
+      start(postgres, workspace, "dev");
+      admin.clearCookies();
+      signIn(page, LOGIN, PASSWORD, false);
+      startModule(page, "zalava-module-home-assistant");
+      APIResponse afterHostRestart = post(admin, page, endpoint, body);
+      assertThat(afterHostRestart.status())
+          .as("a host restart invalidates the previous exact-action grant")
+          .isEqualTo(202);
+      ha.verify(4, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      String afterHostRestartId =
+          JSON.readTree(afterHostRestart.text()).path("requestId").asString();
+      assertThat(afterHostRestartId).isNotBlank();
+      assertThat(
+              post(
+                      admin,
+                      page,
+                      "/api/zalava/permission-requests/" + afterHostRestartId + "/deny",
                       Map.of())
                   .status())
           .isEqualTo(200);
@@ -518,7 +547,7 @@ class ReleasedModuleDistributableAcceptanceTest {
               "arguments",
               Map.of("domain", "script", "action", "turn_on", "entityId", "script.all"));
       assertThat(post(admin, page, endpoint, deniedBody).status()).isEqualTo(501);
-      ha.verify(2, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
+      ha.verify(4, postRequestedFor(urlEqualTo("/api/services/light/turn_on")));
     } finally {
       ha.stop();
     }
