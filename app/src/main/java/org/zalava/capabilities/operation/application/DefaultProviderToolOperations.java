@@ -20,6 +20,7 @@ import org.zalava.capabilities.operation.application.port.out.ToolApprovalPort;
 import org.zalava.capabilities.operation.application.port.out.ToolArgumentDecoder;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObservation;
 import org.zalava.capabilities.operation.application.port.out.ToolInvocationObserver;
+import org.zalava.capabilities.operation.domain.ApprovalBinding;
 import org.zalava.identity.accounts.application.port.in.AccountLifecycle;
 
 public final class DefaultProviderToolOperations implements ProviderToolOperations {
@@ -500,14 +501,23 @@ public final class DefaultProviderToolOperations implements ProviderToolOperatio
       ZalavaProvider provider,
       InvocationContext context,
       Map<String, Object> arguments) {
-    return approval.actorId().equals(context.actorId())
-        && provider.descriptor().moduleId().equals(approval.attributes().get("approvedModuleId"))
-        && approval.providerScope().equals(provider.descriptor().scope())
-        && Objects.equals(
-            approval.attributes().get("accountRole"), context.attributes().get("accountRole"))
-        && Objects.equals(
-            approval.attributes().get("conversationId"), context.attributes().get("conversationId"))
-        && decoder.decode(approval.argumentsJson()).equals(arguments);
+    var recorded =
+        new ApprovalBinding(
+            approval.actorId(),
+            approval.attributes().get("approvedModuleId"),
+            approval.providerScope(),
+            approval.attributes().get("accountRole"),
+            approval.attributes().get("conversationId"),
+            decoder.decode(approval.argumentsJson()));
+    var invocation =
+        new ApprovalBinding(
+            context.actorId(),
+            provider.descriptor().moduleId(),
+            provider.descriptor().scope(),
+            context.attributes().get("accountRole"),
+            context.attributes().get("conversationId"),
+            arguments);
+    return recorded.matches(invocation);
   }
 
   private static boolean isHomeApproval(ToolApproval approval) {
